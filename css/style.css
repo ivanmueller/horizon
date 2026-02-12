@@ -1170,7 +1170,7 @@ p {
 .tour-hero__overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(26,26,46,0.85) 0%, rgba(26,26,46,0.4) 30%, transparent 55%);
+  background: linear-gradient(to top, rgba(26,26,46,0.85) 0%, rgba(26,26,46,0.5) 35%, rgba(26,26,46,0.2) 55%, transparent 70%);
 }
 
 .tour-hero__content {
@@ -1183,7 +1183,7 @@ p {
   margin: 0 auto;
   color: white;
   z-index: 2;
-  padding-right: 420px;
+  padding-right: calc(380px + var(--space-4));
 }
 
 @media (max-width: 960px) {
