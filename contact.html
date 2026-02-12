@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Get in touch with Wild Atlas Tours. Questions about tours, group bookings, or partnerships — we're here to help.">
+  <title>Contact — Wild Atlas Tours</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/design-system.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/pages.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏔</text></svg>">
+</head>
+<body>
+
+  <!-- ═══════════════════ Navbar ═══════════════════ -->
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <div class="navbar__inner">
+      <a href="../index.html" class="navbar__logo">
+        <svg viewBox="0 0 36 36" fill="none"><path d="M18 2L32 30H4L18 2Z" fill="#FF6B4A" opacity="0.9"/><path d="M18 10L27 28H9L18 10Z" fill="#1A1A2E" opacity="0.8"/><path d="M18 16L23 26H13L18 16Z" fill="#FAFAF7"/></svg>
+        Wild Atlas
+      </a>
+      <div class="navbar__nav">
+        <a href="../index.html" class="navbar__link">Home</a>
+        <a href="tours.html" class="navbar__link">Tours</a>
+        <a href="about.html" class="navbar__link">About</a>
+        <a href="contact.html" class="navbar__link active">Contact</a>
+        <a href="b2b.html" class="navbar__link">Partners</a>
+        <a href="tours.html" class="btn btn--primary btn--sm navbar__cta">Book Now</a>
+      </div>
+      <button class="navbar__mobile-toggle" aria-label="Toggle menu" aria-expanded="false"><span></span></button>
+    </div>
+    <div class="navbar__mobile-menu" role="menu">
+      <a href="../index.html" class="navbar__mobile-link">Home</a>
+      <a href="tours.html" class="navbar__mobile-link">Tours</a>
+      <a href="about.html" class="navbar__mobile-link">About</a>
+      <a href="contact.html" class="navbar__mobile-link">Contact</a>
+      <a href="b2b.html" class="navbar__mobile-link">Partners</a>
+    </div>
+  </nav>
+
+  <main>
+    <!-- ═══════════════════ Hero ═══════════════════ -->
+    <section class="contact-hero">
+      <div class="container">
+        <h1 class="contact-hero__title fade-in">Let's Talk</h1>
+        <p class="contact-hero__text fade-in">Questions about a tour, group bookings, or just want to say hi? We're real people who live in the Rockies — and we respond fast.</p>
+      </div>
+    </section>
+
+    <!-- ═══════════════════ Contact Grid ═══════════════════ -->
+    <section class="section" style="padding-top:0;">
+      <div class="container">
+        <div class="contact-grid">
+
+          <!-- Left: Form -->
+          <div class="contact-form-wrap fade-in">
+            <h2 class="contact-form__heading">Send Us a Message</h2>
+            <p style="color:var(--color-mid-gray);margin-bottom:var(--space-8);font-size:var(--text-sm);">We typically respond within a few hours during business days.</p>
+
+            <form class="contact-form" id="contactForm" action="https://formspree.io/f/YOUR_FORM_ID" method="POST" novalidate>
+              <div class="contact-form__row">
+                <div class="contact-form__field">
+                  <label for="firstName" class="contact-form__label">First Name <span aria-hidden="true">*</span></label>
+                  <input type="text" id="firstName" name="firstName" required class="contact-form__input" placeholder="Jane">
+                </div>
+                <div class="contact-form__field">
+                  <label for="lastName" class="contact-form__label">Last Name</label>
+                  <input type="text" id="lastName" name="lastName" class="contact-form__input" placeholder="Smith">
+                </div>
+              </div>
+
+              <div class="contact-form__field">
+                <label for="email" class="contact-form__label">Email <span aria-hidden="true">*</span></label>
+                <input type="email" id="email" name="email" required class="contact-form__input" placeholder="jane@example.com">
+              </div>
+
+              <div class="contact-form__field">
+                <label for="subject" class="contact-form__label">What can we help with?</label>
+                <select id="subject" name="subject" class="contact-form__input contact-form__select">
+                  <option value="" disabled selected>Select a topic</option>
+                  <option value="tour-question">Question about a tour</option>
+                  <option value="group-booking">Group booking (6+ guests)</option>
+                  <option value="private-tour">Private tour request</option>
+                  <option value="hotel-partnership">Hotel / B2B partnership</option>
+                  <option value="media">Press / Media inquiry</option>
+                  <option value="other">Something else</option>
+                </select>
+              </div>
+
+              <div class="contact-form__field">
+                <label for="message" class="contact-form__label">Message <span aria-hidden="true">*</span></label>
+                <textarea id="message" name="message" required rows="5" class="contact-form__input contact-form__textarea" placeholder="Tell us what's on your mind..."></textarea>
+              </div>
+
+              <button type="submit" class="btn btn--primary btn--lg" style="width:100%;">Send Message</button>
+              <p class="contact-form__disclaimer">By submitting, you agree to our <a href="#">Privacy Policy</a>. We never share your information.</p>
+            </form>
+          </div>
+
+          <!-- Right: Contact Info + Map -->
+          <div class="contact-info-wrap fade-in">
+
+            <!-- Quick Contact Cards -->
+            <div class="contact-info-card">
+              <div class="contact-info-card__icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              </div>
+              <div>
+                <h3 class="contact-info-card__title">Email Us</h3>
+                <a href="mailto:hello@wildatlastours.com" class="contact-info-card__link">hello@wildatlastours.com</a>
+                <p class="contact-info-card__note">Best for detailed questions</p>
+              </div>
+            </div>
+
+            <div class="contact-info-card">
+              <div class="contact-info-card__icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              </div>
+              <div>
+                <h3 class="contact-info-card__title">Call or Text</h3>
+                <a href="tel:+14035551234" class="contact-info-card__link">+1 (403) 555-1234</a>
+                <p class="contact-info-card__note">Mon–Sun, 7 AM – 9 PM MT</p>
+              </div>
+            </div>
+
+            <div class="contact-info-card">
+              <div class="contact-info-card__icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+              </div>
+              <div>
+                <h3 class="contact-info-card__title">Based In</h3>
+                <p class="contact-info-card__link" style="cursor:default;">Canmore & Banff, Alberta</p>
+                <p class="contact-info-card__note">Canadian Rockies</p>
+              </div>
+            </div>
+
+            <!-- Map Placeholder -->
+            <div class="contact-map">
+              <div class="contact-map__placeholder">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:0.3;"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+                <p>Banff National Park, Alberta</p>
+                <span style="font-size:var(--text-xs);color:var(--color-mid-gray);">Interactive map coming soon</span>
+              </div>
+            </div>
+
+            <!-- Social -->
+            <div class="contact-social">
+              <p style="font-size:var(--text-sm);font-weight:600;color:var(--color-near-black);margin-bottom:var(--space-3);">Follow the Adventure</p>
+              <div class="contact-social__links">
+                <a href="#" class="contact-social__link" aria-label="Instagram">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                </a>
+                <a href="#" class="contact-social__link" aria-label="Facebook">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                </a>
+                <a href="#" class="contact-social__link" aria-label="TripAdvisor">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                </a>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════ FAQ ═══════════════════ -->
+    <section class="section section--warm">
+      <div class="container" style="max-width:800px;">
+        <div class="section-header fade-in">
+          <span class="section-header__label">Questions</span>
+          <h2 class="section-header__title">Quick Answers</h2>
+        </div>
+        <div class="faq stagger-children">
+          <div class="faq__item">
+            <button class="faq__question" aria-expanded="false">
+              <span>How far in advance should I book?</span>
+              <svg class="faq__chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="faq__answer"><p>We recommend booking at least 48 hours in advance for the best availability, though last-minute spots occasionally open up. Peak season (June–September) tours can fill weeks ahead.</p></div>
+          </div>
+          <div class="faq__item">
+            <button class="faq__question" aria-expanded="false">
+              <span>Do you offer group or private tours?</span>
+              <svg class="faq__chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="faq__answer"><p>Absolutely. For groups of 6 or more, we can customize departure times, itineraries, and add special touches. Just select "Group booking" in the form above and tell us what you have in mind.</p></div>
+          </div>
+          <div class="faq__item">
+            <button class="faq__question" aria-expanded="false">
+              <span>What's your cancellation policy?</span>
+              <svg class="faq__chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="faq__answer"><p>Free cancellation up to 24 hours before your tour. Cancel within 24 hours and we'll offer a full credit toward a future date. We want you to book with confidence.</p></div>
+          </div>
+          <div class="faq__item">
+            <button class="faq__question" aria-expanded="false">
+              <span>Are you a hotel or travel partner looking to collaborate?</span>
+              <svg class="faq__chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="faq__answer"><p>We'd love to hear from you. Visit our <a href="b2b.html" style="color:var(--color-coral);">Partners page</a> or select "Hotel / B2B partnership" in the form above. We offer competitive commission structures and dedicated partner support.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ═══════════════════ Footer ═══════════════════ -->
+  <footer class="footer" role="contentinfo">
+    <div class="container">
+      <div class="footer__grid">
+        <div class="footer__brand">
+          <a href="../index.html" class="footer__logo">
+            <svg viewBox="0 0 36 36" fill="none" width="28" height="28"><path d="M18 2L32 30H4L18 2Z" fill="#FF6B4A" opacity="0.9"/><path d="M18 10L27 28H9L18 10Z" fill="#FAFAF7" opacity="0.8"/></svg>
+            Wild Atlas Tours
+          </a>
+          <p class="footer__tagline">Small-group adventures in the Canadian Rockies. Locally owned, fully licensed, unforgettable.</p>
+        </div>
+        <div class="footer__col">
+          <h4 class="footer__heading">Tours</h4>
+          <a href="tour-sunrise-canoe.html" class="footer__link">Sunrise Canoe</a>
+          <a href="tour-canoe-sightseeing.html" class="footer__link">Canoe & Sightseeing</a>
+          <a href="tour-sightseeing.html" class="footer__link">Sightseeing Tour</a>
+        </div>
+        <div class="footer__col">
+          <h4 class="footer__heading">Company</h4>
+          <a href="about.html" class="footer__link">About Us</a>
+          <a href="contact.html" class="footer__link">Contact</a>
+          <a href="b2b.html" class="footer__link">Partners</a>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        <span>&copy; 2025 Wild Atlas Tours. All rights reserved.</span>
+        <div class="footer__legal">
+          <a href="#">Privacy</a>
+          <a href="#">Terms</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../js/main.js"></script>
+</body>
+</html>

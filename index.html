@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Premium guided tours in Banff National Park & the Canadian Rockies. Sunrise canoe experiences, Lake Louise & Moraine Lake tours. Small groups, expert guides.">
+  <meta name="keywords" content="Banff tours, Lake Louise canoe, Moraine Lake tour, Canadian Rockies, Banff National Park">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="Wild Atlas Tours — Premium Canadian Rockies Experiences">
+  <meta property="og:description" content="Handcrafted small-group adventures in Banff National Park. Sunrise canoe experiences, Lake Louise, Moraine Lake & more.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://wildatlastours.com">
+  
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TourOperator",
+    "name": "Wild Atlas Tours",
+    "description": "Premium guided tours in Banff National Park & the Canadian Rockies",
+    "url": "https://wildatlastours.com",
+    "areaServed": {
+      "@type": "Place",
+      "name": "Banff National Park, Alberta, Canada"
+    },
+    "priceRange": "$$"
+  }
+  </script>
+
+  <title>Wild Atlas Tours — Premium Canadian Rockies Experiences</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages.css">
+
+  <!-- Favicon placeholder -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏔</text></svg>">
+</head>
+<body>
+
+  <!-- ============ NAVBAR ============ -->
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <div class="navbar__inner">
+      <a href="index.html" class="navbar__logo" aria-label="Wild Atlas Tours Home">
+        <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 2L32 30H4L18 2Z" fill="#FF6B4A" opacity="0.9"/>
+          <path d="M18 10L27 28H9L18 10Z" fill="#1A1A2E" opacity="0.8"/>
+          <path d="M18 16L23 26H13L18 16Z" fill="#FAFAF7"/>
+        </svg>
+        Wild Atlas
+      </a>
+      <div class="navbar__nav">
+        <a href="index.html" class="navbar__link active">Home</a>
+        <a href="pages/tours.html" class="navbar__link">Tours</a>
+        <a href="pages/about.html" class="navbar__link">About</a>
+        <a href="pages/contact.html" class="navbar__link">Contact</a>
+        <a href="pages/b2b.html" class="navbar__link">Partners</a>
+        <a href="pages/tours.html" class="btn btn--primary btn--sm navbar__cta">Book Now</a>
+      </div>
+      <button class="navbar__mobile-toggle" aria-label="Toggle menu" aria-expanded="false">
+        <span></span>
+      </button>
+    </div>
+    <div class="navbar__mobile-menu" role="menu">
+      <a href="index.html" class="navbar__mobile-link" role="menuitem">Home</a>
+      <a href="pages/tours.html" class="navbar__mobile-link" role="menuitem">Tours</a>
+      <a href="pages/about.html" class="navbar__mobile-link" role="menuitem">About</a>
+      <a href="pages/contact.html" class="navbar__mobile-link" role="menuitem">Contact</a>
+      <a href="pages/b2b.html" class="navbar__mobile-link" role="menuitem">Partners</a>
+      <a href="pages/tours.html" class="btn btn--primary btn--lg btn--full" style="margin-top: var(--space-6);">Book a Tour</a>
+    </div>
+  </nav>
+
+  <!-- ============ HERO ============ -->
+  <section class="hero" aria-label="Hero">
+    <div class="hero__bg">
+      <!-- Using a gradient placeholder — replace with real hero image -->
+      <div style="width:100%;height:100%;background:linear-gradient(135deg, #1A1A2E 0%, #2D3A4A 30%, #3A5A6A 60%, #FF6B4A 100%);"></div>
+    </div>
+    <div class="container hero__content">
+      <div class="hero__label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        Banff's Premier Tour Experience
+      </div>
+      <h1 class="hero__title">Discover the Canadian Rockies Like&nbsp;Never&nbsp;Before</h1>
+      <p class="hero__subtitle">Handcrafted small-group adventures through the most breathtaking landscapes on earth. Sunrise canoe sessions, turquoise lakes, and alpine wonders await.</p>
+      <div class="hero__actions">
+        <a href="pages/tours.html" class="btn btn--primary btn--lg">Explore Our Tours</a>
+        <a href="#featured-tours" class="btn btn--ghost">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          View Experiences
+        </a>
+      </div>
+    </div>
+    <div class="hero__scroll-indicator" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+    </div>
+  </section>
+
+  <!-- ============ SOCIAL PROOF ============ -->
+  <section class="social-proof-section" aria-label="Social proof">
+    <div class="container">
+      <div class="social-proof fade-in">
+        <div class="social-proof__item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#FF6B4A" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <span><strong>4.9</strong> average rating</span>
+        </div>
+        <div class="social-proof__divider" aria-hidden="true"></div>
+        <div class="social-proof__item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span><strong>500+</strong> happy guests</span>
+        </div>
+        <div class="social-proof__divider" aria-hidden="true"></div>
+        <div class="social-proof__item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span><strong>Banff</strong> local experts</span>
+        </div>
+        <div class="social-proof__divider" aria-hidden="true"></div>
+        <div class="social-proof__item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <span><strong>Licensed</strong> & fully insured</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FEATURED TOURS ============ -->
+  <section id="featured-tours" class="section section--warm" aria-label="Featured tours">
+    <div class="container">
+      <div class="section-header fade-in">
+        <span class="section-header__label">Our Experiences</span>
+        <h2 class="section-header__title">Unforgettable Rocky Mountain Adventures</h2>
+        <p class="section-header__subtitle">Each tour is crafted to deliver intimate, awe-inspiring encounters with the Canadian Rockies. Small groups, big moments.</p>
+      </div>
+
+      <div class="tour-grid stagger-children">
+
+        <!-- Tour Card 1 -->
+        <a href="pages/tour-sunrise-canoe.html" class="tour-card">
+          <div class="tour-card__image-wrap">
+            <div class="tour-card__image" style="background: linear-gradient(135deg, #FF9A76 0%, #FF6B4A 50%, #D14E30 100%); width:100%; height:100%;"></div>
+            <span class="tour-card__badge">☀️ Sunrise</span>
+          </div>
+          <div class="tour-card__body">
+            <div class="tour-card__location">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+              Banff National Park
+            </div>
+            <h3 class="tour-card__title">Lake Louise Sunrise Canoe Experience</h3>
+            <div class="tour-card__details">
+              <span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                3 hours
+              </span>
+              <span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                Max 12 guests
+              </span>
+            </div>
+            <div class="tour-card__footer">
+              <div class="tour-card__rating">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#FF6B4A" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <span>4.9</span>
+                <span style="color:var(--color-mid-gray);font-weight:400;">(127)</span>
+              </div>
+              <div class="tour-card__price">
+                From <strong>$249</strong> <span style="font-size:var(--text-xs);">CAD</span>
+              </div>
+            </div>
+          </div>
+        </a>
+
+        <!-- Tour Card 2 -->
+        <a href="pages/tour-canoe-sightseeing.html" class="tour-card">
+          <div class="tour-card__image-wrap">
+            <div class="tour-card__image" style="background: linear-gradient(135deg, #4ECDC4 0%, #2C8C99 50%, #1A5F6A 100%); width:100%; height:100%;"></div>
+            <span class="tour-card__badge">🛶 Canoe + Sightseeing</span>
+          </div>
+          <div class="tour-card__body">
+            <div class="tour-card__location">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+              Banff National Park
+            </div>
+            <h3 class="tour-card__title">Lake Louise & Moraine Lake Tour with Canoe</h3>
+            <div class="tour-card__details">
+              <span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                6 hours
+              </span>
+              <span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                Max 12 guests
+              </span>
+            </div>
+            <div class="tour-card__footer">
+              <div class="tour-card__rating">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#FF6B4A" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <span>5.0</span>
+                <span style="color:var(--color-mid-gray);font-weight:400;">(89)</span>
+              </div>
+              <div class="tour-card__price">
+                From <strong>$279</strong> <span style="font-size:var(--text-xs);">CAD</span>
+              </div>
+            </div>
+          </div>
+        </a>
+
+        <!-- Tour Card 3 -->
+        <a href="pages/tour-sightseeing.html" class="tour-card">
+          <div class="tour-card__image-wrap">
+            <div class="tour-card__image" style="background: linear-gradient(135deg, #6C63FF 0%, #4A42CC 50%, #2D2799 100%); width:100%; height:100%;"></div>
+            <span class="tour-card__badge">📸 Sightseeing</span>
+          </div>
+          <div class="tour-card__body">
+            <div class="tour-card__location">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+              Banff National Park
+            </div>
+            <h3 class="tour-card__title">Lake Louise & Moraine Lake Sightseeing Tour</h3>
+            <div class="tour-card__details">
+              <span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                5 hours
+              </span>
+              <span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                Max 14 guests
+              </span>
+            </div>
+            <div class="tour-card__footer">
+              <div class="tour-card__rating">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#FF6B4A" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <span>4.8</span>
+                <span style="color:var(--color-mid-gray);font-weight:400;">(203)</span>
+              </div>
+              <div class="tour-card__price">
+                From <strong>$199</strong> <span style="font-size:var(--text-xs);">CAD</span>
+              </div>
+            </div>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ WHY BOOK WITH US ============ -->
+  <section class="section" aria-label="Why book with us">
+    <div class="container">
+      <div class="section-header fade-in">
+        <span class="section-header__label">Why Wild Atlas</span>
+        <h2 class="section-header__title">Built Different From the Big Bus&nbsp;Tours</h2>
+        <p class="section-header__subtitle">We're not a faceless tour factory. Every detail is crafted for an experience you'll genuinely remember.</p>
+      </div>
+
+      <div class="features-grid stagger-children">
+        <div class="feature-card">
+          <div class="feature-card__icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <h3 class="feature-card__title">Intimate Small Groups</h3>
+          <p class="feature-card__text">Maximum 12–14 guests per trip. You get personal attention, flexible pacing, and the insider spots big buses can't reach.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card__icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <h3 class="feature-card__title">Local Knowledge</h3>
+          <p class="feature-card__text">Our guides live and breathe the Rockies. Secret viewpoints, wildlife hotspots, and the stories behind every peak.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card__icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>
+          </div>
+          <h3 class="feature-card__title">Strategic Timing</h3>
+          <p class="feature-card__text">We depart at the golden hours — sunrise slots that let you see the lakes before the crowds arrive, bathed in perfect light.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card__icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <h3 class="feature-card__title">Fully Licensed & Insured</h3>
+          <p class="feature-card__text">Commercial licensing, Parks Canada permits, full passenger insurance. Your safety and peace of mind come first.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PHOTO IMMERSION ============ -->
+  <section class="section section--warm" aria-label="Photo gallery">
+    <div class="container">
+      <div class="section-header fade-in">
+        <span class="section-header__label">Through the Lens</span>
+        <h2 class="section-header__title">Moments That Take Your Breath Away</h2>
+      </div>
+
+      <div class="photo-mosaic fade-in">
+        <div class="photo-mosaic__item">
+          <div style="width:100%;height:100%;background:linear-gradient(135deg, #2C8C99 0%, #1A5F6A 100%);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.3);font-size:1rem;font-family:var(--font-body);">Lake Louise at Sunrise</div>
+        </div>
+        <div class="photo-mosaic__item">
+          <div style="width:100%;height:100%;background:linear-gradient(135deg, #4ECDC4 0%, #2C8C99 100%);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.3);font-size:0.8rem;font-family:var(--font-body);">Moraine Lake</div>
+        </div>
+        <div class="photo-mosaic__item">
+          <div style="width:100%;height:100%;background:linear-gradient(135deg, #FF9A76 0%, #FF6B4A 100%);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.3);font-size:0.8rem;font-family:var(--font-body);">Canoe Adventure</div>
+        </div>
+        <div class="photo-mosaic__item">
+          <div style="width:100%;height:100%;background:linear-gradient(135deg, #6C63FF 0%, #4A42CC 100%);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.3);font-size:0.8rem;font-family:var(--font-body);">Mountain Vista</div>
+        </div>
+        <div class="photo-mosaic__item">
+          <div style="width:100%;height:100%;background:linear-gradient(135deg, #1A1A2E 0%, #3A5A6A 100%);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.3);font-size:0.8rem;font-family:var(--font-body);">Two Jack Lake</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TESTIMONIALS ============ -->
+  <section class="section" aria-label="Testimonials">
+    <div class="container">
+      <div class="section-header fade-in">
+        <span class="section-header__label">Guest Reviews</span>
+        <h2 class="section-header__title">What Our Guests Are Saying</h2>
+        <p class="section-header__subtitle">Hear from the adventurers who chose Wild Atlas for their Canadian Rockies experience.</p>
+      </div>
+
+      <div class="testimonials-grid stagger-children">
+        <div class="testimonial-card">
+          <div class="testimonial-card__stars" aria-label="5 out of 5 stars">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </div>
+          <p class="testimonial-card__text">"The sunrise canoe experience was honestly the highlight of our entire Canadian trip. Our guide knew every hidden viewpoint. We had the lake almost to ourselves — magical."</p>
+          <div class="testimonial-card__author">
+            <div class="testimonial-card__avatar">JM</div>
+            <div>
+              <div class="testimonial-card__name">Jessica M.</div>
+              <div class="testimonial-card__origin">San Francisco, CA</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card">
+          <div class="testimonial-card__stars" aria-label="5 out of 5 stars">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </div>
+          <p class="testimonial-card__text">"Worth every penny. The three-lake combo was incredible — canoeing at Two Jack with Mount Rundle behind us, then those iconic turquoise views. Small group made all the difference."</p>
+          <div class="testimonial-card__author">
+            <div class="testimonial-card__avatar">DL</div>
+            <div>
+              <div class="testimonial-card__name">David L.</div>
+              <div class="testimonial-card__origin">London, UK</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card">
+          <div class="testimonial-card__stars" aria-label="5 out of 5 stars">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </div>
+          <p class="testimonial-card__text">"We almost booked one of the big bus tours from Calgary but so glad we found Wild Atlas instead. Felt personal, unhurried, and genuinely special. Already recommending to friends."</p>
+          <div class="testimonial-card__author">
+            <div class="testimonial-card__avatar">SK</div>
+            <div>
+              <div class="testimonial-card__name">Sarah K.</div>
+              <div class="testimonial-card__origin">Toronto, ON</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FAQ ============ -->
+  <section class="section section--warm" aria-label="Frequently asked questions">
+    <div class="container container--narrow">
+      <div class="section-header fade-in">
+        <span class="section-header__label">FAQ</span>
+        <h2 class="section-header__title">Common Questions</h2>
+      </div>
+
+      <div class="faq-list fade-in" role="list">
+        <div class="faq-item" role="listitem">
+          <button class="faq-item__trigger" aria-expanded="false">
+            <span>Where do your tours depart from?</span>
+            <svg class="faq-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <div class="faq-item__content">
+            <p class="faq-item__answer">Our tours depart from convenient pickup locations in Banff and Canmore. We also offer Calgary hotel pickups on select tours. Exact meeting points are shared upon booking confirmation.</p>
+          </div>
+        </div>
+
+        <div class="faq-item" role="listitem">
+          <button class="faq-item__trigger" aria-expanded="false">
+            <span>Do I need canoeing experience?</span>
+            <svg class="faq-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <div class="faq-item__content">
+            <p class="faq-item__answer">Not at all. Our canoe experiences are designed for all skill levels, including complete beginners. Your guide provides a brief paddling orientation before launch, and the calm lake waters are forgiving and safe.</p>
+          </div>
+        </div>
+
+        <div class="faq-item" role="listitem">
+          <button class="faq-item__trigger" aria-expanded="false">
+            <span>What is your cancellation policy?</span>
+            <svg class="faq-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <div class="faq-item__content">
+            <p class="faq-item__answer">We offer free cancellation up to 24 hours before your tour start time for a full refund. Cancellations within 24 hours are non-refundable, though we're happy to help you reschedule when possible.</p>
+          </div>
+        </div>
+
+        <div class="faq-item" role="listitem">
+          <button class="faq-item__trigger" aria-expanded="false">
+            <span>What should I bring?</span>
+            <svg class="faq-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <div class="faq-item__content">
+            <p class="faq-item__answer">We recommend layered clothing (mountain mornings are cool), comfortable footwear, sunscreen, sunglasses, a camera, and water. For canoe tours, everything you need for paddling is provided — just bring yourself and a sense of adventure.</p>
+          </div>
+        </div>
+
+        <div class="faq-item" role="listitem">
+          <button class="faq-item__trigger" aria-expanded="false">
+            <span>Are tours suitable for children?</span>
+            <svg class="faq-item__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <div class="faq-item__content">
+            <p class="faq-item__answer">Our sightseeing tours welcome children of all ages. Canoe tours are recommended for ages 6 and up. Life jackets in all sizes are provided. Families are one of our favourite groups to guide — kids love it.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CTA BANNER ============ -->
+  <section class="section" aria-label="Call to action">
+    <div class="container">
+      <div class="cta-banner fade-in">
+        <div class="cta-banner__content">
+          <h2 class="cta-banner__title">Ready for an Adventure?</h2>
+          <p class="cta-banner__text">The Rockies are calling. Secure your spot on one of our small-group experiences and see why guests call it unforgettable.</p>
+          <a href="pages/tours.html" class="btn btn--primary btn--lg">View All Tours</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="footer" role="contentinfo">
+    <div class="container">
+      <div class="footer__grid">
+        <div class="footer__brand">
+          <a href="index.html" class="navbar__logo" style="color: #fff; margin-bottom: var(--space-2);">
+            <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" width="32" height="32">
+              <path d="M18 2L32 30H4L18 2Z" fill="#FF6B4A" opacity="0.9"/>
+              <path d="M18 10L27 28H9L18 10Z" fill="#FAFAF7" opacity="0.3"/>
+              <path d="M18 16L23 26H13L18 16Z" fill="#FAFAF7"/>
+            </svg>
+            Wild Atlas
+          </a>
+          <p>Handcrafted small-group adventures in Banff National Park and the Canadian Rockies. Licensed, insured, and locally operated.</p>
+        </div>
+
+        <div class="footer__col">
+          <h4 class="footer__heading">Tours</h4>
+          <div class="footer__links">
+            <a href="pages/tour-sunrise-canoe.html">Sunrise Canoe Experience</a>
+            <a href="pages/tour-canoe-sightseeing.html">Canoe & Sightseeing</a>
+            <a href="pages/tour-sightseeing.html">Sightseeing Tour</a>
+            <a href="pages/tours.html">All Tours</a>
+          </div>
+        </div>
+
+        <div class="footer__col">
+          <h4 class="footer__heading">Company</h4>
+          <div class="footer__links">
+            <a href="pages/about.html">About Us</a>
+            <a href="pages/contact.html">Contact</a>
+            <a href="pages/b2b.html">Hotel Partners</a>
+            <a href="#">Careers</a>
+          </div>
+        </div>
+
+        <div class="footer__col">
+          <h4 class="footer__heading">Support</h4>
+          <div class="footer__links">
+            <a href="#">FAQ</a>
+            <a href="#">Cancellation Policy</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer__bottom">
+        <span>&copy; 2025 Wild Atlas Tours. All rights reserved.</span>
+        <div class="footer__social">
+          <a href="#" aria-label="Instagram">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </a>
+          <a href="#" aria-label="Facebook">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+          </a>
+          <a href="#" aria-label="TripAdvisor">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
