@@ -270,10 +270,18 @@ p {
   z-index: 1000;
   height: var(--nav-height);
   transition: all var(--duration-normal) var(--ease-out);
+  /* Default to solid — JS applies transparent on pages that need it */
+  background: rgba(250, 250, 247, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .nav--transparent {
   background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom: none;
 }
 
 .nav--solid {
@@ -302,6 +310,7 @@ p {
   font-size: 1.3rem;
   letter-spacing: -0.03em;
   z-index: 1001;
+  color: var(--near-black);
 }
 
 .nav__logo-icon {
@@ -337,6 +346,11 @@ p {
   letter-spacing: 0.01em;
   transition: color var(--duration-fast);
   position: relative;
+  color: var(--mid-gray);
+}
+
+.nav__link:hover {
+  color: var(--near-black);
 }
 
 .nav--transparent .nav__link {
@@ -385,6 +399,7 @@ p {
   height: 2px;
   border-radius: 2px;
   transition: all var(--duration-normal) var(--ease-out);
+  background: var(--near-black);
 }
 
 .nav--transparent .nav__mobile-toggle span {
@@ -1732,14 +1747,14 @@ p {
   100% { opacity: 1; transform: scaleY(1); }
 }
 
-/* Scroll-triggered animations */
-.reveal {
+/* Scroll-triggered animations — only activate when JS is confirmed loaded */
+.js-loaded .reveal {
   opacity: 0;
   transform: translateY(32px);
   transition: opacity 0.7s var(--ease-out), transform 0.7s var(--ease-out);
 }
 
-.reveal.visible {
+.js-loaded .reveal.visible {
   opacity: 1;
   transform: translateY(0);
 }
@@ -1757,5 +1772,5 @@ p {
     transition-duration: 0.01ms !important;
   }
   html { scroll-behavior: auto; }
-  .reveal { opacity: 1; transform: none; }
+  .js-loaded .reveal { opacity: 1; transform: none; }
 }

@@ -3,6 +3,9 @@
    ============================================================ */
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Signal that JS is loaded — reveal animations only activate with this class
+  document.documentElement.classList.add('js-loaded');
+
   initNavigation();
   initScrollReveal();
   initFAQ();
