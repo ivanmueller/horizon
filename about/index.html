@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About Us — Wild Atlas Tours | Banff & Canadian Rockies</title>
+  <meta name="description" content="Wild Atlas Tours is a locally owned tour company offering small-group guided experiences in Banff National Park. Meet the team behind the Rockies' best tours.">
+  <link rel="canonical" href="https://wildatlastours.com/about/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏔</text></svg>">
+  <meta property="og:title" content="About Wild Atlas Tours">
+  <meta property="og:description" content="Locally owned. Small groups. Real experiences in the Canadian Rockies.">
+  <meta property="og:type" content="website">
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"TouristTripOrganizer","name":"Wild Atlas Tours","description":"Premium guided tour experiences in Banff National Park and the Canadian Rockies.","url":"https://wildatlastours.com","areaServed":{"@type":"Place","name":"Banff National Park, Alberta, Canada"}}
+  </script>
+  <style>
+    /* About-specific styles */
+    .about-hero {
+      position: relative;
+      height: 50vh;
+      min-height: 380px;
+      max-height: 520px;
+      overflow: hidden;
+    }
+    .about-hero__image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .about-hero__overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(26,26,46,0.3) 0%, rgba(26,26,46,0.6) 100%);
+    }
+    .about-hero__content {
+      position: absolute;
+      bottom: var(--space-10);
+      left: 0;
+      right: 0;
+      padding: 0 var(--space-6);
+      max-width: var(--container-max);
+      margin: 0 auto;
+      color: white;
+    }
+    .about-hero__title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 5vw, 3.25rem);
+      font-weight: 700;
+      line-height: 1.15;
+      margin-bottom: var(--space-3);
+    }
+    .about-hero__subtitle {
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      opacity: 0.9;
+      max-width: 560px;
+      line-height: 1.6;
+    }
+
+    .story-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-10);
+      align-items: center;
+    }
+    @media (max-width: 768px) {
+      .story-section { grid-template-columns: 1fr; gap: var(--space-6); }
+    }
+    .story-section__image {
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      aspect-ratio: 4/3;
+    }
+    .story-section__image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .story-section__text h2 {
+      font-family: var(--font-display);
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      font-weight: 700;
+      color: var(--near-black);
+      margin-bottom: var(--space-4);
+    }
+    .story-section__text p {
+      color: var(--mid-gray);
+      line-height: 1.8;
+      margin-bottom: var(--space-4);
+    }
+    .story-section__text p:last-child { margin-bottom: 0; }
+
+    .values-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: var(--space-6);
+    }
+    .value-card {
+      padding: var(--space-6);
+      background: white;
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(0,0,0,0.06);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .value-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+    .value-card__icon {
+      font-size: 2rem;
+      margin-bottom: var(--space-3);
+      display: block;
+    }
+    .value-card__title {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 1.15rem;
+      color: var(--near-black);
+      margin-bottom: var(--space-2);
+    }
+    .value-card__desc {
+      color: var(--mid-gray);
+      line-height: 1.7;
+      font-size: 0.95rem;
+    }
+
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-6);
+      text-align: center;
+      padding: var(--space-10) 0;
+    }
+    @media (max-width: 640px) {
+      .stats-bar { grid-template-columns: repeat(2, 1fr); gap: var(--space-6) var(--space-4); }
+    }
+    .stat-item__number {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      font-weight: 800;
+      color: var(--sunset-coral);
+      display: block;
+      line-height: 1;
+      margin-bottom: var(--space-2);
+    }
+    .stat-item__label {
+      color: var(--mid-gray);
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .team-section {
+      text-align: center;
+    }
+    .team-photo {
+      max-width: 720px;
+      margin: 0 auto;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      aspect-ratio: 16/9;
+    }
+    .team-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .about-cta {
+      background: var(--near-black);
+      color: white;
+      border-radius: var(--radius-xl);
+      padding: var(--space-10) var(--space-8);
+      text-align: center;
+    }
+    .about-cta h2 {
+      font-family: var(--font-display);
+      font-size: clamp(1.5rem, 3vw, 2.25rem);
+      font-weight: 700;
+      margin-bottom: var(--space-3);
+    }
+    .about-cta p {
+      color: rgba(255,255,255,0.75);
+      max-width: 520px;
+      margin: 0 auto var(--space-6);
+      line-height: 1.7;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="nav" role="navigation" aria-label="Main navigation">
+    <div class="nav__inner">
+      <a href="/" class="nav__logo"><span class="nav__logo-icon">🏔</span> Wild Atlas</a>
+      <div class="nav__links">
+        <a href="/" class="nav__link">Home</a>
+        <a href="/tours/" class="nav__link">Tours</a>
+        <a href="/about/" class="nav__link nav__link--active">About</a>
+        <a href="/contact/" class="nav__link">Contact</a>
+        <a href="/tours/" class="btn btn--primary nav__cta">Book a Tour</a>
+      </div>
+      <button class="nav__mobile-toggle" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <div class="about-hero">
+    <img class="about-hero__image" src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80&auto=format"
+         alt="Mountain peaks in the Canadian Rockies at golden hour" loading="eager" fetchpriority="high">
+    <div class="about-hero__overlay"></div>
+    <div class="about-hero__content">
+      <h1 class="about-hero__title">We live here.<br>We guide here.</h1>
+      <p class="about-hero__subtitle">Wild Atlas Tours is a locally owned company built by people who wake up in the Rockies every morning and never get tired of the view.</p>
+    </div>
+  </div>
+
+  <!-- Our Story -->
+  <section class="section">
+    <div class="container">
+      <div class="story-section reveal">
+        <div class="story-section__image">
+          <img src="https://images.unsplash.com/photo-1527004013197-933c4bb611b3?w=800&q=80&auto=format"
+               alt="Mountain lake in Banff National Park" loading="lazy" width="800" height="600">
+        </div>
+        <div class="story-section__text">
+          <h2>The short version</h2>
+          <p>Wild Atlas Tours started because we believed visitors to the Rockies deserved better than a crowded bus and a megaphone. We wanted to build the kind of experience we'd want if we were visiting for the first time — small groups, local guides who actually know these mountains, and access to places most tourists don't see.</p>
+          <p>We're based in the Bow Valley, licensed to operate in Banff National Park, and small enough to care about every single guest. That's not a tagline — it's how we built the company.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <section class="section section--alt">
+    <div class="container">
+      <div class="stats-bar reveal">
+        <div class="stat-item">
+          <span class="stat-item__number">4.9</span>
+          <span class="stat-item__label">Average rating</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item__number">500+</span>
+          <span class="stat-item__label">Happy guests</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item__number">12</span>
+          <span class="stat-item__label">Max group size</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-item__number">100%</span>
+          <span class="stat-item__label">Locally owned</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Values -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header reveal">
+        <h2 class="section-header__title">What we believe in</h2>
+        <p class="section-header__subtitle">These aren't corporate values on a poster. They're how we make decisions every day.</p>
+      </div>
+      <div class="values-grid">
+        <div class="value-card reveal">
+          <span class="value-card__icon">🏔</span>
+          <h3 class="value-card__title">Small groups, always</h3>
+          <p class="value-card__desc">Maximum 12 guests per tour. This isn't a bus operation. We keep groups small so every guest gets personal attention and every experience feels exclusive.</p>
+        </div>
+        <div class="value-card reveal">
+          <span class="value-card__icon">🧭</span>
+          <h3 class="value-card__title">Local knowledge</h3>
+          <p class="value-card__desc">Our guides live here. They know the trails, the wildlife patterns, the best light for photos, and the spots that don't show up on Google Maps.</p>
+        </div>
+        <div class="value-card reveal">
+          <span class="value-card__icon">🌲</span>
+          <h3 class="value-card__title">Respect the park</h3>
+          <p class="value-card__desc">We operate under Parks Canada licensing and take Leave No Trace seriously. The Rockies were here long before us, and we intend to keep them that way.</p>
+        </div>
+        <div class="value-card reveal">
+          <span class="value-card__icon">🤝</span>
+          <h3 class="value-card__title">No hidden fees</h3>
+          <p class="value-card__desc">The price you see is the price you pay. Free cancellation up to 24 hours before. We want you to book with confidence, not anxiety.</p>
+        </div>
+        <div class="value-card reveal">
+          <span class="value-card__icon">📸</span>
+          <h3 class="value-card__title">Moments over itineraries</h3>
+          <p class="value-card__desc">If the light is perfect at a viewpoint, we stay. If a bear crosses the road, we stop. The best moments aren't on a schedule.</p>
+        </div>
+        <div class="value-card reveal">
+          <span class="value-card__icon">💎</span>
+          <h3 class="value-card__title">Exclusive access</h3>
+          <p class="value-card__desc">We bring our own canoes to lakes where there are no rental services. This means you get experiences that literally aren't available any other way.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Second Story Block -->
+  <section class="section section--alt">
+    <div class="container">
+      <div class="story-section reveal" style="direction:rtl;">
+        <div class="story-section__image" style="direction:ltr;">
+          <img src="https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=800&q=80&auto=format"
+               alt="Canoe on a calm mountain lake at sunrise" loading="lazy" width="800" height="600">
+        </div>
+        <div class="story-section__text" style="direction:ltr;">
+          <h2>Why we built the canoe experience</h2>
+          <p>When we started Wild Atlas, we noticed something: everyone wanted to canoe in Banff, but the options were limited to rental docks with hour-long queues and 30-minute time slots. That's not an experience — that's a transaction.</p>
+          <p>So we did something different. We bring our own canoes to Two Jack Lake, where there are no rental shops and no crowds. Just you, the water, and Mount Rundle. It's the kind of experience we wish someone had offered us, and now it's something only our guests can do.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Team -->
+  <section class="section">
+    <div class="container">
+      <div class="team-section reveal">
+        <div class="section-header">
+          <h2 class="section-header__title">Meet the crew</h2>
+          <p class="section-header__subtitle">A small team of locals who genuinely love sharing these mountains with visitors from around the world.</p>
+        </div>
+        <div class="team-photo">
+          <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&q=80&auto=format"
+               alt="Wild Atlas Tours team outdoors" loading="lazy" width="1200" height="675">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section">
+    <div class="container">
+      <div class="about-cta reveal">
+        <h2>Ready to see the Rockies?</h2>
+        <p>Browse our tours and find the experience that's right for you. Small groups, big views, and stories you'll tell for years.</p>
+        <a href="/tours/" class="btn btn--primary btn--lg">View All Tours <span class="arrow">→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer" role="contentinfo"><div class="container">
+    <div class="footer__grid">
+      <div><a href="/" class="nav__logo" style="color:white;display:inline-flex;"><span class="nav__logo-icon">🏔</span> Wild Atlas Tours</a><p class="footer__brand-desc">Premium guided experiences in Banff National Park.</p></div>
+      <div><h4 class="footer__heading">Experiences</h4><a href="/tours/lake-louise-sunrise-canoe/" class="footer__link">Sunrise Canoe</a><a href="/tours/lake-louise-moraine-lake-canoe/" class="footer__link">Canoe & Sightseeing</a><a href="/tours/lake-louise-moraine-lake-sightseeing/" class="footer__link">Sightseeing Tour</a></div>
+      <div><h4 class="footer__heading">Company</h4><a href="/about/" class="footer__link">About Us</a><a href="/contact/" class="footer__link">Contact</a></div>
+      <div><h4 class="footer__heading">Get In Touch</h4><a href="mailto:hello@wildatlastours.com" class="footer__link">hello@wildatlastours.com</a></div>
+    </div>
+    <div class="footer__bottom"><p>&copy; 2025 Wild Atlas Tours. All rights reserved.</p></div>
+  </div></footer>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>

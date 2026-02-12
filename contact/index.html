@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Us — Wild Atlas Tours | Banff & Canadian Rockies</title>
+  <meta name="description" content="Get in touch with Wild Atlas Tours. Questions about tours, group bookings, or custom experiences in Banff National Park? We'd love to hear from you.">
+  <link rel="canonical" href="https://wildatlastours.com/contact/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏔</text></svg>">
+  <meta property="og:title" content="Contact Wild Atlas Tours">
+  <meta property="og:description" content="Reach our team for tour bookings, group inquiries, or questions about the Canadian Rockies.">
+  <meta property="og:type" content="website">
+  <style>
+    /* Contact page styles */
+    .contact-hero {
+      background: var(--near-black);
+      padding: calc(var(--space-10) + 80px) 0 var(--space-10);
+      text-align: center;
+      color: white;
+    }
+    .contact-hero__title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+      margin-bottom: var(--space-3);
+    }
+    .contact-hero__subtitle {
+      color: rgba(255,255,255,0.7);
+      font-size: clamp(1rem, 2vw, 1.15rem);
+      max-width: 520px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    .contact-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-10);
+      align-items: start;
+    }
+    @media (max-width: 768px) {
+      .contact-layout {
+        grid-template-columns: 1fr;
+        gap: var(--space-6);
+      }
+    }
+
+    /* Info cards */
+    .contact-info { display: flex; flex-direction: column; gap: var(--space-4); }
+    .info-card {
+      display: flex;
+      gap: var(--space-4);
+      padding: var(--space-5);
+      background: white;
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(0,0,0,0.06);
+      transition: box-shadow 0.2s ease;
+    }
+    .info-card:hover { box-shadow: var(--shadow-md); }
+    .info-card__icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      background: rgba(255,107,74,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
+      flex-shrink: 0;
+    }
+    .info-card__title {
+      font-family: var(--font-display);
+      font-weight: 600;
+      color: var(--near-black);
+      margin-bottom: 4px;
+      font-size: 1rem;
+    }
+    .info-card__text {
+      color: var(--mid-gray);
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+    .info-card__text a {
+      color: var(--sunset-coral);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .info-card__text a:hover { text-decoration: underline; }
+
+    /* Form */
+    .contact-form-wrapper {
+      background: white;
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+      border: 1px solid rgba(0,0,0,0.06);
+      box-shadow: var(--shadow-sm);
+    }
+    .contact-form-wrapper h2 {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--near-black);
+      margin-bottom: var(--space-5);
+    }
+    .form-group {
+      margin-bottom: var(--space-4);
+    }
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.88rem;
+      color: var(--near-black);
+      margin-bottom: 6px;
+    }
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1.5px solid rgba(0,0,0,0.12);
+      border-radius: var(--radius-md);
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      color: var(--near-black);
+      background: var(--warm-white);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--sunset-coral);
+      box-shadow: 0 0 0 3px rgba(255,107,74,0.12);
+    }
+    .form-group textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+    .form-group select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 40px;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-4);
+    }
+    @media (max-width: 480px) {
+      .form-row { grid-template-columns: 1fr; }
+    }
+    .form-submit {
+      margin-top: var(--space-5);
+    }
+    .form-note {
+      font-size: 0.82rem;
+      color: var(--mid-gray);
+      margin-top: var(--space-3);
+      line-height: 1.5;
+    }
+
+    /* Map section */
+    .contact-map {
+      background: var(--near-black);
+      border-radius: var(--radius-lg);
+      height: 320px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.5);
+      font-size: 1rem;
+    }
+
+    /* FAQ quick section */
+    .contact-faq {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="nav" role="navigation" aria-label="Main navigation">
+    <div class="nav__inner">
+      <a href="/" class="nav__logo"><span class="nav__logo-icon">🏔</span> Wild Atlas</a>
+      <div class="nav__links">
+        <a href="/" class="nav__link">Home</a>
+        <a href="/tours/" class="nav__link">Tours</a>
+        <a href="/about/" class="nav__link">About</a>
+        <a href="/contact/" class="nav__link nav__link--active">Contact</a>
+        <a href="/tours/" class="btn btn--primary nav__cta">Book a Tour</a>
+      </div>
+      <button class="nav__mobile-toggle" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <div class="contact-hero">
+    <div class="container">
+      <h1 class="contact-hero__title">Let's talk</h1>
+      <p class="contact-hero__subtitle">Questions about a tour, group bookings, or just want to say hi? We usually respond within a few hours.</p>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <section class="section">
+    <div class="container">
+      <div class="contact-layout">
+
+        <!-- Left: Info Cards -->
+        <div class="contact-info reveal">
+          <div class="info-card">
+            <div class="info-card__icon">✉️</div>
+            <div>
+              <h3 class="info-card__title">Email us</h3>
+              <p class="info-card__text"><a href="mailto:hello@wildatlastours.com">hello@wildatlastours.com</a><br>We respond to most emails within 2–4 hours during business hours.</p>
+            </div>
+          </div>
+          <div class="info-card">
+            <div class="info-card__icon">📱</div>
+            <div>
+              <h3 class="info-card__title">Call or text</h3>
+              <p class="info-card__text"><a href="tel:+14035551234">+1 (403) 555-1234</a><br>Available 7 AM – 9 PM MST, 7 days a week during tour season.</p>
+            </div>
+          </div>
+          <div class="info-card">
+            <div class="info-card__icon">📍</div>
+            <div>
+              <h3 class="info-card__title">Based in the Bow Valley</h3>
+              <p class="info-card__text">We operate tours in Banff National Park with pickups available from Banff and Canmore hotels.</p>
+            </div>
+          </div>
+          <div class="info-card">
+            <div class="info-card__icon">👥</div>
+            <div>
+              <h3 class="info-card__title">Group & private bookings</h3>
+              <p class="info-card__text">Traveling with a group of 6 or more? We offer private tours with custom itineraries and flexible scheduling. <a href="mailto:hello@wildatlastours.com?subject=Group%20Booking%20Inquiry">Get a quote →</a></p>
+            </div>
+          </div>
+
+          <!-- Map -->
+          <div class="contact-map">
+            <span>📍 Map — Banff National Park, Alberta</span>
+          </div>
+        </div>
+
+        <!-- Right: Form -->
+        <div class="contact-form-wrapper reveal">
+          <h2>Send us a message</h2>
+          <form name="contact" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+            <p style="display:none;"><label>Don't fill this out: <input name="bot-field"></label></p>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="name">Name</label>
+                <input type="text" id="name" name="name" placeholder="Your name" required>
+              </div>
+              <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="you@email.com" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="subject">What's this about?</label>
+              <select id="subject" name="subject">
+                <option value="" disabled selected>Choose a topic</option>
+                <option value="tour-question">Question about a tour</option>
+                <option value="booking-help">Help with an existing booking</option>
+                <option value="group-booking">Group or private booking</option>
+                <option value="partnership">Partnership or collaboration</option>
+                <option value="other">Something else</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="tour">Which tour are you interested in?</label>
+              <select id="tour" name="tour">
+                <option value="" selected>Not sure yet / general question</option>
+                <option value="sunrise-canoe">Lake Louise Sunrise Canoe Experience</option>
+                <option value="three-lake-canoe">Lake Louise & Moraine Lake Tour with Canoe</option>
+                <option value="sightseeing">Lake Louise & Moraine Lake Sightseeing Tour</option>
+                <option value="private">Private / custom tour</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="message">Your message</label>
+              <textarea id="message" name="message" placeholder="Tell us what you're looking for, ask a question, or just say hi..." required></textarea>
+            </div>
+
+            <div class="form-submit">
+              <button type="submit" class="btn btn--primary btn--lg btn--full">Send Message <span class="arrow">→</span></button>
+            </div>
+            <p class="form-note">We usually respond within a few hours during business hours (7 AM – 9 PM MST). For urgent booking inquiries, call or text us directly.</p>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick FAQ -->
+  <section class="section section--alt">
+    <div class="container">
+      <div class="contact-faq">
+        <div class="section-header reveal">
+          <h2 class="section-header__title">Common questions</h2>
+        </div>
+        <div class="faq-list">
+          <div class="faq-item reveal">
+            <button class="faq-item__question"><span>How do I book a tour?</span><span class="faq-item__icon">+</span></button>
+            <div class="faq-item__answer"><div class="faq-item__answer-inner">You can book directly through our website by visiting the tour page and clicking "Book Now." We also accept bookings via email or phone.</div></div>
+          </div>
+          <div class="faq-item reveal">
+            <button class="faq-item__question"><span>What's your cancellation policy?</span><span class="faq-item__icon">+</span></button>
+            <div class="faq-item__answer"><div class="faq-item__answer-inner">Free cancellation up to 24 hours before your tour. Weather-related cancellations by us receive a full refund or free rescheduling.</div></div>
+          </div>
+          <div class="faq-item reveal">
+            <button class="faq-item__question"><span>Do you offer hotel pickup?</span><span class="faq-item__icon">+</span></button>
+            <div class="faq-item__answer"><div class="faq-item__answer-inner">Yes — all tours include complimentary pickup and drop-off from hotels in Banff and Canmore. We'll confirm the exact pickup time when you book.</div></div>
+          </div>
+          <div class="faq-item reveal">
+            <button class="faq-item__question"><span>Can you accommodate dietary restrictions or accessibility needs?</span><span class="faq-item__icon">+</span></button>
+            <div class="faq-item__answer"><div class="faq-item__answer-inner">We do our best to accommodate all guests. Please let us know about any specific needs when booking and we'll work with you to ensure a comfortable experience.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer" role="contentinfo"><div class="container">
+    <div class="footer__grid">
+      <div><a href="/" class="nav__logo" style="color:white;display:inline-flex;"><span class="nav__logo-icon">🏔</span> Wild Atlas Tours</a><p class="footer__brand-desc">Premium guided experiences in Banff National Park.</p></div>
+      <div><h4 class="footer__heading">Experiences</h4><a href="/tours/lake-louise-sunrise-canoe/" class="footer__link">Sunrise Canoe</a><a href="/tours/lake-louise-moraine-lake-canoe/" class="footer__link">Canoe & Sightseeing</a><a href="/tours/lake-louise-moraine-lake-sightseeing/" class="footer__link">Sightseeing Tour</a></div>
+      <div><h4 class="footer__heading">Company</h4><a href="/about/" class="footer__link">About Us</a><a href="/contact/" class="footer__link">Contact</a></div>
+      <div><h4 class="footer__heading">Get In Touch</h4><a href="mailto:hello@wildatlastours.com" class="footer__link">hello@wildatlastours.com</a></div>
+    </div>
+    <div class="footer__bottom"><p>&copy; 2025 Wild Atlas Tours. All rights reserved.</p></div>
+  </div></footer>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>
