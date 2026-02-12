@@ -1180,21 +1180,14 @@ p {
   max-width: var(--container-max);
   margin: 0 auto;
   padding: 0 var(--container-padding);
-  display: grid;
-  grid-template-columns: 1fr 380px;
-  gap: var(--space-4);
+  padding-right: 200px;
   color: white;
   z-index: 2;
 }
 
-.tour-hero__content > * {
-  grid-column: 1;
-}
-
 @media (max-width: 960px) {
   .tour-hero__content {
-    display: block;
-    padding: 0 var(--container-padding);
+    padding-right: var(--container-padding);
   }
 }
 
@@ -1450,6 +1443,7 @@ p {
   border: 1px solid var(--border-color);
   height: fit-content;
   margin-top: calc(-1 * var(--space-32));
+  z-index: 3;
 }
 
 @media (max-width: 960px) {
