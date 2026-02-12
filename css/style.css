@@ -1180,7 +1180,7 @@ p {
   max-width: var(--container-max);
   margin: 0 auto;
   padding: 0 var(--container-padding);
-  padding-right: 200px;
+  padding-right: 420px;
   color: white;
   z-index: 2;
 }
