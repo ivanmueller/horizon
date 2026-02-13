@@ -429,6 +429,7 @@ p {
     left: 0;
     right: 0;
     bottom: 0;
+    z-index: 1000;
     background: var(--warm-white);
     flex-direction: column;
     justify-content: center;
@@ -1530,6 +1531,7 @@ a.tour-card:active .tour-card__title {
 @media (max-width: 960px) {
   .booking-panel {
     position: fixed;
+    top: auto;
     bottom: 0;
     left: 0;
     right: 0;
