@@ -688,6 +688,11 @@ p {
   transition: all var(--duration-normal) var(--ease-out);
   position: relative;
   border: 1px solid var(--border-color);
+  color: var(--near-black);
+}
+
+.tour-card:visited {
+  color: var(--near-black);
 }
 
 .tour-card:hover {
