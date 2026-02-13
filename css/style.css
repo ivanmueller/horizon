@@ -323,8 +323,9 @@ p {
 }
 
 .nav__logo-text {
-  font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
   font-weight: 700 !important;
+  font-size: 1.5rem !important;
   color: #FF6B4A !important;
   letter-spacing: -0.02em;
 }
@@ -335,7 +336,7 @@ p {
 
 .nav--transparent .nav__logo-text {
   color: #FF6B4A !important;
-  font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
 .nav--solid .nav__logo {
@@ -344,7 +345,7 @@ p {
 
 .nav--solid .nav__logo-text {
   color: #FF6B4A !important;
-  font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
 .nav__links {
