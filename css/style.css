@@ -671,7 +671,7 @@ p {
 /* --- Tour Cards (Airbnb-style) --- */
 .tours-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: var(--space-8);
 }
 
@@ -780,6 +780,9 @@ a.tour-card:active {
 }
 
 .tour-card__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
   padding: var(--space-4) var(--space-4) var(--space-4);
 }
 
@@ -787,7 +790,6 @@ a.tour-card:active {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-1);
 }
 
 .tour-card__tags {
@@ -824,8 +826,10 @@ a.tour-card:active {
   font-family: var(--font-display);
   font-size: var(--text-base);
   font-weight: 700;
-  margin-top: var(--space-3);
-  margin-bottom: var(--space-3);
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  padding: var(--space-4) 0;
   line-height: 1.35;
   color: #1A1A2E !important;
   -webkit-text-fill-color: #1A1A2E !important;
@@ -849,6 +853,7 @@ a.tour-card:active .tour-card__title {
   justify-content: space-between;
   padding-top: var(--space-3);
   border-top: 1px solid var(--border-color);
+  margin-top: auto;
 }
 
 .tour-card__price {
