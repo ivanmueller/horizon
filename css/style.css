@@ -687,11 +687,11 @@ p {
   background: white;
   transition: all var(--duration-normal) var(--ease-out);
   position: relative;
+  border: 1px solid var(--border-color);
 }
 
 .tour-card:hover {
-  box-shadow: var(--card-shadow-hover);
-  transform: translateY(-4px);
+  transform: none;
 }
 
 .tour-card__image-wrap {
@@ -732,24 +732,33 @@ p {
   right: var(--space-3);
   width: 32px;
   height: 32px;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(8px);
+  background: transparent;
+  border: none;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-size: 0.9rem;
-  transition: all var(--duration-fast);
+  cursor: pointer;
+  padding: 0;
+  transition: transform var(--duration-fast);
 }
 
-.tour-card__wishlist:hover {
-  background: rgba(0, 0, 0, 0.6);
+.tour-card__wishlist svg {
+  width: 24px;
+  height: 24px;
+  stroke: white;
+  stroke-width: 2;
+  fill: rgba(0, 0, 0, 0.5);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  transition: transform var(--duration-fast);
+}
+
+.tour-card__wishlist:hover svg {
   transform: scale(1.1);
 }
 
 .tour-card__body {
-  padding: var(--space-4) var(--space-1) var(--space-2);
+  padding: var(--space-4) var(--space-4) var(--space-4);
 }
 
 .tour-card__meta {
@@ -759,10 +768,21 @@ p {
   margin-bottom: var(--space-1);
 }
 
-.tour-card__location {
-  font-size: var(--text-sm);
+.tour-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.tour-card__tag {
+  font-size: var(--text-xs);
   color: var(--mid-gray);
   font-weight: 500;
+  background: var(--warm-white);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  line-height: 1.5;
 }
 
 .tour-card__rating {
@@ -779,20 +799,15 @@ p {
 
 .tour-card__title {
   font-family: var(--font-display);
-  font-size: var(--text-lg);
+  font-size: var(--text-base);
   font-weight: 600;
-  margin-bottom: var(--space-1);
+  margin-bottom: var(--space-2);
   line-height: 1.35;
+  color: var(--mid-gray);
 }
 
 .tour-card__desc {
-  font-size: var(--text-sm);
-  color: var(--mid-gray);
-  margin-bottom: var(--space-3);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  display: none;
 }
 
 .tour-card__footer {
