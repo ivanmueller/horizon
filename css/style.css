@@ -316,14 +316,16 @@ p {
 .nav__logo-icon {
   width: 36px;
   height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  border-radius: var(--radius-md);
 }
 
 .nav__logo-text {
-  font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-weight: 700;
-  color: var(--coral) !important;
+  font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-weight: 700 !important;
+  color: #FF6B4A !important;
   letter-spacing: -0.02em;
 }
 
@@ -331,8 +333,18 @@ p {
   color: white;
 }
 
+.nav--transparent .nav__logo-text {
+  color: #FF6B4A !important;
+  font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
 .nav--solid .nav__logo {
   color: var(--near-black);
+}
+
+.nav--solid .nav__logo-text {
+  color: #FF6B4A !important;
+  font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
 .nav__links {
