@@ -10,6 +10,54 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
+
+  <style>
+    .tours-grid {
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)) !important;
+    }
+    .tour-card {
+      display: flex !important;
+      flex-direction: column !important;
+    }
+    .tour-card__image-wrap {
+      position: relative !important;
+      width: 100% !important;
+      height: 0 !important;
+      padding-bottom: 88% !important;
+      flex-shrink: 0 !important;
+      flex-grow: 0 !important;
+      overflow: hidden !important;
+    }
+    .tour-card__image-wrap::before {
+      display: none !important;
+    }
+    .tour-card__image-wrap img {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+    }
+    .tour-card__body {
+      display: flex !important;
+      flex-direction: column !important;
+      flex: 1 1 auto !important;
+      padding: 1rem !important;
+    }
+    .tour-card__title {
+      flex: 1 1 auto !important;
+      display: flex !important;
+      align-items: center !important;
+      padding-top: 1.5rem !important;
+      padding-bottom: 1.5rem !important;
+      margin: 0 !important;
+    }
+    .tour-card__footer {
+      margin-top: auto !important;
+    }
+  </style>
+
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏔</text></svg>">
   <script type="application/ld+json">
   {"@context":"https://schema.org","@type":"TouristTrip","name":"Lake Louise & Moraine Lake Tour with Canoe","description":"The ultimate three-lake experience combining canoeing and sightseeing.","offers":{"@type":"Offer","price":"249","priceCurrency":"CAD","availability":"https://schema.org/InStock"},"provider":{"@type":"TouristTripOrganizer","name":"Horizon Tours"}}
@@ -35,9 +83,10 @@
     <img class="tour-hero__image" src="https://images.unsplash.com/photo-1561134643-668f9057cce4?w=1920&q=80&auto=format"
          alt="Moraine Lake with Valley of the Ten Peaks" loading="eager" fetchpriority="high">
     <div class="tour-hero__overlay"></div>
-    <div class="tour-hero__breadcrumb">
-      <a href="/">Home</a><span>›</span><a href="/tours/">Tours</a><span>›</span><span>Canoe & Sightseeing</span>
-    </div>
+    <a href="/tours/" class="tour-hero__back" aria-label="Back to all tours">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      All Tours
+    </a>
     <div class="tour-hero__content">
       <h1 class="tour-hero__title">Lake Louise & Moraine Lake Tour with Canoe</h1>
       <div class="tour-hero__meta">
@@ -213,21 +262,63 @@
 
   <section class="section section--alt"><div class="container">
     <div class="section-header"><h2 class="section-header__title">You might also like</h2></div>
-    <div class="tours-grid" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
+    <div class="tours-grid">
       <a href="/tours/lake-louise-sunrise-canoe/" class="tour-card">
-        <div class="tour-card__image-wrap"><img src="https://images.unsplash.com/photo-1503614472-8c93d56e92ce?w=720&q=80&auto=format" alt="Sunrise canoe" loading="lazy" width="720" height="540"></div>
+        <div class="tour-card__image-wrap" style="width:100%!important;height:0!important;padding-bottom:88%!important;position:relative!important;overflow:hidden!important;">
+          <img src="https://images.unsplash.com/photo-1503614472-8c93d56e92ce?w=720&q=80&auto=format" alt="Canoe on calm lake at sunrise with mountain reflection" loading="lazy" width="540" height="540">
+          <span class="tour-card__badge">Most Popular</span>
+          <button class="tour-card__wishlist" aria-label="Save to wishlist"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M16 28c7-4.73 14-10 14-17a6.98 6.98 0 0 0-7-7c-1.8 0-3.58.68-4.95 2.05L16 8.1l-2.05-2.05A6.98 6.98 0 0 0 9 4a6.98 6.98 0 0 0-7 7c0 7 7 12.27 14 17z"/></svg></button>
+        </div>
         <div class="tour-card__body">
-          <div class="tour-card__meta"><span class="tour-card__location">Lake Louise</span><span class="tour-card__rating"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> 4.9</span></div>
-          <h3 class="tour-card__title">Lake Louise Sunrise Canoe Experience</h3>
-          <div class="tour-card__footer"><div class="tour-card__price"><span class="tour-card__price-amount">$249</span><span class="tour-card__price-unit"> CAD</span></div><span class="tour-card__duration">3 hours</span></div>
+          <div class="tour-card__meta">
+            <div class="tour-card__tags">
+              <span class="tour-card__tag">Guided Tour</span>
+            </div>
+            <span class="tour-card__rating">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              4.9
+            </span>
+          </div>
+          <h3 class="tour-card__title" style="color:#1A1A2E !important;-webkit-text-fill-color:#1A1A2E !important;">Lake Louise Sunrise Canoe Experience</h3>
+          <div class="tour-card__footer">
+            <div class="tour-card__price">
+              <span class="tour-card__price-amount">$249</span>
+              <span class="tour-card__price-unit"> CAD</span>
+            </div>
+            <span class="tour-card__duration">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              3 hours
+            </span>
+          </div>
         </div>
       </a>
       <a href="/tours/lake-louise-moraine-lake-sightseeing/" class="tour-card">
-        <div class="tour-card__image-wrap"><img src="https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=720&q=80&auto=format" alt="Mountain vista" loading="lazy" width="720" height="540"></div>
+        <div class="tour-card__image-wrap" style="width:100%!important;height:0!important;padding-bottom:88%!important;position:relative!important;overflow:hidden!important;">
+          <img src="https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=720&q=80&auto=format" alt="Scenic mountain vista in the Canadian Rockies" loading="lazy" width="540" height="540">
+          <span class="tour-card__badge">Best Value</span>
+          <button class="tour-card__wishlist" aria-label="Save to wishlist"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M16 28c7-4.73 14-10 14-17a6.98 6.98 0 0 0-7-7c-1.8 0-3.58.68-4.95 2.05L16 8.1l-2.05-2.05A6.98 6.98 0 0 0 9 4a6.98 6.98 0 0 0-7 7c0 7 7 12.27 14 17z"/></svg></button>
+        </div>
         <div class="tour-card__body">
-          <div class="tour-card__meta"><span class="tour-card__location">Lake Louise & Moraine Lake</span><span class="tour-card__rating"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> 4.8</span></div>
-          <h3 class="tour-card__title">Lake Louise & Moraine Lake Sightseeing Tour</h3>
-          <div class="tour-card__footer"><div class="tour-card__price"><span class="tour-card__price-amount">$149</span><span class="tour-card__price-unit"> CAD</span></div><span class="tour-card__duration">5 hours</span></div>
+          <div class="tour-card__meta">
+            <div class="tour-card__tags">
+              <span class="tour-card__tag">Day Trip</span>
+            </div>
+            <span class="tour-card__rating">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              4.8
+            </span>
+          </div>
+          <h3 class="tour-card__title" style="color:#1A1A2E !important;-webkit-text-fill-color:#1A1A2E !important;">Lake Louise & Moraine Lake Sightseeing Tour</h3>
+          <div class="tour-card__footer">
+            <div class="tour-card__price">
+              <span class="tour-card__price-amount">$149</span>
+              <span class="tour-card__price-unit"> CAD</span>
+            </div>
+            <span class="tour-card__duration">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              5 hours
+            </span>
+          </div>
         </div>
       </a>
     </div>
