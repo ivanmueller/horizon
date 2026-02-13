@@ -688,6 +688,11 @@ p {
   transition: all var(--duration-normal) var(--ease-out);
   position: relative;
   border: 1px solid var(--border-color);
+  color: var(--near-black);
+}
+
+.tour-card:visited {
+  color: var(--near-black);
 }
 
 .tour-card:hover {
@@ -804,7 +809,11 @@ p {
   margin-top: var(--space-3);
   margin-bottom: var(--space-3);
   line-height: 1.35;
-  color: var(--near-black);
+  color: #1A1A2E !important;
+}
+
+a.tour-card:visited .tour-card__title {
+  color: #1A1A2E !important;
 }
 
 .tour-card__desc {
