@@ -314,15 +314,16 @@ p {
 }
 
 .nav__logo-icon {
-  width: 36px;
-  height: 36px;
-  background: var(--coral);
-  border-radius: var(--radius-md);
+  width: 28px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.nav__logo-text {
+  color: var(--coral) !important;
 }
 
 .nav--transparent .nav__logo {
