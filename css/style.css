@@ -316,14 +316,15 @@ p {
 .nav__logo-icon {
   width: 36px;
   height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   flex-shrink: 0;
+  border-radius: var(--radius-md);
 }
 
 .nav__logo-text {
+  font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 700;
   color: var(--coral) !important;
+  letter-spacing: -0.02em;
 }
 
 .nav--transparent .nav__logo {
