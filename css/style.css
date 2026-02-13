@@ -696,7 +696,7 @@ p {
 
 .tour-card__image-wrap {
   position: relative;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
   border-radius: var(--radius-xl);
 }
@@ -801,9 +801,10 @@ p {
   font-family: var(--font-display);
   font-size: var(--text-base);
   font-weight: 600;
-  margin-bottom: var(--space-2);
+  margin-top: var(--space-3);
+  margin-bottom: var(--space-3);
   line-height: 1.35;
-  color: var(--mid-gray);
+  color: var(--near-black);
 }
 
 .tour-card__desc {
