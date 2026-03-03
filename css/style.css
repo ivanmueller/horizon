@@ -1262,16 +1262,24 @@ a.tour-card:active .tour-card__title {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  padding: 0.5rem 1rem 0.5rem 0.75rem;
+  background: rgba(26, 26, 46, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
   font-family: var(--font-display);
   font-size: var(--text-sm);
   font-weight: 500;
-  color: var(--mid-gray);
+  color: white;
   text-decoration: none;
-  transition: color var(--duration-fast);
+  transition: all var(--duration-normal) var(--ease-out);
 }
 
 .tour-photo-grid-nav__back:hover {
-  color: var(--near-black);
+  background: var(--coral);
+  border-color: var(--coral);
+  color: white;
 }
 
 .tour-photo-grid {
