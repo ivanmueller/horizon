@@ -82,7 +82,7 @@ function initFAQ() {
 
 /* --- Photo Gallery Modal --- */
 function initPhotoModal() {
-  const showAllBtn = document.querySelector('.photo-grid__show-all');
+  const showAllBtn = document.querySelector('.tour-photo-grid__show-all');
   const modal = document.querySelector('.photo-modal');
   if (!showAllBtn || !modal) return;
 
