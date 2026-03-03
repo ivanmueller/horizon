@@ -65,7 +65,7 @@
 </head>
 <body>
 
-  <nav class="nav" role="navigation" aria-label="Main navigation">
+  <nav class="nav nav--static" role="navigation" aria-label="Main navigation">
     <div class="nav__inner">
       <a href="/" class="nav__logo"><span class="nav__logo-icon"><svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true"><rect width="36" height="36" rx="8" fill="#FF6B4A"/><path d="M13 7v22M13 18c0-6 12-6 12 0v11" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/></svg></span> <span class="nav__logo-text" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.5rem;color:#FF6B4A;font-weight:700;">horizon</span></a>
       <div class="nav__links">
@@ -79,16 +79,35 @@
     </div>
   </nav>
 
-  <!-- Tour Hero Image (clean — no text overlay) -->
-  <div class="tour-hero">
-    <img class="tour-hero__image" src="https://images.unsplash.com/photo-1561134643-668f9057cce4?w=1920&q=80&auto=format"
-         alt="Moraine Lake with Valley of the Ten Peaks" loading="eager" fetchpriority="high">
-    <div class="tour-hero__overlay"></div>
-    <a href="/tours/" class="tour-hero__back" aria-label="Back to all tours"
-       style="position:absolute;top:88px;left:clamp(1.25rem,4vw,2.5rem);z-index:10;display:flex;align-items:center;gap:0.5rem;padding:0.5rem 1rem 0.5rem 0.75rem;background:rgba(26,26,46,0.6);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.2);border-radius:9999px;font-family:'Outfit',sans-serif;font-size:0.875rem;font-weight:500;color:white;text-decoration:none;">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;display:inline-block;"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
-      All Tours
-    </a>
+  <!-- Tour Photo Grid -->
+  <div class="tour-photo-grid-wrap">
+    <nav class="tour-photo-grid-nav">
+      <a href="/tours/" class="tour-photo-grid-nav__back">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+        All Tours
+      </a>
+    </nav>
+    <div class="tour-photo-grid">
+      <div class="tour-photo-grid__item">
+        <img src="https://images.unsplash.com/photo-1561134643-668f9057cce4?w=1200&q=80&auto=format" alt="Moraine Lake with Valley of the Ten Peaks" loading="eager" fetchpriority="high">
+      </div>
+      <div class="tour-photo-grid__item">
+        <img src="https://images.unsplash.com/photo-1503614472-8c93d56e92ce?w=800&q=80&auto=format" alt="Lake Louise turquoise waters at sunrise" loading="eager">
+      </div>
+      <div class="tour-photo-grid__item">
+        <img src="https://images.unsplash.com/photo-1609198092458-38a293c7ac4b?w=800&q=80&auto=format" alt="Aerial view of glacial lake and mountains" loading="eager">
+      </div>
+      <div class="tour-photo-grid__item">
+        <img src="https://images.unsplash.com/photo-1500581276021-a4bbcd0601af?w=800&q=80&auto=format" alt="Canoe on crystal clear mountain lake" loading="lazy">
+      </div>
+      <div class="tour-photo-grid__item">
+        <img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80&auto=format" alt="Mountain peaks with dramatic clouds" loading="lazy">
+      </div>
+      <button class="tour-photo-grid__show-all">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="3" r="1.5"/><circle cx="8" cy="3" r="1.5"/><circle cx="13" cy="3" r="1.5"/><circle cx="3" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="13" cy="8" r="1.5"/><circle cx="3" cy="13" r="1.5"/><circle cx="8" cy="13" r="1.5"/><circle cx="13" cy="13" r="1.5"/></svg>
+        Show all photos
+      </button>
+    </div>
   </div>
 
   <div class="tour-detail">
@@ -237,13 +256,9 @@
       <div><a href="/" class="nav__logo" style="color:white;display:inline-flex;"><span class="nav__logo-icon"><svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true"><rect width="36" height="36" rx="8" fill="#FF6B4A"/><path d="M13 7v22M13 18c0-6 12-6 12 0v11" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/></svg></span> <span class="nav__logo-text" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.5rem;color:#FF6B4A;font-weight:700;">horizon</span> tours</a><p class="footer__brand-desc">Premium guided experiences in Banff National Park.</p></div>
       <div><h4 class="footer__heading">Experiences</h4><a href="/tours/lake-louise-sunrise-canoe/" class="footer__link">Sunrise Canoe</a><a href="/tours/lake-louise-moraine-lake-canoe/" class="footer__link">Canoe & Sightseeing</a><a href="/tours/lake-louise-moraine-lake-sightseeing/" class="footer__link">Sightseeing Tour</a></div>
       <div><h4 class="footer__heading">Company</h4><a href="/about/" class="footer__link">About Us</a><a href="/contact/" class="footer__link">Contact</a></div>
-      <div><h4 class="footer__heading">Get In Touch</h4><a href="mailto:hello@gowithhorizon.com" class="footer__link">hello@gowithhorizon.com</a></div>
+      <div><h4 class="footer__heading">Get In Touch</h4><a href="/cdn-cgi/l/email-protection#2c44494040436c4b435b45584444435e45564342024f4341" class="footer__link"><span class="__cf_email__" data-cfemail="caa2afa6a6a58aada5bda3bea2a2a5b8a3b0a5a4e4a9a5a7">[email&#160;protected]</span></a></div>
     </div>
     <div class="footer__bottom"><p>&copy; 2025 Horizon Tours. All rights reserved.</p></div>
   </div></footer>
 
   <div style="height:80px;display:none;" class="mobile-booking-spacer"></div>
-  <style>@media(max-width:960px){.mobile-booking-spacer{display:block!important;}}</style>
-  <script src="/js/main.js"></script>
-</body>
-</html>
