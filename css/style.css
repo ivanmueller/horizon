@@ -1546,7 +1546,7 @@ a.tour-card:active .tour-card__title {
   box-shadow: var(--elevation-3);
   border: 1px solid var(--border-color);
   height: fit-content;
-  margin-top: 0;
+  margin-top: var(--space-8)
   z-index: 3;
 }
 
