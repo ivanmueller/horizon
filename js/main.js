@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initScrollReveal();
   initFAQ();
   initMobileMenu();
-  initPhotoModal();
 });
 
 /* --- Navigation Scroll Behavior --- */
@@ -77,39 +76,6 @@ function initFAQ() {
         item.classList.add('active');
       }
     });
-  });
-}
-
-/* --- Photo Gallery Modal --- */
-function initPhotoModal() {
-  const showAllBtn = document.querySelector('.tour-photo-grid__show-all');
-  const modal = document.querySelector('.photo-modal');
-  if (!showAllBtn || !modal) return;
-
-  const closeBtn = modal.querySelector('.photo-modal__close');
-
-  showAllBtn.addEventListener('click', () => {
-    modal.classList.add('active');
-    document.body.style.overflow = 'hidden';
-  });
-
-  closeBtn.addEventListener('click', () => {
-    modal.classList.remove('active');
-    document.body.style.overflow = '';
-  });
-
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.classList.remove('active');
-      document.body.style.overflow = '';
-    }
-  });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modal.classList.contains('active')) {
-      modal.classList.remove('active');
-      document.body.style.overflow = '';
-    }
   });
 }
 

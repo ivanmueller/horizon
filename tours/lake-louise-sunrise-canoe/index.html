@@ -101,59 +101,40 @@
     </div>
   </nav>
 
-  <div class="tour-photo-grid">
-    <div class="tour-photo-grid__item tour-photo-grid__item--main">
-      <img src="https://images.unsplash.com/photo-1503614472-8c93d56e92ce?w=1200&q=80&auto=format"
-           alt="Canoe on still lake at sunrise with mountain reflections" loading="eager" fetchpriority="high">
-    </div>
-    <div class="tour-photo-grid__item">
-      <img src="https://images.unsplash.com/photo-1469521669194-babb45599def?w=600&q=80&auto=format"
-           alt="Golden sunrise over Canadian Rockies" loading="eager">
-    </div>
-    <div class="tour-photo-grid__item">
-      <img src="https://images.unsplash.com/photo-1505765050516-f72dcac9c60e?w=600&q=80&auto=format"
-           alt="Turquoise waters of Lake Louise" loading="eager">
-    </div>
-    <div class="tour-photo-grid__item">
-      <img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&q=80&auto=format"
-           alt="Mountain peaks in morning light" loading="lazy">
-    </div>
-    <div class="tour-photo-grid__item">
-      <img src="https://images.unsplash.com/photo-1561134643-668f9057cce4?w=600&q=80&auto=format"
-           alt="Moraine Lake valley view" loading="lazy">
-    </div>
-    <button class="tour-photo-grid__show-all" type="button">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="3" r="1.5"/><circle cx="8" cy="3" r="1.5"/><circle cx="13" cy="3" r="1.5"/><circle cx="3" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="13" cy="8" r="1.5"/><circle cx="3" cy="13" r="1.5"/><circle cx="8" cy="13" r="1.5"/><circle cx="13" cy="13" r="1.5"/></svg>
-      Show all photos
-    </button>
-  </div>
-
-  <div class="tour-header">
-    <a href="/tours/" class="tour-header__back">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+  <!-- Tour Hero Image -->
+  <div class="tour-hero">
+    <img class="tour-hero__image" src="https://images.unsplash.com/photo-1503614472-8c93d56e92ce?w=1920&q=80&auto=format"
+         alt="Canoe on still lake at sunrise with mountain reflections" loading="eager" fetchpriority="high">
+    <div class="tour-hero__overlay"></div>
+    <a href="/tours/" class="tour-hero__back" aria-label="Back to all tours"
+       style="position:absolute;top:88px;left:clamp(1.25rem,4vw,2.5rem);z-index:10;display:flex;align-items:center;gap:0.5rem;padding:0.5rem 1rem 0.5rem 0.75rem;background:rgba(26,26,46,0.6);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.2);border-radius:9999px;font-family:'Outfit',sans-serif;font-size:0.875rem;font-weight:500;color:white;text-decoration:none;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;display:inline-block;"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
       All Tours
     </a>
-    <h1 class="tour-header__title">Lake Louise Sunrise Canoe Experience</h1>
-    <div class="tour-header__meta">
-      <span class="tour-header__meta-item">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:#FBBF24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-        <strong style="color:var(--near-black)">4.9</strong>&nbsp;(47 reviews)
-      </span>
-      <span class="tour-header__meta-item">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-        3 hours
-      </span>
-      <span class="tour-header__meta-item">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
-        Lake Louise, Banff
-      </span>
-      <span class="tour-header__meta-item">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-        Max 12 guests
-      </span>
+    <div class="tour-hero__content">
+      <h1 class="tour-hero__title">Lake Louise Sunrise Canoe Experience</h1>
+      <div class="tour-hero__meta">
+        <span class="tour-hero__meta-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:#FBBF24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <strong>4.9</strong>&nbsp;(47 reviews)
+        </span>
+        <span class="tour-hero__meta-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          3 hours
+        </span>
+        <span class="tour-hero__meta-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+          Lake Louise, Banff
+        </span>
+        <span class="tour-hero__meta-item">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          Max 12 guests
+        </span>
+      </div>
     </div>
   </div>
 
+  <!-- Tour Detail Layout -->
   <div class="tour-detail">
     <!-- Main Content -->
     <main class="tour-detail__main">
@@ -505,22 +486,6 @@
   <!-- Bottom padding for mobile sticky bar -->
   <div style="height: 80px; display: none;" class="mobile-booking-spacer"></div>
   <style>@media(max-width:960px){.mobile-booking-spacer{display:block!important;}}</style>
-
-  <div class="photo-modal">
-    <div class="photo-modal__header">
-      <button class="photo-modal__close" type="button">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
-        Back
-      </button>
-    </div>
-    <div class="photo-modal__grid">
-      <img src="https://images.unsplash.com/photo-1503614472-8c93d56e92ce?w=1200&q=80&auto=format" alt="Canoe on still lake at sunrise with mountain reflections">
-      <img src="https://images.unsplash.com/photo-1469521669194-babb45599def?w=1200&q=80&auto=format" alt="Golden sunrise over Canadian Rockies">
-      <img src="https://images.unsplash.com/photo-1505765050516-f72dcac9c60e?w=1200&q=80&auto=format" alt="Turquoise waters of Lake Louise">
-      <img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&q=80&auto=format" alt="Mountain peaks in morning light">
-      <img src="https://images.unsplash.com/photo-1561134643-668f9057cce4?w=1200&q=80&auto=format" alt="Moraine Lake valley view">
-    </div>
-  </div>
 
   <script src="/js/main.js"></script>
 </body>
