@@ -1285,7 +1285,7 @@ a.tour-card:active .tour-card__title {
 .tour-photo-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr;
-  grid-template-rows: 210px 210px;
+  grid-template-rows: 280px 280px;
   gap: var(--space-2);
   border-radius: var(--radius-xl);
   overflow: hidden;
@@ -1303,12 +1303,12 @@ a.tour-card:active .tour-card__title {
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform var(--duration-slow) var(--ease-out);
+  transition: filter var(--duration-normal) var(--ease-out);
   cursor: pointer;
 }
 
 .tour-photo-grid__item:hover img {
-  transform: scale(1.03);
+  filter: brightness(0.75);
 }
 
 .tour-photo-grid__item:nth-child(1) {
@@ -1379,6 +1379,65 @@ a.tour-card:active .tour-card__title {
     bottom: var(--space-3);
     right: var(--space-3);
   }
+}
+
+/* --- Photo Lightbox --- */
+.photo-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-normal) var(--ease-out);
+  padding: var(--space-10);
+}
+
+.photo-lightbox.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.photo-lightbox__img {
+  max-width: 90vw;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  transform: scale(0.92);
+  transition: transform var(--duration-normal) var(--ease-out);
+}
+
+.photo-lightbox.active .photo-lightbox__img {
+  transform: scale(1);
+}
+
+.photo-lightbox__close {
+  position: absolute;
+  top: var(--space-6);
+  left: var(--space-6);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--duration-fast);
+  color: white;
+  padding: 0;
+}
+
+.photo-lightbox__close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
 }
 
 /* --- Tour Detail Page --- */
