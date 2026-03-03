@@ -1342,7 +1342,6 @@ a.tour-card:active .tour-card__title {
   padding: var(--space-8) var(--container-padding) 0;
   display: grid;
   grid-template-columns: 1fr 380px;
-  align-items: start;
   gap: var(--space-12);
   position: relative;
 }
