@@ -1244,6 +1244,7 @@ a.tour-card:active .tour-card__title {
   background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.55) 30%, rgba(0,0,0,0.15) 50%, transparent 65%);
 }
 
+/* CHANGED: removed padding-right: 400px — title now lives below hero */
 .tour-hero__content {
   position: absolute;
   bottom: var(--space-10);
@@ -1338,9 +1339,10 @@ a.tour-card:active .tour-card__title {
 .tour-detail {
   max-width: var(--container-max);
   margin: 0 auto;
-  padding: 0 var(--container-padding);
+  padding: var(--space-8) var(--container-padding) 0;
   display: grid;
   grid-template-columns: 1fr 380px;
+  align-items: start;
   gap: var(--space-12);
   position: relative;
 }
@@ -1353,7 +1355,7 @@ a.tour-card:active .tour-card__title {
 }
 
 .tour-detail__main {
-  padding-top: var(--space-8);
+  padding-top: 0;
 }
 
 .tour-detail__header {
@@ -1537,6 +1539,7 @@ a.tour-card:active .tour-card__title {
 }
 
 /* Sticky Booking Panel */
+/* CHANGED: margin-top from calc(-1 * var(--space-32)) to 0 — panel now sits below hero */
 .booking-panel {
   position: sticky;
   top: calc(var(--nav-height) + var(--space-6));
@@ -1546,7 +1549,7 @@ a.tour-card:active .tour-card__title {
   box-shadow: var(--elevation-3);
   border: 1px solid var(--border-color);
   height: fit-content;
-  margin-top: var(--space-8)
+  margin-top: 0;
   z-index: 3;
 }
 
