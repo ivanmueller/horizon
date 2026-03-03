@@ -1252,7 +1252,7 @@ a.tour-card:active .tour-card__title {
   max-width: var(--container-max);
   margin: 0 auto;
   padding: 0 var(--container-padding);
-  padding-right: 400px;
+  padding-right: var(--container-padding);
   color: white;
   z-index: 2;
 }
@@ -1546,7 +1546,7 @@ a.tour-card:active .tour-card__title {
   box-shadow: var(--elevation-3);
   border: 1px solid var(--border-color);
   height: fit-content;
-  margin-top: calc(-1 * var(--space-32));
+  margin-top: 0;
   z-index: 3;
 }
 
