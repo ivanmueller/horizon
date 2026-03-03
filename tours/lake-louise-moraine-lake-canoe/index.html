@@ -79,6 +79,7 @@
     </div>
   </nav>
 
+  <!-- Tour Hero Image (clean — no text overlay) -->
   <div class="tour-hero">
     <img class="tour-hero__image" src="https://images.unsplash.com/photo-1561134643-668f9057cce4?w=1920&q=80&auto=format"
          alt="Moraine Lake with Valley of the Ten Peaks" loading="eager" fetchpriority="high">
@@ -88,27 +89,29 @@
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;display:inline-block;"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
       All Tours
     </a>
-    <div class="tour-hero__content">
-      <h1 class="tour-hero__title">Lake Louise & Moraine Lake Tour with Canoe</h1>
-      <div class="tour-hero__meta">
-        <span class="tour-hero__meta-item">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:#FBBF24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-          <strong>5.0</strong>&nbsp;(32 reviews)
-        </span>
-        <span class="tour-hero__meta-item">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-          7 hours
-        </span>
-        <span class="tour-hero__meta-item">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-          Max 12 guests
-        </span>
-      </div>
-    </div>
   </div>
 
   <div class="tour-detail">
     <main class="tour-detail__main">
+
+      <!-- Tour Title & Meta (moved below hero) -->
+      <div class="tour-detail__header">
+        <h1 class="tour-detail__title">Lake Louise & Moraine Lake Tour with Canoe</h1>
+        <div class="tour-detail__meta">
+          <span class="tour-detail__meta-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:#FBBF24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <strong>5.0</strong>&nbsp;(32 reviews)
+          </span>
+          <span class="tour-detail__meta-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            7 hours
+          </span>
+          <span class="tour-detail__meta-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            Max 12 guests
+          </span>
+        </div>
+      </div>
 
       <div class="tour-section">
         <h2 class="tour-section__title">Tour Highlights</h2>
@@ -149,76 +152,28 @@
       <div class="tour-section">
         <h2 class="tour-section__title">Itinerary</h2>
         <div class="timeline">
-          <div class="timeline__item">
-            <div class="timeline__dot"></div>
-            <div class="timeline__time">7:00 AM</div>
-            <div class="timeline__title">Hotel Pickup</div>
-            <div class="timeline__desc">Pickup from your hotel in Banff or Canmore. Settle into our comfortable van with water and snacks.</div>
-          </div>
-          <div class="timeline__item">
-            <div class="timeline__dot"></div>
-            <div class="timeline__time">7:45 AM</div>
-            <div class="timeline__title">Two Jack Lake — Canoe Experience</div>
-            <div class="timeline__desc">Arrive at Two Jack Lake for your exclusive canoe experience. Your guide leads a safety briefing before you paddle out with Mount Rundle towering above you. This is the only guided canoe experience on this lake.</div>
-          </div>
-          <div class="timeline__item">
-            <div class="timeline__dot"></div>
-            <div class="timeline__time">9:30 AM</div>
-            <div class="timeline__title">Drive to Lake Louise</div>
-            <div class="timeline__desc">Scenic drive along the Trans-Canada Highway and Bow Valley Parkway with your guide sharing stories and pointing out wildlife.</div>
-          </div>
-          <div class="timeline__item">
-            <div class="timeline__dot"></div>
-            <div class="timeline__time">10:15 AM</div>
-            <div class="timeline__title">Lake Louise</div>
-            <div class="timeline__desc">Explore the lakeshore, walk the trail toward the glacier, and take in the famous turquoise water and Chateau Lake Louise.</div>
-          </div>
-          <div class="timeline__item">
-            <div class="timeline__dot"></div>
-            <div class="timeline__time">12:00 PM</div>
-            <div class="timeline__title">Moraine Lake</div>
-            <div class="timeline__desc">Visit the iconic Valley of the Ten Peaks. Walk the Rockpile Trail for the famous viewpoint, and explore the lakeshore at your own pace.</div>
-          </div>
-          <div class="timeline__item">
-            <div class="timeline__dot"></div>
-            <div class="timeline__time">2:00 PM</div>
-            <div class="timeline__title">Return to Hotel</div>
-            <div class="timeline__desc">Scenic return with optional stop for photos. Arrive back at your hotel by early afternoon.</div>
-          </div>
+          <div class="timeline__item"><div class="timeline__dot"></div><div class="timeline__time">7:00 AM</div><div class="timeline__title">Hotel Pickup</div><div class="timeline__desc">Pickup from your hotel in Banff or Canmore. Settle into our comfortable van with water and snacks.</div></div>
+          <div class="timeline__item"><div class="timeline__dot"></div><div class="timeline__time">7:45 AM</div><div class="timeline__title">Two Jack Lake — Canoe Experience</div><div class="timeline__desc">Arrive at Two Jack Lake for your exclusive canoe experience. Your guide leads a safety briefing before you paddle out with Mount Rundle towering above you. This is the only guided canoe experience on this lake.</div></div>
+          <div class="timeline__item"><div class="timeline__dot"></div><div class="timeline__time">9:30 AM</div><div class="timeline__title">Drive to Lake Louise</div><div class="timeline__desc">Scenic drive along the Trans-Canada Highway and Bow Valley Parkway with your guide sharing stories and pointing out wildlife.</div></div>
+          <div class="timeline__item"><div class="timeline__dot"></div><div class="timeline__time">10:15 AM</div><div class="timeline__title">Lake Louise</div><div class="timeline__desc">Explore the lakeshore, walk the trail toward the glacier, and take in the famous turquoise water and Chateau Lake Louise.</div></div>
+          <div class="timeline__item"><div class="timeline__dot"></div><div class="timeline__time">12:00 PM</div><div class="timeline__title">Moraine Lake</div><div class="timeline__desc">Visit the iconic Valley of the Ten Peaks. Walk the Rockpile Trail for the famous viewpoint, and explore the lakeshore at your own pace.</div></div>
+          <div class="timeline__item"><div class="timeline__dot"></div><div class="timeline__time">2:00 PM</div><div class="timeline__title">Return to Hotel</div><div class="timeline__desc">Scenic return with optional stop for photos. Arrive back at your hotel by early afternoon.</div></div>
         </div>
       </div>
 
-      <div class="tour-section">
-        <h2 class="tour-section__title">Meeting Point</h2>
-        <div class="map-placeholder"><span>📍 Map — Hotel pickup in Banff / Canmore</span></div>
-      </div>
+      <div class="tour-section"><h2 class="tour-section__title">Meeting Point</h2><div class="map-placeholder"><span>📍 Map — Hotel pickup in Banff / Canmore</span></div></div>
 
       <div class="tour-section">
         <h2 class="tour-section__title">Cancellation Policy</h2>
-        <div class="policy-box">
-          <div class="policy-box__icon">🛡</div>
-          <div>
-            <div class="policy-box__title">Free cancellation up to 24 hours before</div>
-            <div class="policy-box__desc">Full refund for cancellations made 24+ hours before the tour. Weather cancellations receive full refund or free rescheduling.</div>
-          </div>
-        </div>
+        <div class="policy-box"><div class="policy-box__icon">🛡</div><div><div class="policy-box__title">Free cancellation up to 24 hours before</div><div class="policy-box__desc">Full refund for cancellations made 24+ hours before the tour. Weather cancellations receive full refund or free rescheduling.</div></div></div>
       </div>
 
       <div class="tour-section">
         <h2 class="tour-section__title">Questions About This Tour</h2>
         <div class="faq-list">
-          <div class="faq-item">
-            <button class="faq-item__question"><span>Why Two Jack Lake instead of Lake Louise for canoeing?</span><span class="faq-item__icon">+</span></button>
-            <div class="faq-item__answer"><div class="faq-item__answer-inner">Two Jack Lake offers an exclusive experience — there are no canoe rental services here, so the only way to paddle is with us. The lake is calmer, less crowded, and the Mount Rundle backdrop is absolutely stunning. It's a hidden gem that most visitors don't know about.</div></div>
-          </div>
-          <div class="faq-item">
-            <button class="faq-item__question"><span>Is lunch included?</span><span class="faq-item__icon">+</span></button>
-            <div class="faq-item__answer"><div class="faq-item__answer-inner">Lunch is not included but we schedule a break at a local café in Lake Louise village. This gives you flexibility to choose what you'd like. We also provide water and snacks throughout the day.</div></div>
-          </div>
-          <div class="faq-item">
-            <button class="faq-item__question"><span>What if Moraine Lake Road is closed?</span><span class="faq-item__icon">+</span></button>
-            <div class="faq-item__answer"><div class="faq-item__answer-inner">Access to Moraine Lake is managed by Parks Canada shuttle in peak season. We plan our timing around shuttle schedules and road access. If Moraine Lake is inaccessible, we substitute with an equally stunning alternative like Peyto Lake or Johnston Canyon.</div></div>
-          </div>
+          <div class="faq-item"><button class="faq-item__question"><span>Why Two Jack Lake instead of Lake Louise for canoeing?</span><span class="faq-item__icon">+</span></button><div class="faq-item__answer"><div class="faq-item__answer-inner">Two Jack Lake offers an exclusive experience — there are no canoe rental services here, so the only way to paddle is with us. The lake is calmer, less crowded, and the Mount Rundle backdrop is absolutely stunning. It's a hidden gem that most visitors don't know about.</div></div></div>
+          <div class="faq-item"><button class="faq-item__question"><span>Is lunch included?</span><span class="faq-item__icon">+</span></button><div class="faq-item__answer"><div class="faq-item__answer-inner">Lunch is not included but we schedule a break at a local café in Lake Louise village. This gives you flexibility to choose what you'd like. We also provide water and snacks throughout the day.</div></div></div>
+          <div class="faq-item"><button class="faq-item__question"><span>What if Moraine Lake Road is closed?</span><span class="faq-item__icon">+</span></button><div class="faq-item__answer"><div class="faq-item__answer-inner">Access to Moraine Lake is managed by Parks Canada shuttle in peak season. We plan our timing around shuttle schedules and road access. If Moraine Lake is inaccessible, we substitute with an equally stunning alternative like Peyto Lake or Johnston Canyon.</div></div></div>
         </div>
       </div>
 
@@ -233,20 +188,14 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
           </div>
           <p class="testimonial-card__text">"The three-lake tour was the highlight of our trip. Canoeing on Two Jack Lake was something we never would have found on our own — having the whole lake to ourselves was magical."</p>
-          <div class="testimonial-card__author">
-            <div class="testimonial-card__avatar">JL</div>
-            <div><div class="testimonial-card__name">Jenny L.</div><div class="testimonial-card__date">September 2024</div></div>
-          </div>
+          <div class="testimonial-card__author"><div class="testimonial-card__avatar">JL</div><div><div class="testimonial-card__name">Jenny L.</div><div class="testimonial-card__date">September 2024</div></div></div>
         </div>
       </div>
     </main>
 
     <aside id="book">
       <div class="booking-panel">
-        <div class="booking-panel__price">
-          <span class="booking-panel__price-amount">$249</span>
-          <span class="booking-panel__price-unit"> CAD / person</span>
-        </div>
+        <div class="booking-panel__price"><span class="booking-panel__price-amount">$249</span><span class="booking-panel__price-unit"> CAD / person</span></div>
         <div class="booking-panel__details">
           <div class="booking-panel__divider"></div>
           <div class="booking-panel__row"><span class="booking-panel__row-label">Duration</span><span class="booking-panel__row-value">7 hours</span></div>
@@ -270,28 +219,7 @@
           <span class="tour-card__badge">Most Popular</span>
           <button class="tour-card__wishlist" aria-label="Save to wishlist"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M16 28c7-4.73 14-10 14-17a6.98 6.98 0 0 0-7-7c-1.8 0-3.58.68-4.95 2.05L16 8.1l-2.05-2.05A6.98 6.98 0 0 0 9 4a6.98 6.98 0 0 0-7 7c0 7 7 12.27 14 17z"/></svg></button>
         </div>
-        <div class="tour-card__body">
-          <div class="tour-card__meta">
-            <div class="tour-card__tags">
-              <span class="tour-card__tag">Guided Tour</span>
-            </div>
-            <span class="tour-card__rating">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              4.9
-            </span>
-          </div>
-          <h3 class="tour-card__title" style="color:#1A1A2E !important;-webkit-text-fill-color:#1A1A2E !important;">Lake Louise Sunrise Canoe Experience</h3>
-          <div class="tour-card__footer">
-            <div class="tour-card__price">
-              <span class="tour-card__price-amount">$249</span>
-              <span class="tour-card__price-unit"> CAD</span>
-            </div>
-            <span class="tour-card__duration">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-              3 hours
-            </span>
-          </div>
-        </div>
+        <div class="tour-card__body"><div class="tour-card__meta"><div class="tour-card__tags"><span class="tour-card__tag">Guided Tour</span></div><span class="tour-card__rating"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> 4.9</span></div><h3 class="tour-card__title" style="color:#1A1A2E !important;-webkit-text-fill-color:#1A1A2E !important;">Lake Louise Sunrise Canoe Experience</h3><div class="tour-card__footer"><div class="tour-card__price"><span class="tour-card__price-amount">$249</span><span class="tour-card__price-unit"> CAD</span></div><span class="tour-card__duration"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> 3 hours</span></div></div>
       </a>
       <a href="/tours/lake-louise-moraine-lake-sightseeing/" class="tour-card">
         <div class="tour-card__image-wrap" style="width:100%!important;height:0!important;padding-bottom:88%!important;position:relative!important;overflow:hidden!important;">
@@ -299,28 +227,7 @@
           <span class="tour-card__badge">Best Value</span>
           <button class="tour-card__wishlist" aria-label="Save to wishlist"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M16 28c7-4.73 14-10 14-17a6.98 6.98 0 0 0-7-7c-1.8 0-3.58.68-4.95 2.05L16 8.1l-2.05-2.05A6.98 6.98 0 0 0 9 4a6.98 6.98 0 0 0-7 7c0 7 7 12.27 14 17z"/></svg></button>
         </div>
-        <div class="tour-card__body">
-          <div class="tour-card__meta">
-            <div class="tour-card__tags">
-              <span class="tour-card__tag">Day Trip</span>
-            </div>
-            <span class="tour-card__rating">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              4.8
-            </span>
-          </div>
-          <h3 class="tour-card__title" style="color:#1A1A2E !important;-webkit-text-fill-color:#1A1A2E !important;">Lake Louise & Moraine Lake Sightseeing Tour</h3>
-          <div class="tour-card__footer">
-            <div class="tour-card__price">
-              <span class="tour-card__price-amount">$149</span>
-              <span class="tour-card__price-unit"> CAD</span>
-            </div>
-            <span class="tour-card__duration">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-              5 hours
-            </span>
-          </div>
-        </div>
+        <div class="tour-card__body"><div class="tour-card__meta"><div class="tour-card__tags"><span class="tour-card__tag">Day Trip</span></div><span class="tour-card__rating"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> 4.8</span></div><h3 class="tour-card__title" style="color:#1A1A2E !important;-webkit-text-fill-color:#1A1A2E !important;">Lake Louise & Moraine Lake Sightseeing Tour</h3><div class="tour-card__footer"><div class="tour-card__price"><span class="tour-card__price-amount">$149</span><span class="tour-card__price-unit"> CAD</span></div><span class="tour-card__duration"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> 5 hours</span></div></div>
       </a>
     </div>
   </div></section>
