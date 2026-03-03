@@ -60,10 +60,15 @@
   --section-spacing: clamp(4rem, 8vw, 7rem);
 
   /* Radius */
+  /* "Show all photos" button */
   --radius-sm: 4px;
+  /* Icons, form inputs, highlight boxes, feature card icons */
   --radius-md: 8px;
+  /* Buttons, photo grid items, policy box, lightbox image */
   --radius-lg: 10px;
+  /* Tour cards, booking panel, photo grid, feature cards, map placeholder */
   --radius-xl: 12px;
+  /* CTA banner, about page story image */
   --radius-2xl: 16px;
   --radius-full: 9999px;
 
