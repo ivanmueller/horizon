@@ -4,131 +4,32 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Blog - Horizon Tours</title>
-  <meta name="description" content="Stories, guides, and insider tips from the Canadian Rockies. Explore Banff, Lake Louise, and Moraine Lake through the eyes of local guides.">
+  <meta name="description" content="Stories, guides, and insider tips from the Canadian Rockies.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%23FF6B4A'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
   <style>
-    .blog-page {
-      padding-top: var(--space-10);
-      padding-bottom: var(--section-spacing);
-    }
-
-    .blog-page__title {
-      font-family: var(--font-display);
-      font-size: var(--text-4xl);
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      margin-bottom: var(--space-8);
-    }
-
-    .blog-filters {
-      display: flex;
-      align-items: center;
-      gap: var(--space-3);
-      flex-wrap: wrap;
-      margin-bottom: var(--space-10);
-    }
-
-    .blog-filter {
-      padding: var(--space-2) var(--space-5);
-      border-radius: var(--radius-full);
-      border: 1.5px solid var(--near-black);
-      font-family: var(--font-display);
-      font-size: var(--text-sm);
-      font-weight: 500;
-      color: var(--near-black);
-      background: transparent;
-      cursor: pointer;
-      transition: all var(--duration-fast);
-      white-space: nowrap;
-    }
-
-    .blog-filter:hover {
-      background: var(--near-black);
-      color: white;
-    }
-
-    .blog-filter.active {
-      background: var(--near-black);
-      color: white;
-    }
-
-    .blog-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: var(--space-8) var(--space-6);
-    }
-
-    @media (max-width: 1024px) {
-      .blog-grid { grid-template-columns: repeat(3, 1fr); }
-    }
-    @media (max-width: 768px) {
-      .blog-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-    @media (max-width: 480px) {
-      .blog-grid { grid-template-columns: 1fr; }
-    }
-
-    .blog-card {
-      display: flex;
-      flex-direction: column;
-      text-decoration: none;
-      color: var(--near-black);
-    }
-
-    .blog-card__image-wrap {
-      position: relative;
-      width: 100%;
-      padding-bottom: 66%;
-      border-radius: var(--radius-xl);
-      overflow: hidden;
-      margin-bottom: var(--space-4);
-    }
-
-    .blog-card__image-wrap img {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: filter var(--duration-normal) var(--ease-out);
-    }
-
-    .blog-card:hover .blog-card__image-wrap img {
-      filter: brightness(0.8);
-    }
-
-    .blog-card__title {
-      font-family: var(--font-display);
-      font-size: var(--text-base);
-      font-weight: 600;
-      line-height: 1.4;
-      margin-bottom: var(--space-2);
-      color: var(--near-black);
-    }
-
-    .blog-card__date {
-      font-size: var(--text-sm);
-      color: var(--mid-gray);
-    }
-
-    .blog-card__tag {
-      display: inline-block;
-      font-size: var(--text-xs);
-      font-weight: 500;
-      color: var(--coral);
-      margin-bottom: var(--space-1);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
+    .blog-page { padding-top: var(--space-10); padding-bottom: var(--section-spacing); }
+    .blog-page__title { font-family: var(--font-display); font-size: var(--text-4xl); font-weight: 700; letter-spacing: -0.03em; margin-bottom: var(--space-8); }
+    .blog-filters { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-10); }
+    .blog-filter { padding: var(--space-2) var(--space-5); border-radius: var(--radius-full); border: 1.5px solid var(--near-black); font-family: var(--font-display); font-size: var(--text-sm); font-weight: 500; color: var(--near-black); background: transparent; cursor: pointer; transition: all var(--duration-fast); white-space: nowrap; }
+    .blog-filter:hover, .blog-filter.active { background: var(--near-black); color: white; }
+    .blog-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-8) var(--space-6); }
+    @media (max-width: 1024px) { .blog-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 768px) { .blog-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .blog-grid { grid-template-columns: 1fr; } }
+    .blog-card { display: flex; flex-direction: column; text-decoration: none; color: var(--near-black); }
+    .blog-card__image-wrap { position: relative; width: 100%; padding-bottom: 66%; border-radius: var(--radius-xl); overflow: hidden; margin-bottom: var(--space-4); }
+    .blog-card__image-wrap img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transition: filter var(--duration-normal) var(--ease-out); }
+    .blog-card:hover .blog-card__image-wrap img { filter: brightness(0.8); }
+    .blog-card__title { font-family: var(--font-display); font-size: var(--text-base); font-weight: 600; line-height: 1.4; margin-bottom: var(--space-2); color: var(--near-black); }
+    .blog-card__date { font-size: var(--text-sm); color: var(--mid-gray); }
+    .blog-card__tag { display: inline-block; font-size: var(--text-xs); font-weight: 500; color: var(--coral); margin-bottom: var(--space-1); text-transform: uppercase; letter-spacing: 0.05em; }
   </style>
 </head>
 <body>
-
   <nav class="nav nav--static" role="navigation" aria-label="Main navigation">
     <div class="nav__inner">
       <a href="/" class="nav__logo" aria-label="Horizon Tours Home">
@@ -142,16 +43,11 @@
         <a href="/contact/" class="nav__link">Contact</a>
         <a href="/tours/" class="btn btn--primary nav__cta">Book Now</a>
       </div>
-      <button class="nav__mobile-toggle" aria-label="Toggle menu" aria-expanded="false">
-        <span></span><span></span><span></span>
-      </button>
+      <button class="nav__mobile-toggle" aria-label="Toggle menu" aria-expanded="false"><span></span><span></span><span></span></button>
     </div>
   </nav>
-
   <div class="container blog-page">
-
     <h1 class="blog-page__title">Stories from the Rockies</h1>
-
     <div class="blog-filters">
       <button class="blog-filter active" data-filter="all">All</button>
       <button class="blog-filter" data-filter="guides">Guides</button>
@@ -159,84 +55,57 @@
       <button class="blog-filter" data-filter="tips">Tips</button>
       <button class="blog-filter" data-filter="news">News</button>
     </div>
-
     <div class="blog-grid">
-
-      <a href="#" class="blog-card" data-category="guides">
-        <div class="blog-card__image-wrap">
-          <img src="https://images.unsplash.com/photo-1503614472-8c93d56e92ce?w=600&q=80&auto=format" alt="Lake Louise at sunrise" loading="eager">
-        </div>
+      <a href="/blog/the-complete-guide-to-visiting-lake-louise-in-2026/" class="blog-card" data-category="guides">
+        <div class="blog-card__image-wrap"><img src="https://images.unsplash.com/photo-1503614472-8c93d56e92ce?w=600&q=80&auto=format" alt="Lake Louise at sunrise" loading="eager"></div>
         <span class="blog-card__tag">Guides</span>
         <h2 class="blog-card__title">The complete guide to visiting Lake Louise in 2026</h2>
         <span class="blog-card__date">February 28, 2026</span>
       </a>
-
       <a href="#" class="blog-card" data-category="stories">
-        <div class="blog-card__image-wrap">
-          <img src="https://images.unsplash.com/photo-1561134643-668f9057cce4?w=600&q=80&auto=format" alt="Moraine Lake Valley of Ten Peaks" loading="eager">
-        </div>
+        <div class="blog-card__image-wrap"><img src="https://images.unsplash.com/photo-1561134643-668f9057cce4?w=600&q=80&auto=format" alt="Moraine Lake Valley of Ten Peaks" loading="eager"></div>
         <span class="blog-card__tag">Stories</span>
         <h2 class="blog-card__title">Why Moraine Lake is worth waking up at 4 AM</h2>
         <span class="blog-card__date">February 22, 2026</span>
       </a>
-
       <a href="#" class="blog-card" data-category="tips">
-        <div class="blog-card__image-wrap">
-          <img src="https://images.unsplash.com/photo-1609198092458-38a293c7ac4b?w=600&q=80&auto=format" alt="Aerial view of turquoise lake" loading="eager">
-        </div>
+        <div class="blog-card__image-wrap"><img src="https://images.unsplash.com/photo-1609198092458-38a293c7ac4b?w=600&q=80&auto=format" alt="Aerial view of turquoise lake" loading="eager"></div>
         <span class="blog-card__tag">Tips</span>
         <h2 class="blog-card__title">How to beat the crowds at Banff's most popular spots</h2>
         <span class="blog-card__date">February 18, 2026</span>
       </a>
-
       <a href="#" class="blog-card" data-category="news">
-        <div class="blog-card__image-wrap">
-          <img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&q=80&auto=format" alt="Mountain peaks at golden hour" loading="eager">
-        </div>
+        <div class="blog-card__image-wrap"><img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&q=80&auto=format" alt="Mountain peaks at golden hour" loading="eager"></div>
         <span class="blog-card__tag">News</span>
         <h2 class="blog-card__title">Horizon Tours launches new Vermilion Lakes canoe experience</h2>
         <span class="blog-card__date">February 14, 2026</span>
       </a>
-
       <a href="#" class="blog-card" data-category="guides">
-        <div class="blog-card__image-wrap">
-          <img src="https://images.unsplash.com/photo-1500581276021-a4bbcd0601af?w=600&q=80&auto=format" alt="Mountain glacier view" loading="lazy">
-        </div>
+        <div class="blog-card__image-wrap"><img src="https://images.unsplash.com/photo-1500581276021-a4bbcd0601af?w=600&q=80&auto=format" alt="Mountain glacier view" loading="lazy"></div>
         <span class="blog-card__tag">Guides</span>
         <h2 class="blog-card__title">Lake Agnes Tea House hike: everything you need to know</h2>
         <span class="blog-card__date">February 8, 2026</span>
       </a>
-
       <a href="#" class="blog-card" data-category="stories">
-        <div class="blog-card__image-wrap">
-          <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80&auto=format" alt="Calm mountain lake reflection" loading="lazy">
-        </div>
+        <div class="blog-card__image-wrap"><img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80&auto=format" alt="Calm mountain lake reflection" loading="lazy"></div>
         <span class="blog-card__tag">Stories</span>
         <h2 class="blog-card__title">What our guests say about canoeing at sunrise</h2>
         <span class="blog-card__date">January 30, 2026</span>
       </a>
-
       <a href="#" class="blog-card" data-category="tips">
-        <div class="blog-card__image-wrap">
-          <img src="https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=600&q=80&auto=format" alt="Canadian Rockies panorama" loading="lazy">
-        </div>
+        <div class="blog-card__image-wrap"><img src="https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=600&q=80&auto=format" alt="Canadian Rockies panorama" loading="lazy"></div>
         <span class="blog-card__tag">Tips</span>
         <h2 class="blog-card__title">What to pack for a summer day in Banff National Park</h2>
         <span class="blog-card__date">January 24, 2026</span>
       </a>
-
       <a href="#" class="blog-card" data-category="guides">
-        <div class="blog-card__image-wrap">
-          <img src="https://images.unsplash.com/photo-1542224566-6e85f2e6772f?w=600&q=80&auto=format" alt="Canoe on mountain lake" loading="lazy">
-        </div>
+        <div class="blog-card__image-wrap"><img src="https://images.unsplash.com/photo-1542224566-6e85f2e6772f?w=600&q=80&auto=format" alt="Canoe on mountain lake" loading="lazy"></div>
         <span class="blog-card__tag">Guides</span>
         <h2 class="blog-card__title">Vermilion Lakes: Banff's best-kept secret for paddling</h2>
         <span class="blog-card__date">January 18, 2026</span>
       </a>
-
     </div>
   </div>
-
   <!-- ========== FOOTER ========== -->
   <footer class="footer" role="contentinfo">
     <div class="container">
@@ -248,15 +117,13 @@
           </a>
           <p class="footer__brand-desc">Premium guided experiences in Banff National Park and the Canadian Rockies. Locally owned, small-group focused.</p>
         </div>
-
         <div>
           <h4 class="footer__heading">Experiences</h4>
           <a href="/tours/lake-louise-sunrise-canoe/" class="footer__link">Sunrise Canoe</a>
-          <a href="/tours/lake-louise-moraine-lake-canoe/" class="footer__link">Canoe & Sightseeing</a>
+          <a href="/tours/lake-louise-moraine-lake-canoe/" class="footer__link">Canoe &amp; Sightseeing</a>
           <a href="/tours/lake-louise-moraine-lake-sightseeing/" class="footer__link">Sightseeing Tour</a>
           <a href="/tours/" class="footer__link">All Tours</a>
         </div>
-
         <div>
           <h4 class="footer__heading">Company</h4>
           <a href="/about/" class="footer__link">About Us</a>
@@ -264,7 +131,6 @@
           <a href="/blog/" class="footer__link">Blog</a>
           <a href="/#faq" class="footer__link">FAQ</a>
         </div>
-
         <div>
           <h4 class="footer__heading">Get In Touch</h4>
           <a href="mailto:hello@gowithhorizon.com" class="footer__link">hello@gowithhorizon.com</a>
@@ -272,7 +138,6 @@
           <p class="footer__link" style="cursor:default;">Banff, Alberta, Canada</p>
         </div>
       </div>
-
       <div class="footer__bottom">
         <p>&copy; 2025 Horizon Tours. All rights reserved.</p>
         <div class="footer__socials">
@@ -283,29 +148,23 @@
       </div>
     </div>
   </footer>
-
   <script src="/main.js"></script>
   <script>
-    (function() {
-      var filters = document.querySelectorAll('.blog-filter');
-      var cards = document.querySelectorAll('.blog-card');
-
-      filters.forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          filters.forEach(function(f) { f.classList.remove('active'); });
-          btn.classList.add('active');
-
-          var filter = btn.getAttribute('data-filter');
-          cards.forEach(function(card) {
-            if (filter === 'all' || card.getAttribute('data-category') === filter) {
-              card.style.display = '';
-            } else {
-              card.style.display = 'none';
-            }
-          });
+  (function(){
+    var filters=document.querySelectorAll('.blog-filter');
+    var cards=document.querySelectorAll('.blog-card');
+    filters.forEach(function(btn){
+      btn.addEventListener('click',function(){
+        filters.forEach(function(f){f.classList.remove('active');});
+        btn.classList.add('active');
+        var filter=btn.getAttribute('data-filter');
+        cards.forEach(function(card){
+          if(filter==='all'||card.getAttribute('data-category')===filter){card.style.display='';}
+          else{card.style.display='none';}
         });
       });
-    })();
+    });
+  })();
   </script>
 </body>
 </html>
