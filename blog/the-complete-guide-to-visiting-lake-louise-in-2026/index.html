@@ -44,8 +44,8 @@
     .article-tags{display:flex;gap:var(--space-2);flex-wrap:wrap}
     .article-tag{padding:var(--space-1) var(--space-4);border-radius:var(--radius-full);border:1.5px solid var(--light-gray);font-size:var(--text-sm);font-weight:500;color:var(--dark-gray);text-decoration:none;transition:all var(--duration-fast)}
     .article-tag:hover{border-color:var(--near-black);color:var(--near-black)}
-    .article-back{display:inline-flex;align-items:center;gap:var(--space-2);font-family:var(--font-display);font-size:var(--text-sm);font-weight:600;color:var(--dark-gray);text-decoration:none;margin-bottom:var(--space-6);transition:color var(--duration-fast)}
-    .article-back:hover{color:var(--coral)}
+    .article-back{display:inline-flex;align-items:center;gap:var(--space-2);padding:0.5rem 1rem 0.5rem 0.75rem;background:rgba(26,26,46,0.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.15);border-radius:9999px;font-family:var(--font-display);font-size:var(--text-sm);font-weight:500;color:white;text-decoration:none;transition:all var(--duration-normal) var(--ease-out);margin-bottom:var(--space-6)}
+    .article-back:hover{background:var(--coral);border-color:var(--coral)}
     .article-related{max-width:1000px;margin:0 auto;padding-top:var(--space-10)}
     .article-related__title{font-family:var(--font-display);font-size:var(--text-2xl);font-weight:700;letter-spacing:-0.02em;margin-bottom:var(--space-8);color:var(--near-black)}
     .article-related__grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-6)}
@@ -78,7 +78,7 @@
     </div>
   </nav>
   <div class="container article-page">
-    <a href="/blog/" class="article-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg> All Posts</a>
+    <a href="/blog/" class="article-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg> All Posts</a>
     <header class="article-header">
       <h1 class="article-header__title">The Complete Guide to Visiting Lake Louise in 2026</h1>
       <div class="article-header__meta">
@@ -129,13 +129,6 @@
       <div class="article-image"><img src="https://images.unsplash.com/photo-1542224566-6e85f2e6772f?w=1200&q=80&auto=format" alt="Canoe on turquoise mountain lake"></div>
       <p>Canoeing is the quintessential Lake Louise experience. The Fairmont operates the canoe dock and rents boats by the hour, but expect long wait times during peak season — sometimes two hours or more. The rental cost is $160 per hour for a canoe that seats three.</p>
       <p>Our guided canoe experience offers an alternative: small-group paddling at sunrise, when the lake is calm and the light is spectacular. Rather than waiting in line with hundreds of other visitors, you're on the water before the crowds arrive, with a local guide who knows the lake intimately. Hot drinks and light refreshments are included, and every guest gets unobstructed photos with the Chateau in the background.</p>
-      <div class="article-cta">
-        <div class="article-cta__text">
-          <p class="article-cta__title">Experience Lake Louise at sunrise</p>
-          <p class="article-cta__desc">Small-group guided canoe tour. On the water before the crowds arrive.</p>
-        </div>
-        <a href="/tours/lake-louise-sunrise-canoe/" class="article-cta__btn">View Tour <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></a>
-      </div>
       <h2>What to Bring</h2>
       <p>Lake Louise sits at 1,731 metres elevation, and temperatures can swing dramatically throughout the day. Even in July, mornings at the lake can be 5–8°C, warming to 20°C by afternoon. Layers are essential. A good approach: base layer, fleece or light jacket, and a packable rain shell.</p>
       <p>If you're hiking to the tea houses, bring cash — they don't accept cards. Comfortable hiking boots with ankle support are recommended for the Lake Agnes and Big Beehive trails. And regardless of your plans, sunscreen and sunglasses are a must. The UV intensity at elevation catches people off guard.</p>
@@ -143,14 +136,6 @@
       <p>The single biggest mistake visitors make is treating Lake Louise as a 30-minute photo stop. Yes, the view from the lakeshore is stunning, but the real magic is in the experiences around the lake — the hikes, the paddling, the tea houses, the wildlife encounters on the trails.</p>
       <p>Give yourself at least half a day. Better yet, combine Lake Louise with nearby Moraine Lake (just 15 minutes away) for a full-day experience that covers the two most iconic destinations in Banff National Park. Our sightseeing tour does exactly that, with a local guide, included transportation, and stops at viewpoints that most visitors never find on their own.</p>
       <p>However you choose to visit, Lake Louise rewards those who go beyond the parking lot. Get there early, stay longer than you planned, and leave room for the unexpected. That's when the real memories happen.</p>
-      <div class="article-footer-row">
-        <div class="article-tags">
-          <a href="/blog/" class="article-tag">Guides</a>
-          <a href="/blog/" class="article-tag">Lake Louise</a>
-          <a href="/blog/" class="article-tag">Banff</a>
-          <a href="/blog/" class="article-tag">Hiking</a>
-        </div>
-      </div>
     </div>
     <hr class="article-divider">
     <div class="article-related">
@@ -203,7 +188,7 @@
         </div>
         <div>
           <h4 class="footer__heading">Get In Touch</h4>
-          <a href="mailto:hello@gowithhorizon.com" class="footer__link">hello@gowithhorizon.com</a>
+          <a href="/cdn-cgi/l/email-protection#bed6dbd2d2d1fed9d1c9d7cad6d6d1ccd7c4d1d090ddd1d3" class="footer__link"><span class="__cf_email__" data-cfemail="543c3138383b14333b233d203c3c3b263d2e3b3a7a373b39">[email&#160;protected]</span></a>
           <a href="tel:+14035551234" class="footer__link">+1 (403) 555-1234</a>
           <p class="footer__link" style="cursor:default;">Banff, Alberta, Canada</p>
         </div>
