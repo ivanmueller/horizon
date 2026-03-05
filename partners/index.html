@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hotel Partner Program — Horizon Tours | Banff & Canadian Rockies</title>
+  <meta name="description" content="Partner with Horizon Tours to offer your guests premium guided experiences in Banff National Park. 15% commission, zero overhead, 4.9★ guest satisfaction.">
+  <link rel="canonical" href="https://gowithhorizon.com/partners/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%23FF6B4A'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
+
+  <style>
+    /* -------------------------------------------------------
+       Partner page — custom additions only.
+       Everything else uses existing style.css classes.
+    ------------------------------------------------------- */
+
+    /* Hero — modelled on .about-hero pattern */
+    .partner-hero {
+      position: relative;
+      height: 56vh;
+      min-height: 420px;
+      max-height: 600px;
+      overflow: hidden;
+    }
+    .partner-hero__image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .partner-hero__overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(26,26,46,0.55) 0%, rgba(26,26,46,0.75) 100%);
+    }
+    .partner-hero__content {
+      position: absolute;
+      bottom: var(--space-12);
+      left: 0;
+      right: 0;
+      padding: 0 var(--container-padding);
+      max-width: var(--container-max);
+      margin: 0 auto;
+    }
+    .partner-hero__eyebrow {
+      font-family: var(--font-display);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--coral);
+      margin-bottom: var(--space-3);
+    }
+    .partner-hero__title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 5vw, 3.25rem);
+      font-weight: 700;
+      color: white;
+      line-height: 1.12;
+      letter-spacing: -0.03em;
+      margin-bottom: var(--space-4);
+    }
+    .partner-hero__subtitle {
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      color: rgba(255,255,255,0.85);
+      max-width: 560px;
+      line-height: 1.6;
+      margin-bottom: var(--space-8);
+    }
+    .partner-hero__actions {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      flex-wrap: wrap;
+    }
+
+    /* How It Works steps */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-6);
+    }
+    @media (max-width: 900px) {
+      .steps-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .steps-grid { grid-template-columns: 1fr; }
+    }
+    .step-item {
+      text-align: center;
+      padding: var(--space-6) var(--space-4);
+    }
+    .step-item__number {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--coral);
+      color: white;
+      font-family: var(--font-display);
+      font-size: var(--text-lg);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto var(--space-5);
+    }
+    .step-item__title {
+      font-family: var(--font-display);
+      font-size: var(--text-lg);
+      font-weight: 600;
+      color: var(--near-black);
+      margin-bottom: var(--space-2);
+    }
+    .step-item__desc {
+      font-size: var(--text-sm);
+      color: var(--mid-gray);
+      line-height: 1.65;
+    }
+
+    /* Commission table */
+    .commission-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--text-sm);
+    }
+    .commission-table th {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: var(--text-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--mid-gray);
+      padding: var(--space-3) var(--space-4);
+      text-align: left;
+      border-bottom: 2px solid var(--border-color);
+    }
+    .commission-table td {
+      padding: var(--space-4);
+      border-bottom: 1px solid var(--border-color);
+      color: var(--near-black);
+      line-height: 1.5;
+    }
+    .commission-table tr:last-child td { border-bottom: none; }
+    .commission-table tr:hover td { background: var(--warm-white-alt); }
+    .commission-table__amount {
+      font-family: var(--font-display);
+      font-weight: 700;
+      color: var(--coral);
+    }
+    .commission-table__wrapper {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+    }
+
+    /* Apply form — follows contact page pattern */
+    .apply-form-wrapper {
+      background: white;
+      border-radius: var(--radius-xl);
+      padding: var(--space-8);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--elevation-2);
+    }
+    .apply-form-wrapper h2 {
+      font-family: var(--font-display);
+      font-size: var(--text-2xl);
+      font-weight: 700;
+      color: var(--near-black);
+      margin-bottom: var(--space-2);
+    }
+    .apply-form-wrapper .form-intro {
+      color: var(--mid-gray);
+      font-size: var(--text-sm);
+      line-height: 1.6;
+      margin-bottom: var(--space-6);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-4);
+    }
+    @media (max-width: 560px) { .form-row { grid-template-columns: 1fr; } }
+    .form-note {
+      font-size: var(--text-xs);
+      color: var(--mid-gray);
+      margin-top: var(--space-3);
+      line-height: 1.5;
+    }
+
+    /* Apply section layout */
+    .apply-layout {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr;
+      gap: var(--space-12);
+      align-items: start;
+    }
+    @media (max-width: 860px) {
+      .apply-layout { grid-template-columns: 1fr; gap: var(--space-8); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV — identical to all inner pages -->
+  <nav class="nav" role="navigation" aria-label="Main navigation">
+    <div class="nav__inner">
+      <a href="/" class="nav__logo" aria-label="Horizon Tours Home">
+        <span class="nav__logo-icon"><svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true"><rect width="36" height="36" rx="8" fill="#FF6B4A"/><path d="M13 7v22M13 18c0-6 12-6 12 0v11" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/></svg></span>
+        <span class="nav__logo-text" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.5rem;color:#FF6B4A;font-weight:700;">horizon</span>
+      </a>
+      <div class="nav__links">
+        <a href="/" class="nav__link">Home</a>
+        <a href="/tours/" class="nav__link">Tours</a>
+        <a href="/about/" class="nav__link">About</a>
+        <a href="/contact/" class="nav__link">Contact</a>
+        <a href="#apply" class="btn btn--primary nav__cta">Become a Partner</a>
+      </div>
+      <button class="nav__mobile-toggle" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="partner-hero">
+    <img class="partner-hero__image"
+         src="https://images.unsplash.com/photo-1542224566-6e85f2e6772f?w=1920&q=80&auto=format"
+         alt="Canoe on a calm alpine lake in Banff National Park" loading="eager" fetchpriority="high">
+    <div class="partner-hero__overlay"></div>
+    <div class="partner-hero__content">
+      <p class="partner-hero__eyebrow">Hotel Partner Program</p>
+      <h1 class="partner-hero__title">Give your guests an<br>unforgettable Rockies moment.</h1>
+      <p class="partner-hero__subtitle">Partner with Horizon Tours and earn 15% commission on every booking — with zero operational overhead and a 4.9&#9733; guest satisfaction guarantee.</p>
+      <div class="partner-hero__actions">
+        <a href="#apply" class="btn btn--primary btn--lg">Apply Now <span class="arrow">→</span></a>
+        <a href="#how-it-works" class="btn btn--lg" style="background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.3);color:white;">How It Works</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOCIAL PROOF BAR — reuses existing .social-proof component -->
+  <section class="social-proof" aria-label="Partner program at a glance">
+    <div class="container">
+      <div class="social-proof__inner">
+        <div class="social-proof__item">
+          <span class="social-proof__number">15%</span>
+          <span>Commission per booking</span>
+        </div>
+        <div class="social-proof__divider"></div>
+        <div class="social-proof__item">
+          <div class="social-proof__stars" aria-label="5 star rating">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </div>
+          <span><strong>4.9&#9733;</strong> guest satisfaction</span>
+        </div>
+        <div class="social-proof__divider"></div>
+        <div class="social-proof__item">
+          <span class="social-proof__number">3–5</span>
+          <span>Days to onboard</span>
+        </div>
+        <div class="social-proof__divider"></div>
+        <div class="social-proof__item">
+          <span class="social-proof__number">$0</span>
+          <span>Overhead for your property</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="section" id="how-it-works" aria-label="How the partner program works">
+    <div class="container">
+      <div class="section-header section-header--center reveal">
+        <span class="section-header__eyebrow">Getting Started</span>
+        <h2 class="section-header__title">Simple to set up. Effortless to run.</h2>
+        <p class="section-header__desc">From application to first commission payout, the whole process takes less than a week.</p>
+      </div>
+      <div class="steps-grid">
+        <div class="step-item reveal reveal-delay-1">
+          <div class="step-item__number">1</div>
+          <h3 class="step-item__title">Apply &amp; Connect</h3>
+          <p class="step-item__desc">Submit your application below. We'll reach out within one business day to confirm fit and set up your account.</p>
+        </div>
+        <div class="step-item reveal reveal-delay-2">
+          <div class="step-item__number">2</div>
+          <h3 class="step-item__title">Onboard Your Team</h3>
+          <p class="step-item__desc">We provide co-branded materials, a dedicated booking link, and a 30-minute briefing for your concierge staff.</p>
+        </div>
+        <div class="step-item reveal reveal-delay-3">
+          <div class="step-item__number">3</div>
+          <h3 class="step-item__title">Guests Book</h3>
+          <p class="step-item__desc">Your guests book through your unique link. We handle everything — confirmation, reminders, guides, and transportation.</p>
+        </div>
+        <div class="step-item reveal reveal-delay-4">
+          <div class="step-item__number">4</div>
+          <h3 class="step-item__title">You Earn</h3>
+          <p class="step-item__desc">15% commission on every completed booking, paid monthly via EFT with a full statement.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BENEFITS — uses .features-grid and .feature-card exactly as in style.css -->
+  <section class="section section--alt" aria-label="Partner benefits">
+    <div class="container">
+      <div class="section-header section-header--center reveal">
+        <span class="section-header__eyebrow">Why Partner With Us</span>
+        <h2 class="section-header__title">Your guests leave happy. You earn commission.</h2>
+        <p class="section-header__desc">We built this program for concierge teams who want to recommend something genuinely outstanding — and get rewarded for it.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card reveal reveal-delay-1">
+          <div class="feature-card__icon">💰</div>
+          <h3 class="feature-card__title">15% on Every Booking</h3>
+          <p class="feature-card__desc">Earn $22–$37 per guest referred. No minimums, no caps. Tracked automatically and paid monthly with a detailed statement.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-2">
+          <div class="feature-card__icon">🚫</div>
+          <h3 class="feature-card__title">Zero Operational Overhead</h3>
+          <p class="feature-card__desc">You refer, we deliver. We handle guides, transport, equipment, permits, and all guest communication from booking to drop-off.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-3">
+          <div class="feature-card__icon">⭐</div>
+          <h3 class="feature-card__title">4.9&#9733; Guest Satisfaction</h3>
+          <p class="feature-card__desc">Our rating across 100+ reviews means every recommendation reflects well on your property. Guests come back and thank your team.</p>
+        </div>
+        <div class="feature-card reveal reveal-delay-4">
+          <div class="feature-card__icon">🛶</div>
+          <h3 class="feature-card__title">Exclusive Access</h3>
+          <p class="feature-card__desc">Our Voyageur Canoe program offers experiences guests can't book independently — a genuine differentiator for your concierge desk.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-card__icon">📊</div>
+          <h3 class="feature-card__title">Partner Dashboard</h3>
+          <p class="feature-card__desc">Real-time visibility into referrals, bookings, and monthly earnings. Monthly reports sent directly to your inbox.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-card__icon">✅</div>
+          <h3 class="feature-card__title">Fully Licensed &amp; Insured</h3>
+          <p class="feature-card__desc">Parks Canada licensed, fully insured, and compliant with all park regulations. Zero liability risk for your property.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMMISSION TABLE -->
+  <section class="section" aria-label="Commission structure">
+    <div class="container container--narrow">
+      <div class="section-header section-header--center reveal">
+        <span class="section-header__eyebrow">Commission Structure</span>
+        <h2 class="section-header__title">What you earn per booking</h2>
+        <p class="section-header__desc">15% on all tours. No tiers, no conditions.</p>
+      </div>
+      <div class="commission-table__wrapper reveal">
+        <table class="commission-table">
+          <thead>
+            <tr>
+              <th>Tour</th>
+              <th>Guest Price</th>
+              <th>Your Commission</th>
+              <th>Duration</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Vermilion Lakes Guided Canoe</strong><br><span style="color:var(--mid-gray);font-size:var(--text-xs);">Flagship experience</span></td>
+              <td>$249 CAD</td>
+              <td class="commission-table__amount">$37.35 / guest</td>
+              <td>3 hrs</td>
+            </tr>
+            <tr>
+              <td><strong>Lake Louise &amp; Moraine Lake with Canoe</strong><br><span style="color:var(--mid-gray);font-size:var(--text-xs);">Full day, most popular</span></td>
+              <td>$249 CAD</td>
+              <td class="commission-table__amount">$37.35 / guest</td>
+              <td>7 hrs</td>
+            </tr>
+            <tr>
+              <td><strong>Lake Louise &amp; Moraine Lake Sightseeing</strong><br><span style="color:var(--mid-gray);font-size:var(--text-xs);">Best value option</span></td>
+              <td>$149 CAD</td>
+              <td class="commission-table__amount">$22.35 / guest</td>
+              <td>5 hrs</td>
+            </tr>
+            <tr>
+              <td><strong>Private Group Tour</strong><br><span style="color:var(--mid-gray);font-size:var(--text-xs);">Custom pricing</span></td>
+              <td>Custom</td>
+              <td class="commission-table__amount">15% of total</td>
+              <td>Custom</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="text-align:center;color:var(--mid-gray);font-size:var(--text-sm);margin-top:var(--space-5);">Commission paid monthly via EFT. No minimum bookings required.</p>
+    </div>
+  </section>
+
+  <!-- TESTIMONIAL — uses .testimonial-card exactly as in style.css -->
+  <section class="section section--alt" aria-label="Partner testimonial">
+    <div class="container container--narrow">
+      <div class="reveal">
+        <div class="testimonial-card">
+          <div class="testimonial-card__stars" aria-label="5 stars">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </div>
+          <p class="testimonial-card__text">"Our guests ask for activity recommendations every day. Horizon is one of the only operators we recommend without hesitation — they deliver exactly what they promise, and the feedback we hear back is consistently outstanding."</p>
+          <div class="testimonial-card__author">
+            <div class="testimonial-card__avatar">JM</div>
+            <div>
+              <div class="testimonial-card__name">Jessica M.</div>
+              <div class="testimonial-card__date">Director of Concierge Services · Rimrock Resort Hotel</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ — uses .faq-list and .faq-item exactly as in style.css -->
+  <section class="section" aria-label="Partner FAQ">
+    <div class="container container--narrow">
+      <div class="section-header section-header--center reveal">
+        <span class="section-header__eyebrow">FAQ</span>
+        <h2 class="section-header__title">Common questions</h2>
+      </div>
+      <div class="faq-list reveal">
+        <div class="faq-item">
+          <button class="faq-item__question" aria-expanded="false">
+            <span>How quickly can we get set up?</span>
+            <span class="faq-item__icon">+</span>
+          </button>
+          <div class="faq-item__answer">
+            <div class="faq-item__answer-inner">Most properties are fully onboarded within 3–5 business days of application approval. This includes your unique booking link, co-branded collateral, and a briefing for your concierge team.</div>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-item__question" aria-expanded="false">
+            <span>Is there an exclusivity requirement?</span>
+            <span class="faq-item__icon">+</span>
+          </button>
+          <div class="faq-item__answer">
+            <div class="faq-item__answer-inner">No exclusivity required. You're free to recommend other operators alongside Horizon Tours. We're confident our product and commission structure will make us your team's first recommendation.</div>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-item__question" aria-expanded="false">
+            <span>How is commission tracked and paid?</span>
+            <span class="faq-item__icon">+</span>
+          </button>
+          <div class="faq-item__answer">
+            <div class="faq-item__answer-inner">Every booking made through your unique link is automatically attributed to your property. You receive a monthly statement with a full breakdown of referrals and earnings, paid via EFT within 5 business days of month-end.</div>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-item__question" aria-expanded="false">
+            <span>What if a guest cancels?</span>
+            <span class="faq-item__icon">+</span>
+          </button>
+          <div class="faq-item__answer">
+            <div class="faq-item__answer-inner">Commission is only paid on completed bookings. If a guest cancels within the free-cancellation window (24 hours before), no commission is charged or paid. We handle all guest communication around cancellations directly.</div>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-item__question" aria-expanded="false">
+            <span>Can guests book directly and still be attributed to our property?</span>
+            <span class="faq-item__icon">+</span>
+          </button>
+          <div class="faq-item__answer">
+            <div class="faq-item__answer-inner">Bookings are tracked through your unique referral link. We also accept manual attribution — if a guest mentions your property by name when booking by phone or email, we'll still credit the commission to your account.</div>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-item__question" aria-expanded="false">
+            <span>Is there a minimum booking volume requirement?</span>
+            <span class="faq-item__icon">+</span>
+          </button>
+          <div class="faq-item__answer">
+            <div class="faq-item__answer-inner">No minimums, ever. Whether your team refers one guest or one hundred, the program works the same way. We keep the structure simple so there's no administrative burden on your end.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- APPLY FORM -->
+  <section class="section section--alt" id="apply" aria-label="Partner application">
+    <div class="container">
+      <div class="apply-layout">
+
+        <!-- Left: context + contact info using .feature-card pattern -->
+        <div class="reveal">
+          <span class="section-header__eyebrow">Apply to Partner</span>
+          <h2 class="section-header__title" style="margin-top:var(--space-3);margin-bottom:var(--space-4);">Let's work together.</h2>
+          <p style="color:var(--mid-gray);line-height:1.7;margin-bottom:var(--space-8);">Fill out the form and we'll be in touch within one business day. We work with hotels and resorts across Banff and Canmore — from boutique properties to major branded hotels.</p>
+
+          <div style="display:flex;flex-direction:column;gap:var(--space-4);">
+            <div class="feature-card" style="padding:var(--space-5);display:flex;align-items:flex-start;gap:var(--space-4);">
+              <div class="feature-card__icon" style="flex-shrink:0;margin-bottom:0;">✉️</div>
+              <div>
+                <div class="feature-card__title">Email us directly</div>
+                <p class="feature-card__desc"><a href="mailto:partners@gowithhorizon.com" style="color:var(--coral);">partners@gowithhorizon.com</a><br>Usually respond within a few hours during business hours.</p>
+              </div>
+            </div>
+            <div class="feature-card" style="padding:var(--space-5);display:flex;align-items:flex-start;gap:var(--space-4);">
+              <div class="feature-card__icon" style="flex-shrink:0;margin-bottom:0;">📱</div>
+              <div>
+                <div class="feature-card__title">Call or text</div>
+                <p class="feature-card__desc"><a href="tel:+14035551234" style="color:var(--coral);">+1 (403) 555-1234</a><br>Available 7 AM – 9 PM MST, 7 days during tour season.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: application form -->
+        <div class="apply-form-wrapper reveal">
+          <h2>Partner Application</h2>
+          <p class="form-intro">Tell us about your property and we'll set up a brief call to get you onboarded.</p>
+
+          <form name="partner-application" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+            <p style="display:none;"><label>Don't fill this out: <input name="bot-field"></label></p>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="name">Your name</label>
+                <input class="form-input" type="text" id="name" name="name" placeholder="Full name" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="role">Your role</label>
+                <input class="form-input" type="text" id="role" name="role" placeholder="e.g. Concierge Manager" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="property">Property name</label>
+                <input class="form-input" type="text" id="property" name="property" placeholder="Hotel or resort name" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="size">Property size</label>
+                <input class="form-input" type="text" id="size" name="size" placeholder="e.g. 120 rooms">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="email">Business email</label>
+              <input class="form-input" type="email" id="email" name="email" placeholder="you@yourhotel.com" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="message">Anything else we should know?</label>
+              <textarea class="form-textarea" id="message" name="message" placeholder="Guest volume, specific tours of interest, existing partnerships, or anything else on your mind…"></textarea>
+            </div>
+
+            <div style="margin-top:var(--space-5);">
+              <button type="submit" class="btn btn--primary btn--lg btn--full">Submit Application <span class="arrow">→</span></button>
+            </div>
+            <p class="form-note">We'll follow up within one business day. No commitment required — just a conversation.</p>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA BANNER — uses .cta-banner exactly as in style.css -->
+  <section class="section">
+    <div class="container">
+      <div class="cta-banner reveal">
+        <h2 class="cta-banner__title">Ready to offer more to your guests?</h2>
+        <p class="cta-banner__desc">Join the hotels and resorts already earning commission on Horizon Tours bookings. Takes less than a week to get started.</p>
+        <a href="#apply" class="btn btn--primary btn--lg" style="position:relative;">Apply Now <span class="arrow">→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER — exact copy from all other pages -->
+  <footer class="footer" role="contentinfo">
+    <div class="container">
+      <div class="footer__grid">
+        <div>
+          <a href="/" class="nav__logo" style="color:white; margin-bottom: var(--space-2); display: inline-flex;">
+            <span class="nav__logo-icon"><svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true"><rect width="36" height="36" rx="8" fill="#FF6B4A"/><path d="M13 7v22M13 18c0-6 12-6 12 0v11" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/></svg></span>
+            <span class="nav__logo-text" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.5rem;color:#FF6B4A;font-weight:700;">horizon</span> tours
+          </a>
+          <p class="footer__brand-desc">Premium guided experiences in Banff National Park and the Canadian Rockies. Locally owned, small-group focused.</p>
+        </div>
+        <div>
+          <h4 class="footer__heading">Experiences</h4>
+          <a href="/tours/lake-louise-sunrise-canoe/" class="footer__link">Sunrise Canoe</a>
+          <a href="/tours/lake-louise-moraine-lake-canoe/" class="footer__link">Canoe &amp; Sightseeing</a>
+          <a href="/tours/lake-louise-moraine-lake-sightseeing/" class="footer__link">Sightseeing Tour</a>
+          <a href="/tours/" class="footer__link">All Tours</a>
+        </div>
+        <div>
+          <h4 class="footer__heading">Company</h4>
+          <a href="/about/" class="footer__link">About Us</a>
+          <a href="/contact/" class="footer__link">Contact</a>
+          <a href="/blog/" class="footer__link">Blog</a>
+          <a href="/partners/" class="footer__link">Partner Program</a>
+        </div>
+        <div>
+          <h4 class="footer__heading">Get In Touch</h4>
+          <a href="mailto:hello@gowithhorizon.com" class="footer__link">hello@gowithhorizon.com</a>
+          <a href="mailto:partners@gowithhorizon.com" class="footer__link">partners@gowithhorizon.com</a>
+          <a href="tel:+14035551234" class="footer__link">+1 (403) 555-1234</a>
+          <p class="footer__link" style="cursor:default;">Banff, Alberta, Canada</p>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        <p>&copy; 2025 Horizon Tours. All rights reserved.</p>
+        <div class="footer__socials">
+          <a href="#" class="footer__social-link" aria-label="Instagram">📷</a>
+          <a href="#" class="footer__social-link" aria-label="Facebook">f</a>
+          <a href="#" class="footer__social-link" aria-label="TripAdvisor">✈</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>
