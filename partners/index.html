@@ -104,18 +104,14 @@
     }
     .map-popup__link:hover { text-decoration: underline; }
 
-    /* Custom price marker pill */
-    .price-marker {
-      background: white; border: 2px solid #1A1A2E;
-      border-radius: 999px; padding: 5px 12px;
-      font-family: 'Outfit', sans-serif; font-size: 0.85rem;
-      font-weight: 700; color: #1A1A2E; white-space: nowrap;
-      box-shadow: 0 2px 8px rgba(26,26,46,0.15);
-      cursor: pointer; transition: all 0.15s;
+    /* Custom hotel pin — small dot by default, pill on hover */
+    .hotel-pin {
+      width: 14px; height: 14px; border-radius: 50%;
+      background: var(--near-black); border: 2.5px solid white;
+      box-shadow: 0 2px 8px rgba(26,26,46,0.25);
+      cursor: pointer; transition: transform 0.15s;
     }
-    .price-marker:hover, .price-marker--active {
-      background: #1A1A2E; color: white;
-    }
+    .hotel-pin:hover { transform: scale(1.3); }
 
     /* ── SEARCH BAR ── */
     .hotel-search-wrap { margin-top: var(--space-6); position: relative; }
@@ -727,14 +723,14 @@
       const monthly = calcMonthly(h.rooms);
       const icon = L.divIcon({
         className: '',
-        html: '<div class="price-marker" data-hotel="' + h.name + '">' + fmtCAD(monthly).replace(' CAD','') + '</div>',
-        iconAnchor: [44, 18]
+        html: '<div class="hotel-pin" data-hotel="' + h.name + '"></div>',
+        iconAnchor: [7, 7]
       });
 
       const marker = L.marker([h.lat, h.lng], { icon: icon }).addTo(map);
       markers[h.name] = marker;
 
-      const popup = L.popup({ offset: [0, -10], maxWidth: 240, closeButton: false })
+      const popup = L.popup({ offset: [0, -10], maxWidth: 240, closeButton: false, autoClose: false, closeOnClick: false })
         .setContent(
           '<div class="map-popup">' +
             '<div class="map-popup__price">' + fmtCAD(monthly) + '/mo</div>' +
@@ -747,6 +743,7 @@
 
       marker.bindPopup(popup);
       marker.on('mouseover', function () { marker.openPopup(); });
+      marker.on('mouseout',  function () { marker.closePopup(); });
     });
 
     /* Expose so search can highlight a marker */
@@ -842,8 +839,8 @@
         window._map.setView([selectedHotel.lat, selectedHotel.lng], 13, { animate: true });
         setTimeout(function () { window._mapMarkers[name].openPopup(); }, 400);
         /* Highlight pill */
-        document.querySelectorAll('.price-marker').forEach(function (el) {
-          el.classList.toggle('price-marker--active', el.dataset.hotel === name);
+        document.querySelectorAll('.hotel-pin').forEach(function (el) {
+          el.style.background = el.dataset.hotel === name ? 'var(--coral)' : '';
         });
       }
 
@@ -860,7 +857,7 @@
     clearBtn.addEventListener('click', function () {
       selectedHotel = null;
       result.classList.remove('is-visible');
-      document.querySelectorAll('.price-marker').forEach(function (el) { el.classList.remove('price-marker--active'); });
+      document.querySelectorAll('.hotel-pin').forEach(function (el) { el.style.background = ''; });
       updateFromSlider();
     });
   })();
