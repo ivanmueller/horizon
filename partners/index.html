@@ -718,6 +718,7 @@
     }).addTo(map);
 
     const markers = {};
+    let activeMarkerName = null;
 
     HOTELS.forEach(function (h) {
       const monthly = calcMonthly(h.rooms);
@@ -742,45 +743,125 @@
         );
 
       marker.bindPopup(popup);
+
+      /* Hover: open/close popup */
       marker.on('mouseover', function () { marker.openPopup(); });
-      marker.on('mouseout',  function () { marker.closePopup(); });
+      marker.on('mouseout',  function () {
+        /* Don't close if this is the actively selected marker */
+        if (activeMarkerName !== h.name) marker.closePopup();
+      });
+
+      /* Click: select hotel on left, or deselect if already selected */
+      marker.on('click', function () {
+        if (activeMarkerName === h.name) {
+          /* Deselect */
+          activeMarkerName = null;
+          marker.closePopup();
+          if (window._deselectHotel) window._deselectHotel();
+        } else {
+          activeMarkerName = h.name;
+          if (window._selectHotel) window._selectHotel(h.name, /* fromMap= */ true);
+        }
+      });
     });
 
-    /* Expose so search can highlight a marker */
-    window._mapMarkers = markers;
-    window._map = map;
+    /* Track active marker externally so search can update it */
+    window._mapMarkers    = markers;
+    window._map           = map;
+    window._setActiveMarker = function (name) { activeMarkerName = name; };
   })();
 
   /* ─── SEARCH + SLIDER ─── */
   (function () {
-    const input     = document.getElementById('hotel-search-input');
-    const dropdown  = document.getElementById('hotel-dropdown');
-    const result    = document.getElementById('hotel-result');
+    const input         = document.getElementById('hotel-search-input');
+    const dropdown      = document.getElementById('hotel-dropdown');
+    const result        = document.getElementById('hotel-result');
     const resultName    = document.getElementById('result-name');
     const resultDetail  = document.getElementById('result-detail');
     const resultEarning = document.getElementById('result-earning');
-    const clearBtn  = document.getElementById('result-clear');
-    const slider    = document.getElementById('rooms-slider');
-    const sliderVal = document.getElementById('slider-rooms-val');
-    const heroAmt   = document.getElementById('hero-amount');
-    const heroGuests= document.getElementById('hero-guests');
+    const clearBtn      = document.getElementById('result-clear');
+    const slider        = document.getElementById('rooms-slider');
+    const sliderVal     = document.getElementById('slider-rooms-val');
+    const heroAmt       = document.getElementById('hero-amount');
+    const heroGuests    = document.getElementById('hero-guests');
 
     let selectedHotel = null;
 
-    /* ── Slider (fallback) ── */
+    /* ── Slider fill helper (visual only, doesn't touch hero when hotel selected) ── */
+    function updateSliderFill(rooms) {
+      const pct = ((Math.min(rooms, slider.max) - slider.min) / (slider.max - slider.min)) * 100;
+      slider.style.background = `linear-gradient(to right, var(--near-black) ${pct}%, var(--light-gray) ${pct}%)`;
+    }
+
+    /* ── Slider drives hero ONLY when no hotel is selected ── */
     function updateFromSlider() {
+      if (selectedHotel) return; /* hotel selected — slider is decorative only */
       const rooms = parseInt(slider.value, 10);
       const monthly = calcMonthly(rooms);
-      const pct = ((rooms - slider.min) / (slider.max - slider.min)) * 100;
-      slider.style.background = `linear-gradient(to right, var(--near-black) ${pct}%, var(--light-gray) ${pct}%)`;
-      sliderVal.textContent   = rooms + ' rooms';
-      heroGuests.textContent  = rooms + ' rooms';
-      heroAmt.textContent     = fmtCAD(monthly).replace(' CAD','');
+      updateSliderFill(rooms);
+      sliderVal.textContent  = rooms + ' rooms';
+      heroGuests.textContent = rooms + ' rooms';
+      heroAmt.textContent    = fmtCAD(monthly).replace(' CAD', '');
     }
     slider.addEventListener('input', updateFromSlider);
     updateFromSlider();
 
-    /* ── Search ── */
+    /* ── Select a hotel (from search or map click) ── */
+    function selectHotel(name, fromMap) {
+      selectedHotel = HOTELS.find(h => h.name === name);
+      if (!selectedHotel) return;
+
+      const monthly = calcMonthly(selectedHotel.rooms);
+
+      /* Update headline with ACTUAL room count — no slider cap applied */
+      heroAmt.textContent    = fmtCAD(monthly).replace(' CAD', '');
+      heroGuests.textContent = selectedHotel.rooms + ' rooms';
+
+      /* Show result chip */
+      resultName.textContent    = selectedHotel.name;
+      resultDetail.textContent  = selectedHotel.rooms + ' rooms · ' + selectedHotel.location +
+        ', AB · est. ' + Math.round(selectedHotel.rooms * 0.72 * 2 * (30 / 3) * 0.05) + ' bookings/mo';
+      resultEarning.textContent = fmtCAD(monthly);
+      result.classList.add('is-visible');
+
+      /* Sync slider visual to hotel rooms (capped at slider max for display) */
+      const sliderRooms = Math.min(Math.max(selectedHotel.rooms, parseInt(slider.min)), parseInt(slider.max));
+      slider.value = sliderRooms;
+      sliderVal.textContent = selectedHotel.rooms + ' rooms'; /* show real count */
+      updateSliderFill(selectedHotel.rooms);
+
+      /* Highlight pin */
+      document.querySelectorAll('.hotel-pin').forEach(function (el) {
+        el.style.background = el.dataset.hotel === name ? 'var(--coral)' : '';
+      });
+
+      /* If selected from search (not map click), pan map and open popup */
+      if (!fromMap && window._map && window._mapMarkers && window._mapMarkers[name]) {
+        window._map.setView([selectedHotel.lat, selectedHotel.lng], 13, { animate: true });
+        if (window._setActiveMarker) window._setActiveMarker(name);
+        setTimeout(function () { window._mapMarkers[name].openPopup(); }, 400);
+      }
+
+      input.value = '';
+      dropdown.classList.remove('is-open');
+      dropdown.innerHTML = '';
+    }
+
+    /* ── Deselect ── */
+    function deselectHotel() {
+      selectedHotel = null;
+      result.classList.remove('is-visible');
+      document.querySelectorAll('.hotel-pin').forEach(function (el) { el.style.background = ''; });
+      /* Restore hero to slider value */
+      slider.value = 120;
+      updateFromSlider();
+    }
+
+    /* Expose for map click callbacks */
+    window._selectHotel  = selectHotel;
+    window._deselectHotel = deselectHotel;
+
+    /* ── Dropdown rendering ── */
     function renderDropdown(query) {
       const q = query.trim().toLowerCase();
       if (!q) { dropdown.classList.remove('is-open'); dropdown.innerHTML = ''; return; }
@@ -809,56 +890,17 @@
       dropdown.querySelectorAll('.hotel-dropdown__item').forEach(function (el) {
         el.addEventListener('mousedown', function (e) {
           e.preventDefault();
-          selectHotel(el.dataset.name);
+          selectHotel(el.dataset.name, false);
         });
       });
     }
 
-    function selectHotel(name) {
-      selectedHotel = HOTELS.find(h => h.name === name);
-      if (!selectedHotel) return;
-
-      const monthly = calcMonthly(selectedHotel.rooms);
-
-      /* Update headline */
-      heroAmt.textContent    = fmtCAD(monthly).replace(' CAD','');
-      heroGuests.textContent = selectedHotel.rooms + ' rooms';
-
-      /* Show result chip */
-      resultName.textContent    = selectedHotel.name;
-      resultDetail.textContent  = selectedHotel.rooms + ' rooms · ' + selectedHotel.location + ', AB · est. ' + Math.round(selectedHotel.rooms * 0.72 * 2 * (30/3) * 0.05) + ' bookings/mo';
-      resultEarning.textContent = fmtCAD(monthly);
-      result.classList.add('is-visible');
-
-      /* Sync slider to hotel room count */
-      slider.value = Math.min(Math.max(selectedHotel.rooms, slider.min), slider.max);
-      updateFromSlider();
-
-      /* Pan map to hotel + open popup */
-      if (window._map && window._mapMarkers && window._mapMarkers[name]) {
-        window._map.setView([selectedHotel.lat, selectedHotel.lng], 13, { animate: true });
-        setTimeout(function () { window._mapMarkers[name].openPopup(); }, 400);
-        /* Highlight pill */
-        document.querySelectorAll('.hotel-pin').forEach(function (el) {
-          el.style.background = el.dataset.hotel === name ? 'var(--coral)' : '';
-        });
-      }
-
-      /* Reset input + close dropdown */
-      input.value = '';
-      dropdown.classList.remove('is-open');
-      dropdown.innerHTML = '';
-    }
-
     input.addEventListener('input', function () { renderDropdown(this.value); });
-    input.addEventListener('focus',  function () { renderDropdown(this.value); });
-    input.addEventListener('blur',   function () { setTimeout(function () { dropdown.classList.remove('is-open'); }, 150); });
-
+    input.addEventListener('focus', function () { renderDropdown(this.value); });
+    input.addEventListener('blur',  function () { setTimeout(function () { dropdown.classList.remove('is-open'); }, 150); });
     clearBtn.addEventListener('click', function () {
-      selectedHotel = null;
-      result.classList.remove('is-visible');
-      document.querySelectorAll('.hotel-pin').forEach(function (el) { el.style.background = ''; });
-      updateFromSlider();
+      if (window._setActiveMarker) window._setActiveMarker(null);
+      deselectHotel();
     });
   })();
   </script>
