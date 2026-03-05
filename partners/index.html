@@ -688,10 +688,10 @@
       scrollWheelZoom: false,
     });
 
-    /* Voyager — full colour, no API key needed */
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
-      subdomains: 'abcd', maxZoom: 19
+    /* Mapbox Streets — warm Airbnb-style colours */
+    L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiaXZhbmdvd2l0aGhvcml6b24iLCJhIjoiY21tZTA3MjYwMDR5cjJzbjNoa3BlN2VjbSJ9.ujNcQr3Sux3HYncTFns7fg', {
+      attribution: '&copy; <a href="https://www.mapbox.com/">Mapbox</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+      tileSize: 512, zoomOffset: -1, maxZoom: 19
     }).addTo(map);
 
     const markers = {};
