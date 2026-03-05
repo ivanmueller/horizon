@@ -117,13 +117,81 @@
       background: #1A1A2E; color: white;
     }
 
-    /* Slider — kept on left side, simplified */
-    .hero-slider-wrap { margin-top: var(--space-6); }
-    .hero-slider-label {
+    /* ── SEARCH BAR ── */
+    .hotel-search-wrap { margin-top: var(--space-6); position: relative; }
+    .hotel-search-box {
+      display: flex; align-items: center; gap: var(--space-3);
+      background: white; border: 1.5px solid var(--border-color);
+      border-radius: 999px; padding: 14px 20px;
+      box-shadow: 0 2px 12px rgba(26,26,46,0.08);
+      transition: box-shadow 0.2s, border-color 0.2s;
+      cursor: text;
+    }
+    .hotel-search-box:focus-within {
+      box-shadow: 0 4px 24px rgba(26,26,46,0.13);
+      border-color: var(--near-black);
+    }
+    .hotel-search-box svg { flex-shrink: 0; color: var(--coral); }
+    .hotel-search-box input {
+      border: none; outline: none; background: transparent;
+      font-family: var(--font-body); font-size: var(--text-base);
+      color: var(--near-black); width: 100%;
+    }
+    .hotel-search-box input::placeholder { color: var(--mid-gray); }
+
+    /* Dropdown */
+    .hotel-dropdown {
+      position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+      background: white; border: 1px solid var(--border-color);
+      border-radius: 20px; overflow: hidden;
+      box-shadow: 0 8px 32px rgba(26,26,46,0.14);
+      z-index: 200; display: none;
+    }
+    .hotel-dropdown.is-open { display: block; }
+    .hotel-dropdown__item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px; cursor: pointer;
+      transition: background 0.12s; gap: var(--space-4);
+      border-bottom: 1px solid var(--border-color);
+    }
+    .hotel-dropdown__item:last-child { border-bottom: none; }
+    .hotel-dropdown__item:hover { background: var(--warm-white-alt); }
+    .hotel-dropdown__item.is-active { background: var(--warm-white-alt); }
+    .hotel-dropdown__name { font-size: var(--text-sm); font-weight: 600; color: var(--near-black); }
+    .hotel-dropdown__location { font-size: var(--text-xs); color: var(--mid-gray); margin-top: 2px; }
+    .hotel-dropdown__rooms {
+      font-family: var(--font-display); font-size: var(--text-xs);
+      font-weight: 700; color: var(--mid-gray); white-space: nowrap; flex-shrink: 0;
+    }
+
+    /* Result chip — shown after hotel selected */
+    .hotel-result {
+      display: none; align-items: center; justify-content: space-between;
+      background: var(--near-black); color: white;
+      border-radius: 16px; padding: var(--space-4) var(--space-5);
+      margin-top: var(--space-4); gap: var(--space-4);
+    }
+    .hotel-result.is-visible { display: flex; }
+    .hotel-result__left { display: flex; flex-direction: column; gap: 2px; }
+    .hotel-result__name { font-family: var(--font-display); font-size: var(--text-sm); font-weight: 700; }
+    .hotel-result__detail { font-size: var(--text-xs); color: rgba(255,255,255,0.6); }
+    .hotel-result__earning {
+      font-family: var(--font-display); font-size: var(--text-lg);
+      font-weight: 800; color: var(--coral); letter-spacing: -0.03em; white-space: nowrap;
+    }
+    .hotel-result__clear {
+      background: none; border: none; color: rgba(255,255,255,0.5);
+      font-size: 1.1rem; cursor: pointer; padding: 0 0 0 var(--space-2); line-height: 1;
+    }
+    .hotel-result__clear:hover { color: white; }
+
+    /* Rooms slider — fallback when no hotel searched */
+    .rooms-slider-wrap { margin-top: var(--space-5); }
+    .rooms-slider-label {
       display: flex; justify-content: space-between;
       font-size: var(--text-sm); color: var(--mid-gray); margin-bottom: var(--space-3);
     }
-    .hero-slider-label strong { color: var(--near-black); }
+    .rooms-slider-label strong { color: var(--near-black); }
     .hero-slider {
       -webkit-appearance: none; appearance: none;
       width: 100%; height: 4px; border-radius: 2px;
@@ -208,25 +276,43 @@
   <div class="partner-hero">
     <div class="partner-hero__inner">
 
-      <!-- Left: headline + single slider -->
+      <!-- Left: headline + search bar + fallback slider -->
       <div>
         <p class="partner-hero__eyebrow">Hotel Partner Program</p>
-        <h1 class="partner-hero__title">Your hotel could earn<br><span id="hero-amount">$2,348</span> CAD<br>per month.</h1>
+        <h1 class="partner-hero__title">Your hotel could earn<br><span id="hero-amount">$3,760</span> CAD<br>per month.</h1>
         <p class="partner-hero__subtitle">Refer your guests to Horizon Tours and earn 15% commission on every completed booking — with zero operational overhead.</p>
         <div class="partner-hero__meta">
-          <span><strong id="hero-guests">75 bookings</strong> / month est.</span>
+          <span><strong id="hero-guests">120 rooms</strong></span>
           <span class="partner-hero__meta-dot"></span>
           <span>Avg. <strong>$209 CAD</strong> / booking</span>
           <span class="partner-hero__meta-dot"></span>
           <span><strong>15%</strong> commission</span>
         </div>
 
-        <div class="hero-slider-wrap">
-          <div class="hero-slider-label">
-            <span>Monthly guest referrals</span>
-            <strong id="slider-val">75 guests</strong>
+        <!-- Search bar -->
+        <div class="hotel-search-wrap" id="search-wrap">
+          <div class="hotel-search-box">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="hotel-search-input" placeholder="Search your hotel name…" autocomplete="off" spellcheck="false">
           </div>
-          <input class="hero-slider" type="range" id="revenue-slider" min="5" max="200" value="75" step="5">
+          <div class="hotel-dropdown" id="hotel-dropdown" role="listbox"></div>
+          <div class="hotel-result" id="hotel-result">
+            <div class="hotel-result__left">
+              <div class="hotel-result__name" id="result-name">—</div>
+              <div class="hotel-result__detail" id="result-detail">—</div>
+            </div>
+            <div class="hotel-result__earning" id="result-earning">—</div>
+            <button class="hotel-result__clear" id="result-clear" aria-label="Clear">✕</button>
+          </div>
+        </div>
+
+        <!-- Rooms slider — fallback / manual override -->
+        <div class="rooms-slider-wrap" id="rooms-slider-wrap">
+          <div class="rooms-slider-label">
+            <span>Or estimate by room count</span>
+            <strong id="slider-rooms-val">120 rooms</strong>
+          </div>
+          <input class="hero-slider" type="range" id="rooms-slider" min="20" max="500" value="120" step="10">
         </div>
 
         <div style="display:flex;gap:var(--space-4);flex-wrap:wrap;margin-top:var(--space-8);">
@@ -579,89 +665,205 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <script src="/js/main.js"></script>
   <script>
-    /* ── MAP ── */
-    (function () {
-      const map = L.map('partner-map', {
-        center: [51.22, -115.92],
-        zoom: 10,
-        zoomControl: true,
-        scrollWheelZoom: false,
-        attributionControl: true
+  /* ─────────────────────────────────────────────
+     HOTEL DATABASE
+     Model: rooms × 72% occ × 2 guests × (30÷3 nights) × 5% activity rate × $209 × 15%
+     = rooms × 45.14 × 0.05 = rooms × 31.35 / month
+     (conservative 5% activity uptake for a cold-start partnership)
+  ───────────────────────────────────────────── */
+  const HOTELS = [
+    { name: 'Fairmont Banff Springs',       location: 'Banff',   rooms: 764, lat: 51.1677, lng: -115.5711 },
+    { name: 'Rimrock Resort Hotel',          location: 'Banff',   rooms: 346, lat: 51.1571, lng: -115.5812 },
+    { name: 'Moose Hotel & Suites',          location: 'Banff',   rooms: 174, lat: 51.1774, lng: -115.5697 },
+    { name: 'Banff Park Lodge',              location: 'Banff',   rooms: 211, lat: 51.1760, lng: -115.5687 },
+    { name: 'The Juniper Hotel & Bistro',    location: 'Banff',   rooms:  52, lat: 51.1840, lng: -115.5492 },
+    { name: 'Buffalo Mountain Lodge',        location: 'Banff',   rooms: 108, lat: 51.1894, lng: -115.5668 },
+    { name: 'Elk + Avenue Hotel',            location: 'Banff',   rooms: 162, lat: 51.1761, lng: -115.5691 },
+    { name: 'Banff Ptarmigan Inn',           location: 'Banff',   rooms: 134, lat: 51.1748, lng: -115.5708 },
+    { name: 'Mount Royal Hotel',             location: 'Banff',   rooms: 135, lat: 51.1762, lng: -115.5699 },
+    { name: 'Banff Centre for Arts',         location: 'Banff',   rooms: 428, lat: 51.1826, lng: -115.5509 },
+    { name: 'Delta Hotels Banff Royal Canadian Lodge', location: 'Banff', rooms: 99, lat: 51.1746, lng: -115.5705 },
+    { name: 'Peaks Hotel and Suites',        location: 'Banff',   rooms:  96, lat: 51.1757, lng: -115.5718 },
+    { name: 'Hidden Ridge Resort',           location: 'Banff',   rooms: 118, lat: 51.1869, lng: -115.5654 },
+    { name: 'Rundlestone Lodge',             location: 'Banff',   rooms:  96, lat: 51.1753, lng: -115.5713 },
+    { name: 'Bow View Lodge',                location: 'Banff',   rooms:  46, lat: 51.1750, lng: -115.5723 },
+    { name: 'Malcolm Hotel',                 location: 'Canmore', rooms: 122, lat: 51.0878, lng: -115.3595 },
+    { name: 'Solara Resort & Spa',           location: 'Canmore', rooms: 130, lat: 51.0921, lng: -115.3601 },
+    { name: 'Coast Canmore Hotel',           location: 'Canmore', rooms: 166, lat: 51.0938, lng: -115.3588 },
+    { name: 'Basecamp Resorts Canmore',      location: 'Canmore', rooms:  81, lat: 51.0892, lng: -115.3587 },
+    { name: 'Grande Rockies Resort',         location: 'Canmore', rooms: 150, lat: 51.0905, lng: -115.3578 },
+  ];
+
+  /* Commission estimate: conservative 5% uptake */
+  function calcMonthly(rooms) {
+    const occupiedRooms   = rooms * 0.72;
+    const guestsPerNight  = occupiedRooms * 2.0;
+    const uniqueGuests    = (guestsPerNight * 30) / 3;
+    const bookings        = uniqueGuests * 0.05;
+    return Math.round(bookings * 209 * 0.15);
+  }
+
+  function fmtCAD(n) {
+    return '$' + n.toLocaleString('en-CA') + ' CAD';
+  }
+
+  /* ─── MAP ─── */
+  (function () {
+    const map = L.map('partner-map', {
+      center: [51.14, -115.56],
+      zoom: 11,
+      zoomControl: true,
+      scrollWheelZoom: false,
+    });
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+      subdomains: 'abcd', maxZoom: 19
+    }).addTo(map);
+
+    const markers = {};
+
+    HOTELS.forEach(function (h) {
+      const monthly = calcMonthly(h.rooms);
+      const icon = L.divIcon({
+        className: '',
+        html: '<div class="price-marker" data-hotel="' + h.name + '">' + fmtCAD(monthly).replace(' CAD','') + '</div>',
+        iconAnchor: [44, 18]
       });
 
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        subdomains: 'abcd', maxZoom: 19
-      }).addTo(map);
+      const marker = L.marker([h.lat, h.lng], { icon: icon }).addTo(map);
+      markers[h.name] = marker;
 
-      const tours = [
-        {
-          lat: 51.1743, lng: -115.6010,
-          price: '$249', commission: '$37',
-          name: 'Vermilion Lakes Guided Canoe',
-          sub: '3 hrs · Flagship experience'
-        },
-        {
-          lat: 51.4173, lng: -116.1771,
-          price: '$249', commission: '$37',
-          name: 'Lake Louise Canoe &amp; Sightseeing',
-          sub: '7 hrs · Full day, most popular'
-        },
-        {
-          lat: 51.3235, lng: -116.1848,
-          price: '$149', commission: '$22',
-          name: 'Moraine Lake Sightseeing',
-          sub: '5 hrs · Best value'
-        },
-        {
-          lat: 51.1784, lng: -115.5600,
-          price: 'Custom', commission: '15%',
-          name: 'Private Group Tour',
-          sub: 'Custom dates &amp; route'
-        }
-      ];
-
-      tours.forEach(function (t) {
-        const icon = L.divIcon({
-          className: '',
-          html: '<div class="price-marker">' + t.commission + ' / guest</div>',
-          iconAnchor: [40, 18]
-        });
-
-        const marker = L.marker([t.lat, t.lng], { icon: icon }).addTo(map);
-
-        marker.bindPopup(
+      const popup = L.popup({ offset: [0, -10], maxWidth: 240, closeButton: false })
+        .setContent(
           '<div class="map-popup">' +
-            '<div class="map-popup__price">' + t.commission + ' per guest</div>' +
-            '<div class="map-popup__name"><strong>' + t.name + '</strong><br>' + t.sub + '</div>' +
-            '<a class="map-popup__link" href="#commission">See all tours →</a>' +
-          '</div>',
-          { offset: [0, -8], maxWidth: 220 }
+            '<div class="map-popup__price">' + fmtCAD(monthly) + '/mo</div>' +
+            '<div class="map-popup__name"><strong>' + h.name + '</strong><br>' +
+              h.rooms + ' rooms · ' + h.location +
+            '</div>' +
+            '<a class="map-popup__link" href="#apply">Apply to partner →</a>' +
+          '</div>'
         );
 
-        marker.on('mouseover', function () { marker.openPopup(); });
-      });
-    })();
+      marker.bindPopup(popup);
+      marker.on('mouseover', function () { marker.openPopup(); });
+    });
 
-    /* ── SLIDER ── */
-    (function () {
-      const slider = document.getElementById('revenue-slider');
-      const PER_GUEST = 31.35;
+    /* Expose so search can highlight a marker */
+    window._mapMarkers = markers;
+    window._map = map;
+  })();
 
-      function update() {
-        const guests = parseInt(slider.value, 10);
-        const monthly = guests * PER_GUEST;
-        const pct = ((guests - slider.min) / (slider.max - slider.min)) * 100;
+  /* ─── SEARCH + SLIDER ─── */
+  (function () {
+    const input     = document.getElementById('hotel-search-input');
+    const dropdown  = document.getElementById('hotel-dropdown');
+    const result    = document.getElementById('hotel-result');
+    const resultName    = document.getElementById('result-name');
+    const resultDetail  = document.getElementById('result-detail');
+    const resultEarning = document.getElementById('result-earning');
+    const clearBtn  = document.getElementById('result-clear');
+    const slider    = document.getElementById('rooms-slider');
+    const sliderVal = document.getElementById('slider-rooms-val');
+    const heroAmt   = document.getElementById('hero-amount');
+    const heroGuests= document.getElementById('hero-guests');
 
-        slider.style.background = `linear-gradient(to right, var(--near-black) ${pct}%, var(--light-gray) ${pct}%)`;
-        document.getElementById('hero-amount').textContent = '$' + Math.round(monthly).toLocaleString('en-CA');
-        document.getElementById('hero-guests').textContent = guests + ' booking' + (guests !== 1 ? 's' : '');
-        document.getElementById('slider-val').textContent  = guests + ' guests';
+    let selectedHotel = null;
+
+    /* ── Slider (fallback) ── */
+    function updateFromSlider() {
+      const rooms = parseInt(slider.value, 10);
+      const monthly = calcMonthly(rooms);
+      const pct = ((rooms - slider.min) / (slider.max - slider.min)) * 100;
+      slider.style.background = `linear-gradient(to right, var(--near-black) ${pct}%, var(--light-gray) ${pct}%)`;
+      sliderVal.textContent   = rooms + ' rooms';
+      heroGuests.textContent  = rooms + ' rooms';
+      heroAmt.textContent     = fmtCAD(monthly).replace(' CAD','');
+    }
+    slider.addEventListener('input', updateFromSlider);
+    updateFromSlider();
+
+    /* ── Search ── */
+    function renderDropdown(query) {
+      const q = query.trim().toLowerCase();
+      if (!q) { dropdown.classList.remove('is-open'); dropdown.innerHTML = ''; return; }
+
+      const matches = HOTELS.filter(h =>
+        h.name.toLowerCase().includes(q) || h.location.toLowerCase().includes(q)
+      ).slice(0, 6);
+
+      if (!matches.length) {
+        dropdown.innerHTML = '<div style="padding:14px 20px;font-size:var(--text-sm);color:var(--mid-gray);">No properties found — use the room slider below.</div>';
+        dropdown.classList.add('is-open');
+        return;
       }
 
-      slider.addEventListener('input', update);
-      update();
-    })();
+      dropdown.innerHTML = matches.map(h =>
+        '<div class="hotel-dropdown__item" data-name="' + h.name + '" role="option" tabindex="0">' +
+          '<div>' +
+            '<div class="hotel-dropdown__name">' + h.name + '</div>' +
+            '<div class="hotel-dropdown__location">' + h.location + ', AB</div>' +
+          '</div>' +
+          '<div class="hotel-dropdown__rooms">' + h.rooms + ' rooms</div>' +
+        '</div>'
+      ).join('');
+      dropdown.classList.add('is-open');
+
+      dropdown.querySelectorAll('.hotel-dropdown__item').forEach(function (el) {
+        el.addEventListener('mousedown', function (e) {
+          e.preventDefault();
+          selectHotel(el.dataset.name);
+        });
+      });
+    }
+
+    function selectHotel(name) {
+      selectedHotel = HOTELS.find(h => h.name === name);
+      if (!selectedHotel) return;
+
+      const monthly = calcMonthly(selectedHotel.rooms);
+
+      /* Update headline */
+      heroAmt.textContent    = fmtCAD(monthly).replace(' CAD','');
+      heroGuests.textContent = selectedHotel.rooms + ' rooms';
+
+      /* Show result chip */
+      resultName.textContent    = selectedHotel.name;
+      resultDetail.textContent  = selectedHotel.rooms + ' rooms · ' + selectedHotel.location + ', AB · est. ' + Math.round(selectedHotel.rooms * 0.72 * 2 * (30/3) * 0.05) + ' bookings/mo';
+      resultEarning.textContent = fmtCAD(monthly);
+      result.classList.add('is-visible');
+
+      /* Sync slider to hotel room count */
+      slider.value = Math.min(Math.max(selectedHotel.rooms, slider.min), slider.max);
+      updateFromSlider();
+
+      /* Pan map to hotel + open popup */
+      if (window._map && window._mapMarkers && window._mapMarkers[name]) {
+        window._map.setView([selectedHotel.lat, selectedHotel.lng], 13, { animate: true });
+        setTimeout(function () { window._mapMarkers[name].openPopup(); }, 400);
+        /* Highlight pill */
+        document.querySelectorAll('.price-marker').forEach(function (el) {
+          el.classList.toggle('price-marker--active', el.dataset.hotel === name);
+        });
+      }
+
+      /* Reset input + close dropdown */
+      input.value = '';
+      dropdown.classList.remove('is-open');
+      dropdown.innerHTML = '';
+    }
+
+    input.addEventListener('input', function () { renderDropdown(this.value); });
+    input.addEventListener('focus',  function () { renderDropdown(this.value); });
+    input.addEventListener('blur',   function () { setTimeout(function () { dropdown.classList.remove('is-open'); }, 150); });
+
+    clearBtn.addEventListener('click', function () {
+      selectedHotel = null;
+      result.classList.remove('is-visible');
+      document.querySelectorAll('.price-marker').forEach(function (el) { el.classList.remove('price-marker--active'); });
+      updateFromSlider();
+    });
+  })();
   </script>
 </body>
 </html>
