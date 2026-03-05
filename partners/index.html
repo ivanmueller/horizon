@@ -661,43 +661,18 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <script src="/js/main.js"></script>
+  <script src="/partners/hotel-data.js"></script>
   <script>
-  /* ─────────────────────────────────────────────
-     HOTEL DATABASE
-     Model: rooms × 72% occ × 2 guests × (30÷3 nights) × 5% activity rate × $209 × 15%
-     = rooms × 45.14 × 0.05 = rooms × 31.35 / month
-     (conservative 5% activity uptake for a cold-start partnership)
-  ───────────────────────────────────────────── */
-  const HOTELS = [
-    { name: 'Fairmont Banff Springs',       location: 'Banff',   rooms: 764, lat: 51.1677, lng: -115.5711 },
-    { name: 'Rimrock Resort Hotel',          location: 'Banff',   rooms: 346, lat: 51.1571, lng: -115.5812 },
-    { name: 'Moose Hotel & Suites',          location: 'Banff',   rooms: 174, lat: 51.1774, lng: -115.5697 },
-    { name: 'Banff Park Lodge',              location: 'Banff',   rooms: 211, lat: 51.1760, lng: -115.5687 },
-    { name: 'The Juniper Hotel & Bistro',    location: 'Banff',   rooms:  52, lat: 51.1840, lng: -115.5492 },
-    { name: 'Buffalo Mountain Lodge',        location: 'Banff',   rooms: 108, lat: 51.1894, lng: -115.5668 },
-    { name: 'Elk + Avenue Hotel',            location: 'Banff',   rooms: 162, lat: 51.1761, lng: -115.5691 },
-    { name: 'Banff Ptarmigan Inn',           location: 'Banff',   rooms: 134, lat: 51.1748, lng: -115.5708 },
-    { name: 'Mount Royal Hotel',             location: 'Banff',   rooms: 135, lat: 51.1762, lng: -115.5699 },
-    { name: 'Banff Centre for Arts',         location: 'Banff',   rooms: 428, lat: 51.1826, lng: -115.5509 },
-    { name: 'Delta Hotels Banff Royal Canadian Lodge', location: 'Banff', rooms: 99, lat: 51.1746, lng: -115.5705 },
-    { name: 'Peaks Hotel and Suites',        location: 'Banff',   rooms:  96, lat: 51.1757, lng: -115.5718 },
-    { name: 'Hidden Ridge Resort',           location: 'Banff',   rooms: 118, lat: 51.1869, lng: -115.5654 },
-    { name: 'Rundlestone Lodge',             location: 'Banff',   rooms:  96, lat: 51.1753, lng: -115.5713 },
-    { name: 'Bow View Lodge',                location: 'Banff',   rooms:  46, lat: 51.1750, lng: -115.5723 },
-    { name: 'Malcolm Hotel',                 location: 'Canmore', rooms: 122, lat: 51.0878, lng: -115.3595 },
-    { name: 'Solara Resort & Spa',           location: 'Canmore', rooms: 130, lat: 51.0921, lng: -115.3601 },
-    { name: 'Coast Canmore Hotel',           location: 'Canmore', rooms: 166, lat: 51.0938, lng: -115.3588 },
-    { name: 'Basecamp Resorts Canmore',      location: 'Canmore', rooms:  81, lat: 51.0892, lng: -115.3587 },
-    { name: 'Grande Rockies Resort',         location: 'Canmore', rooms: 150, lat: 51.0905, lng: -115.3578 },
-  ];
+  /* HOTELS and COMMISSION_CONFIG are loaded from /partners/hotel-data.js */
 
-  /* Commission estimate: conservative 5% uptake */
+  /* Commission estimate — reads from COMMISSION_CONFIG in hotel-data.js */
   function calcMonthly(rooms) {
-    const occupiedRooms   = rooms * 0.72;
-    const guestsPerNight  = occupiedRooms * 2.0;
-    const uniqueGuests    = (guestsPerNight * 30) / 3;
-    const bookings        = uniqueGuests * 0.05;
-    return Math.round(bookings * 209 * 0.15);
+    const c = COMMISSION_CONFIG;
+    const occupiedRooms  = rooms * c.occupancyRate;
+    const guestsPerNight = occupiedRooms * c.guestsPerRoom;
+    const uniqueGuests   = (guestsPerNight * 30) / c.avgStayNights;
+    const bookings       = uniqueGuests * c.activityRate;
+    return Math.round(bookings * c.avgBookingValue * c.commissionRate);
   }
 
   function fmtCAD(n) {
@@ -713,7 +688,8 @@
       scrollWheelZoom: false,
     });
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    /* Voyager — full colour, no API key needed */
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
       subdomains: 'abcd', maxZoom: 19
     }).addTo(map);
