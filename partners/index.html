@@ -286,6 +286,26 @@
     .tour-card__title { flex: 1 1 auto !important; display: flex !important; align-items: center !important; padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; margin: 0 !important; }
     .tour-card__footer { margin-top: auto !important; }
 
+    /* Tour card commission badge */
+    .tour-card-wrap {
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .tour-card__earn-badge {
+      display: inline-block;
+      background: var(--coral);
+      color: white;
+      font-family: var(--font-display);
+      font-size: var(--text-sm);
+      font-weight: 700;
+      padding: 0.45em 1.1em;
+      border-radius: 999px;
+      margin-bottom: var(--space-3);
+      letter-spacing: 0.01em;
+    }
+    .tour-card-wrap .tour-card {
+      width: 100%;
+    }
+
     /* Benefits — 3 cards */
     .features-grid--three { grid-template-columns: repeat(3, 1fr) !important; }
     @media (max-width: 780px) { .features-grid--three { grid-template-columns: 1fr !important; } }
@@ -463,12 +483,14 @@
       <div class="section-header section-header--center reveal">
         <span class="section-header__eyebrow">What Your Guests Can Book</span>
         <h2 class="section-header__title">Your hotel earns 15% on every one of these.</h2>
-        <p class="section-header__desc">Commission is tracked automatically through your QR code and booking link. Paid monthly via EFT.</p>
+        <p class="section-header__desc">These are the experiences your guests can reserve through your property. Commission is tracked automatically through your QR code and booking link. Paid monthly via EFT.</p>
       </div>
       <div class="tours-grid reveal">
 
         <!-- Tour Card 1 -->
-        <div class="tour-card">
+        <div class="tour-card-wrap">
+          <div class="tour-card__earn-badge">Hotel earns $37 per guest</div>
+          <a href="/tours/lake-louise-sunrise-canoe/" class="tour-card" target="_blank">
           <div class="tour-card__image-wrap" style="width:100%!important;height:0!important;padding-bottom:88%!important;position:relative!important;overflow:hidden!important;">
             <img src="https://images.unsplash.com/photo-1503614472-8c93d56e92ce?w=720&q=80&auto=format"
                  alt="Canoe on calm lake at sunrise with mountain reflection"
@@ -486,8 +508,7 @@
             <h3 class="tour-card__title" style="color:#1A1A2E !important;-webkit-text-fill-color:#1A1A2E !important;">Lake Louise Sunrise Canoe Experience</h3>
             <div class="tour-card__footer">
               <div class="tour-card__price">
-                <span class="tour-card__price-amount">$249</span>
-                <span class="tour-card__price-unit"> CAD &nbsp;·&nbsp; <strong style="color:var(--coral);">$37 your commission</strong></span>
+                <span class="tour-card__price-amount" style="font-size:1rem;font-weight:500;color:var(--mid-gray);">Guest price $249 CAD</span>
               </div>
               <span class="tour-card__duration">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
@@ -495,10 +516,13 @@
               </span>
             </div>
           </div>
+        </a>
         </div>
 
         <!-- Tour Card 2 -->
-        <div class="tour-card">
+        <div class="tour-card-wrap">
+          <div class="tour-card__earn-badge">Hotel earns $37 per guest</div>
+          <a href="/tours/lake-louise-moraine-lake-canoe/" class="tour-card" target="_blank">
           <div class="tour-card__image-wrap" style="width:100%!important;height:0!important;padding-bottom:88%!important;position:relative!important;overflow:hidden!important;">
             <img src="https://images.unsplash.com/photo-1561134643-668f9057cce4?w=720&q=80&auto=format"
                  alt="Moraine Lake with turquoise water surrounded by Valley of the Ten Peaks"
@@ -516,8 +540,7 @@
             <h3 class="tour-card__title" style="color:#1A1A2E !important;-webkit-text-fill-color:#1A1A2E !important;">Lake Louise & Moraine Lake Tour with Canoe</h3>
             <div class="tour-card__footer">
               <div class="tour-card__price">
-                <span class="tour-card__price-amount">$249</span>
-                <span class="tour-card__price-unit"> CAD &nbsp;·&nbsp; <strong style="color:var(--coral);">$37 your commission</strong></span>
+                <span class="tour-card__price-amount" style="font-size:1rem;font-weight:500;color:var(--mid-gray);">Guest price $249 CAD</span>
               </div>
               <span class="tour-card__duration">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
@@ -525,10 +548,13 @@
               </span>
             </div>
           </div>
+        </a>
         </div>
 
         <!-- Tour Card 3 -->
-        <div class="tour-card">
+        <div class="tour-card-wrap">
+          <div class="tour-card__earn-badge">Hotel earns $22 per guest</div>
+          <a href="/tours/lake-louise-moraine-lake-sightseeing/" class="tour-card" target="_blank">
           <div class="tour-card__image-wrap" style="width:100%!important;height:0!important;padding-bottom:88%!important;position:relative!important;overflow:hidden!important;">
             <img src="https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=720&q=80&auto=format"
                  alt="Scenic mountain vista in the Canadian Rockies with alpine meadow"
@@ -546,8 +572,7 @@
             <h3 class="tour-card__title" style="color:#1A1A2E !important;-webkit-text-fill-color:#1A1A2E !important;">Lake Louise & Moraine Lake Sightseeing Tour</h3>
             <div class="tour-card__footer">
               <div class="tour-card__price">
-                <span class="tour-card__price-amount">$149</span>
-                <span class="tour-card__price-unit"> CAD &nbsp;·&nbsp; <strong style="color:var(--coral);">$22 your commission</strong></span>
+                <span class="tour-card__price-amount" style="font-size:1rem;font-weight:500;color:var(--mid-gray);">Guest price $149 CAD</span>
               </div>
               <span class="tour-card__duration">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
@@ -555,6 +580,7 @@
               </span>
             </div>
           </div>
+        </a>
         </div>
 
       </div>
