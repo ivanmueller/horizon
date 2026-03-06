@@ -44,19 +44,20 @@
       max-width: var(--container-max);
       margin: 0 auto;
       padding: 0 var(--container-padding);
-      max-width: 780px;
-      text-align: center;
     }
     .partner-hero-top__title {
       font-family: var(--font-display);
       font-size: clamp(2.2rem,5vw,3.5rem); font-weight: 800;
-      color: var(--near-black); line-height: 1.08; letter-spacing: -0.035em;
+      line-height: 1.08; letter-spacing: -0.035em;
       margin-bottom: var(--space-6);
+      background: linear-gradient(135deg, var(--near-black) 0%, var(--coral) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
     .partner-hero-top__sub {
       font-size: var(--text-lg); color: var(--mid-gray);
       line-height: 1.7; margin-bottom: var(--space-8);
-      max-width: 640px; margin-left: auto; margin-right: auto;
+      max-width: 640px;
     }
 
     /* Hero */
@@ -333,7 +334,7 @@
   <!-- HERO — BOTTOM PANEL (estimate + map) -->
   <div class="partner-hero">
     <div style="max-width:var(--container-max);margin:0 auto;padding:0 var(--container-padding);">
-      <p class="partner-hero__eyebrow" style="text-align:center;margin-bottom:var(--space-8);">Search your hotel below to see an estimated monthly commission.</p>
+      <p class="partner-hero__eyebrow" style="text-align:center;margin-bottom:var(--space-8);">Search your hotel below to see what your property could earn.</p>
     </div>
     <div class="partner-hero__inner">
 
@@ -386,7 +387,7 @@
     <div class="stats-bar__inner">
       <div class="stats-bar__item">
         <div class="stats-bar__number">85%</div>
-        <div class="stats-bar__label"><strong>Most activities in Banff are booked after guests arrive.</strong> The recommendation usually happens at the concierge or front desk.</div>
+        <div class="stats-bar__label"><strong>of activities are booked after guests arrive.</strong> The recommendation usually happens at the concierge or front desk.</div>
       </div>
       <div class="stats-bar__item">
         <div class="stats-bar__number">$0</div>
