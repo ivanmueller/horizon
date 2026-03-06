@@ -43,16 +43,18 @@
       font-family: var(--font-display);
       font-size: clamp(2.2rem,5vw,3.5rem); font-weight: 800;
       line-height: 1.08; letter-spacing: -0.035em;
-      margin: 0 0 var(--space-6);
-      display: block; width: 100%;
+      max-width: 820px; /* ← adjust title width here */
+      margin: 0 auto var(--space-6);
+      display: block;
       background: linear-gradient(to right, #FF6B4A, #D94F2E);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
     }
     .partner-hero-top__sub {
-      display: block; width: 100%;
+      display: block;
+      max-width: 600px; /* ← adjust subtitle width here */
       font-size: var(--text-lg); color: var(--mid-gray);
-      line-height: 1.7; margin: 0;
+      line-height: 1.7; margin: 0 auto;
     }
 
     /* Hero */
