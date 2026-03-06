@@ -276,6 +276,10 @@
     .stats-bar__label { font-size: var(--text-sm); color: rgba(255,255,255,0.65); line-height: 1.5; }
     .stats-bar__label strong { color: white; font-weight: 500; }
 
+    /* Benefits — 3 cards */
+    .features-grid--three { grid-template-columns: repeat(3, 1fr) !important; }
+    @media (max-width: 780px) { .features-grid--three { grid-template-columns: 1fr !important; } }
+
     /* How It Works */
     .steps-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: var(--space-6); }
     @media (max-width: 900px) { .steps-grid { grid-template-columns: repeat(2,1fr); } }
@@ -326,7 +330,7 @@
   <div class="partner-hero-top">
     <div class="partner-hero-top__inner">
       <h1 class="partner-hero-top__title">Give your guests some of the best experiences in Banff.</h1>
-      <p class="partner-hero-top__sub">Horizon runs the experience. Your guests simply scan a QR code or use your hotel's private booking link to reserve directly.<br><br>Every booking made through that link is automatically tracked to your property. Your hotel earns 15% commission on completed tours.<br><br>No booking system. No extra work for your team.</p>
+      <p class="partner-hero-top__sub">Horizon runs the experience. Your guests simply scan a QR code or use your hotel's private booking link to reserve directly. Guests book directly with Horizon. Your staff never manages reservations.<br><br>Every booking made through that link is automatically tracked to your property. Your hotel earns 15% commission on completed tours.<br><br>No booking system. No extra work for your team.</p>
 
     </div>
   </div>
@@ -404,7 +408,7 @@
         <div class="step-item reveal reveal-delay-3">
           <div class="step-item__number">3</div>
           <h3 class="step-item__title">Guests Book</h3>
-          <p class="step-item__desc">Guests scan the QR code in your lobby or use your hotel's private booking link. The reservation happens directly through our system. Payment, confirmation, waivers, and guest communication are handled by us.</p>
+          <p class="step-item__desc">Guests scan the QR code in your lobby or use your hotel's private booking link. Reservations, payment, confirmations, and guest communication are handled entirely by Horizon.</p>
         </div>
         <div class="step-item reveal reveal-delay-4">
           <div class="step-item__number">4</div>
@@ -423,36 +427,21 @@
         <h2 class="section-header__title">A trusted recommendation for your guests. Additional commission for your property.</h2>
         <p class="section-header__desc">We built this for concierge teams who take their recommendations seriously. The commission matters. So does sending a guest on something they'll talk about for years.</p>
       </div>
-      <div class="features-grid">
+      <div class="features-grid features-grid--three">
         <div class="feature-card reveal reveal-delay-1">
           <div class="feature-card__icon">💰</div>
-          <h3 class="feature-card__title">15% on Every Booking</h3>
-          <p class="feature-card__desc">Earn $22–$37 per guest referred. No minimums, no caps. Tracked automatically and paid monthly with a detailed statement.</p>
+          <h3 class="feature-card__title">Earn Commission</h3>
+          <p class="feature-card__desc">Earn 15% on every completed booking. No minimums, no caps. Tracked automatically through your hotel's QR code and booking link, paid monthly with a detailed statement.</p>
         </div>
         <div class="feature-card reveal reveal-delay-2">
-          <div class="feature-card__icon">🚫</div>
-          <h3 class="feature-card__title">Nothing Extra for Your Team</h3>
-          <p class="feature-card__desc">Your team recommends the experience. We handle guides, transportation, equipment, permits, and guest communication from booking through drop-off.</p>
+          <div class="feature-card__icon">✅</div>
+          <h3 class="feature-card__title">Simple for Concierge Teams</h3>
+          <p class="feature-card__desc">Your team simply recommends the experience. Guests book directly with Horizon.</p>
         </div>
         <div class="feature-card reveal reveal-delay-3">
           <div class="feature-card__icon">⭐</div>
-          <h3 class="feature-card__title">4.9★ Guest Satisfaction</h3>
-          <p class="feature-card__desc">Our rating across 100+ reviews means every recommendation reflects well on your property. Guests come back and thank your team.</p>
-        </div>
-        <div class="feature-card reveal reveal-delay-4">
-          <div class="feature-card__icon">🛶</div>
-          <h3 class="feature-card__title">Exclusive Access</h3>
-          <p class="feature-card__desc">Our Voyageur Canoe program offers experiences guests can't book independently. It's a genuine differentiator for your concierge desk.</p>
-        </div>
-        <div class="feature-card reveal">
-          <div class="feature-card__icon">📊</div>
-          <h3 class="feature-card__title">Partner Dashboard</h3>
-          <p class="feature-card__desc">Log in anytime to see referrals, bookings, and what you've earned. A summary report lands in your inbox at the end of every month.</p>
-        </div>
-        <div class="feature-card reveal">
-          <div class="feature-card__icon">✅</div>
-          <h3 class="feature-card__title">Fully Licensed &amp; Insured</h3>
-          <p class="feature-card__desc">Parks Canada licensed, fully insured, and compliant with all park regulations. Zero liability risk for your property.</p>
+          <h3 class="feature-card__title">Trusted Guest Experience</h3>
+          <p class="feature-card__desc">4.9★ across 100+ reviews. Every recommendation reflects well on your property. Guests come back and thank your team.</p>
         </div>
       </div>
     </div>
