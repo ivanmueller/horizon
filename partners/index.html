@@ -41,7 +41,7 @@
       border-bottom: 1px solid var(--border-color);
     }
     .partner-hero-top__inner {
-      max-width: var(--container-wide);
+      max-width: var(--container-max);
       margin: 0 auto;
       padding: 0 var(--container-padding);
       text-align: center;
@@ -50,13 +50,11 @@
       font-family: var(--font-display);
       font-size: clamp(2.2rem,5vw,3.5rem); font-weight: 800;
       line-height: 1.08; letter-spacing: -0.035em;
-      margin-bottom: var(--space-6);
+      margin: 0 auto var(--space-6);
+      max-width: 800px;
       background: linear-gradient(135deg, var(--near-black) 0%, var(--coral) 100%);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
-      max-width: 700px;        /* ← add this */
-      margin-left: auto;       /* ← add this to keep it centered */
-      margin-right: auto;      /* ← add this to keep it centered */
     }
     .partner-hero-top__sub {
       font-size: var(--text-lg); color: var(--mid-gray);
