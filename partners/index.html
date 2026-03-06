@@ -40,8 +40,9 @@
       padding: clamp(3.5rem,8vw,6rem) 0 clamp(3rem,6vw,5rem);
     }
     .partner-hero-top__inner {
+      --hero-top-width: 960px; /* ← adjust this to change section width */
       width: 100%;
-      max-width: 1200px;
+      max-width: var(--hero-top-width);
       margin: 0 auto;
       padding: 0 40px;
       text-align: center;
@@ -53,7 +54,7 @@
       line-height: 1.08; letter-spacing: -0.035em;
       margin: 0 auto var(--space-6);
       max-width: 800px;
-      background: linear-gradient(135deg, var(--near-black) 0%, var(--coral) 100%);
+      background: linear-gradient(to right, #FF6B4A, #D94F2E);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
     }
