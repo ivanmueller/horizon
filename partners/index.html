@@ -207,14 +207,31 @@
     }
 
     /* Stats bar */
-    .stats-bar { background: var(--near-black); padding: var(--space-10) 0; }
+    .stats-bar {
+      background: #FAFAF7;
+      padding: var(--space-10) var(--container-padding);
+    }
     .stats-bar__inner {
       display: grid; grid-template-columns: repeat(3, 1fr);
       gap: var(--space-6); max-width: var(--container-max);
-      margin: 0 auto; padding: 0 var(--container-padding);
+      margin: 0 auto; padding: var(--space-10) var(--space-12);
+      background: var(--near-black);
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
     }
-    @media (max-width: 640px) { .stats-bar__inner { grid-template-columns: 1fr; gap: var(--space-8); } }
-    .stats-bar__item { text-align: center; }
+    .stats-bar__inner::before {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(circle at 30% 50%, rgba(255, 107, 74, 0.15) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    @media (max-width: 640px) {
+      .stats-bar__inner { grid-template-columns: 1fr; gap: var(--space-8); padding: var(--space-8) var(--space-6); }
+    }
+    .stats-bar__item { text-align: center; position: relative; z-index: 1; }
     .stats-bar__number {
       font-family: var(--font-display); font-size: clamp(2rem,4vw,2.75rem);
       font-weight: 800; color: var(--coral); letter-spacing: -0.04em; line-height: 1;
@@ -326,24 +343,6 @@
     </div>
   </div>
 
-  <!-- SOCIAL PROOF BAR -->
-  <section class="social-proof" aria-label="Partner program at a glance">
-    <div class="container">
-      <div class="social-proof__inner">
-        <div class="social-proof__item"><span class="social-proof__number">15%</span><span>Commission per booking</span></div>
-        <div class="social-proof__divider"></div>
-        <div class="social-proof__item">
-          <div class="social-proof__stars" aria-label="4.9 star rating"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
-          <span><strong>4.9★</strong> guest satisfaction</span>
-        </div>
-        <div class="social-proof__divider"></div>
-        <div class="social-proof__item"><span class="social-proof__number">3–5</span><span>Days to onboard</span></div>
-        <div class="social-proof__divider"></div>
-        <div class="social-proof__item"><span class="social-proof__number">$0</span><span>Overhead for your property</span></div>
-      </div>
-    </div>
-  </section>
-
   <!-- INDUSTRY STATS BAR -->
   <div class="stats-bar" aria-label="Industry context">
     <div class="stats-bar__inner">
@@ -352,8 +351,8 @@
         <div class="stats-bar__label"><strong>of activities are booked on-location.</strong> Your concierge desk is where the decision gets made.</div>
       </div>
       <div class="stats-bar__item">
-        <div class="stats-bar__number">98%</div>
-        <div class="stats-bar__label"><strong>of travelers say local experiences matter</strong> when choosing where to stay</div>
+        <div class="stats-bar__number">$0</div>
+        <div class="stats-bar__label"><strong>to get started.</strong> No setup fees, no staff costs, no risk to your property.</div>
       </div>
       <div class="stats-bar__item">
         <div class="stats-bar__number">15%</div>
@@ -549,7 +548,7 @@
               <div class="feature-card__icon" style="flex-shrink:0;margin-bottom:0;">✉️</div>
               <div>
                 <div class="feature-card__title">Email us directly</div>
-                <p class="feature-card__desc"><a href="mailto:partners@gowithhorizon.com" style="color:var(--coral);">partners@gowithhorizon.com</a><br>Usually respond within a few hours during business hours.</p>
+                <p class="feature-card__desc"><a href="/cdn-cgi/l/email-protection#cebeafbcbaa0abbcbd8ea9a1b9a7baa6a6a1bca7b4a1a0e0ada1a3" style="color:var(--coral);"><span class="__cf_email__" data-cfemail="a4d4c5d6d0cac1d6d7e4c3cbd3cdd0cccccbd6cddecbca8ac7cbc9">[email&#160;protected]</span></a><br>Usually respond within a few hours during business hours.</p>
               </div>
             </div>
             <div class="feature-card" style="padding:var(--space-5);display:flex;align-items:flex-start;gap:var(--space-4);">
@@ -642,8 +641,8 @@
         </div>
         <div>
           <h4 class="footer__heading">Get In Touch</h4>
-          <a href="mailto:hello@gowithhorizon.com" class="footer__link">hello@gowithhorizon.com</a>
-          <a href="mailto:partners@gowithhorizon.com" class="footer__link">partners@gowithhorizon.com</a>
+          <a href="/cdn-cgi/l/email-protection#553d3039393a15323a223c213d3d3a273c2f3a3b7b363a38" class="footer__link"><span class="__cf_email__" data-cfemail="82eae7eeeeedc2e5edf5ebf6eaeaedf0ebf8edecace1edef">[email&#160;protected]</span></a>
+          <a href="/cdn-cgi/l/email-protection#e1918093958f849392a1868e96889589898e93889b8e8fcf828e8c" class="footer__link"><span class="__cf_email__" data-cfemail="d1a1b0a3a5bfb4a3a291b6bea6b8a5b9b9bea3b8abbebfffb2bebc">[email&#160;protected]</span></a>
           <a href="tel:+14035551234" class="footer__link">+1 (403) 555-1234</a>
           <p class="footer__link" style="cursor:default;">Banff, Alberta, Canada</p>
         </div>
@@ -659,7 +658,7 @@
     </div>
   </footer>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <script src="/js/main.js"></script>
   <script src="/partners/hotel-data.js"></script>
   <script>
@@ -867,7 +866,7 @@
       dropdown.querySelectorAll('.hotel-dropdown__item').forEach(function (el) {
         el.addEventListener('mousedown', function (e) {
           e.preventDefault();
-          selectHotel(el.dataset.name, false);
+             selectHotel(el.dataset.name, false);
         });
       });
     }
