@@ -40,13 +40,10 @@
       padding: clamp(3.5rem,8vw,6rem) 0 clamp(3rem,6vw,5rem);
     }
     .partner-hero-top__inner {
-      --hero-top-width: 960px; /* ← adjust this to change section width */
-      width: 100%;
-      max-width: var(--hero-top-width);
+      max-width: var(--container-max);
       margin: 0 auto;
-      padding: 0 40px;
+      padding: 0 var(--container-padding);
       text-align: center;
-      box-sizing: border-box;
     }
     .partner-hero-top__title {
       font-family: var(--font-display);
