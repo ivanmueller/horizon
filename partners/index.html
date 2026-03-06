@@ -73,9 +73,10 @@
     }
     @media (max-width: 880px) { .partner-hero__inner { grid-template-columns: 1fr; gap: var(--space-10); } }
     .partner-hero__eyebrow {
-      font-family: var(--font-display); font-size: var(--text-xs);
-      font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+      font-family: var(--font-display); font-size: var(--text-sm);
+      font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
       color: var(--coral); margin-bottom: var(--space-4);
+      display: block;
     }
     .partner-hero__title {
       font-family: var(--font-display);
@@ -332,11 +333,13 @@
 
   <!-- HERO — BOTTOM PANEL (estimate + map) -->
   <div class="partner-hero">
+    <div style="max-width:var(--container-max);margin:0 auto;padding:0 var(--container-padding);">
+      <p class="partner-hero__eyebrow" style="text-align:center;margin-bottom:var(--space-8);">Search your hotel below to see an estimated monthly commission.</p>
+    </div>
     <div class="partner-hero__inner">
 
       <!-- Left: estimate + search -->
       <div>
-        <p class="partner-hero__eyebrow">Search your hotel below to see an estimated monthly commission.</p>
         <h2 class="partner-hero__title">Your hotel could earn<br><span id="hero-amount">$3,760</span> CAD per month</h2>
         <div class="partner-hero__meta">
           <span><strong id="hero-guests">120 rooms</strong></span>
