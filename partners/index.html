@@ -34,10 +34,35 @@
     }
     .btn--pill { border-radius: 999px !important; padding: 0.75em 1.8em; }
 
+    /* Top hero panel */
+    .partner-hero-top {
+      background: var(--warm-white);
+      padding: clamp(3.5rem,8vw,6rem) 0 clamp(3rem,6vw,5rem);
+      border-bottom: 1px solid var(--border-color);
+    }
+    .partner-hero-top__inner {
+      max-width: var(--container-max);
+      margin: 0 auto;
+      padding: 0 var(--container-padding);
+      max-width: 780px;
+      text-align: center;
+    }
+    .partner-hero-top__title {
+      font-family: var(--font-display);
+      font-size: clamp(2.2rem,5vw,3.5rem); font-weight: 800;
+      color: var(--near-black); line-height: 1.08; letter-spacing: -0.035em;
+      margin-bottom: var(--space-6);
+    }
+    .partner-hero-top__sub {
+      font-size: var(--text-lg); color: var(--mid-gray);
+      line-height: 1.7; margin-bottom: var(--space-8);
+      max-width: 640px; margin-left: auto; margin-right: auto;
+    }
+
     /* Hero */
     .partner-hero {
       background: var(--warm-white);
-      padding: clamp(3.5rem,8vw,6rem) 0 clamp(3rem,6vw,5rem);
+      padding: clamp(3rem,6vw,5rem) 0;
       border-bottom: 1px solid var(--border-color);
     }
     .partner-hero__inner {
@@ -58,7 +83,14 @@
       color: var(--near-black); line-height: 1.08; letter-spacing: -0.035em;
       margin-bottom: var(--space-5);
     }
-    .partner-hero__title span { color: var(--coral); }
+    /* Bottom hero panel — title is h2 but styled same as hero h1 */
+    .partner-hero .partner-hero__title {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem,4vw,2.8rem); font-weight: 800;
+      color: var(--near-black); line-height: 1.08; letter-spacing: -0.035em;
+      margin-bottom: var(--space-5);
+    }
+    .partner-hero .partner-hero__title span { color: var(--coral); }
     .partner-hero__subtitle {
       font-size: var(--text-lg); color: var(--mid-gray);
       line-height: 1.65; max-width: 480px; margin-bottom: var(--space-6);
@@ -286,14 +318,26 @@
     </div>
   </nav>
 
-  <!-- HERO -->
+  <!-- HERO — TOP PANEL (headline + sub + CTAs) -->
+  <div class="partner-hero-top">
+    <div class="partner-hero-top__inner">
+      <h1 class="partner-hero-top__title">Give your guests some of the best experiences in Banff.</h1>
+      <p class="partner-hero-top__sub">Horizon runs the experience. Your guests simply scan a QR code or use your hotel's private booking link to reserve directly. Every booking made through that link is automatically tracked to your property. Your hotel earns 15% commission on completed tours. No booking system. No admin work for your team.</p>
+      <div style="display:flex;gap:var(--space-4);flex-wrap:wrap;">
+        <a href="#apply" class="btn btn--primary btn--lg btn--pill">Get in Touch <span class="arrow">→</span></a>
+        <a href="#how-it-works" class="btn btn--outline btn--lg btn--pill">How It Works</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- HERO — BOTTOM PANEL (estimate + map) -->
   <div class="partner-hero">
     <div class="partner-hero__inner">
 
-      <!-- Left: headline + search bar + fallback slider -->
+      <!-- Left: estimate + search -->
       <div>
-        <h1 class="partner-hero__title">Your hotel could earn<br><span id="hero-amount">$3,760</span> CAD per month</h1>
-        <p class="partner-hero__subtitle">Horizon runs the experience. Your guests simply scan a QR code or use your hotel's private booking link to reserve directly.<br><br>Every booking made through that link is automatically tracked to your property. Your hotel earns 15% commission on completed tours.<br><br>No booking system. No admin work for your team.</p>
+        <p class="partner-hero__eyebrow">Search your hotel below to see an estimated monthly commission.</p>
+        <h2 class="partner-hero__title">Your hotel could earn<br><span id="hero-amount">$3,760</span> CAD per month</h2>
         <div class="partner-hero__meta">
           <span><strong id="hero-guests">120 rooms</strong></span>
           <span class="partner-hero__meta-dot"></span>
@@ -301,7 +345,6 @@
         </div>
 
         <!-- Search bar -->
-        <p style="font-family:var(--font-display); font-size:var(--text-sm); font-weight:600; color:var(--near-black); margin-bottom:var(--space-3);">Search your hotel below to see an estimated monthly commission.</p>
         <div class="hotel-search-wrap" id="search-wrap">
           <div class="hotel-search-box">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -326,14 +369,9 @@
           </div>
           <input class="hero-slider" type="range" id="rooms-slider" min="20" max="500" value="120" step="10">
         </div>
-
-        <div style="display:flex;gap:var(--space-4);flex-wrap:wrap;margin-top:var(--space-8);">
-          <a href="#apply" class="btn btn--primary btn--lg btn--pill">Get in Touch <span class="arrow">→</span></a>
-          <a href="#how-it-works" class="btn btn--outline btn--lg btn--pill">How It Works</a>
-        </div>
       </div>
 
-      <!-- Right: Banff tour map -->
+      <!-- Right: map -->
       <div class="map-card">
         <div id="partner-map"></div>
       </div>
