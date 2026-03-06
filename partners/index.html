@@ -563,7 +563,6 @@
           <form name="partner-application" action="https://api.web3forms.com/submit" method="POST">
             <input type="hidden" name="access_key" value="005911d3-1bf1-4929-8ba3-7997462c916a">
             <input type="hidden" name="subject" value="New Partner Enquiry — Horizon Tours">
-            <input type="hidden" name="redirect" value="https://gowithhorizon.com/partners/thank-you/">
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label" for="name">Your name</label>
@@ -593,10 +592,17 @@
               <textarea class="form-textarea" id="message" name="message" placeholder="Tours you'd like to feature, guest volume, or anything else on your mind…"></textarea>
             </div>
             <div style="margin-top:var(--space-5);">
-              <button type="submit" class="btn btn--primary btn--lg btn--full btn--pill">Send Your Details <span class="arrow">→</span></button>
+              <button type="submit" id="partner-submit-btn" class="btn btn--primary btn--lg btn--full btn--pill">Send Your Details <span class="arrow">→</span></button>
             </div>
             <p class="form-note">We'll follow up within one business day. No commitment at this stage. Just a conversation.</p>
           </form>
+
+          <!-- Success message — hidden until form submits -->
+          <div id="partner-success" style="display:none; text-align:center; padding:var(--space-10) var(--space-6);">
+            <div style="font-size:2.5rem; margin-bottom:var(--space-4);">✅</div>
+            <h3 style="font-family:var(--font-display); font-size:var(--text-2xl); font-weight:700; color:var(--near-black); margin-bottom:var(--space-3);">We'll be in touch shortly</h3>
+            <p style="color:var(--mid-gray); font-size:var(--text-base); line-height:1.7;">Thanks for reaching out. Someone from our team will follow up within one business day to walk you through the program.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -876,6 +882,40 @@
     clearBtn.addEventListener('click', function () {
       if (window._setActiveMarker) window._setActiveMarker(null);
       deselectHotel();
+    });
+  })();
+  /* ─── PARTNER FORM ─── */
+  (function () {
+    const form = document.querySelector('form[name="partner-application"]');
+    if (!form) return;
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const btn = document.getElementById('partner-submit-btn');
+      btn.textContent = 'Sending…';
+      btn.disabled = true;
+
+      const data = new FormData(form);
+
+      try {
+        const res = await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          body: data,
+        });
+        const json = await res.json();
+
+        if (json.success) {
+          form.style.display = 'none';
+          document.getElementById('partner-success').style.display = 'block';
+        } else {
+          btn.textContent = 'Something went wrong — try again';
+          btn.disabled = false;
+        }
+      } catch (err) {
+        btn.textContent = 'Something went wrong — try again';
+        btn.disabled = false;
+      }
     });
   })();
   </script>
