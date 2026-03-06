@@ -39,13 +39,6 @@
       background: var(--warm-white);
       padding: clamp(3.5rem,8vw,6rem) 0 clamp(3rem,6vw,5rem);
     }
-    .partner-hero-top__inner {
-      /* width is set by JS to exactly match .partner-hero__inner */
-      margin: 0 auto;
-      padding: 0 var(--container-padding);
-      text-align: center;
-      box-sizing: border-box;
-    }
     .partner-hero-top__title {
       font-family: var(--font-display);
       font-size: clamp(2.2rem,5vw,3.5rem); font-weight: 800;
@@ -357,7 +350,7 @@
 
   <!-- HERO — TOP PANEL (headline + sub + CTAs) -->
   <div class="partner-hero-top">
-    <div class="partner-hero-top__inner">
+    <div class="container" style="text-align:center;">
       <h1 class="partner-hero-top__title">Give your guests some of the best experiences in Banff.</h1>
       <p class="partner-hero-top__sub">Horizon runs the experience. Your guests simply scan a QR code or use your hotel's private booking link to reserve directly. Guests book directly with Horizon. Your staff never manages reservations.<br><br>Every booking made through that link is automatically tracked to your property. Your hotel earns 15% commission on completed tours.<br><br>No booking system. No extra work for your team.</p>
 
@@ -1017,17 +1010,6 @@
     });
   })();
   </script>
-  <script>
-    (function syncHeroWidth() {
-      function match() {
-        var src = document.querySelector('.partner-hero__inner');
-        var tgt = document.querySelector('.partner-hero-top__inner');
-        if (!src || !tgt) return;
-        tgt.style.width = src.offsetWidth + 'px';
-      }
-      match();
-      window.addEventListener('resize', match);
-    })();
-  </script>
+
 </body>
 </html>
