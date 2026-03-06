@@ -35,26 +35,32 @@
     .btn--pill { border-radius: 999px !important; padding: 0.75em 1.8em; }
 
     /* Top hero panel */
+    :root { --hero-section-width: 1100px; } /* ← change this one value to resize the hero */
+
     .partner-hero-top {
       background: var(--warm-white);
       padding: clamp(3.5rem,8vw,6rem) 0 clamp(3rem,6vw,5rem);
     }
     .partner-hero-top__inner {
-      max-width: var(--container-max);
+      width: 100%;
+      max-width: var(--hero-section-width);
       margin: 0 auto;
       padding: 0 var(--container-padding);
       text-align: center;
+      box-sizing: border-box;
     }
     .partner-hero-top__title {
       font-family: var(--font-display);
       font-size: clamp(2.2rem,5vw,3.5rem); font-weight: 800;
       line-height: 1.08; letter-spacing: -0.035em;
       margin: 0 0 var(--space-6);
+      display: block; width: 100%;
       background: linear-gradient(to right, #FF6B4A, #D94F2E);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
     }
     .partner-hero-top__sub {
+      display: block; width: 100%;
       font-size: var(--text-lg); color: var(--mid-gray);
       line-height: 1.7; margin: 0 0 var(--space-8);
     }
