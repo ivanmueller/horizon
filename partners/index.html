@@ -276,6 +276,16 @@
     .stats-bar__label { font-size: var(--text-sm); color: rgba(255,255,255,0.65); line-height: 1.5; }
     .stats-bar__label strong { color: white; font-weight: 500; }
 
+    /* Tour cards */
+    .tours-grid { grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)) !important; }
+    .tour-card { display: flex !important; flex-direction: column !important; }
+    .tour-card__image-wrap { position: relative !important; width: 100% !important; height: 0 !important; padding-bottom: 88% !important; flex-shrink: 0 !important; flex-grow: 0 !important; overflow: hidden !important; }
+    .tour-card__image-wrap::before { display: none !important; }
+    .tour-card__image-wrap img { position: absolute !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; object-fit: cover !important; }
+    .tour-card__body { display: flex !important; flex-direction: column !important; flex: 1 1 auto !important; padding: 1rem !important; }
+    .tour-card__title { flex: 1 1 auto !important; display: flex !important; align-items: center !important; padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; margin: 0 !important; }
+    .tour-card__footer { margin-top: auto !important; }
+
     /* Benefits — 3 cards */
     .features-grid--three { grid-template-columns: repeat(3, 1fr) !important; }
     @media (max-width: 780px) { .features-grid--three { grid-template-columns: 1fr !important; } }
@@ -447,41 +457,107 @@
     </div>
   </section>
 
-  <!-- COMMISSION TABLE -->
-  <section class="section" id="commission" aria-label="Commission structure">
-    <div class="container container--narrow">
+  <!-- TOURS / COMMISSION -->
+  <section class="section" id="commission" aria-label="Tours your guests can book">
+    <div class="container">
       <div class="section-header section-header--center reveal">
-        <span class="section-header__eyebrow">Commission Structure</span>
-        <h2 class="section-header__title">What you earn per booking</h2>
-        <p class="section-header__desc">15% on all tours. No tiers, no conditions.</p>
-        <p class="section-header__desc" style="margin-top:var(--space-3); font-size:var(--text-sm);">Commission is automatically tracked through your hotel's QR code and referral booking link.</p>
+        <span class="section-header__eyebrow">What Your Guests Can Book</span>
+        <h2 class="section-header__title">Your hotel earns 15% on every one of these.</h2>
+        <p class="section-header__desc">Commission is tracked automatically through your QR code and booking link. Paid monthly via EFT.</p>
       </div>
-      <div class="commission-table__wrapper reveal">
-        <table class="commission-table">
-          <thead>
-            <tr><th>Tour</th><th>Guest Price</th><th>Your Commission</th><th>Duration</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>Vermilion Lakes Guided Canoe</strong><br><span style="color:var(--mid-gray);font-size:var(--text-xs);">Flagship experience</span></td>
-              <td>$249 CAD</td><td class="commission-table__amount">$37.35 / guest</td><td>3 hrs</td>
-            </tr>
-            <tr>
-              <td><strong>Lake Louise &amp; Moraine Lake with Canoe</strong><br><span style="color:var(--mid-gray);font-size:var(--text-xs);">Full day, most popular</span></td>
-              <td>$249 CAD</td><td class="commission-table__amount">$37.35 / guest</td><td>7 hrs</td>
-            </tr>
-            <tr>
-              <td><strong>Lake Louise &amp; Moraine Lake Sightseeing</strong><br><span style="color:var(--mid-gray);font-size:var(--text-xs);">Best value option</span></td>
-              <td>$149 CAD</td><td class="commission-table__amount">$22.35 / guest</td><td>5 hrs</td>
-            </tr>
-            <tr>
-              <td><strong>Private Group Tour</strong><br><span style="color:var(--mid-gray);font-size:var(--text-xs);">Custom pricing</span></td>
-              <td>Custom</td><td class="commission-table__amount">15% of total</td><td>Custom</td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="tours-grid reveal">
+
+        <!-- Tour Card 1 -->
+        <div class="tour-card">
+          <div class="tour-card__image-wrap" style="width:100%!important;height:0!important;padding-bottom:88%!important;position:relative!important;overflow:hidden!important;">
+            <img src="https://images.unsplash.com/photo-1503614472-8c93d56e92ce?w=720&q=80&auto=format"
+                 alt="Canoe on calm lake at sunrise with mountain reflection"
+                 loading="lazy" width="540" height="540">
+            <span class="tour-card__badge">Most Popular</span>
+          </div>
+          <div class="tour-card__body">
+            <div class="tour-card__meta">
+              <div class="tour-card__tags"><span class="tour-card__tag">Guided Tour</span></div>
+              <span class="tour-card__rating">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                4.9
+              </span>
+            </div>
+            <h3 class="tour-card__title" style="color:#1A1A2E !important;-webkit-text-fill-color:#1A1A2E !important;">Lake Louise Sunrise Canoe Experience</h3>
+            <div class="tour-card__footer">
+              <div class="tour-card__price">
+                <span class="tour-card__price-amount">$249</span>
+                <span class="tour-card__price-unit"> CAD &nbsp;·&nbsp; <strong style="color:var(--coral);">$37 your commission</strong></span>
+              </div>
+              <span class="tour-card__duration">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                3 hours
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tour Card 2 -->
+        <div class="tour-card">
+          <div class="tour-card__image-wrap" style="width:100%!important;height:0!important;padding-bottom:88%!important;position:relative!important;overflow:hidden!important;">
+            <img src="https://images.unsplash.com/photo-1561134643-668f9057cce4?w=720&q=80&auto=format"
+                 alt="Moraine Lake with turquoise water surrounded by Valley of the Ten Peaks"
+                 loading="lazy" width="540" height="540">
+            <span class="tour-card__badge">Full Day</span>
+          </div>
+          <div class="tour-card__body">
+            <div class="tour-card__meta">
+              <div class="tour-card__tags"><span class="tour-card__tag">Day Trip</span></div>
+              <span class="tour-card__rating">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                5.0
+              </span>
+            </div>
+            <h3 class="tour-card__title" style="color:#1A1A2E !important;-webkit-text-fill-color:#1A1A2E !important;">Lake Louise & Moraine Lake Tour with Canoe</h3>
+            <div class="tour-card__footer">
+              <div class="tour-card__price">
+                <span class="tour-card__price-amount">$249</span>
+                <span class="tour-card__price-unit"> CAD &nbsp;·&nbsp; <strong style="color:var(--coral);">$37 your commission</strong></span>
+              </div>
+              <span class="tour-card__duration">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                7 hours
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tour Card 3 -->
+        <div class="tour-card">
+          <div class="tour-card__image-wrap" style="width:100%!important;height:0!important;padding-bottom:88%!important;position:relative!important;overflow:hidden!important;">
+            <img src="https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=720&q=80&auto=format"
+                 alt="Scenic mountain vista in the Canadian Rockies with alpine meadow"
+                 loading="lazy" width="540" height="540">
+            <span class="tour-card__badge">Best Value</span>
+          </div>
+          <div class="tour-card__body">
+            <div class="tour-card__meta">
+              <div class="tour-card__tags"><span class="tour-card__tag">Day Trip</span></div>
+              <span class="tour-card__rating">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                4.8
+              </span>
+            </div>
+            <h3 class="tour-card__title" style="color:#1A1A2E !important;-webkit-text-fill-color:#1A1A2E !important;">Lake Louise & Moraine Lake Sightseeing Tour</h3>
+            <div class="tour-card__footer">
+              <div class="tour-card__price">
+                <span class="tour-card__price-amount">$149</span>
+                <span class="tour-card__price-unit"> CAD &nbsp;·&nbsp; <strong style="color:var(--coral);">$22 your commission</strong></span>
+              </div>
+              <span class="tour-card__duration">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                5 hours
+              </span>
+            </div>
+          </div>
+        </div>
+
       </div>
-      <p style="text-align:center;color:var(--mid-gray);font-size:var(--text-sm);margin-top:var(--space-5);">Commission paid monthly via EFT. No minimum bookings required.</p>
     </div>
   </section>
 
