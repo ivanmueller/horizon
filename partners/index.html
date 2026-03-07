@@ -74,7 +74,7 @@
     @media (max-width: 880px) { .partner-hero__inner { grid-template-columns: 1fr; gap: var(--space-10); } }
     .partner-hero__eyebrow {
       font-family: var(--font-display); font-size: var(--text-sm);
-      font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+      font-weight: 600; letter-spacing: 0.06em; text-transform: none;
       color: var(--coral); margin-bottom: var(--space-4);
       display: block;
     }
@@ -328,6 +328,8 @@
     .commission-table tr:hover td { background: var(--warm-white-alt); }
     .commission-table__amount { font-family: var(--font-display); font-weight: 700; color: var(--coral); }
     .commission-table__wrapper { background: white; border: 1px solid var(--border-color); border-radius: var(--radius-xl); overflow: hidden; }
+
+    .section-header__eyebrow { text-transform: none !important; }
 
     /* Apply form */
     .apply-form-wrapper { background: white; border-radius: var(--radius-xl); padding: var(--space-8); border: 1px solid var(--border-color); box-shadow: var(--elevation-2); }
