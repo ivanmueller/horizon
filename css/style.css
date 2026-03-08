@@ -671,7 +671,7 @@ p {
   font-size: var(--text-xs);
   font-weight: 600;
   letter-spacing: 0.1em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--coral);
   margin-bottom: var(--space-3);
 }
