@@ -57,7 +57,7 @@
   --container-narrow: 800px;
   --container-wide: 1400px;
   --container-padding: clamp(1.25rem, 4vw, 2.5rem);
-  --section-spacing: clamp(4rem, 8vw, 7rem);
+  --section-spacing: clamp(2.5rem, 4vw, 4rem);
 
   /* Radius */
   /* "Show all photos" button */
@@ -663,7 +663,7 @@ p {
 
 /* --- Section Headers --- */
 .section-header {
-  margin-bottom: var(--space-12);
+  margin-bottom: var(--space-8);
 }
 
 .section-header__eyebrow {
