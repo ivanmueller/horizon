@@ -636,7 +636,7 @@ p {
 .social-proof__stars {
   display: flex;
   gap: 2px;
-  color: #FBBF24;
+  color: var(--near-black);
 }
 
 .social-proof__number {
