@@ -717,7 +717,7 @@ p {
   background: white;
   transition: all var(--duration-normal) var(--ease-out);
   position: relative;
-  border: 1px solid var(--border-color);
+  border: none;
   color: #1A1A2E;
 }
 
