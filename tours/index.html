@@ -14,7 +14,23 @@
   <!-- Card overrides -->
   <style>
     .tours-grid {
-      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)) !important;
+      grid-template-columns: repeat(5, 1fr) !important;
+      gap: 1.5rem !important;
+    }
+    @media (max-width: 1200px) {
+      .tours-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+      }
+    }
+    @media (max-width: 768px) {
+      .tours-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+    }
+    @media (max-width: 480px) {
+      .tours-grid {
+        grid-template-columns: 1fr !important;
+      }
     }
     .tour-card {
       display: flex !important;
@@ -85,7 +101,7 @@
 
   <!-- Tours Listing -->
   <section class="section" style="padding-top: calc(var(--nav-height) + var(--space-8));" aria-label="All tours">
-    <div class="container">
+    <div class="container" style="max-width: 1600px; padding: 0 clamp(1rem, 3vw, 1.5rem);">
       <div class="tours-listing__filters reveal">
         <button class="filter-pill active">All Tours</button>
         <button class="filter-pill">Canoe</button>
