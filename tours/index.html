@@ -76,8 +76,10 @@
       opacity: 0 !important;
       transition: opacity 0.35s ease !important;
     }
-    .tour-card:hover .tour-card__hover-grid {
-      opacity: 1 !important;
+    @media (hover: hover) and (pointer: fine) {
+      .tour-card:hover .tour-card__hover-grid {
+        opacity: 1 !important;
+      }
     }
     .tour-card__hover-grid img {
       position: static !important;
