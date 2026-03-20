@@ -1230,9 +1230,9 @@ a.tour-card:active .tour-card__title {
 }
 
 /* --- Static Nav (for tour detail pages) --- */
-/* Tour detail pages: white background below the nav */
-body.page--tour-detail {
-  background-color: red;
+/* White background for tour pages (below the nav) */
+body.page--white-bg {
+  background-color: #fff;
 }
 
 .nav--static {
