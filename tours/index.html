@@ -82,12 +82,15 @@
     }
     .tour-card__hover-grid img {
       position: static !important;
+      display: block !important;
       width: 100% !important;
       height: 100% !important;
+      min-height: 0 !important;
       object-fit: cover !important;
       transform: none !important;
       transition: none !important;
       border-radius: 6px !important;
+      overflow: hidden !important;
     }
     /* On hover, fade out main image to reveal grid */
     .tour-card:hover .tour-card__image-wrap > img {
