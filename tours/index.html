@@ -58,7 +58,7 @@
       height: 100% !important;
       object-fit: cover !important;
       z-index: 1 !important;
-      transition: opacity 0.3s ease !important;
+      transition: opacity 0.35s ease !important;
     }
     /* 2x2 hover grid */
     .tour-card__hover-grid {
@@ -70,8 +70,15 @@
       display: grid !important;
       grid-template-columns: 1fr 1fr !important;
       grid-template-rows: 1fr 1fr !important;
-      gap: 2px !important;
+      gap: 4px !important;
+      padding: 4px !important;
+      box-sizing: border-box !important;
       z-index: 0 !important;
+      opacity: 0 !important;
+      transition: opacity 0.35s ease !important;
+    }
+    .tour-card:hover .tour-card__hover-grid {
+      opacity: 1 !important;
     }
     .tour-card__hover-grid img {
       position: static !important;
@@ -80,6 +87,7 @@
       object-fit: cover !important;
       transform: none !important;
       transition: none !important;
+      border-radius: 6px !important;
     }
     /* On hover, fade out main image to reveal grid */
     .tour-card:hover .tour-card__image-wrap > img {
