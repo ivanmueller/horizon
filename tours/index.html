@@ -94,8 +94,10 @@
       overflow: hidden !important;
     }
     /* On hover, fade out main image to reveal grid */
-    .tour-card:hover .tour-card__image-wrap > img {
-      opacity: 0 !important;
+    @media (hover: hover) and (pointer: fine) {
+      .tour-card:hover .tour-card__image-wrap > img {
+        opacity: 0 !important;
+      }
     }
     /* Keep badge and wishlist above everything */
     .tour-card__badge,
