@@ -43,14 +43,19 @@
     </div>
   </nav>
 
+  <!-- Breadcrumbs -->
+  <div class="tour-breadcrumbs">
+    <a href="/">Home</a>
+    <span class="tour-breadcrumbs__sep">&#8250;</span>
+    <a href="/tours/">Tours</a>
+    <span class="tour-breadcrumbs__sep">&#8250;</span>
+    <a href="/tours/">Banff National Park</a>
+    <span class="tour-breadcrumbs__sep">&#8250;</span>
+    <span>Guided Hike to Lake Agnes Tea House</span>
+  </div>
+
   <!-- Tour Photo Grid -->
   <div class="tour-photo-grid-wrap">
-    <nav class="tour-photo-grid-nav">
-      <a href="/tours/" class="tour-photo-grid-nav__back">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
-        All Tours
-      </a>
-    </nav>
     <div class="tour-photo-grid">
       <div class="tour-photo-grid__item">
         <img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-Hero.jpg" alt="Lake Agnes Tea House guided hike" loading="eager" fetchpriority="high">
@@ -77,74 +82,173 @@
   <div class="tour-detail">
     <main class="tour-detail__main">
 
-      <!-- Tour Title & Meta (moved below hero) -->
+      <!-- Tour Title & Meta -->
       <div class="tour-detail__header">
+        <div class="tour-detail__category">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          Hiking Tour
+        </div>
         <h1 class="tour-detail__title">Lake Louise: Guided Hike to Lake Agnes Tea House with Lunch</h1>
-        <div class="tour-detail__meta">
-          <span class="tour-detail__meta-item">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:#FBBF24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            <strong>4.8</strong>&nbsp;(28 reviews)
+        <div class="tour-detail__rating-row">
+          <div class="tour-detail__stars">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <span class="tour-detail__rating-text">4.8</span>
+          </div>
+          <a href="#reviews" class="tour-detail__reviews-link">28 reviews</a>
+          <span class="tour-detail__bookings-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            200+ booked
           </span>
-          <span class="tour-detail__meta-item">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <div class="tour-info-pills">
+          <span class="tour-info-pill tour-info-pill--green">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+            Free cancellation
+          </span>
+          <span class="tour-info-pill">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
             7 hours
           </span>
-          <span class="tour-detail__meta-item">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-            Max 12 guests
+          <span class="tour-info-pill">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Live tour guide &middot; English
+          </span>
+          <span class="tour-info-pill">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            Small group (max 12)
+          </span>
+          <span class="tour-info-pill">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8l4 2.5v5L16 18"/></svg>
+            Hotel pickup
           </span>
         </div>
       </div>
 
+      <!-- About This Activity -->
       <div class="tour-section">
-        <h2 class="tour-section__title">Tour Highlights</h2>
-        <div class="highlights-grid">
-          <div class="highlight-item"><span class="highlight-item__icon">🍵</span><p class="highlight-item__text">Enjoy lunch at the historic Lake Agnes Tea House, serving hikers since 1905</p></div>
-          <div class="highlight-item"><span class="highlight-item__icon">🏔</span><p class="highlight-item__text">Reach the Big Beehive for a panoramic overlook of Lake Louise below</p></div>
-          <div class="highlight-item"><span class="highlight-item__icon">🥾</span><p class="highlight-item__text">Hike past Mirror Lake, alpine waterfalls, and old-growth forest</p></div>
-          <div class="highlight-item"><span class="highlight-item__icon">🎒</span><p class="highlight-item__text">Receive hiking poles, snacks, water, and expert trail interpretation</p></div>
-          <div class="highlight-item"><span class="highlight-item__icon">🦌</span><p class="highlight-item__text">Spot wildlife and learn about Rocky Mountain ecology from your certified guide</p></div>
-          <div class="highlight-item"><span class="highlight-item__icon">🚐</span><p class="highlight-item__text">Small-group experience with comfortable hotel pickup and drop-off from Banff or Canmore</p></div>
+        <h2 class="tour-section__title">About this activity</h2>
+        <div class="activity-info-box">
+          <div class="activity-info-box__item">
+            <div class="activity-info-box__icon activity-info-box__icon--green">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+            </div>
+            <div>
+              <div class="activity-info-box__label">Free cancellation</div>
+              <div class="activity-info-box__value">Cancel up to 24 hours in advance</div>
+            </div>
+          </div>
+          <div class="activity-info-box__item">
+            <div class="activity-info-box__icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <div>
+              <div class="activity-info-box__label">Duration</div>
+              <div class="activity-info-box__value">7 hours</div>
+            </div>
+          </div>
+          <div class="activity-info-box__item">
+            <div class="activity-info-box__icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <div>
+              <div class="activity-info-box__label">Live tour guide</div>
+              <div class="activity-info-box__value">English</div>
+            </div>
+          </div>
+          <div class="activity-info-box__item">
+            <div class="activity-info-box__icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            </div>
+            <div>
+              <div class="activity-info-box__label">Small group</div>
+              <div class="activity-info-box__value">Max 12 participants</div>
+            </div>
+          </div>
         </div>
       </div>
 
+      <!-- Highlights -->
       <div class="tour-section">
-        <h2 class="tour-section__title">About This Experience</h2>
-        <p style="color:var(--mid-gray); line-height:1.8; margin-bottom:var(--space-4);">
-          Your morning starts with a pickup from Banff or Canmore. Settle into a comfortable van with your small group as your guide introduces the day ahead and shares background on Banff National Park and the Lake Louise area.
-        </p>
-        <p style="color:var(--mid-gray); line-height:1.8; margin-bottom:var(--space-4);">
-          After arriving at Lake Louise, you'll walk past the Fairmont Chateau and along the turquoise shoreline before the trail begins climbing through dense evergreen forest. Your guide sets a comfortable pace, pointing out glacier-carved features, local wildlife patterns, and the wildflowers and birdlife along the way.
-        </p>
-        <p style="color:var(--mid-gray); line-height:1.8; margin-bottom:var(--space-4);">
-          As you gain elevation, views of Lake Louise and Victoria Glacier open up through gaps in the trees. The trail passes Mirror Lake, a small alpine lake tucked beneath the rounded peak of Big Beehive, before a final section of switchbacks and a wooden staircase deliver you to Lake Agnes.
-        </p>
-        <p style="color:var(--mid-gray); line-height:1.8; margin-bottom:var(--space-4);">
-          The Lake Agnes Tea House has been serving hikers since 1905, making it one of the oldest tea houses in Canada. Perched at 2,135 meters beside a waterfall and a glacial lake ringed by Mount Whyte, Mount Niblock, and the Devil's Thumb, this is where you sit down for lunch. Your guide has arranged everything allowing you to choose from a selection of loose-leaf teas, fresh-baked goods, and hearty options while taking in the alpine scenery.
-        </p>
-        <p style="color:var(--mid-gray); line-height:1.8; margin-bottom:var(--space-4);">
-          After lunch, the group continues to the Big Beehive viewpoint. The additional climb is rewarded with what many consider the most iconic overhead view of Lake Louise in all of Banff, the turquoise lake, the glacier, and the Chateau far below, framed by peaks stretching to the horizon. Your guide adjusts this portion based on group ability and conditions.
-        </p>
-        <p style="color:var(--mid-gray); line-height:1.8; margin-bottom:var(--space-4);">
-          The descent follows a varied route for different perspectives, and your guide manages the timing so you're back at the trailhead before the afternoon crowds peak. The drive back to Banff passes through the Bow Valley with opportunities to spot wildlife along the way.
-        </p>
-        <p style="color:var(--mid-gray); line-height:1.8;">
-          You'll return to your hotel by mid-to-late afternoon with the rest of the day free. Your guide will share recommendations for restaurants and activities in town.
-        </p>
+        <h2 class="tour-section__title">Highlights</h2>
+        <ul class="highlights-list">
+          <li class="highlights-list__item">
+            <span class="highlights-list__icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>
+            Enjoy lunch at the historic Lake Agnes Tea House, serving hikers since 1905
+          </li>
+          <li class="highlights-list__item">
+            <span class="highlights-list__icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>
+            Reach the Big Beehive for a panoramic overlook of Lake Louise below
+          </li>
+          <li class="highlights-list__item">
+            <span class="highlights-list__icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>
+            Hike past Mirror Lake, alpine waterfalls, and old-growth forest
+          </li>
+          <li class="highlights-list__item">
+            <span class="highlights-list__icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>
+            Receive hiking poles, snacks, water, and expert trail interpretation
+          </li>
+          <li class="highlights-list__item">
+            <span class="highlights-list__icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>
+            Spot wildlife and learn about Rocky Mountain ecology from your certified guide
+          </li>
+          <li class="highlights-list__item">
+            <span class="highlights-list__icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>
+            Small-group experience with comfortable hotel pickup and drop-off from Banff or Canmore
+          </li>
+        </ul>
       </div>
 
+      <!-- Full Description -->
       <div class="tour-section">
-        <h2 class="tour-section__title">What's Included</h2>
-        <div class="includes-list">
-          <div class="includes-item includes-item--yes"><span class="includes-item__icon">✓</span><span>Certified local hiking guide (full day)</span></div>
-          <div class="includes-item includes-item--yes"><span class="includes-item__icon">✓</span><span>Lunch at the Lake Agnes Tea House (tea + food)</span></div>
-          <div class="includes-item includes-item--yes"><span class="includes-item__icon">✓</span><span>Hotel pickup and drop-off (Banff and Canmore)</span></div>
-          <div class="includes-item includes-item--yes"><span class="includes-item__icon">✓</span><span>Comfortable van transport (max 14 guests)</span></div>
-          <div class="includes-item includes-item--yes"><span class="includes-item__icon">✓</span><span>Hiking poles</span></div>
-          <div class="includes-item includes-item--yes"><span class="includes-item__icon">✓</span><span>Bottled water and trail snacks</span></div>
-          <div class="includes-item includes-item--yes"><span class="includes-item__icon">✓</span><span>Big Beehive viewpoint extension (conditions permitting)</span></div>
-          <div class="includes-item includes-item--no"><span class="includes-item__icon">✕</span><span>Additional Tea House purchases beyond included lunch</span></div>
-          <div class="includes-item includes-item--no"><span class="includes-item__icon">✕</span><span>Guide Gratuities</span></div>
+        <h2 class="tour-section__title">Full description</h2>
+        <div class="tour-description__text tour-description--collapsed" id="tourDescription">
+          <p>Your morning starts with a pickup from Banff or Canmore. Settle into a comfortable van with your small group as your guide introduces the day ahead and shares background on Banff National Park and the Lake Louise area.</p>
+          <p>After arriving at Lake Louise, you'll walk past the Fairmont Chateau and along the turquoise shoreline before the trail begins climbing through dense evergreen forest. Your guide sets a comfortable pace, pointing out glacier-carved features, local wildlife patterns, and the wildflowers and birdlife along the way.</p>
+          <p>As you gain elevation, views of Lake Louise and Victoria Glacier open up through gaps in the trees. The trail passes Mirror Lake, a small alpine lake tucked beneath the rounded peak of Big Beehive, before a final section of switchbacks and a wooden staircase deliver you to Lake Agnes.</p>
+          <p>The Lake Agnes Tea House has been serving hikers since 1905, making it one of the oldest tea houses in Canada. Perched at 2,135 meters beside a waterfall and a glacial lake ringed by Mount Whyte, Mount Niblock, and the Devil's Thumb, this is where you sit down for lunch. Your guide has arranged everything allowing you to choose from a selection of loose-leaf teas, fresh-baked goods, and hearty options while taking in the alpine scenery.</p>
+          <p>After lunch, the group continues to the Big Beehive viewpoint. The additional climb is rewarded with what many consider the most iconic overhead view of Lake Louise in all of Banff, the turquoise lake, the glacier, and the Chateau far below, framed by peaks stretching to the horizon. Your guide adjusts this portion based on group ability and conditions.</p>
+          <p>The descent follows a varied route for different perspectives, and your guide manages the timing so you're back at the trailhead before the afternoon crowds peak. The drive back to Banff passes through the Bow Valley with opportunities to spot wildlife along the way.</p>
+          <p>You'll return to your hotel by mid-to-late afternoon with the rest of the day free. Your guide will share recommendations for restaurants and activities in town.</p>
+        </div>
+        <button class="tour-description__toggle" id="descriptionToggle" onclick="toggleDescription()">
+          Read more
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+      </div>
+
+      <!-- Includes / Not Included -->
+      <div class="tour-section">
+        <h2 class="tour-section__title">What's included</h2>
+        <div class="includes-columns">
+          <div>
+            <div class="includes-column__title" style="color:#059669;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+              Included
+            </div>
+            <div class="includes-column__list">
+              <div class="includes-item includes-item--yes"><span class="includes-item__icon">&#10003;</span><span>Certified local hiking guide (full day)</span></div>
+              <div class="includes-item includes-item--yes"><span class="includes-item__icon">&#10003;</span><span>Lunch at the Lake Agnes Tea House (tea + food)</span></div>
+              <div class="includes-item includes-item--yes"><span class="includes-item__icon">&#10003;</span><span>Hotel pickup and drop-off (Banff and Canmore)</span></div>
+              <div class="includes-item includes-item--yes"><span class="includes-item__icon">&#10003;</span><span>Comfortable van transport (max 14 guests)</span></div>
+              <div class="includes-item includes-item--yes"><span class="includes-item__icon">&#10003;</span><span>Hiking poles</span></div>
+              <div class="includes-item includes-item--yes"><span class="includes-item__icon">&#10003;</span><span>Bottled water and trail snacks</span></div>
+              <div class="includes-item includes-item--yes"><span class="includes-item__icon">&#10003;</span><span>Big Beehive viewpoint extension (conditions permitting)</span></div>
+            </div>
+          </div>
+          <div>
+            <div class="includes-column__title" style="color:#DC2626;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+              Not included
+            </div>
+            <div class="includes-column__list">
+              <div class="includes-item includes-item--no"><span class="includes-item__icon">&#10005;</span><span>Additional Tea House purchases beyond included lunch</span></div>
+              <div class="includes-item includes-item--no"><span class="includes-item__icon">&#10005;</span><span>Guide gratuities</span></div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -159,39 +263,187 @@
         </div>
       </div>
 
+      <!-- Important Information -->
       <div class="tour-section">
-        <h2 class="tour-section__title">Cancellation Policy</h2>
-        <div class="policy-box"><div class="policy-box__icon">🛡</div><div><div class="policy-box__title">Free cancellation up to 24 hours before</div><div class="policy-box__desc">Full refund for cancellations made 24+ hours before the tour start time.</div></div></div>
-      </div>
-
-      <div class="tour-section">
-        <h2 class="tour-section__title">Questions About This Tour</h2>
-        <div class="faq-list">
-          <div class="faq-item"><button class="faq-item__question"><span>Is this tour wheelchair accessible?</span><span class="faq-item__icon">+</span></button><div class="faq-item__answer"><div class="faq-item__answer-inner">The Lake Louise shoreline is paved and accessible. However, the Rockpile Trail at Moraine Lake involves uneven terrain and stairs. Please contact us to discuss your specific needs and we'll work to accommodate you.</div></div></div>
-          <div class="faq-item"><button class="faq-item__question"><span>Can I upgrade to add the canoe experience?</span><span class="faq-item__icon">+</span></button><div class="faq-item__answer"><div class="faq-item__answer-inner">If you'd like to add canoeing, check out our "Lake Louise & Moraine Lake Tour with Canoe" option. It includes everything in this tour plus a guided canoe experience on Two Jack Lake.</div></div></div>
-          <div class="faq-item"><button class="faq-item__question"><span>What happens in bad weather?</span><span class="faq-item__icon">+</span></button><div class="faq-item__answer"><div class="faq-item__answer-inner">This tour runs rain or shine — the mountains look incredible in all weather. We only cancel for unsafe road conditions. If we cancel, you receive a full refund or free rescheduling.</div></div></div>
+        <h2 class="tour-section__title">Important information</h2>
+        <div class="important-info">
+          <div>
+            <div class="important-info__group-title">What to bring</div>
+            <ul class="important-info__list">
+              <li>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><circle cx="12" cy="16" r="0.5" fill="currentColor"/></svg>
+                Sturdy hiking boots or trail shoes with ankle support
+              </li>
+              <li>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><circle cx="12" cy="16" r="0.5" fill="currentColor"/></svg>
+                Layers and a rain jacket (mountain weather changes quickly)
+              </li>
+              <li>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><circle cx="12" cy="16" r="0.5" fill="currentColor"/></svg>
+                Sunscreen, hat, and sunglasses
+              </li>
+              <li>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><circle cx="12" cy="16" r="0.5" fill="currentColor"/></svg>
+                Small daypack for personal items
+              </li>
+              <li>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><circle cx="12" cy="16" r="0.5" fill="currentColor"/></svg>
+                Cash for additional Tea House purchases (no cards accepted)
+              </li>
+            </ul>
+          </div>
+          <div>
+            <div class="important-info__group-title">Know before you go</div>
+            <ul class="important-info__list">
+              <li>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><circle cx="12" cy="16" r="0.5" fill="currentColor"/></svg>
+                Moderate fitness level required. The hike covers 7.4 km round trip with 400 m elevation gain.
+              </li>
+              <li>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><circle cx="12" cy="16" r="0.5" fill="currentColor"/></svg>
+                The Tea House is typically open from early June to mid-October, weather permitting.
+              </li>
+              <li>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><circle cx="12" cy="16" r="0.5" fill="currentColor"/></svg>
+                Not suitable for children under 6 or guests with mobility limitations.
+              </li>
+              <li>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><circle cx="12" cy="16" r="0.5" fill="currentColor"/></svg>
+                Tour operates rain or shine. Only cancelled in unsafe conditions (full refund provided).
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
 
+      <!-- Cancellation Policy -->
       <div class="tour-section">
-        <h2 class="tour-section__title">Guest Reviews</h2>
-        <div class="testimonial-card" style="border:none;padding:0;background:none;">
-          <div class="testimonial-card__stars">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <h2 class="tour-section__title">Cancellation policy</h2>
+        <div class="policy-box">
+          <div class="policy-box__icon" style="background:#ECFDF5;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
           </div>
-          <p class="testimonial-card__text">"Perfect half-day tour. Our guide knew the best spots for photos and the small group size meant we could actually take our time. Great value for the price."</p>
-          <div class="testimonial-card__author"><div class="testimonial-card__avatar">DW</div><div><div class="testimonial-card__name">Diana W.</div><div class="testimonial-card__date">August 2024</div></div></div>
+          <div>
+            <div class="policy-box__title">Free cancellation up to 24 hours before</div>
+            <div class="policy-box__desc">Full refund if you cancel at least 24 hours before the activity starts. No refund if you cancel less than 24 hours before or fail to show up.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FAQs -->
+      <div class="tour-section">
+        <h2 class="tour-section__title">Frequently asked questions</h2>
+        <div class="faq-list">
+          <div class="faq-item"><button class="faq-item__question"><span>Is this tour wheelchair accessible?</span><span class="faq-item__icon">+</span></button><div class="faq-item__answer"><div class="faq-item__answer-inner">The Lake Louise shoreline is paved and accessible. However, the trail to Lake Agnes Tea House involves uneven terrain, stairs, and steep sections. Please contact us to discuss your specific needs and we'll work to accommodate you.</div></div></div>
+          <div class="faq-item"><button class="faq-item__question"><span>Can I upgrade to add the canoe experience?</span><span class="faq-item__icon">+</span></button><div class="faq-item__answer"><div class="faq-item__answer-inner">If you'd like to add canoeing, check out our "Lake Louise & Moraine Lake Tour with Canoe" option. It includes everything in this tour plus a guided canoe experience on Two Jack Lake.</div></div></div>
+          <div class="faq-item"><button class="faq-item__question"><span>What happens in bad weather?</span><span class="faq-item__icon">+</span></button><div class="faq-item__answer"><div class="faq-item__answer-inner">This tour runs rain or shine — the mountains look incredible in all weather. We only cancel for unsafe road conditions. If we cancel, you receive a full refund or free rescheduling.</div></div></div>
+          <div class="faq-item"><button class="faq-item__question"><span>What fitness level is required?</span><span class="faq-item__icon">+</span></button><div class="faq-item__answer"><div class="faq-item__answer-inner">Moderate fitness is needed. The hike is 7.4 km round trip with 400 m of elevation gain. Your guide sets a comfortable pace with rest stops. If you can walk for 3-4 hours on uneven terrain, you'll be fine.</div></div></div>
+        </div>
+      </div>
+
+      <!-- Customer Reviews -->
+      <div class="tour-section" id="reviews">
+        <h2 class="tour-section__title">Customer reviews</h2>
+        <div class="reviews-summary">
+          <div class="reviews-summary__score">
+            <div class="reviews-summary__number">4.8</div>
+            <div class="reviews-summary__label">out of 5</div>
+          </div>
+          <div class="reviews-summary__bars">
+            <div class="reviews-bar"><span class="reviews-bar__label">5</span><div class="reviews-bar__track"><div class="reviews-bar__fill" style="width:78%"></div></div><span class="reviews-bar__count">22</span></div>
+            <div class="reviews-bar"><span class="reviews-bar__label">4</span><div class="reviews-bar__track"><div class="reviews-bar__fill" style="width:18%"></div></div><span class="reviews-bar__count">5</span></div>
+            <div class="reviews-bar"><span class="reviews-bar__label">3</span><div class="reviews-bar__track"><div class="reviews-bar__fill" style="width:4%"></div></div><span class="reviews-bar__count">1</span></div>
+            <div class="reviews-bar"><span class="reviews-bar__label">2</span><div class="reviews-bar__track"><div class="reviews-bar__fill" style="width:0%"></div></div><span class="reviews-bar__count">0</span></div>
+            <div class="reviews-bar"><span class="reviews-bar__label">1</span><div class="reviews-bar__track"><div class="reviews-bar__fill" style="width:0%"></div></div><span class="reviews-bar__count">0</span></div>
+          </div>
+        </div>
+        <div class="reviews-grid">
+          <div class="review-card">
+            <div class="review-card__header">
+              <div class="review-card__author">
+                <div class="review-card__avatar">DW</div>
+                <div>
+                  <div class="review-card__name">Diana W.</div>
+                  <div class="review-card__date">August 2024</div>
+                </div>
+              </div>
+              <div class="review-card__stars">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              </div>
+            </div>
+            <p class="review-card__text">Perfect half-day tour. Our guide knew the best spots for photos and the small group size meant we could actually take our time. The Tea House lunch was a highlight!</p>
+          </div>
+          <div class="review-card">
+            <div class="review-card__header">
+              <div class="review-card__author">
+                <div class="review-card__avatar">MJ</div>
+                <div>
+                  <div class="review-card__name">Mark J.</div>
+                  <div class="review-card__date">September 2024</div>
+                </div>
+              </div>
+              <div class="review-card__stars">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              </div>
+            </div>
+            <p class="review-card__text">Incredible experience! The Big Beehive viewpoint was absolutely worth the extra climb. Our guide was knowledgeable about the local ecology and kept a great pace for the group. Highly recommend.</p>
+          </div>
+          <div class="review-card">
+            <div class="review-card__header">
+              <div class="review-card__author">
+                <div class="review-card__avatar">SL</div>
+                <div>
+                  <div class="review-card__name">Sarah L.</div>
+                  <div class="review-card__date">July 2024</div>
+                </div>
+              </div>
+              <div class="review-card__stars">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="opacity:0.3"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              </div>
+            </div>
+            <p class="review-card__text">Great tour overall. The Tea House was charming and the views were stunning. Only reason for 4 stars is we didn't make it to Big Beehive due to weather, but the guide handled it well.</p>
+          </div>
+          <div class="review-card">
+            <div class="review-card__header">
+              <div class="review-card__author">
+                <div class="review-card__avatar">TC</div>
+                <div>
+                  <div class="review-card__name">Tom C.</div>
+                  <div class="review-card__date">August 2024</div>
+                </div>
+              </div>
+              <div class="review-card__stars">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              </div>
+            </div>
+            <p class="review-card__text">We did this as a family and it was one of the best things we did in Banff. The pickup was right on time, the guide was fantastic, and the Tea House was such a unique experience. Can't recommend enough.</p>
+          </div>
         </div>
       </div>
     </main>
 
     <aside id="book">
       <div class="booking-panel">
-        <div class="booking-panel__price"><span class="booking-panel__price-amount">$149</span><span class="booking-panel__price-unit"> CAD / person</span></div>
+        <div class="booking-panel__price">
+          <div class="booking-panel__from">From</div>
+          <span class="booking-panel__price-amount">$149</span><span class="booking-panel__price-unit"> CAD per person</span>
+        </div>
         <div class="booking-panel__details">
           <div class="booking-panel__divider"></div>
           <div class="booking-panel__row"><span class="booking-panel__row-label">Duration</span><span class="booking-panel__row-value">7 hours</span></div>
@@ -200,8 +452,16 @@
           <div class="booking-panel__row"><span class="booking-panel__row-label">Languages</span><span class="booking-panel__row-value">English</span></div>
           <div class="booking-panel__divider"></div>
         </div>
-        <a href="#" class="btn btn--primary btn--lg btn--full" style="margin-top:var(--space-4);">Book Now <span class="arrow">→</span></a>
-        <p class="booking-panel__note">🛡 Free cancellation up to 24 hours before</p>
+        <button class="booking-panel__select-date">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Select date and travelers
+        </button>
+        <a href="#" class="btn btn--primary btn--lg btn--full">Check availability</a>
+        <div class="booking-panel__guarantee">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Free cancellation up to 24 hours before
+        </div>
+        <p class="booking-panel__note">Reserve now, pay later</p>
       </div>
     </aside>
   </div>
@@ -249,6 +509,19 @@
   </div>
 
   <script src="/main.js"></script>
+  <script>
+    function toggleDescription() {
+      var desc = document.getElementById('tourDescription');
+      var btn = document.getElementById('descriptionToggle');
+      if (desc.classList.contains('tour-description--collapsed')) {
+        desc.classList.remove('tour-description--collapsed');
+        btn.innerHTML = 'Show less <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg>';
+      } else {
+        desc.classList.add('tour-description--collapsed');
+        btn.innerHTML = 'Read more <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
+      }
+    }
+  </script>
   <script>
     (function() {
       const lightbox = document.getElementById('photoLightbox');
