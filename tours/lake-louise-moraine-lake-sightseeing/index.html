@@ -20,6 +20,247 @@
     .tour-card__body { display: flex !important; flex-direction: column !important; flex: 1 1 auto !important; padding: 1rem !important; }
     .tour-card__title { flex: 1 1 auto !important; display: flex !important; align-items: center !important; padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; margin: 0 !important; }
     .tour-card__footer { margin-top: auto !important; }
+
+    /* GYG-style additions */
+    .tour-badge--top-rated {
+      display: inline-block;
+      background: var(--near-black);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-right: 10px;
+      vertical-align: middle;
+      letter-spacing: 0.01em;
+    }
+    .tour-detail__rating-row {
+      flex-wrap: wrap;
+      gap: 6px 10px;
+    }
+    .tour-detail__provider {
+      font-size: var(--text-sm);
+      color: var(--mid-gray);
+    }
+    .tour-detail__header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-left: auto;
+    }
+    .tour-detail__action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: var(--text-sm);
+      color: var(--near-black);
+      font-weight: 500;
+      padding: 4px 0;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .tour-detail__action-btn:hover { color: var(--coral); }
+
+    /* Highlighted reviews carousel */
+    .highlighted-reviews { position: relative; }
+    .highlighted-reviews__cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-4);
+    }
+    @media (max-width: 600px) {
+      .highlighted-reviews__cards { grid-template-columns: 1fr; }
+      .highlighted-reviews__cards .review-card:last-child { display: none; }
+    }
+    .highlighted-reviews__nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: var(--space-4);
+    }
+    .highlighted-reviews__nav-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid var(--border-color);
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--near-black);
+      transition: border-color var(--duration-fast);
+    }
+    .highlighted-reviews__nav-btn:hover { border-color: var(--near-black); }
+    .highlighted-reviews__see-more {
+      display: block;
+      text-align: center;
+      margin-top: var(--space-5);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--near-black);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .review-card__verified {
+      font-size: 0.7rem;
+      color: var(--mid-gray);
+      font-weight: 400;
+    }
+    .review-card__name-line {
+      font-weight: 600;
+      font-size: var(--text-sm);
+    }
+
+    /* Itinerary with map */
+    .itinerary-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-8);
+      align-items: start;
+    }
+    @media (max-width: 768px) {
+      .itinerary-layout { grid-template-columns: 1fr; }
+    }
+    .itinerary-map {
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      background: #e8ecef;
+      aspect-ratio: 4/3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .itinerary-map iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+    }
+    .itinerary-map__legend {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(255,255,255,0.95);
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 0.7rem;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    }
+    .itinerary-map__legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--near-black);
+    }
+    .itinerary-view-full {
+      display: inline-block;
+      margin-top: var(--space-4);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--near-black);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      cursor: pointer;
+    }
+    .itinerary-disclaimer {
+      margin-top: var(--space-5);
+      font-size: 0.75rem;
+      color: var(--mid-gray);
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    /* Meeting point */
+    .meeting-point__desc {
+      font-size: var(--text-sm);
+      color: var(--mid-gray);
+      line-height: 1.6;
+      margin-bottom: var(--space-3);
+    }
+    .meeting-point__maps-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--near-black);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .meeting-point__maps-link:hover { color: var(--coral); }
+
+    /* Booking panel GYG style */
+    .booking-panel__sell-out {
+      display: inline-block;
+      background: #DC2626;
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 4px;
+      margin-bottom: var(--space-3);
+      letter-spacing: 0.01em;
+    }
+    .booking-panel__select-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: var(--space-3) var(--space-4);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      background: #fff;
+      margin-bottom: var(--space-3);
+      cursor: pointer;
+      font-size: var(--text-sm);
+      color: var(--near-black);
+      transition: border-color var(--duration-fast);
+    }
+    .booking-panel__select-row:hover { border-color: var(--coral); }
+    .booking-panel__select-row svg { color: var(--mid-gray); flex-shrink: 0; }
+    .booking-panel__select-row span { flex: 1; text-align: left; }
+    .booking-panel__select-row .chevron { margin-left: auto; color: var(--mid-gray); }
+    .booking-panel__guarantee-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      margin-top: var(--space-4);
+    }
+    .booking-panel__guarantee-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.8rem;
+    }
+    .booking-panel__guarantee-item svg {
+      color: #059669;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .booking-panel__guarantee-item-title {
+      font-weight: 600;
+      color: var(--near-black);
+      display: block;
+      margin-bottom: 2px;
+    }
+    .booking-panel__guarantee-item-desc {
+      color: var(--mid-gray);
+      line-height: 1.4;
+    }
+    .booking-panel__guarantee-item-desc a {
+      color: var(--near-black);
+      font-weight: 600;
+    }
   </style>
 
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%23FF6B4A'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
@@ -90,6 +331,7 @@
         </div>
         <h1 class="tour-detail__title">Lake Louise: Guided Hike to Lake Agnes Tea House with Lunch</h1>
         <div class="tour-detail__rating-row">
+          <span class="tour-badge--top-rated">Top rated</span>
           <div class="tour-detail__stars">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
@@ -99,10 +341,17 @@
             <span class="tour-detail__rating-text">4.8</span>
           </div>
           <a href="#reviews" class="tour-detail__reviews-link">28 reviews</a>
-          <span class="tour-detail__bookings-badge">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            200+ booked
-          </span>
+          <span class="tour-detail__provider">&middot; Activity provider: Horizon Tours</span>
+          <div class="tour-detail__header-actions">
+            <button class="tour-detail__action-btn" aria-label="Add to wishlist">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              Add to wishlist
+            </button>
+            <button class="tour-detail__action-btn" aria-label="Share this tour">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+              Share
+            </button>
+          </div>
         </div>
         <div class="tour-info-pills">
           <span class="tour-info-pill tour-info-pill--green">
@@ -142,6 +391,15 @@
             </div>
           </div>
           <div class="activity-info-box__item">
+            <div class="activity-info-box__icon activity-info-box__icon--green">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+            </div>
+            <div>
+              <div class="activity-info-box__label">Reserve now &amp; pay later</div>
+              <div class="activity-info-box__value">Keep your travel plans flexible &mdash; book your spot and pay nothing today.</div>
+            </div>
+          </div>
+          <div class="activity-info-box__item">
             <div class="activity-info-box__icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
             </div>
@@ -169,6 +427,62 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Highlighted Reviews -->
+      <div class="tour-section highlighted-reviews">
+        <h2 class="tour-section__title">Highlighted reviews from other travelers</h2>
+        <div class="highlighted-reviews__cards">
+          <div class="review-card">
+            <div class="review-card__header">
+              <div class="review-card__author">
+                <div class="review-card__avatar">MJ</div>
+                <div>
+                  <div class="review-card__name-line">Mark J. &ndash; Canada</div>
+                  <div class="review-card__date">September 2025 <span class="review-card__verified">- Verified booking</span></div>
+                </div>
+              </div>
+              <div class="review-card__stars">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <span style="font-size:0.8rem;font-weight:600;margin-left:4px;">5</span>
+              </div>
+            </div>
+            <p class="review-card__text">Incredible experience! The Big Beehive viewpoint was absolutely worth the extra climb. Our guide was knowledgeable about the local ecology and kept a great pace for the group. Highly recommend.</p>
+          </div>
+          <div class="review-card">
+            <div class="review-card__header">
+              <div class="review-card__author">
+                <div class="review-card__avatar">DW</div>
+                <div>
+                  <div class="review-card__name-line">Diana W. &ndash; United States</div>
+                  <div class="review-card__date">August 2025 <span class="review-card__verified">- Verified booking</span></div>
+                </div>
+              </div>
+              <div class="review-card__stars">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <span style="font-size:0.8rem;font-weight:600;margin-left:4px;">5</span>
+              </div>
+            </div>
+            <p class="review-card__text">Best thing we did in Banff! The Tea House lunch was magical &mdash; sitting beside a glacial lake at 2,100m with fresh-baked scones and tea. Our guide stopped us at all the right spots and told us things we never would have known on our own. <a href="#reviews" style="color:var(--mid-gray);font-weight:600;">Read more</a></p>
+          </div>
+        </div>
+        <div class="highlighted-reviews__nav">
+          <button class="highlighted-reviews__nav-btn" aria-label="Previous reviews">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <button class="highlighted-reviews__nav-btn" aria-label="Next reviews">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+        </div>
+        <a href="#reviews" class="highlighted-reviews__see-more">See more reviews</a>
       </div>
 
       <!-- Highlights -->
@@ -215,7 +529,7 @@
           <p>You'll return to your hotel by mid-to-late afternoon with the rest of the day free. Your guide will share recommendations for restaurants and activities in town.</p>
         </div>
         <button class="tour-description__toggle" id="descriptionToggle" onclick="toggleDescription()">
-          Read more
+          See more
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
         </button>
       </div>
@@ -254,13 +568,77 @@
 
       <div class="tour-section">
         <h2 class="tour-section__title">Itinerary</h2>
-        <div class="timeline">
-          <div class="timeline__item"><div class="timeline__dot"></div><div class="timeline__time">8:30 AM</div><div class="timeline__title">Hotel Pickup</div><div class="timeline__desc">Convenient morning pickup from your Banff or Canmore hotel. Settle in for the scenic drive through the Bow Valley.</div></div>
-          <div class="timeline__item"><div class="timeline__dot"></div><div class="timeline__time">9:30 AM</div><div class="timeline__title">Lake Louise</div><div class="timeline__desc">Arrive at Lake Louise for guided exploration. Walk along the shoreline, learn about Victoria Glacier, and capture photos with the Chateau in the background.</div></div>
-          <div class="timeline__item"><div class="timeline__dot"></div><div class="timeline__time">11:15 AM</div><div class="timeline__title">Moraine Lake</div><div class="timeline__desc">Drive to Moraine Lake and hike the short Rockpile Trail for the iconic Valley of the Ten Peaks viewpoint. Explore the lakeside at your own pace.</div></div>
-          <div class="timeline__item"><div class="timeline__dot"></div><div class="timeline__time">1:00 PM</div><div class="timeline__title">Scenic Return</div><div class="timeline__desc">Return to your hotel with an optional stop for additional photos along the Bow Valley Parkway.</div></div>
-          <div class="timeline__item"><div class="timeline__dot"></div><div class="timeline__time">1:30 PM</div><div class="timeline__title">Hotel Drop-off</div><div class="timeline__desc">Back at your hotel with the whole afternoon free. Your guide will recommend restaurants and activities for the rest of your day.</div></div>
+        <div class="itinerary-layout">
+          <div>
+            <div class="timeline">
+              <div class="timeline__item">
+                <div class="timeline__dot"></div>
+                <div class="timeline__time">Starting location</div>
+                <div class="timeline__title">Your Banff or Canmore hotel</div>
+              </div>
+              <div class="timeline__item">
+                <div class="timeline__dot"></div>
+                <div class="timeline__time">8:30 AM</div>
+                <div class="timeline__title">Hotel Pickup</div>
+                <div class="timeline__desc">Convenient morning pickup from your Banff or Canmore hotel. Settle into a comfortable van for the scenic 45-minute drive up the Bow Valley Parkway.</div>
+              </div>
+              <div class="timeline__item">
+                <div class="timeline__dot"></div>
+                <div class="timeline__time">9:15 AM</div>
+                <div class="timeline__title">Lake Louise Trailhead</div>
+                <div class="timeline__desc">Walk past the Fairmont Chateau along the turquoise shoreline of Lake Louise before the trail begins climbing through dense evergreen forest.</div>
+              </div>
+              <div class="timeline__item">
+                <div class="timeline__dot"></div>
+                <div class="timeline__time">11:30 AM</div>
+                <div class="timeline__title">Lake Agnes Tea House &ndash; Lunch</div>
+                <div class="timeline__desc">Arrive at the historic Lake Agnes Tea House, perched at 2,135 m beside a glacial lake and waterfall. Enjoy a sit-down lunch with loose-leaf tea and fresh-baked goods.</div>
+              </div>
+              <div class="timeline__item">
+                <div class="timeline__dot"></div>
+                <div class="timeline__time">1:00 PM</div>
+                <div class="timeline__title">Big Beehive Viewpoint</div>
+                <div class="timeline__desc">Ascend to the Big Beehive for the most iconic overhead view of Lake Louise, Victoria Glacier, and the Chateau far below (conditions permitting).</div>
+              </div>
+              <div class="timeline__item">
+                <div class="timeline__dot"></div>
+                <div class="timeline__time">3:30 PM</div>
+                <div class="timeline__title">Hotel Drop-off</div>
+                <div class="timeline__desc">Return to your hotel with the rest of the afternoon free. Your guide will share restaurant and activity recommendations for the evening.</div>
+              </div>
+            </div>
+            <a href="#" class="itinerary-view-full">View full itinerary</a>
+          </div>
+          <div>
+            <div class="itinerary-map">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d10139.38!2d-116.2135!3d51.4254!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x5377903b9498e3a7%3A0x1f27df1d07b61432!2sLake%20Agnes%20Tea%20House!5e0!3m2!1sen!2sca!4v1"
+                title="Lake Agnes Tea House map"
+                allowfullscreen=""
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade">
+              </iframe>
+              <div class="itinerary-map__legend">
+                <div class="itinerary-map__legend-dot"></div>
+                Main stop
+              </div>
+            </div>
+          </div>
         </div>
+        <div class="itinerary-disclaimer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px;"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><circle cx="12" cy="16" r="0.5" fill="currentColor"/></svg>
+          For reference only. Itineraries are subject to change.
+        </div>
+      </div>
+
+      <!-- Meeting Point -->
+      <div class="tour-section">
+        <h2 class="tour-section__title">Meeting point</h2>
+        <p class="meeting-point__desc">Your guide will pick you up directly from your hotel lobby in Banff or Canmore. You will receive a confirmation message with your exact pickup time 24 hours before the tour. Please be ready in the lobby 5 minutes before the scheduled time, as the van departs promptly.</p>
+        <a href="https://maps.google.com/?q=Banff,+Alberta,+Canada" class="meeting-point__maps-link" target="_blank" rel="noopener noreferrer">
+          Open in Google Maps
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+        </a>
       </div>
 
       <!-- Important Information -->
@@ -440,28 +818,38 @@
 
     <aside id="book">
       <div class="booking-panel">
+        <div class="booking-panel__sell-out">Likely to sell out</div>
         <div class="booking-panel__price">
           <div class="booking-panel__from">From</div>
           <span class="booking-panel__price-amount">$149</span><span class="booking-panel__price-unit"> CAD per person</span>
         </div>
-        <div class="booking-panel__details">
-          <div class="booking-panel__divider"></div>
-          <div class="booking-panel__row"><span class="booking-panel__row-label">Duration</span><span class="booking-panel__row-value">7 hours</span></div>
-          <div class="booking-panel__row"><span class="booking-panel__row-label">Group size</span><span class="booking-panel__row-value">Max 12</span></div>
-          <div class="booking-panel__row"><span class="booking-panel__row-label">Start time</span><span class="booking-panel__row-value">8:30 AM</span></div>
-          <div class="booking-panel__row"><span class="booking-panel__row-label">Languages</span><span class="booking-panel__row-value">English</span></div>
-          <div class="booking-panel__divider"></div>
-        </div>
-        <button class="booking-panel__select-date">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          Select date and travelers
+        <button class="booking-panel__select-row" aria-label="Select number of adults">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          <span>Adult x 1</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <button class="booking-panel__select-row" aria-label="Select date">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span>Select date</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
         </button>
         <a href="#" class="btn btn--primary btn--lg btn--full">Check availability</a>
-        <div class="booking-panel__guarantee">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          Free cancellation up to 24 hours before
+        <div class="booking-panel__guarantee-list">
+          <div class="booking-panel__guarantee-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+            <div>
+              <span class="booking-panel__guarantee-item-title">Free cancellation</span>
+              <span class="booking-panel__guarantee-item-desc">Cancel up to 24 hours in advance for a full refund</span>
+            </div>
+          </div>
+          <div class="booking-panel__guarantee-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+            <div>
+              <span class="booking-panel__guarantee-item-title">Reserve now &amp; pay later</span>
+              <span class="booking-panel__guarantee-item-desc">Keep your travel plans flexible &mdash; book your spot and pay nothing today. <a href="#">Read more</a></span>
+            </div>
+          </div>
         </div>
-        <p class="booking-panel__note">Reserve now, pay later</p>
       </div>
     </aside>
   </div>
@@ -515,10 +903,10 @@
       var btn = document.getElementById('descriptionToggle');
       if (desc.classList.contains('tour-description--collapsed')) {
         desc.classList.remove('tour-description--collapsed');
-        btn.innerHTML = 'Show less <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg>';
+        btn.innerHTML = 'See less <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg>';
       } else {
         desc.classList.add('tour-description--collapsed');
-        btn.innerHTML = 'Read more <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
+        btn.innerHTML = 'See more <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
       }
     }
   </script>
