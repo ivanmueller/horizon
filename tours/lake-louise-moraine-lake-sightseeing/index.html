@@ -261,6 +261,39 @@
       color: var(--near-black);
       font-weight: 600;
     }
+
+    /* ---- GYG-style hero header layout ---- */
+    .tour-hero-header {
+      max-width: var(--container-max);
+      margin: 0 auto;
+      padding: var(--space-8) var(--container-padding) var(--space-4);
+    }
+    .tour-hero-header .tour-detail__category {
+      margin-bottom: var(--space-3);
+    }
+    .tour-hero-header .tour-detail__title {
+      margin-bottom: var(--space-3);
+    }
+    /* Remove extra top padding from tour-detail when hero header is rendered above it */
+    .tour-detail--with-hero {
+      padding-top: var(--space-2);
+    }
+    /* Photo grid inside the left column — override standalone full-width styles */
+    .tour-detail__main .tour-photo-grid-wrap {
+      max-width: none;
+      padding: 0;
+      margin: 0 0 var(--space-6);
+    }
+    .tour-detail__main .tour-photo-grid {
+      grid-template-rows: 210px 210px;
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+    }
+    @media (max-width: 768px) {
+      .tour-detail__main .tour-photo-grid {
+        grid-template-rows: 260px;
+      }
+    }
   </style>
 
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%23FF6B4A'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
@@ -295,85 +328,63 @@
     <span>Guided Hike to Lake Agnes Tea House</span>
   </div>
 
-  <!-- Tour Photo Grid -->
-  <div class="tour-photo-grid-wrap">
-    <div class="tour-photo-grid">
-      <div class="tour-photo-grid__item">
-        <img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-Hero.jpg" alt="Lake Agnes Tea House guided hike" loading="eager" fetchpriority="high">
+  <!-- Tour Hero Header: full-width title + rating above the photo/panel layout -->
+  <div class="tour-hero-header">
+    <div class="tour-detail__category">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      Hiking Tour
+    </div>
+    <h1 class="tour-detail__title">Lake Louise: Guided Hike to Lake Agnes Tea House with Lunch</h1>
+    <div class="tour-detail__rating-row">
+      <span class="tour-badge--top-rated">Top rated</span>
+      <div class="tour-detail__stars">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <span class="tour-detail__rating-text">4.8</span>
       </div>
-      <div class="tour-photo-grid__item">
-        <img src="/images/Lake-Agnes-Tea-House/lake-agnes-tea-house-2.jpg" alt="Lake Agnes Tea House trail views" loading="eager">
+      <a href="#reviews" class="tour-detail__reviews-link">28 reviews</a>
+      <span class="tour-detail__provider">&middot; Activity provider: Horizon Tours</span>
+      <div class="tour-detail__header-actions">
+        <button class="tour-detail__action-btn" aria-label="Add to wishlist">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          Add to wishlist
+        </button>
+        <button class="tour-detail__action-btn" aria-label="Share this tour">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          Share
+        </button>
       </div>
-      <div class="tour-photo-grid__item">
-        <img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-3.jpg" alt="Lake Agnes alpine scenery" loading="eager">
-      </div>
-      <div class="tour-photo-grid__item">
-        <img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-4.jpg" alt="Big Beehive viewpoint over Lake Louise" loading="lazy">
-      </div>
-      <div class="tour-photo-grid__item">
-        <img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-5.jpg" alt="Lake Agnes Tea House hiking experience" loading="lazy">
-      </div>
-      <button class="tour-photo-grid__show-all">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="3" r="1.5"/><circle cx="8" cy="3" r="1.5"/><circle cx="13" cy="3" r="1.5"/><circle cx="3" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="13" cy="8" r="1.5"/><circle cx="3" cy="13" r="1.5"/><circle cx="8" cy="13" r="1.5"/><circle cx="13" cy="13" r="1.5"/></svg>
-        Show all photos
-      </button>
     </div>
   </div>
 
-  <div class="tour-detail">
+  <div class="tour-detail tour-detail--with-hero">
     <main class="tour-detail__main">
 
-      <!-- Tour Title & Meta -->
-      <div class="tour-detail__header">
-        <div class="tour-detail__category">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-          Hiking Tour
-        </div>
-        <h1 class="tour-detail__title">Lake Louise: Guided Hike to Lake Agnes Tea House with Lunch</h1>
-        <div class="tour-detail__rating-row">
-          <span class="tour-badge--top-rated">Top rated</span>
-          <div class="tour-detail__stars">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            <span class="tour-detail__rating-text">4.8</span>
+      <!-- Tour Photo Grid (inside left column, beside booking panel) -->
+      <div class="tour-photo-grid-wrap">
+        <div class="tour-photo-grid">
+          <div class="tour-photo-grid__item">
+            <img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-Hero.jpg" alt="Lake Agnes Tea House guided hike" loading="eager" fetchpriority="high">
           </div>
-          <a href="#reviews" class="tour-detail__reviews-link">28 reviews</a>
-          <span class="tour-detail__provider">&middot; Activity provider: Horizon Tours</span>
-          <div class="tour-detail__header-actions">
-            <button class="tour-detail__action-btn" aria-label="Add to wishlist">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-              Add to wishlist
-            </button>
-            <button class="tour-detail__action-btn" aria-label="Share this tour">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-              Share
-            </button>
+          <div class="tour-photo-grid__item">
+            <img src="/images/Lake-Agnes-Tea-House/lake-agnes-tea-house-2.jpg" alt="Lake Agnes Tea House trail views" loading="eager">
           </div>
-        </div>
-        <div class="tour-info-pills">
-          <span class="tour-info-pill tour-info-pill--green">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
-            Free cancellation
-          </span>
-          <span class="tour-info-pill">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-            7 hours
-          </span>
-          <span class="tour-info-pill">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            Live tour guide &middot; English
-          </span>
-          <span class="tour-info-pill">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-            Small group (max 12)
-          </span>
-          <span class="tour-info-pill">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8l4 2.5v5L16 18"/></svg>
-            Hotel pickup
-          </span>
+          <div class="tour-photo-grid__item">
+            <img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-3.jpg" alt="Lake Agnes alpine scenery" loading="eager">
+          </div>
+          <div class="tour-photo-grid__item">
+            <img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-4.jpg" alt="Big Beehive viewpoint over Lake Louise" loading="lazy">
+          </div>
+          <div class="tour-photo-grid__item">
+            <img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-5.jpg" alt="Lake Agnes Tea House hiking experience" loading="lazy">
+          </div>
+          <button class="tour-photo-grid__show-all">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+            View all
+          </button>
         </div>
       </div>
 
