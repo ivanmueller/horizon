@@ -277,15 +277,20 @@
     /* Remove extra top padding from tour-detail when hero header is rendered above it */
     .tour-detail--with-hero {
       padding-top: var(--space-2);
+      max-width: 1050px;
+    }
+    /* Hero header matches tour-detail width */
+    .tour-hero-header {
+      max-width: 1050px;
     }
     /* Photo grid inside the left column — override standalone full-width styles */
     .tour-detail__main .tour-photo-grid-wrap {
       max-width: none;
       padding: 0;
-      margin: 0 0 var(--space-6);
+      margin: 0 0 var(--space-4);
     }
     .tour-detail__main .tour-photo-grid {
-      grid-template-rows: 210px 210px;
+      grid-template-rows: 240px 240px;
       border-radius: var(--radius-xl);
       overflow: hidden;
     }
@@ -293,6 +298,13 @@
       .tour-detail__main .tour-photo-grid {
         grid-template-rows: 260px;
       }
+    }
+    /* Short intro description below photos */
+    .tour-photo-intro {
+      font-size: var(--text-sm);
+      color: var(--mid-gray);
+      line-height: 1.65;
+      margin: 0 0 var(--space-2);
     }
   </style>
 
@@ -387,6 +399,9 @@
           </button>
         </div>
       </div>
+
+      <!-- Short intro description (below photo grid, like GYG) -->
+      <p class="tour-photo-intro">Discover the Canadian Rockies on a guided hike to the historic Lake Agnes Tea House, perched at 2,135 m beside a glacial lake. Enjoy a sit-down lunch, alpine waterfalls, and the iconic overhead view of Lake Louise from the Big Beehive summit.</p>
 
       <!-- About This Activity -->
       <div class="tour-section">
