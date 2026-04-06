@@ -266,7 +266,8 @@
     .tour-hero-header {
       max-width: var(--container-max);
       margin: 0 auto;
-      padding: var(--space-8) var(--container-padding) var(--space-4);
+      /* GYG uses tighter side padding than the default container */
+      padding: var(--space-8) 1.5rem var(--space-4);
     }
     .tour-hero-header .tour-detail__category {
       margin-bottom: var(--space-3);
@@ -274,9 +275,12 @@
     .tour-hero-header .tour-detail__title {
       margin-bottom: var(--space-3);
     }
-    /* Remove extra top padding from tour-detail when hero header is rendered above it */
+    /* Remove extra top padding from tour-detail when hero header is rendered above it,
+       and match the tighter side padding of the hero header */
     .tour-detail--with-hero {
       padding-top: var(--space-2);
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
     }
     /* Photo grid inside the left column — override standalone full-width styles */
     .tour-detail__main .tour-photo-grid-wrap {
@@ -285,7 +289,8 @@
       margin: 0 0 var(--space-4);
     }
     .tour-detail__main .tour-photo-grid {
-      grid-template-rows: 240px 240px;
+      /* ~175px rows make each cell roughly square at the column width GYG uses */
+      grid-template-rows: 175px 175px;
       border-radius: var(--radius-xl);
       overflow: hidden;
     }
