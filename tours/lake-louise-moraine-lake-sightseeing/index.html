@@ -1637,7 +1637,7 @@
       // Validate before sending
       if (!date) {
         document.getElementById('dateBtn').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        document.getElementById('dateBtn').click();
+        setTimeout(function() { document.getElementById('dateBtn').click(); }, 400);
         return;
       }
       if (adults + youth < 1) {
