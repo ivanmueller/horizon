@@ -281,9 +281,9 @@
       position: fixed;
       inset: 0;
       z-index: 9000;
-      background: rgba(0,0,0,0.55);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      background: rgba(0,0,0,0.22);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       align-items: center;
       justify-content: center;
       padding: 24px;
@@ -295,7 +295,6 @@
       align-items: center;
       max-width: 1080px;
       width: 100%;
-      position: relative;
     }
     .wyd-lb__sidebar {
       display: flex;
@@ -339,21 +338,22 @@
     .wyd-lb__thumb.is-active,
     .wyd-lb__thumb:hover { opacity: 1; }
     .wyd-lb__thumb.is-active { border-color: #fff; }
-    .wyd-lb__card-wrap {
-      flex: 1;
-      position: relative;
-    }
     .wyd-lb__card {
       background: #fff;
       border-radius: 20px;
-      overflow: hidden;
+      overflow: visible;
       display: flex;
+      flex: 1;
       min-height: 520px;
+      position: relative;
     }
     .wyd-lb__img-panel {
       flex: 0 0 54%;
       background: #fff;
       padding: 18px;
+      border-radius: 20px 0 0 20px;
+      overflow: hidden;
+      position: relative;
     }
     .wyd-lb__img-panel img {
       width: 100%;
@@ -361,6 +361,7 @@
       object-fit: cover;
       display: block;
       border-radius: 12px;
+      transition: opacity 200ms ease;
     }
     .wyd-lb__info-panel {
       flex: 1;
@@ -375,6 +376,7 @@
       color: var(--mid-gray);
       font-weight: 500;
       margin-bottom: 16px;
+      transition: opacity 200ms ease;
     }
     .wyd-lb__info-title {
       font-size: 1.65rem;
@@ -382,18 +384,44 @@
       color: var(--near-black);
       line-height: 1.2;
       margin-bottom: 20px;
+      transition: opacity 200ms ease;
     }
     .wyd-lb__info-desc {
       font-size: 0.9rem;
       color: var(--mid-gray);
       line-height: 1.7;
+      transition: opacity 200ms ease;
     }
+    /* Skeleton shimmer */
+    @keyframes wyd-shimmer {
+      0%   { background-position: -600px 0; }
+      100% { background-position:  600px 0; }
+    }
+    .wyd-lb__skel {
+      display: none;
+      border-radius: 8px;
+      background: linear-gradient(90deg, #e8e8e8 25%, #f2f2f2 50%, #e8e8e8 75%);
+      background-size: 1200px 100%;
+      animation: wyd-shimmer 1.4s infinite linear;
+    }
+    .wyd-lb__card.is-loading .wyd-lb__skel    { display: block; }
+    .wyd-lb__card.is-loading .wyd-lb__img-panel img,
+    .wyd-lb__card.is-loading .wyd-lb__info-time,
+    .wyd-lb__card.is-loading .wyd-lb__info-title,
+    .wyd-lb__card.is-loading .wyd-lb__info-desc { opacity: 0; }
+    .wyd-lb__skel--img   { position: absolute; inset: 18px; border-radius: 12px; }
+    .wyd-lb__skel--time  { height: 13px; width: 55px; margin: 0 auto 18px; }
+    .wyd-lb__skel--title { height: 30px; width: 75%; margin: 0 auto 22px; }
+    .wyd-lb__skel--desc1,
+    .wyd-lb__skel--desc2 { height: 12px; width: 88%; margin: 0 auto 10px; }
+    .wyd-lb__skel--desc2 { width: 70%; }
+    /* Close button — inside card, top-right corner */
     .wyd-lb__close {
       position: absolute;
-      top: -18px;
-      right: -18px;
-      width: 40px;
-      height: 40px;
+      top: 16px;
+      right: 16px;
+      width: 38px;
+      height: 38px;
       border-radius: 50%;
       background: #fff;
       border: 1px solid #d1d5db;
@@ -409,10 +437,9 @@
     @media (max-width: 780px) {
       .wyd-lb__sidebar { display: none; }
       .wyd-lb__card { flex-direction: column; min-height: 0; }
-      .wyd-lb__img-panel { flex: 0 0 240px; padding: 14px; }
+      .wyd-lb__img-panel { flex: 0 0 240px; padding: 14px; border-radius: 20px 20px 0 0; }
       .wyd-lb__info-panel { padding: 28px 24px; text-align: left; }
       .wyd-lb__info-title { font-size: 1.2rem; }
-      .wyd-lb__close { top: -14px; right: -14px; width: 34px; height: 34px; }
     }
 
     /* Meeting point */
@@ -2304,19 +2331,22 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
         </button>
       </div>
-      <div class="wyd-lb__card-wrap">
+      <div class="wyd-lb__card" id="wydLbCard">
         <button class="wyd-lb__close" id="wydLbClose" aria-label="Close">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
         </button>
-        <div class="wyd-lb__card">
-          <div class="wyd-lb__img-panel">
-            <img src="" alt="" id="wydLbImg">
-          </div>
-          <div class="wyd-lb__info-panel">
-            <div class="wyd-lb__info-time" id="wydLbTime"></div>
-            <div class="wyd-lb__info-title" id="wydLbTitle"></div>
-            <div class="wyd-lb__info-desc" id="wydLbDesc"></div>
-          </div>
+        <div class="wyd-lb__img-panel">
+          <img src="" alt="" id="wydLbImg">
+          <div class="wyd-lb__skel wyd-lb__skel--img"></div>
+        </div>
+        <div class="wyd-lb__info-panel">
+          <div class="wyd-lb__skel wyd-lb__skel--time"></div>
+          <div class="wyd-lb__skel wyd-lb__skel--title"></div>
+          <div class="wyd-lb__skel wyd-lb__skel--desc1"></div>
+          <div class="wyd-lb__skel wyd-lb__skel--desc2"></div>
+          <div class="wyd-lb__info-time" id="wydLbTime"></div>
+          <div class="wyd-lb__info-title" id="wydLbTitle"></div>
+          <div class="wyd-lb__info-desc" id="wydLbDesc"></div>
         </div>
       </div>
     </div>
@@ -2332,6 +2362,7 @@
     ];
     var current = 0;
     var lb      = document.getElementById('wydLightbox');
+    var lbCard  = document.getElementById('wydLbCard');
     var lbImg   = document.getElementById('wydLbImg');
     var lbTime  = document.getElementById('wydLbTime');
     var lbTitle = document.getElementById('wydLbTitle');
@@ -2339,12 +2370,12 @@
     var thumbs  = lb.querySelectorAll('.wyd-lb__thumb');
     var prevBtn = document.getElementById('wydLbPrev');
     var nextBtn = document.getElementById('wydLbNext');
+    var skelTimer = null;
     function updateNav() {
       prevBtn.disabled = current === 0;
       nextBtn.disabled = current === items.length - 1;
     }
-    function show(i) {
-      current = i;
+    function applyItem(i) {
       var d = items[i];
       lbImg.src   = d.src;
       lbImg.alt   = d.alt;
@@ -2354,8 +2385,19 @@
       thumbs.forEach(function(t, j) { t.classList.toggle('is-active', j === i); });
       updateNav();
     }
+    function show(i) {
+      if (i === current && lbCard.classList.contains('is-open')) return;
+      clearTimeout(skelTimer);
+      current = i;
+      lbCard.classList.add('is-loading');
+      skelTimer = setTimeout(function() {
+        applyItem(i);
+        lbCard.classList.remove('is-loading');
+      }, 340);
+    }
     function open(i) {
-      show(i);
+      current = i;
+      applyItem(i);
       lb.classList.add('is-open');
       document.body.style.overflow = 'hidden';
     }
