@@ -281,9 +281,101 @@
       height: 100%;
       object-fit: cover;
       display: block;
-      transition: transform 0.2s ease;
+      transition: filter 0.2s ease;
     }
-    .photo-gallery-overlay__item:hover img { transform: scale(1.04); }
+    .photo-gallery-overlay__item:hover img { filter: brightness(0.75); }
+
+    /* Photo viewer (white, single-image from gallery) */
+    .photo-viewer {
+      position: fixed;
+      inset: 0;
+      z-index: 10001;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .photo-viewer.active { opacity: 1; pointer-events: all; }
+    .photo-viewer__topbar {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      flex-shrink: 0;
+    }
+    .photo-viewer__counter {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--near-black);
+    }
+    .photo-viewer__icon-btn {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      border: 1.5px solid #D1D5DB;
+      background: #fff;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--near-black);
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .photo-viewer__icon-btn:hover { background: #F3F4F6; }
+    .photo-viewer__stage {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      position: relative;
+      padding: 0 88px;
+      overflow: hidden;
+    }
+    .photo-viewer__img {
+      max-width: 100%;
+      max-height: calc(100vh - 160px);
+      object-fit: contain;
+      border-radius: 10px;
+      display: block;
+    }
+    .photo-viewer__nav {
+      position: absolute;
+      top: 50%; transform: translateY(-50%);
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      border: 1.5px solid #D1D5DB;
+      background: #fff;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--near-black);
+      transition: background 0.15s;
+      z-index: 2;
+    }
+    .photo-viewer__nav:hover { background: #F3F4F6; }
+    .photo-viewer__nav:disabled { opacity: 0.3; cursor: default; }
+    .photo-viewer__nav--prev { left: 24px; }
+    .photo-viewer__nav--next { right: 24px; }
+    .photo-viewer__footer {
+      padding: 16px;
+      flex-shrink: 0;
+    }
+    .photo-viewer__check-btn {
+      border: 1.5px solid var(--near-black);
+      border-radius: 50px;
+      background: #fff;
+      color: var(--near-black);
+      font-weight: 600;
+      font-size: 0.875rem;
+      padding: 11px 32px;
+      cursor: pointer;
+      font-family: inherit;
+      letter-spacing: 0.01em;
+      transition: background 0.15s, color 0.15s;
+    }
+    .photo-viewer__check-btn:hover { background: var(--near-black); color: #fff; }
     .booking-panel__select-row svg { color: #6B7280; flex-shrink: 0; }
     .booking-panel__select-row span { flex: 1; text-align: left; }
     .booking-panel__select-row .chevron { margin-left: auto; color: #6B7280; }
@@ -1180,6 +1272,31 @@
 
   <div style="height:80px;display:none;" class="mobile-booking-spacer"></div>
   
+  <!-- Photo Viewer (single image from gallery, white bg) -->
+  <div class="photo-viewer" id="photoViewer">
+    <div class="photo-viewer__topbar">
+      <button class="photo-viewer__icon-btn" id="viewerClose" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+      </button>
+      <span class="photo-viewer__counter" id="viewerCounter">1 / 10</span>
+      <button class="photo-viewer__icon-btn" id="viewerGrid" aria-label="Back to all photos">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      </button>
+    </div>
+    <div class="photo-viewer__stage">
+      <button class="photo-viewer__nav photo-viewer__nav--prev" id="viewerPrev" aria-label="Previous photo">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <img class="photo-viewer__img" id="viewerImg" src="" alt="">
+      <button class="photo-viewer__nav photo-viewer__nav--next" id="viewerNext" aria-label="Next photo">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </div>
+    <div class="photo-viewer__footer">
+      <button class="photo-viewer__check-btn" id="viewerCheckAvail">Check availability</button>
+    </div>
+  </div>
+
   <!-- Photo Gallery Overlay (View all) -->
   <div class="photo-gallery-overlay" id="photoGalleryOverlay">
     <button class="photo-gallery-overlay__close" id="galleryClose" aria-label="Close gallery">
@@ -1223,14 +1340,13 @@
   </script>
   <script>
     (function() {
-      // ── Single-image lightbox ────────────────────────────────
-      const lightbox    = document.getElementById('photoLightbox');
-      const lightboxImg = document.getElementById('lightboxImg');
-      const closeBtn    = lightbox.querySelector('.photo-lightbox__close');
+      // ── Dark lightbox (direct grid clicks) ──────────────────
+      var lightbox    = document.getElementById('photoLightbox');
+      var lightboxImg = document.getElementById('lightboxImg');
+      var closeBtn    = lightbox.querySelector('.photo-lightbox__close');
 
       function openLightbox(src, alt) {
-        lightboxImg.src = src;
-        lightboxImg.alt = alt;
+        lightboxImg.src = src; lightboxImg.alt = alt;
         lightbox.classList.add('active');
         document.body.style.overflow = 'hidden';
       }
@@ -1238,18 +1354,16 @@
         lightbox.classList.remove('active');
         document.body.style.overflow = '';
       }
-
       document.querySelectorAll('.tour-photo-grid__item img').forEach(function(img) {
         img.addEventListener('click', function() { openLightbox(this.src, this.alt); });
       });
-
       closeBtn.addEventListener('click', closeLightbox);
       lightbox.addEventListener('click', function(e) { if (e.target === lightbox) closeLightbox(); });
 
-      // ── Gallery overlay (View all) ───────────────────────────
-      const gallery     = document.getElementById('photoGalleryOverlay');
-      const galleryClose = document.getElementById('galleryClose');
-      const viewAllBtn  = document.querySelector('.tour-photo-grid__show-all');
+      // ── Gallery overlay (View all grid) ─────────────────────
+      var gallery      = document.getElementById('photoGalleryOverlay');
+      var galleryClose = document.getElementById('galleryClose');
+      var viewAllBtn   = document.querySelector('.tour-photo-grid__show-all');
 
       function openGallery() {
         gallery.classList.add('active');
@@ -1259,21 +1373,86 @@
         gallery.classList.remove('active');
         document.body.style.overflow = '';
       }
-
       if (viewAllBtn) viewAllBtn.addEventListener('click', openGallery);
-      galleryClose.addEventListener('click', closeGallery);
-      gallery.addEventListener('click', function(e) { if (e.target === gallery) closeGallery(); });
+      galleryClose.addEventListener('click', function() { closeGallery(); document.body.style.overflow = ''; });
 
-      // Clicking a gallery image opens the single-image lightbox
-      gallery.querySelectorAll('.photo-gallery-overlay__item img').forEach(function(img) {
-        img.addEventListener('click', function(e) {
+      // ── Photo viewer (white, opens from gallery) ─────────────
+      var viewer       = document.getElementById('photoViewer');
+      var viewerImg    = document.getElementById('viewerImg');
+      var viewerCounter = document.getElementById('viewerCounter');
+      var viewerPrev   = document.getElementById('viewerPrev');
+      var viewerNext   = document.getElementById('viewerNext');
+
+      // Build ordered image list from gallery
+      var galleryImgs = Array.prototype.slice.call(
+        gallery.querySelectorAll('.photo-gallery-overlay__item img')
+      );
+      var viewerIndex = 0;
+
+      function showViewerAt(idx) {
+        viewerIndex = idx;
+        viewerImg.src = galleryImgs[idx].src;
+        viewerImg.alt = galleryImgs[idx].alt;
+        viewerCounter.textContent = (idx + 1) + ' / ' + galleryImgs.length;
+        viewerPrev.disabled = idx === 0;
+        viewerNext.disabled = idx === galleryImgs.length - 1;
+      }
+
+      function openViewer(idx) {
+        showViewerAt(idx);
+        closeGallery();
+        viewer.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+      function closeViewer() {
+        viewer.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+
+      // Wire gallery images to open viewer
+      galleryImgs.forEach(function(img, i) {
+        img.parentElement.addEventListener('click', function(e) {
           e.stopPropagation();
-          closeGallery();
-          openLightbox(this.src, this.alt);
+          openViewer(i);
         });
       });
 
-      // Close both on Escape
+      // Viewer controls
+      document.getElementById('viewerClose').addEventListener('click', function() {
+        closeViewer(); // X closes everything — back to tour page
+      });
+      document.getElementById('viewerGrid').addEventListener('click', function() {
+        closeViewer();
+        openGallery(); // grid icon returns to gallery
+      });
+      viewerPrev.addEventListener('click', function() {
+        if (viewerIndex > 0) showViewerAt(viewerIndex - 1);
+      });
+      viewerNext.addEventListener('click', function() {
+        if (viewerIndex < galleryImgs.length - 1) showViewerAt(viewerIndex + 1);
+      });
+
+      // Check availability: close overlays, scroll to panel, open date picker
+      document.getElementById('viewerCheckAvail').addEventListener('click', function() {
+        closeViewer();
+        closeGallery();
+        document.body.style.overflow = '';
+        var dateBtn = document.getElementById('dateBtn');
+        if (dateBtn) {
+          dateBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(function() { dateBtn.click(); }, 400);
+        }
+      });
+
+      // Arrow key navigation
+      document.addEventListener('keydown', function(e) {
+        if (!viewer.classList.contains('active')) return;
+        if (e.key === 'ArrowLeft'  && viewerIndex > 0) showViewerAt(viewerIndex - 1);
+        if (e.key === 'ArrowRight' && viewerIndex < galleryImgs.length - 1) showViewerAt(viewerIndex + 1);
+        if (e.key === 'Escape') { closeViewer(); }
+      });
+
+      // Escape from gallery
       document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') { closeLightbox(); closeGallery(); }
       });
