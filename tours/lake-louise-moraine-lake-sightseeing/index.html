@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 
   <style>
     .tours-grid { grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)) !important; }
@@ -547,6 +548,107 @@
       color: var(--near-black);
       padding-bottom: 14px;
     }
+    /* Pickup location row */
+    .bp-pickup {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--near-black);
+      padding-bottom: 14px;
+    }
+    .bp-pickup__label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+    .bp-pickup__pills {
+      display: flex;
+      gap: 6px;
+    }
+    .bp-pickup__pill {
+      padding: 3px 12px;
+      border-radius: 999px;
+      border: 1.5px solid #D1D5DB;
+      background: #fff;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--near-black);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+    }
+    .bp-pickup__pill:hover { border-color: #1A1A2E; }
+    .bp-pickup__pill--active {
+      border-color: #1A1A2E;
+      background: #1A1A2E;
+      color: #fff;
+    }
+    .bp-pickup__map-link {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.8rem;
+      color: var(--mid-gray);
+      text-decoration: underline;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+      margin-left: 2px;
+    }
+    .bp-pickup__map-link:hover { color: var(--near-black); }
+    /* Map lightbox */
+    .map-lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(0,0,0,0.55);
+      align-items: center;
+      justify-content: center;
+    }
+    .map-lightbox--open { display: flex; }
+    .map-lightbox__dialog {
+      background: #fff;
+      border-radius: 16px;
+      width: min(680px, 94vw);
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .map-lightbox__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid #E5E7EB;
+    }
+    .map-lightbox__title {
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--near-black);
+    }
+    .map-lightbox__subtitle {
+      font-size: 0.85rem;
+      color: var(--mid-gray);
+      margin-top: 2px;
+    }
+    .map-lightbox__close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--mid-gray);
+      padding: 4px;
+      border-radius: 6px;
+      line-height: 1;
+    }
+    .map-lightbox__close:hover { color: var(--near-black); background: #F3F4F6; }
+    .map-lightbox__map { height: 380px; flex-shrink: 0; }
     .bp-expansion__divider { border: none; border-top: 1px solid #E5E7EB; margin: 0 20px; }
     .bp-expansion__section { padding: 14px 20px; }
     .bp-expansion__time-label {
@@ -818,9 +920,19 @@
                 Guide: English
               </span>
             </div>
-            <div class="bp-expansion__location">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              Hotel pickup · Banff or Canmore
+            <div class="bp-pickup">
+              <span class="bp-pickup__label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                Pickup location
+              </span>
+              <div class="bp-pickup__pills">
+                <button class="bp-pickup__pill bp-pickup__pill--active" data-location="canmore" type="button">Canmore</button>
+                <button class="bp-pickup__pill" data-location="banff" type="button">Banff</button>
+              </div>
+              <button class="bp-pickup__map-link" id="pickupMapBtn" type="button">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z"/><path d="M8 2v16M16 6v16"/></svg>
+                See on map
+              </button>
             </div>
           </div>
           <hr class="bp-expansion__divider">
@@ -1908,6 +2020,95 @@
           bookBtn.textContent = 'Book now';
           alert('Something went wrong starting checkout. Please try again or contact us.');
         });
+    });
+  })();
+  </script>
+
+  <!-- Pickup location map lightbox -->
+  <div class="map-lightbox" id="pickupMapLightbox" role="dialog" aria-modal="true" aria-labelledby="mapLightboxTitle">
+    <div class="map-lightbox__dialog">
+      <div class="map-lightbox__header">
+        <div>
+          <div class="map-lightbox__title" id="mapLightboxTitle">Pickup details</div>
+          <div class="map-lightbox__subtitle" id="mapLightboxSubtitle"></div>
+        </div>
+        <button class="map-lightbox__close" id="pickupMapClose" aria-label="Close map">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="map-lightbox__map" id="pickupMapEl"></div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script>
+  (function() {
+    var MAPBOX_TOKEN = 'pk.eyJ1IjoiaXZhbmdvd2l0aGhvcml6b24iLCJhIjoiY21tZTA3MjYwMDR5cjJzbjNoa3BlN2VjbSJ9.ujNcQr3Sux3HYncTFns7fg';
+
+    var LOCATIONS = {
+      canmore: {
+        label: 'Canmore',
+        subtitle: 'Canmore pickup · hotel pickup from Canmore area',
+        lat: 51.0884, lng: -115.3444, zoom: 13
+      },
+      banff: {
+        label: 'Banff',
+        subtitle: 'Banff pickup · hotel pickup from Banff area',
+        lat: 51.1784, lng: -115.5708, zoom: 13
+      }
+    };
+
+    var activeLocation = 'canmore';
+    var leafletMap = null;
+    var leafletMarker = null;
+
+    // Pill selection
+    document.querySelectorAll('.bp-pickup__pill').forEach(function(pill) {
+      pill.addEventListener('click', function() {
+        document.querySelectorAll('.bp-pickup__pill').forEach(function(p) {
+          p.classList.remove('bp-pickup__pill--active');
+        });
+        pill.classList.add('bp-pickup__pill--active');
+        activeLocation = pill.dataset.location;
+      });
+    });
+
+    // Open map lightbox
+    document.getElementById('pickupMapBtn').addEventListener('click', function() {
+      var loc = LOCATIONS[activeLocation];
+      document.getElementById('mapLightboxTitle').textContent = loc.label + ' pickup details';
+      document.getElementById('mapLightboxSubtitle').textContent = loc.subtitle;
+      document.getElementById('pickupMapLightbox').classList.add('map-lightbox--open');
+      document.body.style.overflow = 'hidden';
+
+      // Init or update map
+      setTimeout(function() {
+        if (!leafletMap) {
+          leafletMap = L.map('pickupMapEl').setView([loc.lat, loc.lng], loc.zoom);
+          L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=' + MAPBOX_TOKEN, {
+            attribution: '&copy; <a href="https://www.mapbox.com/">Mapbox</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+            tileSize: 512, zoomOffset: -1, maxZoom: 19
+          }).addTo(leafletMap);
+          leafletMarker = L.marker([loc.lat, loc.lng]).addTo(leafletMap);
+        } else {
+          leafletMap.setView([loc.lat, loc.lng], loc.zoom);
+          leafletMarker.setLatLng([loc.lat, loc.lng]);
+        }
+        leafletMap.invalidateSize();
+      }, 80);
+    });
+
+    // Close map lightbox
+    function closeMap() {
+      document.getElementById('pickupMapLightbox').classList.remove('map-lightbox--open');
+      document.body.style.overflow = '';
+    }
+    document.getElementById('pickupMapClose').addEventListener('click', closeMap);
+    document.getElementById('pickupMapLightbox').addEventListener('click', function(e) {
+      if (e.target === this) closeMap();
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeMap();
     });
   })();
   </script>
