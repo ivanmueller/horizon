@@ -478,13 +478,13 @@
     }
 
     /* ---- GYG-style booking expansion panel ---- */
-    .bp-expansion { margin-top: 14px; }
+    .bp-expansion { margin-top: 0; margin-bottom: var(--space-8); }
     .bp-expansion:not([hidden]) { animation: dropdownFadeIn 0.35s ease; }
     .bp-expansion__header {
-      font-size: 0.9rem;
-      font-weight: 600;
+      font-size: 1rem;
+      font-weight: 700;
       color: var(--near-black);
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
     .bp-expansion__card {
       border: 2px solid var(--coral);
@@ -492,7 +492,7 @@
       overflow: hidden;
       background: #fff;
     }
-    .bp-expansion__top { padding: 14px 16px 0; }
+    .bp-expansion__top { padding: 16px 20px 0; }
     .bp-expansion__badge {
       display: inline-block;
       background: #DC2626;
@@ -501,61 +501,68 @@
       font-weight: 700;
       padding: 3px 8px;
       border-radius: 4px;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
       letter-spacing: 0.01em;
     }
     .bp-expansion__tour-title {
-      font-size: 0.95rem;
+      font-size: 1.05rem;
       font-weight: 700;
       color: var(--near-black);
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
     .bp-expansion__meta {
       display: flex;
-      gap: 14px;
-      font-size: 0.8rem;
+      gap: 24px;
+      font-size: 0.85rem;
       color: var(--mid-gray);
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
-    .bp-expansion__meta-item { display: flex; align-items: center; gap: 4px; }
+    .bp-expansion__meta-item { display: flex; align-items: center; gap: 5px; }
     .bp-expansion__location {
       display: flex;
       align-items: flex-start;
       gap: 6px;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       color: var(--near-black);
-      padding-bottom: 12px;
+      padding-bottom: 14px;
     }
     .bp-expansion__divider { border: none; border-top: 1px solid #E5E7EB; margin: 0; }
-    .bp-expansion__section { padding: 12px 16px; }
+    .bp-expansion__section { padding: 14px 20px; }
     .bp-expansion__time-label {
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       font-weight: 600;
       color: var(--near-black);
-      margin-bottom: 3px;
+      margin-bottom: 4px;
     }
-    .bp-expansion__time-date { font-size: 0.85rem; color: var(--near-black); }
-    .bp-expansion__time-value { font-size: 0.85rem; color: var(--near-black); font-weight: 500; }
+    .bp-expansion__time-date { font-size: 0.9rem; color: var(--near-black); }
+    .bp-expansion__time-value { font-size: 0.9rem; color: var(--near-black); font-weight: 500; }
     .bp-expansion__policy-row {
       display: flex;
       align-items: flex-start;
-      gap: 8px;
-      font-size: 0.8rem;
+      gap: 10px;
+      font-size: 0.85rem;
       color: var(--near-black);
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
     .bp-expansion__policy-row:last-child { margin-bottom: 0; }
     .bp-expansion__policy-row svg { flex-shrink: 0; margin-top: 1px; color: #059669; }
     .bp-expansion__policy-row a { color: var(--near-black); font-weight: 600; }
-    .bp-expansion__footer { padding: 12px 16px 14px; border-top: 1px solid #E5E7EB; }
+    .bp-expansion__footer {
+      padding: 16px 20px;
+      border-top: 1px solid #E5E7EB;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+    }
     .bp-expansion__total {
-      font-size: 1.2rem;
+      font-size: 1.3rem;
       font-weight: 700;
       color: var(--near-black);
       margin-bottom: 2px;
     }
-    .bp-expansion__breakdown { font-size: 0.78rem; color: var(--mid-gray); margin-bottom: 2px; }
-    .bp-expansion__tax { font-size: 0.75rem; color: var(--mid-gray); margin-bottom: 12px; }
+    .bp-expansion__breakdown { font-size: 0.82rem; color: var(--mid-gray); margin-bottom: 2px; }
+    .bp-expansion__tax { font-size: 0.78rem; color: var(--mid-gray); }
 
     /* Travellers */
     .bp-travellers__row {
@@ -770,6 +777,56 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
             View all
           </button>
+        </div>
+      </div>
+
+      <!-- GYG-style booking expansion (triggered by Check Availability in sidebar) -->
+      <div class="bp-expansion" id="bpExpansion" hidden>
+        <div class="bp-expansion__header">1 option available</div>
+        <div class="bp-expansion__card">
+          <div class="bp-expansion__top">
+            <div class="bp-expansion__badge">Only 9 spots left</div>
+            <div class="bp-expansion__tour-title">Lake Agnes Tea House Hike</div>
+            <div class="bp-expansion__meta">
+              <span class="bp-expansion__meta-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                7 hours
+              </span>
+              <span class="bp-expansion__meta-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                Guide: English
+              </span>
+            </div>
+            <div class="bp-expansion__location">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              Hotel pickup · Banff or Canmore
+            </div>
+          </div>
+          <hr class="bp-expansion__divider">
+          <div class="bp-expansion__section">
+            <div class="bp-expansion__time-label">Starting time</div>
+            <div class="bp-expansion__time-date" id="expansionDate"></div>
+            <div class="bp-expansion__time-value">8:30 AM</div>
+          </div>
+          <hr class="bp-expansion__divider">
+          <div class="bp-expansion__section">
+            <div class="bp-expansion__policy-row">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              <span>Cancel before <strong id="expansionCancelDate"></strong> at 8:30 AM for a full refund</span>
+            </div>
+            <div class="bp-expansion__policy-row">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+              <span>You can reserve now &amp; pay later. <a href="#">Learn more</a></span>
+            </div>
+          </div>
+          <div class="bp-expansion__footer">
+            <div>
+              <div class="bp-expansion__total" id="expansionTotal"></div>
+              <div class="bp-expansion__breakdown" id="expansionBreakdown"></div>
+              <div class="bp-expansion__tax">All taxes and fees included</div>
+            </div>
+            <button class="btn btn--primary btn--lg" id="bookNowBtn" type="button">Book now</button>
+          </div>
         </div>
       </div>
 
@@ -1306,54 +1363,6 @@
 
         <button class="btn btn--primary btn--lg btn--full" id="checkAvailBtn" type="button">Check availability</button>
 
-        <!-- GYG-style booking expansion -->
-        <div class="bp-expansion" id="bpExpansion" hidden>
-          <div class="bp-expansion__header">1 option available</div>
-          <div class="bp-expansion__card">
-            <div class="bp-expansion__top">
-              <div class="bp-expansion__badge">Only 9 spots left</div>
-              <div class="bp-expansion__tour-title">Lake Agnes Tea House Hike</div>
-              <div class="bp-expansion__meta">
-                <span class="bp-expansion__meta-item">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                  7 hours
-                </span>
-                <span class="bp-expansion__meta-item">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-                  Guide: English
-                </span>
-              </div>
-              <div class="bp-expansion__location">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                Hotel pickup · Banff or Canmore
-              </div>
-            </div>
-            <hr class="bp-expansion__divider">
-            <div class="bp-expansion__section">
-              <div class="bp-expansion__time-label">Starting time</div>
-              <div class="bp-expansion__time-date" id="expansionDate"></div>
-              <div class="bp-expansion__time-value">8:30 AM</div>
-            </div>
-            <hr class="bp-expansion__divider">
-            <div class="bp-expansion__section">
-              <div class="bp-expansion__policy-row">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                <span>Cancel before <strong id="expansionCancelDate"></strong> at 8:30 AM for a full refund</span>
-              </div>
-              <div class="bp-expansion__policy-row">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
-                <span>You can reserve now &amp; pay later. <a href="#">Learn more</a></span>
-              </div>
-            </div>
-            <div class="bp-expansion__footer">
-              <div class="bp-expansion__total" id="expansionTotal"></div>
-              <div class="bp-expansion__breakdown" id="expansionBreakdown"></div>
-              <div class="bp-expansion__tax">All taxes and fees included</div>
-              <button class="btn btn--primary btn--lg btn--full" id="bookNowBtn" type="button">Book now</button>
-            </div>
-          </div>
-        </div>
-
         <div class="booking-panel__guarantee-list">
           <div class="booking-panel__guarantee-item">
             <svg width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#059669"/><path d="M6.5 12.5l3.5 3.5 7-7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
@@ -1806,6 +1815,9 @@
     function showExpansion() {
       populateExpansion(getBookingData());
       expansion.hidden = false;
+      setTimeout(function() {
+        expansion.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 50);
     }
 
     function hideExpansion() { expansion.hidden = true; }
