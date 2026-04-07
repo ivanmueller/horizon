@@ -1217,7 +1217,7 @@
           </div>
         </div>
 
-        <a href="#" class="btn btn--primary btn--lg btn--full">Check availability</a>
+        <button class="btn btn--primary btn--lg btn--full" id="checkAvailBtn" type="button">Check availability</button>
         <div class="booking-panel__guarantee-list">
           <div class="booking-panel__guarantee-item">
             <svg width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#059669"/><path d="M6.5 12.5l3.5 3.5 7-7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
@@ -1324,6 +1324,8 @@
     <img class="photo-lightbox__img" id="lightboxImg" src="" alt="">
   </div>
 
+  <!-- ⚠️  After deploying the Cloudflare Worker, replace the URL below with your worker's URL -->
+  <script>var CHECKOUT_WORKER_URL = 'https://horizon-checkout.YOUR_SUBDOMAIN.workers.dev/checkout';</script>
   <script src="/main.js"></script>
   <script>
     function toggleDescription() {
@@ -1562,6 +1564,9 @@
             selectedDate = new Date(y, m, day);
             var label = MONTHS[m] + ' ' + day + ', ' + y;
             document.getElementById('dateLabel').textContent = label;
+            // Store ISO date string so the checkout handler can read it
+            var iso = y + '-' + String(m + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+            document.getElementById('dateBtn').dataset.selectedDate = iso;
             closeCalendar();
             renderCalendar(); // re-render to update selection highlight
           });
@@ -1613,6 +1618,56 @@
     // Close on Escape
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') { closeTravellers(); closeCalendar(); }
+    });
+  })();
+  </script>
+
+  <!-- Stripe Checkout — "Check availability" handler -->
+  <script>
+  (function() {
+    var btn = document.getElementById('checkAvailBtn');
+    if (!btn) return;
+
+    btn.addEventListener('click', function() {
+      var date   = document.getElementById('dateBtn').dataset.selectedDate || '';
+      var adults = parseInt(document.getElementById('count-adult').textContent,  10) || 0;
+      var youth  = parseInt(document.getElementById('count-youth').textContent,  10) || 0;
+      var infants = parseInt(document.getElementById('count-infant').textContent, 10) || 0;
+
+      // Validate before sending
+      if (!date) {
+        document.getElementById('dateBtn').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        document.getElementById('dateBtn').click();
+        return;
+      }
+      if (adults + youth < 1) {
+        document.getElementById('travellersBtn').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      // Show loading state
+      btn.disabled = true;
+      btn.textContent = 'Redirecting to checkout…';
+
+      fetch(CHECKOUT_WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: date, adults: adults, youth: youth, infants: infants }),
+      })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data.url) {
+            window.location.href = data.url;
+          } else {
+            throw new Error(data.error || 'No checkout URL returned');
+          }
+        })
+        .catch(function(err) {
+          console.error('Checkout error:', err);
+          btn.disabled = false;
+          btn.textContent = 'Check availability';
+          alert('Something went wrong starting checkout. Please try again or contact us.');
+        });
     });
   })();
   </script>
