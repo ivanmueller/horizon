@@ -212,7 +212,6 @@
       height: 100%;
       object-fit: cover;
       display: block;
-      transition: transform 300ms ease;
     }
     .wyd-item__img-overlay {
       position: absolute;
@@ -230,9 +229,6 @@
       opacity: 0;
       transition: opacity 300ms ease;
     }
-    .wyd-item__img-wrap:hover .wyd-item__img {
-      transform: scale(1.05);
-    }
     .wyd-item__img-wrap:hover .wyd-item__img-overlay {
       opacity: 1;
     }
@@ -240,7 +236,7 @@
       opacity: 1;
     }
     .wyd-item__line {
-      width: 4px;
+      width: 6px;
       background: var(--coral);
       min-height: 36px;
       flex: 1;
@@ -277,6 +273,116 @@
       .wyd-item__img-wrap { width: 88px; height: 88px; }
       .wyd-item__visual { width: 88px; }
       .wyd-item { gap: 18px; }
+    }
+
+    /* WYD Lightbox */
+    .wyd-lb {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      background: rgba(0,0,0,0.72);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .wyd-lb.is-open { display: flex; }
+    .wyd-lb__inner {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      max-width: 940px;
+      width: 100%;
+    }
+    .wyd-lb__thumbs {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .wyd-lb__thumb {
+      width: 62px;
+      height: 62px;
+      border-radius: 8px;
+      object-fit: cover;
+      cursor: pointer;
+      border: 2px solid transparent;
+      opacity: 0.6;
+      transition: opacity 200ms, border-color 200ms;
+    }
+    .wyd-lb__thumb.is-active,
+    .wyd-lb__thumb:hover { opacity: 1; }
+    .wyd-lb__thumb.is-active { border-color: #fff; }
+    .wyd-lb__card {
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex: 1;
+      position: relative;
+      min-height: 420px;
+    }
+    .wyd-lb__img-panel {
+      flex: 0 0 57%;
+      background: #111;
+    }
+    .wyd-lb__img-panel img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .wyd-lb__info-panel {
+      flex: 1;
+      padding: 48px 36px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      text-align: center;
+    }
+    .wyd-lb__info-time {
+      font-size: 0.85rem;
+      color: var(--mid-gray);
+      font-weight: 500;
+      margin-bottom: 14px;
+    }
+    .wyd-lb__info-title {
+      font-size: 1.55rem;
+      font-weight: 700;
+      color: var(--near-black);
+      line-height: 1.25;
+      margin-bottom: 18px;
+    }
+    .wyd-lb__info-desc {
+      font-size: 0.9rem;
+      color: var(--mid-gray);
+      line-height: 1.65;
+    }
+    .wyd-lb__close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      z-index: 10;
+      color: var(--near-black);
+      transition: background 150ms;
+    }
+    .wyd-lb__close:hover { background: #f5f5f5; }
+    @media (max-width: 720px) {
+      .wyd-lb__thumbs { display: none; }
+      .wyd-lb__card { flex-direction: column; min-height: 0; }
+      .wyd-lb__img-panel { flex: 0 0 220px; }
+      .wyd-lb__info-panel { padding: 24px 20px; text-align: left; }
+      .wyd-lb__info-title { font-size: 1.15rem; }
     }
 
     /* Meeting point */
@@ -1179,10 +1285,10 @@
 
           <div class="wyd-item">
             <div class="wyd-item__visual">
-              <div class="wyd-item__img-wrap">
+              <div class="wyd-item__img-wrap" onclick="openWydLightbox(0)">
                 <img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-Hero.jpg" alt="Hotel pickup in Banff" class="wyd-item__img">
                 <div class="wyd-item__img-overlay">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
                 </div>
               </div>
               <div class="wyd-item__line"></div>
@@ -1196,10 +1302,10 @@
 
           <div class="wyd-item">
             <div class="wyd-item__visual">
-              <div class="wyd-item__img-wrap">
+              <div class="wyd-item__img-wrap" onclick="openWydLightbox(1)">
                 <img src="/images/Lake-Agnes-Tea-House/lake-agnes-tea-house-2.jpg" alt="Lake Louise trailhead" class="wyd-item__img">
                 <div class="wyd-item__img-overlay">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
                 </div>
               </div>
               <div class="wyd-item__line"></div>
@@ -1213,10 +1319,10 @@
 
           <div class="wyd-item">
             <div class="wyd-item__visual">
-              <div class="wyd-item__img-wrap">
+              <div class="wyd-item__img-wrap" onclick="openWydLightbox(2)">
                 <img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-3.jpg" alt="Lake Agnes Tea House lunch" class="wyd-item__img">
                 <div class="wyd-item__img-overlay">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
                 </div>
               </div>
               <div class="wyd-item__line"></div>
@@ -1230,10 +1336,10 @@
 
           <div class="wyd-item">
             <div class="wyd-item__visual">
-              <div class="wyd-item__img-wrap">
+              <div class="wyd-item__img-wrap" onclick="openWydLightbox(3)">
                 <img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-4.jpg" alt="Big Beehive viewpoint" class="wyd-item__img">
                 <div class="wyd-item__img-overlay">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
                 </div>
               </div>
               <div class="wyd-item__line"></div>
@@ -1247,10 +1353,10 @@
 
           <div class="wyd-item">
             <div class="wyd-item__visual">
-              <div class="wyd-item__img-wrap">
+              <div class="wyd-item__img-wrap" onclick="openWydLightbox(4)">
                 <img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-5.jpg" alt="Return to hotel" class="wyd-item__img">
                 <div class="wyd-item__img-overlay">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
                 </div>
               </div>
               <div class="wyd-item__line"></div>
@@ -2147,6 +2253,72 @@
           alert('Something went wrong starting checkout. Please try again or contact us.');
         });
     });
+  })();
+  </script>
+
+  <!-- WYD Itinerary Lightbox -->
+  <div class="wyd-lb" id="wydLightbox" role="dialog" aria-modal="true" aria-label="Itinerary stop detail">
+    <div class="wyd-lb__inner">
+      <div class="wyd-lb__thumbs">
+        <img class="wyd-lb__thumb" src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-Hero.jpg" alt="Hotel Pickup" data-index="0">
+        <img class="wyd-lb__thumb" src="/images/Lake-Agnes-Tea-House/lake-agnes-tea-house-2.jpg" alt="Lake Louise Trailhead" data-index="1">
+        <img class="wyd-lb__thumb" src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-3.jpg" alt="Lake Agnes Tea House" data-index="2">
+        <img class="wyd-lb__thumb" src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-4.jpg" alt="Big Beehive Viewpoint" data-index="3">
+        <img class="wyd-lb__thumb" src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-5.jpg" alt="Hotel Drop-off" data-index="4">
+      </div>
+      <div class="wyd-lb__card">
+        <div class="wyd-lb__img-panel">
+          <img src="" alt="" id="wydLbImg">
+        </div>
+        <div class="wyd-lb__info-panel">
+          <div class="wyd-lb__info-time" id="wydLbTime"></div>
+          <div class="wyd-lb__info-title" id="wydLbTitle"></div>
+          <div class="wyd-lb__info-desc" id="wydLbDesc"></div>
+        </div>
+        <button class="wyd-lb__close" id="wydLbClose" aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+  <script>
+  (function() {
+    var items = [
+      { src: '/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-Hero.jpg', alt: 'Hotel pickup in Banff', time: '8:30 AM', title: 'Hotel Pickup', desc: 'Convenient morning pickup from your Banff or Canmore hotel. Settle into a comfortable van for the scenic 45-minute drive up the Bow Valley Parkway.' },
+      { src: '/images/Lake-Agnes-Tea-House/lake-agnes-tea-house-2.jpg', alt: 'Lake Louise trailhead', time: '9:15 AM', title: 'Lake Louise Trailhead', desc: 'Walk past the Fairmont Chateau along the turquoise shoreline of Lake Louise before the trail begins climbing through dense evergreen forest.' },
+      { src: '/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-3.jpg', alt: 'Lake Agnes Tea House lunch', time: '11:30 AM', title: 'Lake Agnes Tea House \u2013 Lunch', desc: 'Arrive at the historic Lake Agnes Tea House, perched at 2,135 m beside a glacial lake and waterfall. Enjoy a sit-down lunch with loose-leaf tea and fresh-baked goods.' },
+      { src: '/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-4.jpg', alt: 'Big Beehive viewpoint', time: '1:00 PM', title: 'Big Beehive Viewpoint', desc: 'Ascend to the Big Beehive for the most iconic overhead view of Lake Louise, Victoria Glacier, and the Chateau far below (conditions permitting).' },
+      { src: '/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-5.jpg', alt: 'Return to hotel', time: '3:30 PM', title: 'Hotel Drop-off', desc: 'Return to your hotel with the rest of the afternoon free. Your guide will share restaurant and activity recommendations for the evening.' }
+    ];
+    var lb      = document.getElementById('wydLightbox');
+    var lbImg   = document.getElementById('wydLbImg');
+    var lbTime  = document.getElementById('wydLbTime');
+    var lbTitle = document.getElementById('wydLbTitle');
+    var lbDesc  = document.getElementById('wydLbDesc');
+    var thumbs  = lb.querySelectorAll('.wyd-lb__thumb');
+    function show(i) {
+      var d = items[i];
+      lbImg.src   = d.src;
+      lbImg.alt   = d.alt;
+      lbTime.textContent  = d.time;
+      lbTitle.textContent = d.title;
+      lbDesc.textContent  = d.desc;
+      thumbs.forEach(function(t, j) { t.classList.toggle('is-active', j === i); });
+    }
+    function open(i) {
+      show(i);
+      lb.classList.add('is-open');
+      document.body.style.overflow = 'hidden';
+    }
+    function close() {
+      lb.classList.remove('is-open');
+      document.body.style.overflow = '';
+    }
+    window.openWydLightbox = open;
+    document.getElementById('wydLbClose').addEventListener('click', close);
+    lb.addEventListener('click', function(e) { if (e.target === lb) close(); });
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && lb.classList.contains('is-open')) close(); });
+    thumbs.forEach(function(t, i) { t.addEventListener('click', function() { show(i); }); });
   })();
   </script>
 
