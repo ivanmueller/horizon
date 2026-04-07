@@ -413,10 +413,7 @@
 
     /* ---- GYG-style hero header layout ---- */
     .tour-hero-header {
-      max-width: 1240px;
-      margin: 0 auto;
-      /* GYG uses tighter side padding than the default container */
-      padding: var(--space-4) 1rem var(--space-3);
+      padding: 0 0 var(--space-3);
     }
     .tour-hero-header .tour-detail__category {
       margin-bottom: var(--space-3);
@@ -729,35 +726,35 @@
     </div>
   </nav>
 
-  <!-- Tour Hero Header: full-width title + rating above the photo/panel layout -->
-  <div class="tour-hero-header">
-    <h1 class="tour-detail__title">Lake Louise: Guided Hike to Lake Agnes Tea House with Lunch</h1>
-    <div class="tour-detail__rating-row">
-      <div class="tour-detail__stars">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="#000000"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="#000000"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="#000000"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="#000000"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="#000000"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-        <span class="tour-detail__rating-text">4.8</span>
-      </div>
-      <a href="#reviews" class="tour-detail__reviews-link">28 reviews</a>
-      <span class="tour-detail__provider">&middot; Activity provider: Horizon Tours</span>
-      <div class="tour-detail__header-actions">
-        <button class="tour-detail__action-btn" aria-label="Add to wishlist">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-          Add to wishlist
-        </button>
-        <button class="tour-detail__action-btn" aria-label="Share this tour">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-          Share
-        </button>
-      </div>
-    </div>
-  </div>
-
   <div class="tour-detail tour-detail--with-hero">
     <main class="tour-detail__main">
+
+      <!-- Tour Hero Header: now inside left column so booking panel can sit at the top right -->
+      <div class="tour-hero-header">
+        <h1 class="tour-detail__title">Lake Louise: Guided Hike to Lake Agnes Tea House with Lunch</h1>
+        <div class="tour-detail__rating-row">
+          <div class="tour-detail__stars">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#000000"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#000000"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#000000"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#000000"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#000000"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <span class="tour-detail__rating-text">4.8</span>
+          </div>
+          <a href="#reviews" class="tour-detail__reviews-link">28 reviews</a>
+          <span class="tour-detail__provider">&middot; Activity provider: Horizon Tours</span>
+          <div class="tour-detail__header-actions">
+            <button class="tour-detail__action-btn" aria-label="Add to wishlist">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              Add to wishlist
+            </button>
+            <button class="tour-detail__action-btn" aria-label="Share this tour">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+              Share
+            </button>
+          </div>
+        </div>
+      </div>
 
       <!-- Tour Photo Grid (inside left column, beside booking panel) -->
       <div class="tour-photo-grid-wrap">
@@ -1824,7 +1821,11 @@
       populateExpansion(getBookingData());
       expansion.hidden = false;
       setTimeout(function() {
-        expansion.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        // Scroll so "1 option available" aligns with the booking panel's sticky top
+        var bookingPanel = document.querySelector('.booking-panel');
+        var stickyTop = bookingPanel ? bookingPanel.getBoundingClientRect().top : 68;
+        var targetScrollY = expansion.getBoundingClientRect().top + window.pageYOffset - stickyTop;
+        window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
       }, 50);
     }
     window.__horizonShowExpansion = showExpansion;
