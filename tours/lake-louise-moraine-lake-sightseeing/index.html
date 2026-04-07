@@ -198,19 +198,53 @@
       flex-shrink: 0;
       width: 110px;
     }
-    .wyd-item__img {
+    .wyd-item__img-wrap {
+      position: relative;
       width: 110px;
       height: 110px;
-      object-fit: cover;
       border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .wyd-item__img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
       display: block;
+      transition: transform 300ms ease;
+    }
+    .wyd-item__img-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.3);
+      opacity: 0;
+      transition: opacity 300ms ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+    }
+    .wyd-item__img-overlay svg {
+      color: #fff;
+      opacity: 0;
+      transition: opacity 300ms ease;
+    }
+    .wyd-item__img-wrap:hover .wyd-item__img {
+      transform: scale(1.05);
+    }
+    .wyd-item__img-wrap:hover .wyd-item__img-overlay {
+      opacity: 1;
+    }
+    .wyd-item__img-wrap:hover .wyd-item__img-overlay svg {
+      opacity: 1;
     }
     .wyd-item__line {
-      width: 2px;
-      background: var(--border-color);
+      width: 4px;
+      background: var(--coral);
       min-height: 36px;
       flex: 1;
-      margin: 6px 0;
+      margin: 0;
     }
     .wyd-item:last-child .wyd-item__line {
       display: none;
@@ -223,9 +257,9 @@
       padding-bottom: 0;
     }
     .wyd-item__time {
-      font-size: 0.78rem;
+      font-size: 0.9rem;
       color: var(--mid-gray);
-      margin-bottom: 3px;
+      margin-bottom: 4px;
       font-weight: 500;
     }
     .wyd-item__title {
@@ -240,7 +274,7 @@
       line-height: 1.6;
     }
     @media (max-width: 480px) {
-      .wyd-item__img { width: 88px; height: 88px; }
+      .wyd-item__img-wrap { width: 88px; height: 88px; }
       .wyd-item__visual { width: 88px; }
       .wyd-item { gap: 18px; }
     }
@@ -1145,11 +1179,16 @@
 
           <div class="wyd-item">
             <div class="wyd-item__visual">
-              <img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-Hero.jpg" alt="Hotel pickup in Banff" class="wyd-item__img">
+              <div class="wyd-item__img-wrap">
+                <img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-Hero.jpg" alt="Hotel pickup in Banff" class="wyd-item__img">
+                <div class="wyd-item__img-overlay">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+                </div>
+              </div>
               <div class="wyd-item__line"></div>
             </div>
             <div class="wyd-item__content">
-              <div class="wyd-item__time">8:30 AM &mdash; Starting point: your Banff or Canmore hotel</div>
+              <div class="wyd-item__time">8:30 AM</div>
               <div class="wyd-item__title">Hotel Pickup</div>
               <div class="wyd-item__desc">Convenient morning pickup from your Banff or Canmore hotel. Settle into a comfortable van for the scenic 45-minute drive up the Bow Valley Parkway.</div>
             </div>
@@ -1157,7 +1196,12 @@
 
           <div class="wyd-item">
             <div class="wyd-item__visual">
-              <img src="/images/Lake-Agnes-Tea-House/lake-agnes-tea-house-2.jpg" alt="Lake Louise trailhead" class="wyd-item__img">
+              <div class="wyd-item__img-wrap">
+                <img src="/images/Lake-Agnes-Tea-House/lake-agnes-tea-house-2.jpg" alt="Lake Louise trailhead" class="wyd-item__img">
+                <div class="wyd-item__img-overlay">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+                </div>
+              </div>
               <div class="wyd-item__line"></div>
             </div>
             <div class="wyd-item__content">
@@ -1169,7 +1213,12 @@
 
           <div class="wyd-item">
             <div class="wyd-item__visual">
-              <img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-3.jpg" alt="Lake Agnes Tea House lunch" class="wyd-item__img">
+              <div class="wyd-item__img-wrap">
+                <img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-3.jpg" alt="Lake Agnes Tea House lunch" class="wyd-item__img">
+                <div class="wyd-item__img-overlay">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+                </div>
+              </div>
               <div class="wyd-item__line"></div>
             </div>
             <div class="wyd-item__content">
@@ -1181,7 +1230,12 @@
 
           <div class="wyd-item">
             <div class="wyd-item__visual">
-              <img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-4.jpg" alt="Big Beehive viewpoint" class="wyd-item__img">
+              <div class="wyd-item__img-wrap">
+                <img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-4.jpg" alt="Big Beehive viewpoint" class="wyd-item__img">
+                <div class="wyd-item__img-overlay">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+                </div>
+              </div>
               <div class="wyd-item__line"></div>
             </div>
             <div class="wyd-item__content">
@@ -1193,7 +1247,12 @@
 
           <div class="wyd-item">
             <div class="wyd-item__visual">
-              <img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-5.jpg" alt="Return to hotel" class="wyd-item__img">
+              <div class="wyd-item__img-wrap">
+                <img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-5.jpg" alt="Return to hotel" class="wyd-item__img">
+                <div class="wyd-item__img-overlay">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+                </div>
+              </div>
               <div class="wyd-item__line"></div>
             </div>
             <div class="wyd-item__content">
