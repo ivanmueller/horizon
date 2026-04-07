@@ -228,6 +228,62 @@
       transition: background var(--duration-fast), border-color var(--duration-fast);
     }
     .booking-panel__select-row:hover { background: #E8EAED; border-color: #D1D5DB; }
+
+    /* Photo gallery overlay */
+    .photo-gallery-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9998;
+      background: rgba(0,0,0,0.92);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      overflow-y: auto;
+      padding: 80px 48px 48px;
+    }
+    .photo-gallery-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .photo-gallery-overlay__close {
+      position: fixed;
+      top: 24px;
+      left: 24px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      transition: background 0.15s;
+      z-index: 10000;
+    }
+    .photo-gallery-overlay__close:hover { background: rgba(255,255,255,0.28); }
+    .photo-gallery-overlay__grid {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .photo-gallery-overlay__item {
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      aspect-ratio: 4/3;
+    }
+    .photo-gallery-overlay__item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.2s ease;
+    }
+    .photo-gallery-overlay__item:hover img { transform: scale(1.04); }
     .booking-panel__select-row svg { color: #6B7280; flex-shrink: 0; }
     .booking-panel__select-row span { flex: 1; text-align: left; }
     .booking-panel__select-row .chevron { margin-left: auto; color: #6B7280; }
@@ -1124,6 +1180,25 @@
 
   <div style="height:80px;display:none;" class="mobile-booking-spacer"></div>
   
+  <!-- Photo Gallery Overlay (View all) -->
+  <div class="photo-gallery-overlay" id="photoGalleryOverlay">
+    <button class="photo-gallery-overlay__close" id="galleryClose" aria-label="Close gallery">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+    </button>
+    <div class="photo-gallery-overlay__grid">
+      <div class="photo-gallery-overlay__item"><img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-Hero.jpg" alt="Lake Agnes Tea House guided hike" loading="lazy"></div>
+      <div class="photo-gallery-overlay__item"><img src="/images/Lake-Agnes-Tea-House/lake-agnes-tea-house-2.jpg" alt="Lake Agnes Tea House trail views" loading="lazy"></div>
+      <div class="photo-gallery-overlay__item"><img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-3.jpg" alt="Lake Agnes alpine scenery" loading="lazy"></div>
+      <div class="photo-gallery-overlay__item"><img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-4.jpg" alt="Big Beehive viewpoint over Lake Louise" loading="lazy"></div>
+      <div class="photo-gallery-overlay__item"><img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-5.jpg" alt="Lake Agnes Tea House hiking experience" loading="lazy"></div>
+      <div class="photo-gallery-overlay__item"><img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-6.jpg" alt="Lake Agnes Tea House scenery" loading="lazy"></div>
+      <div class="photo-gallery-overlay__item"><img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-7.jpg" alt="Lake Agnes Tea House views" loading="lazy"></div>
+      <div class="photo-gallery-overlay__item"><img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-8.jpg" alt="Lake Agnes Tea House trail" loading="lazy"></div>
+      <div class="photo-gallery-overlay__item"><img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-9.jpg" alt="Lake Agnes Tea House hike" loading="lazy"></div>
+      <div class="photo-gallery-overlay__item"><img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-10.jpg" alt="Lake Agnes Tea House experience" loading="lazy"></div>
+    </div>
+  </div>
+
   <!-- Photo Lightbox -->
   <div class="photo-lightbox" id="photoLightbox">
     <button class="photo-lightbox__close" aria-label="Close lightbox">
@@ -1148,30 +1223,59 @@
   </script>
   <script>
     (function() {
-      const lightbox = document.getElementById('photoLightbox');
+      // ── Single-image lightbox ────────────────────────────────
+      const lightbox    = document.getElementById('photoLightbox');
       const lightboxImg = document.getElementById('lightboxImg');
-      const closeBtn = lightbox.querySelector('.photo-lightbox__close');
+      const closeBtn    = lightbox.querySelector('.photo-lightbox__close');
 
-      document.querySelectorAll('.tour-photo-grid__item img').forEach(function(img) {
-        img.addEventListener('click', function() {
-          lightboxImg.src = this.src;
-          lightboxImg.alt = this.alt;
-          lightbox.classList.add('active');
-          document.body.style.overflow = 'hidden';
-        });
-      });
-
+      function openLightbox(src, alt) {
+        lightboxImg.src = src;
+        lightboxImg.alt = alt;
+        lightbox.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
       function closeLightbox() {
         lightbox.classList.remove('active');
         document.body.style.overflow = '';
       }
 
-      closeBtn.addEventListener('click', closeLightbox);
-      lightbox.addEventListener('click', function(e) {
-        if (e.target === lightbox) closeLightbox();
+      document.querySelectorAll('.tour-photo-grid__item img').forEach(function(img) {
+        img.addEventListener('click', function() { openLightbox(this.src, this.alt); });
       });
+
+      closeBtn.addEventListener('click', closeLightbox);
+      lightbox.addEventListener('click', function(e) { if (e.target === lightbox) closeLightbox(); });
+
+      // ── Gallery overlay (View all) ───────────────────────────
+      const gallery     = document.getElementById('photoGalleryOverlay');
+      const galleryClose = document.getElementById('galleryClose');
+      const viewAllBtn  = document.querySelector('.tour-photo-grid__show-all');
+
+      function openGallery() {
+        gallery.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+      function closeGallery() {
+        gallery.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+
+      if (viewAllBtn) viewAllBtn.addEventListener('click', openGallery);
+      galleryClose.addEventListener('click', closeGallery);
+      gallery.addEventListener('click', function(e) { if (e.target === gallery) closeGallery(); });
+
+      // Clicking a gallery image opens the single-image lightbox
+      gallery.querySelectorAll('.photo-gallery-overlay__item img').forEach(function(img) {
+        img.addEventListener('click', function(e) {
+          e.stopPropagation();
+          closeGallery();
+          openLightbox(this.src, this.alt);
+        });
+      });
+
+      // Close both on Escape
       document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'Escape') { closeLightbox(); closeGallery(); }
       });
     })();
   </script>
