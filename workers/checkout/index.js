@@ -41,13 +41,29 @@ export default {
       return jsonError('At least one adult or youth guest is required', 400, request);
     }
 
+    // Format date for display: "2026-05-10" → "May 10, 2026"
+    const [y, mo, d] = date.split('-').map(Number);
+    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const formattedDate = `${monthNames[mo - 1]} ${d}, ${y}`;
+
+    // Guest breakdown line for description
+    const guestParts = [];
+    if (adults > 0) guestParts.push(`${adults} adult${adults > 1 ? 's' : ''}`);
+    if (youth  > 0) guestParts.push(`${youth} youth`);
+    if (infants > 0) guestParts.push(`${infants} infant${infants > 1 ? 's' : ''} (no charge)`);
+    const guestSummary = guestParts.join(', ');
+
     // Build the Stripe Checkout Session via the REST API (no npm dependency needed)
+    // Using price_data (inline) so we can show the tour date on the checkout page
     const params = new URLSearchParams({
       mode: 'payment',
       success_url: `${ALLOWED_ORIGIN}/booking-confirmed/`,
       cancel_url: `${ALLOWED_ORIGIN}/tours/lake-louise-moraine-lake-sightseeing/`,
       'payment_method_types[0]': 'card',
-      'line_items[0][price]': env.STRIPE_PRICE_ID,
+      'line_items[0][price_data][currency]': 'cad',
+      'line_items[0][price_data][unit_amount]': '14900',  // $149.00 CAD in cents
+      'line_items[0][price_data][product_data][name]': 'Lake Agnes Tea House Hike',
+      'line_items[0][price_data][product_data][description]': `Tour date: ${formattedDate} · ${guestSummary}`,
       'line_items[0][quantity]': String(payingGuests),
       // Store booking details in metadata so they appear in the Stripe dashboard
       'metadata[tour_date]': date,
