@@ -1770,7 +1770,7 @@ body.page--white-bg {
   width: 40px;
   height: 40px;
   border-radius: var(--radius-md);
-  background: var(--warm-white-alt);
+  background: #F3F4F6;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1788,10 +1788,14 @@ body.page--white-bg {
   margin-bottom: 2px;
 }
 
+.activity-info-box__label--green {
+  color: #059669;
+}
+
 .activity-info-box__value {
   font-size: var(--text-sm);
   font-weight: 600;
-  color: var(--near-black);
+  color: #1D2939;
 }
 
 /* Description Read More */
