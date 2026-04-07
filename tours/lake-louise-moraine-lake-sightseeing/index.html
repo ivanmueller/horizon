@@ -1820,15 +1820,18 @@
     }
 
     function showExpansion() {
+      var alreadyOpen = !expansion.hidden;
       populateExpansion(getBookingData());
       expansion.hidden = false;
-      setTimeout(function() {
-        // Scroll so "1 option available" aligns with the booking panel's sticky top
-        var bookingPanel = document.querySelector('.booking-panel');
-        var stickyTop = bookingPanel ? bookingPanel.getBoundingClientRect().top : 68;
-        var targetScrollY = expansion.getBoundingClientRect().top + window.pageYOffset - stickyTop;
-        window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
-      }, 50);
+      // Only scroll on first open — if already visible just update the content in place
+      if (!alreadyOpen) {
+        setTimeout(function() {
+          var bookingPanel = document.querySelector('.booking-panel');
+          var stickyTop = bookingPanel ? bookingPanel.getBoundingClientRect().top : 68;
+          var targetScrollY = expansion.getBoundingClientRect().top + window.pageYOffset - stickyTop;
+          window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
+        }, 50);
+      }
     }
     window.__horizonShowExpansion = showExpansion;
 
