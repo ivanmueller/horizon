@@ -284,9 +284,23 @@
       padding-right: 1rem;
       gap: var(--space-6); /* reduce from space-12 (48px) to space-6 (24px) */
     }
-    /* Push booking panel inward from left so it sits more to the right */
-    .tour-detail--with-hero > aside {
-      padding-left: var(--space-4);
+    /* Widen booking panel column slightly */
+    .tour-detail--with-hero {
+      grid-template-columns: 1fr 410px;
+    }
+    /* Tighter internal panel spacing to match GYG */
+    .tour-detail--with-hero .booking-panel {
+      padding: var(--space-5);
+    }
+    .tour-detail--with-hero .booking-panel__price {
+      margin-bottom: var(--space-3);
+    }
+    .tour-detail--with-hero .booking-panel__sell-out {
+      margin-bottom: var(--space-2);
+    }
+    .tour-detail--with-hero .booking-panel__guarantee-list {
+      gap: var(--space-2);
+      margin-top: var(--space-3);
     }
     /* Photo grid inside the left column — override standalone full-width styles */
     .tour-detail__main .tour-photo-grid-wrap {
