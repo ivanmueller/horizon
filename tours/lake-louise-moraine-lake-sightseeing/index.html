@@ -1714,6 +1714,10 @@
             document.getElementById('dateBtn').dataset.selectedDate = iso;
             closeCalendar();
             renderCalendar(); // re-render to update selection highlight
+            // Auto-open the booking expansion after a date is picked
+            setTimeout(function() {
+              if (typeof window.__horizonShowExpansion === 'function') window.__horizonShowExpansion();
+            }, 150);
           });
           grid.appendChild(btn);
         })(d);
@@ -1819,6 +1823,7 @@
         expansion.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }, 50);
     }
+    window.__horizonShowExpansion = showExpansion;
 
     function hideExpansion() { expansion.hidden = true; }
 
