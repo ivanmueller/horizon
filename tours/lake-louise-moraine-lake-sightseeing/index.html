@@ -437,6 +437,17 @@
     .tour-detail--with-hero {
       grid-template-columns: 1fr 395px;
     }
+    /* Shift booking panel down to align with expansion panel when open */
+    #book {
+      transition: padding-top 0.35s ease;
+    }
+    #book.book--expansion-open {
+      padding-top: calc(195px * 2 + var(--space-2) + var(--space-8));
+    }
+    /* Stick closer to top when scrolling */
+    .booking-panel {
+      top: calc(var(--nav-height) + var(--space-2)) !important;
+    }
     /* Tighter internal panel spacing to match GYG */
     .tour-detail--with-hero .booking-panel {
       padding: var(--space-5);
@@ -1819,13 +1830,17 @@
     function showExpansion() {
       populateExpansion(getBookingData());
       expansion.hidden = false;
+      document.getElementById('book').classList.add('book--expansion-open');
       setTimeout(function() {
         expansion.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }, 50);
     }
     window.__horizonShowExpansion = showExpansion;
 
-    function hideExpansion() { expansion.hidden = true; }
+    function hideExpansion() {
+      expansion.hidden = true;
+      document.getElementById('book').classList.remove('book--expansion-open');
+    }
 
     // "Check availability" — open calendar if no date, else show/toggle expansion
     checkBtn.addEventListener('click', function() {
