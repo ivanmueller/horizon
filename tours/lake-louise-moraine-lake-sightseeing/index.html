@@ -1827,9 +1827,8 @@
       if (!alreadyOpen) {
         setTimeout(function() {
           var bookingPanel = document.querySelector('.booking-panel');
-          var stickyTop = bookingPanel ? bookingPanel.getBoundingClientRect().top : 68;
-          var targetScrollY = expansion.getBoundingClientRect().top + window.pageYOffset - stickyTop;
-          window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
+          var stickyTop = bookingPanel ? parseFloat(getComputedStyle(bookingPanel).top) || 68 : 68;
+          window.scrollTo({ top: expansion.offsetTop - stickyTop, behavior: 'smooth' });
         }, 50);
       }
     }
