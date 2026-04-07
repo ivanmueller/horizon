@@ -483,6 +483,24 @@
     /* ---- GYG-style booking expansion panel ---- */
     .bp-expansion { margin-top: 0; margin-bottom: var(--space-8); }
     .bp-expansion:not([hidden]) { animation: dropdownFadeIn 0.35s ease; }
+
+    /* Skeleton shimmer for expansion refresh */
+    @keyframes shimmer {
+      0%   { background-position: -600px 0; }
+      100% { background-position: 600px 0; }
+    }
+    .bp-expansion__card--skeleton .bp-expansion__time-date,
+    .bp-expansion__card--skeleton .bp-expansion__total,
+    .bp-expansion__card--skeleton .bp-expansion__breakdown,
+    .bp-expansion__card--skeleton #expansionCancelDate {
+      color: transparent !important;
+      background: linear-gradient(90deg, #E5E7EB 25%, #F9FAFB 50%, #E5E7EB 75%);
+      background-size: 600px 100%;
+      animation: shimmer 1s infinite linear;
+      border-radius: 4px;
+      min-width: 80px;
+      display: inline-block;
+    }
     .bp-expansion__header {
       font-size: 1rem;
       font-weight: 700;
@@ -1825,6 +1843,18 @@
 
     function showExpansion() {
       var alreadyOpen = !expansion.hidden;
+      var card = expansion.querySelector('.bp-expansion__card');
+
+      if (alreadyOpen && card) {
+        // Skeleton flash then update
+        card.classList.add('bp-expansion__card--skeleton');
+        setTimeout(function() {
+          populateExpansion(getBookingData());
+          card.classList.remove('bp-expansion__card--skeleton');
+        }, 350);
+        return;
+      }
+
       populateExpansion(getBookingData());
       expansion.hidden = false;
       // Only scroll on first open — if already visible just update the content in place
