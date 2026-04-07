@@ -1629,6 +1629,10 @@
       document.getElementById('count-' + type).textContent = counts[type];
       document.getElementById('btn-minus-' + type).disabled = counts[type] <= mins[type];
       updateTravellersLabel();
+      var exp = document.getElementById('bpExpansion');
+      if (exp && !exp.hidden && typeof window.__horizonShowExpansion === 'function') {
+        window.__horizonShowExpansion();
+      }
     }
 
     ['adult','youth','infant'].forEach(function(type) {
@@ -1851,9 +1855,6 @@
       showExpansion();
     });
 
-    // Hide expansion when the traveller or date dropdowns are opened
-    document.getElementById('travellersBtn').addEventListener('click', hideExpansion);
-    document.getElementById('dateBtn').addEventListener('click', hideExpansion);
 
     // "Book now" — send to Stripe Checkout
     bookBtn.addEventListener('click', function() {
