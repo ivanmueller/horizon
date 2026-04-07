@@ -181,6 +181,70 @@
       gap: 6px;
     }
 
+    /* What you'll do – Airbnb style */
+    .wyd-list {
+      display: flex;
+      flex-direction: column;
+    }
+    .wyd-item {
+      display: flex;
+      gap: 28px;
+      align-items: flex-start;
+    }
+    .wyd-item__visual {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+      width: 110px;
+    }
+    .wyd-item__img {
+      width: 110px;
+      height: 110px;
+      object-fit: cover;
+      border-radius: 10px;
+      display: block;
+    }
+    .wyd-item__line {
+      width: 2px;
+      background: var(--border-color);
+      min-height: 36px;
+      flex: 1;
+      margin: 6px 0;
+    }
+    .wyd-item:last-child .wyd-item__line {
+      display: none;
+    }
+    .wyd-item__content {
+      padding-top: 6px;
+      padding-bottom: 36px;
+    }
+    .wyd-item:last-child .wyd-item__content {
+      padding-bottom: 0;
+    }
+    .wyd-item__time {
+      font-size: 0.78rem;
+      color: var(--mid-gray);
+      margin-bottom: 3px;
+      font-weight: 500;
+    }
+    .wyd-item__title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--near-black);
+      margin-bottom: 6px;
+    }
+    .wyd-item__desc {
+      font-size: var(--text-sm);
+      color: var(--mid-gray);
+      line-height: 1.6;
+    }
+    @media (max-width: 480px) {
+      .wyd-item__img { width: 88px; height: 88px; }
+      .wyd-item__visual { width: 88px; }
+      .wyd-item { gap: 18px; }
+    }
+
     /* Meeting point */
     .meeting-point__desc {
       font-size: var(--text-sm);
@@ -1074,6 +1138,74 @@
         <a href="#reviews" class="highlighted-reviews__see-more">See more reviews</a>
       </div>
 
+      <!-- What you'll do -->
+      <div class="tour-section">
+        <h2 class="tour-section__title">What you'll do</h2>
+        <div class="wyd-list">
+
+          <div class="wyd-item">
+            <div class="wyd-item__visual">
+              <img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-Hero.jpg" alt="Hotel pickup in Banff" class="wyd-item__img">
+              <div class="wyd-item__line"></div>
+            </div>
+            <div class="wyd-item__content">
+              <div class="wyd-item__time">8:30 AM &mdash; Starting point: your Banff or Canmore hotel</div>
+              <div class="wyd-item__title">Hotel Pickup</div>
+              <div class="wyd-item__desc">Convenient morning pickup from your Banff or Canmore hotel. Settle into a comfortable van for the scenic 45-minute drive up the Bow Valley Parkway.</div>
+            </div>
+          </div>
+
+          <div class="wyd-item">
+            <div class="wyd-item__visual">
+              <img src="/images/Lake-Agnes-Tea-House/lake-agnes-tea-house-2.jpg" alt="Lake Louise trailhead" class="wyd-item__img">
+              <div class="wyd-item__line"></div>
+            </div>
+            <div class="wyd-item__content">
+              <div class="wyd-item__time">9:15 AM</div>
+              <div class="wyd-item__title">Lake Louise Trailhead</div>
+              <div class="wyd-item__desc">Walk past the Fairmont Chateau along the turquoise shoreline of Lake Louise before the trail begins climbing through dense evergreen forest.</div>
+            </div>
+          </div>
+
+          <div class="wyd-item">
+            <div class="wyd-item__visual">
+              <img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-3.jpg" alt="Lake Agnes Tea House lunch" class="wyd-item__img">
+              <div class="wyd-item__line"></div>
+            </div>
+            <div class="wyd-item__content">
+              <div class="wyd-item__time">11:30 AM</div>
+              <div class="wyd-item__title">Lake Agnes Tea House &ndash; Lunch</div>
+              <div class="wyd-item__desc">Arrive at the historic Lake Agnes Tea House, perched at 2,135 m beside a glacial lake and waterfall. Enjoy a sit-down lunch with loose-leaf tea and fresh-baked goods.</div>
+            </div>
+          </div>
+
+          <div class="wyd-item">
+            <div class="wyd-item__visual">
+              <img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-4.jpg" alt="Big Beehive viewpoint" class="wyd-item__img">
+              <div class="wyd-item__line"></div>
+            </div>
+            <div class="wyd-item__content">
+              <div class="wyd-item__time">1:00 PM</div>
+              <div class="wyd-item__title">Big Beehive Viewpoint</div>
+              <div class="wyd-item__desc">Ascend to the Big Beehive for the most iconic overhead view of Lake Louise, Victoria Glacier, and the Chateau far below (conditions permitting).</div>
+            </div>
+          </div>
+
+          <div class="wyd-item">
+            <div class="wyd-item__visual">
+              <img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-5.jpg" alt="Return to hotel" class="wyd-item__img">
+              <div class="wyd-item__line"></div>
+            </div>
+            <div class="wyd-item__content">
+              <div class="wyd-item__time">3:30 PM</div>
+              <div class="wyd-item__title">Hotel Drop-off</div>
+              <div class="wyd-item__desc">Return to your hotel with the rest of the afternoon free. Your guide will share restaurant and activity recommendations for the evening.</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
       <!-- Highlights -->
       <div class="tour-section">
         <h2 class="tour-section__title">Highlights</h2>
@@ -1152,71 +1284,6 @@
               <div class="includes-item includes-item--no"><span class="includes-item__icon">&#10005;</span><span>Guide gratuities</span></div>
             </div>
           </div>
-        </div>
-      </div>
-
-      <div class="tour-section">
-        <h2 class="tour-section__title">Itinerary</h2>
-        <div class="itinerary-layout">
-          <div>
-            <div class="timeline">
-              <div class="timeline__item">
-                <div class="timeline__dot"></div>
-                <div class="timeline__time">Starting location</div>
-                <div class="timeline__title">Your Banff or Canmore hotel</div>
-              </div>
-              <div class="timeline__item">
-                <div class="timeline__dot"></div>
-                <div class="timeline__time">8:30 AM</div>
-                <div class="timeline__title">Hotel Pickup</div>
-                <div class="timeline__desc">Convenient morning pickup from your Banff or Canmore hotel. Settle into a comfortable van for the scenic 45-minute drive up the Bow Valley Parkway.</div>
-              </div>
-              <div class="timeline__item">
-                <div class="timeline__dot"></div>
-                <div class="timeline__time">9:15 AM</div>
-                <div class="timeline__title">Lake Louise Trailhead</div>
-                <div class="timeline__desc">Walk past the Fairmont Chateau along the turquoise shoreline of Lake Louise before the trail begins climbing through dense evergreen forest.</div>
-              </div>
-              <div class="timeline__item">
-                <div class="timeline__dot"></div>
-                <div class="timeline__time">11:30 AM</div>
-                <div class="timeline__title">Lake Agnes Tea House &ndash; Lunch</div>
-                <div class="timeline__desc">Arrive at the historic Lake Agnes Tea House, perched at 2,135 m beside a glacial lake and waterfall. Enjoy a sit-down lunch with loose-leaf tea and fresh-baked goods.</div>
-              </div>
-              <div class="timeline__item">
-                <div class="timeline__dot"></div>
-                <div class="timeline__time">1:00 PM</div>
-                <div class="timeline__title">Big Beehive Viewpoint</div>
-                <div class="timeline__desc">Ascend to the Big Beehive for the most iconic overhead view of Lake Louise, Victoria Glacier, and the Chateau far below (conditions permitting).</div>
-              </div>
-              <div class="timeline__item">
-                <div class="timeline__dot"></div>
-                <div class="timeline__time">3:30 PM</div>
-                <div class="timeline__title">Hotel Drop-off</div>
-                <div class="timeline__desc">Return to your hotel with the rest of the afternoon free. Your guide will share restaurant and activity recommendations for the evening.</div>
-              </div>
-            </div>
-            <a href="#" class="itinerary-view-full">View full itinerary</a>
-          </div>
-          <div>
-            <div class="itinerary-map">
-              <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d10139.38!2d-116.2135!3d51.4254!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x5377903b9498e3a7%3A0x1f27df1d07b61432!2sLake%20Agnes%20Tea%20House!5e0!3m2!1sen!2sca!4v1"
-                title="Lake Agnes Tea House map"
-                allowfullscreen=""
-                loading="lazy"
-                referrerpolicy="no-referrer-when-downgrade">
-              </iframe>
-              <div class="itinerary-map__legend">
-                <div class="itinerary-map__legend-dot"></div>
-                Main stop
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="itinerary-disclaimer">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px;"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><circle cx="12" cy="16" r="0.5" fill="currentColor"/></svg>
-          For reference only. Itineraries are subject to change.
         </div>
       </div>
 
