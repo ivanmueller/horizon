@@ -285,12 +285,12 @@
     }
     .photo-gallery-overlay__item:hover img { filter: brightness(0.75); }
 
-    /* Photo viewer (white, single-image from gallery) */
+    /* Photo viewer (dark bg, single-image from gallery) */
     .photo-viewer {
       position: fixed;
       inset: 0;
       z-index: 10001;
-      background: #fff;
+      background: rgba(0,0,0,0.88);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -310,20 +310,20 @@
     .photo-viewer__counter {
       font-size: 0.875rem;
       font-weight: 600;
-      color: var(--near-black);
+      color: #fff;
     }
     .photo-viewer__icon-btn {
       width: 44px; height: 44px;
       border-radius: 50%;
-      border: 1.5px solid #D1D5DB;
-      background: #fff;
+      border: 1.5px solid rgba(255,255,255,0.35);
+      background: rgba(255,255,255,0.12);
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      color: var(--near-black);
+      color: #fff;
       transition: background 0.15s;
       flex-shrink: 0;
     }
-    .photo-viewer__icon-btn:hover { background: #F3F4F6; }
+    .photo-viewer__icon-btn:hover { background: rgba(255,255,255,0.25); }
     .photo-viewer__stage {
       flex: 1;
       display: flex;
@@ -346,15 +346,15 @@
       top: 50%; transform: translateY(-50%);
       width: 44px; height: 44px;
       border-radius: 50%;
-      border: 1.5px solid #D1D5DB;
-      background: #fff;
+      border: 1.5px solid rgba(255,255,255,0.35);
+      background: rgba(255,255,255,0.12);
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      color: var(--near-black);
+      color: #fff;
       transition: background 0.15s;
       z-index: 2;
     }
-    .photo-viewer__nav:hover { background: #F3F4F6; }
+    .photo-viewer__nav:hover { background: rgba(255,255,255,0.25); }
     .photo-viewer__nav:disabled { opacity: 0.3; cursor: default; }
     .photo-viewer__nav--prev { left: 24px; }
     .photo-viewer__nav--next { right: 24px; }
@@ -363,19 +363,19 @@
       flex-shrink: 0;
     }
     .photo-viewer__check-btn {
-      border: 1.5px solid var(--near-black);
+      border: 1.5px solid rgba(255,255,255,0.8);
       border-radius: 50px;
-      background: #fff;
-      color: var(--near-black);
+      background: transparent;
+      color: #fff;
       font-weight: 600;
       font-size: 0.875rem;
       padding: 11px 32px;
       cursor: pointer;
       font-family: inherit;
       letter-spacing: 0.01em;
-      transition: background 0.15s, color 0.15s;
+      transition: background 0.15s;
     }
-    .photo-viewer__check-btn:hover { background: var(--near-black); color: #fff; }
+    .photo-viewer__check-btn:hover { background: rgba(255,255,255,0.15); }
     .booking-panel__select-row svg { color: #6B7280; flex-shrink: 0; }
     .booking-panel__select-row span { flex: 1; text-align: left; }
     .booking-panel__select-row .chevron { margin-left: auto; color: #6B7280; }
