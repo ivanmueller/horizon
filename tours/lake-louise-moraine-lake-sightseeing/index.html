@@ -436,9 +436,9 @@
     .tour-detail--with-hero {
       grid-template-columns: 1fr 395px;
     }
-    /* Stick right below the nav when scrolling */
+    /* Nav is position:relative on this page (scrolls away), so stick near the top */
     .booking-panel {
-      top: var(--nav-height) !important;
+      top: 12px !important;
     }
     /* Tighter internal panel spacing to match GYG */
     .tour-detail--with-hero .booking-panel {
@@ -1827,7 +1827,7 @@
       if (!alreadyOpen) {
         setTimeout(function() {
           // getBoundingClientRect().top + pageYOffset = true document-relative top of expansion
-          // getComputedStyle(...).top = the CSS sticky value (68px) — independent of scroll
+          // getComputedStyle(...).top = the CSS sticky value (12px) — independent of scroll
           var bookingPanel = document.querySelector('.booking-panel');
           var stickyTop = bookingPanel ? parseFloat(getComputedStyle(bookingPanel).top) || 68 : 68;
           var expansionDocTop = expansion.getBoundingClientRect().top + window.pageYOffset;
