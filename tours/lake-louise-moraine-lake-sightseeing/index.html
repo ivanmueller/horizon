@@ -201,14 +201,15 @@
 
     /* Booking panel GYG style */
     .booking-panel__sell-out {
-      display: inline-block;
+      display: block;
+      width: fit-content;
       background: #DC2626;
       color: #fff;
       font-size: 0.75rem;
       font-weight: 700;
-      padding: 4px 10px;
-      border-radius: 4px;
-      margin-bottom: var(--space-3);
+      padding: 5px 12px;
+      /* Flush to top-left corner — panel overflow:hidden clips the corner */
+      border-radius: 0 0 4px 0;
       letter-spacing: 0.01em;
     }
     .booking-panel__select-row {
@@ -291,12 +292,18 @@
     /* Tighter internal panel spacing to match GYG */
     .tour-detail--with-hero .booking-panel {
       padding: var(--space-5);
+      overflow: hidden; /* clips sell-out tag to panel corner radius */
+    }
+    /* Pull tag flush to top-left corner, escaping the panel padding */
+    .tour-detail--with-hero .booking-panel__sell-out {
+      margin: calc(-1 * var(--space-5)) auto var(--space-3) calc(-1 * var(--space-5));
     }
     .tour-detail--with-hero .booking-panel__price {
       margin-bottom: var(--space-3);
     }
-    .tour-detail--with-hero .booking-panel__sell-out {
-      margin-bottom: var(--space-2);
+    /* Tighten gap between "From" label and price */
+    .tour-detail--with-hero .booking-panel__from {
+      margin-bottom: 0;
     }
     .tour-detail--with-hero .booking-panel__guarantee-list {
       gap: var(--space-2);
