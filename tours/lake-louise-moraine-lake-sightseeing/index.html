@@ -281,19 +281,45 @@
       position: fixed;
       inset: 0;
       z-index: 9000;
-      background: rgba(0,0,0,0.72);
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 24px;
     }
     .wyd-lb.is-open { display: flex; }
     .wyd-lb__inner {
       display: flex;
-      gap: 12px;
-      align-items: flex-start;
-      max-width: 940px;
+      gap: 16px;
+      align-items: center;
+      max-width: 1080px;
       width: 100%;
+      position: relative;
     }
+    .wyd-lb__sidebar {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .wyd-lb__nav-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #fff;
+      border: 1px solid #d1d5db;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--near-black);
+      transition: box-shadow 150ms;
+      flex-shrink: 0;
+    }
+    .wyd-lb__nav-btn:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.18); }
+    .wyd-lb__nav-btn:disabled { opacity: 0.25; cursor: default; box-shadow: none; }
     .wyd-lb__thumbs {
       display: flex;
       flex-direction: column;
@@ -301,40 +327,44 @@
       flex-shrink: 0;
     }
     .wyd-lb__thumb {
-      width: 62px;
-      height: 62px;
+      width: 66px;
+      height: 66px;
       border-radius: 8px;
       object-fit: cover;
       cursor: pointer;
-      border: 2px solid transparent;
-      opacity: 0.6;
+      border: 2.5px solid transparent;
+      opacity: 0.55;
       transition: opacity 200ms, border-color 200ms;
     }
     .wyd-lb__thumb.is-active,
     .wyd-lb__thumb:hover { opacity: 1; }
     .wyd-lb__thumb.is-active { border-color: #fff; }
-    .wyd-lb__card {
-      background: #fff;
-      border-radius: 16px;
-      overflow: hidden;
-      display: flex;
+    .wyd-lb__card-wrap {
       flex: 1;
       position: relative;
-      min-height: 420px;
+    }
+    .wyd-lb__card {
+      background: #fff;
+      border-radius: 20px;
+      overflow: hidden;
+      display: flex;
+      min-height: 520px;
     }
     .wyd-lb__img-panel {
-      flex: 0 0 57%;
-      background: #111;
+      flex: 0 0 54%;
+      background: #fff;
+      padding: 18px;
     }
     .wyd-lb__img-panel img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
+      border-radius: 12px;
     }
     .wyd-lb__info-panel {
       flex: 1;
-      padding: 48px 36px;
+      padding: 56px 44px;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -344,45 +374,45 @@
       font-size: 0.85rem;
       color: var(--mid-gray);
       font-weight: 500;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
     .wyd-lb__info-title {
-      font-size: 1.55rem;
+      font-size: 1.65rem;
       font-weight: 700;
       color: var(--near-black);
-      line-height: 1.25;
-      margin-bottom: 18px;
+      line-height: 1.2;
+      margin-bottom: 20px;
     }
     .wyd-lb__info-desc {
       font-size: 0.9rem;
       color: var(--mid-gray);
-      line-height: 1.65;
+      line-height: 1.7;
     }
     .wyd-lb__close {
       position: absolute;
-      top: 12px;
-      right: 12px;
-      width: 36px;
-      height: 36px;
+      top: -18px;
+      right: -18px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
       background: #fff;
-      border: 1px solid #e5e7eb;
+      border: 1px solid #d1d5db;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-      z-index: 10;
       color: var(--near-black);
+      z-index: 10;
       transition: background 150ms;
     }
     .wyd-lb__close:hover { background: #f5f5f5; }
-    @media (max-width: 720px) {
-      .wyd-lb__thumbs { display: none; }
+    @media (max-width: 780px) {
+      .wyd-lb__sidebar { display: none; }
       .wyd-lb__card { flex-direction: column; min-height: 0; }
-      .wyd-lb__img-panel { flex: 0 0 220px; }
-      .wyd-lb__info-panel { padding: 24px 20px; text-align: left; }
-      .wyd-lb__info-title { font-size: 1.15rem; }
+      .wyd-lb__img-panel { flex: 0 0 240px; padding: 14px; }
+      .wyd-lb__info-panel { padding: 28px 24px; text-align: left; }
+      .wyd-lb__info-title { font-size: 1.2rem; }
+      .wyd-lb__close { top: -14px; right: -14px; width: 34px; height: 34px; }
     }
 
     /* Meeting point */
@@ -2259,25 +2289,35 @@
   <!-- WYD Itinerary Lightbox -->
   <div class="wyd-lb" id="wydLightbox" role="dialog" aria-modal="true" aria-label="Itinerary stop detail">
     <div class="wyd-lb__inner">
-      <div class="wyd-lb__thumbs">
-        <img class="wyd-lb__thumb" src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-Hero.jpg" alt="Hotel Pickup" data-index="0">
-        <img class="wyd-lb__thumb" src="/images/Lake-Agnes-Tea-House/lake-agnes-tea-house-2.jpg" alt="Lake Louise Trailhead" data-index="1">
-        <img class="wyd-lb__thumb" src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-3.jpg" alt="Lake Agnes Tea House" data-index="2">
-        <img class="wyd-lb__thumb" src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-4.jpg" alt="Big Beehive Viewpoint" data-index="3">
-        <img class="wyd-lb__thumb" src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-5.jpg" alt="Hotel Drop-off" data-index="4">
+      <div class="wyd-lb__sidebar">
+        <button class="wyd-lb__nav-btn" id="wydLbPrev" aria-label="Previous stop">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+        </button>
+        <div class="wyd-lb__thumbs">
+          <img class="wyd-lb__thumb" src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-Hero.jpg" alt="Hotel Pickup" data-index="0">
+          <img class="wyd-lb__thumb" src="/images/Lake-Agnes-Tea-House/lake-agnes-tea-house-2.jpg" alt="Lake Louise Trailhead" data-index="1">
+          <img class="wyd-lb__thumb" src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-3.jpg" alt="Lake Agnes Tea House" data-index="2">
+          <img class="wyd-lb__thumb" src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-4.jpg" alt="Big Beehive Viewpoint" data-index="3">
+          <img class="wyd-lb__thumb" src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-5.jpg" alt="Hotel Drop-off" data-index="4">
+        </div>
+        <button class="wyd-lb__nav-btn" id="wydLbNext" aria-label="Next stop">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
       </div>
-      <div class="wyd-lb__card">
-        <div class="wyd-lb__img-panel">
-          <img src="" alt="" id="wydLbImg">
-        </div>
-        <div class="wyd-lb__info-panel">
-          <div class="wyd-lb__info-time" id="wydLbTime"></div>
-          <div class="wyd-lb__info-title" id="wydLbTitle"></div>
-          <div class="wyd-lb__info-desc" id="wydLbDesc"></div>
-        </div>
+      <div class="wyd-lb__card-wrap">
         <button class="wyd-lb__close" id="wydLbClose" aria-label="Close">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
         </button>
+        <div class="wyd-lb__card">
+          <div class="wyd-lb__img-panel">
+            <img src="" alt="" id="wydLbImg">
+          </div>
+          <div class="wyd-lb__info-panel">
+            <div class="wyd-lb__info-time" id="wydLbTime"></div>
+            <div class="wyd-lb__info-title" id="wydLbTitle"></div>
+            <div class="wyd-lb__info-desc" id="wydLbDesc"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -2290,13 +2330,21 @@
       { src: '/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-4.jpg', alt: 'Big Beehive viewpoint', time: '1:00 PM', title: 'Big Beehive Viewpoint', desc: 'Ascend to the Big Beehive for the most iconic overhead view of Lake Louise, Victoria Glacier, and the Chateau far below (conditions permitting).' },
       { src: '/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-5.jpg', alt: 'Return to hotel', time: '3:30 PM', title: 'Hotel Drop-off', desc: 'Return to your hotel with the rest of the afternoon free. Your guide will share restaurant and activity recommendations for the evening.' }
     ];
+    var current = 0;
     var lb      = document.getElementById('wydLightbox');
     var lbImg   = document.getElementById('wydLbImg');
     var lbTime  = document.getElementById('wydLbTime');
     var lbTitle = document.getElementById('wydLbTitle');
     var lbDesc  = document.getElementById('wydLbDesc');
     var thumbs  = lb.querySelectorAll('.wyd-lb__thumb');
+    var prevBtn = document.getElementById('wydLbPrev');
+    var nextBtn = document.getElementById('wydLbNext');
+    function updateNav() {
+      prevBtn.disabled = current === 0;
+      nextBtn.disabled = current === items.length - 1;
+    }
     function show(i) {
+      current = i;
       var d = items[i];
       lbImg.src   = d.src;
       lbImg.alt   = d.alt;
@@ -2304,6 +2352,7 @@
       lbTitle.textContent = d.title;
       lbDesc.textContent  = d.desc;
       thumbs.forEach(function(t, j) { t.classList.toggle('is-active', j === i); });
+      updateNav();
     }
     function open(i) {
       show(i);
@@ -2317,8 +2366,15 @@
     window.openWydLightbox = open;
     document.getElementById('wydLbClose').addEventListener('click', close);
     lb.addEventListener('click', function(e) { if (e.target === lb) close(); });
-    document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && lb.classList.contains('is-open')) close(); });
+    prevBtn.addEventListener('click', function() { if (current > 0) show(current - 1); });
+    nextBtn.addEventListener('click', function() { if (current < items.length - 1) show(current + 1); });
     thumbs.forEach(function(t, i) { t.addEventListener('click', function() { show(i); }); });
+    document.addEventListener('keydown', function(e) {
+      if (!lb.classList.contains('is-open')) return;
+      if (e.key === 'Escape') close();
+      if (e.key === 'ArrowUp' && current > 0) show(current - 1);
+      if (e.key === 'ArrowDown' && current < items.length - 1) show(current + 1);
+    });
   })();
   </script>
 
