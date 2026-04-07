@@ -1826,9 +1826,12 @@
       // Only scroll on first open — if already visible just update the content in place
       if (!alreadyOpen) {
         setTimeout(function() {
+          // getBoundingClientRect().top + pageYOffset = true document-relative top of expansion
+          // getComputedStyle(...).top = the CSS sticky value (68px) — independent of scroll
           var bookingPanel = document.querySelector('.booking-panel');
           var stickyTop = bookingPanel ? parseFloat(getComputedStyle(bookingPanel).top) || 68 : 68;
-          window.scrollTo({ top: expansion.offsetTop - stickyTop, behavior: 'smooth' });
+          var expansionDocTop = expansion.getBoundingClientRect().top + window.pageYOffset;
+          window.scrollTo({ top: expansionDocTop - stickyTop, behavior: 'smooth' });
         }, 50);
       }
     }
