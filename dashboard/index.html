@@ -3,9 +3,242 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard — Horizon Tours</title>
+  <title>Hotel Commission Dashboard — Horizon Tours</title>
   <meta name="robots" content="noindex, nofollow">
+
+  <!-- Fonts (Horizon brand) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Horizon brand tokens -->
+  <link rel="stylesheet" href="/css/style.css">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%23FF6B4A'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
+
+  <style>
+    /* ============================================================
+       Dashboard — Page shell & layout grid (Step 1)
+       ============================================================ */
+
+    :root {
+      --dash-header-height: 56px;
+    }
+
+    html, body {
+      background: var(--warm-white);
+      color: var(--near-black);
+      font-family: var(--font-body);
+    }
+
+    /* --- Outer page wrapper --- */
+    .dash-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* --- Sticky header bar --- */
+    .dash-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      height: var(--dash-header-height);
+      background: #FFFFFF;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .dash-header__inner {
+      max-width: var(--container-max);
+      height: 100%;
+      margin: 0 auto;
+      padding: 0 var(--container-padding);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-4);
+    }
+
+    /* Left: property identity */
+    .dash-brand {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      min-width: 0;
+    }
+    .dash-brand__avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-md);
+      background: var(--near-black);
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.75rem;
+      letter-spacing: 0.02em;
+      flex-shrink: 0;
+    }
+    .dash-brand__name {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--near-black);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Right cluster: date toggle + settings */
+    .dash-header__right {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+
+    /* Date range pill toggle */
+    .date-toggle {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px;
+      background: var(--warm-white-alt);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-full);
+    }
+    .date-toggle__option {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      padding: 5px 12px;
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--mid-gray);
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      line-height: 1;
+      transition: background-color var(--duration-fast) var(--ease-out),
+                  color var(--duration-fast) var(--ease-out);
+    }
+    .date-toggle__option:hover {
+      color: var(--near-black);
+    }
+    .date-toggle__option[aria-pressed="true"] {
+      background: #FFFFFF;
+      color: var(--near-black);
+      font-weight: 600;
+      box-shadow: 0 1px 2px rgba(26, 26, 46, 0.06);
+    }
+    .date-toggle__option:focus-visible {
+      outline: 2px solid var(--coral);
+      outline-offset: 2px;
+    }
+
+    /* Settings gear */
+    .dash-icon-btn {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-md);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--mid-gray);
+      cursor: pointer;
+      transition: background-color var(--duration-fast) var(--ease-out),
+                  color var(--duration-fast) var(--ease-out);
+    }
+    .dash-icon-btn:hover {
+      background: var(--warm-white-alt);
+      color: var(--near-black);
+    }
+    .dash-icon-btn:focus-visible {
+      outline: 2px solid var(--coral);
+      outline-offset: 2px;
+    }
+    .dash-icon-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* --- Main content container (where future sections will live) --- */
+    .dash-main {
+      flex: 1;
+      width: 100%;
+      max-width: var(--container-max);
+      margin: 0 auto;
+      padding: var(--space-8) var(--container-padding) var(--space-16);
+    }
+
+    /* Responsive trims */
+    @media (max-width: 640px) {
+      :root { --dash-header-height: 56px; }
+      .dash-brand__name { max-width: 140px; }
+      .date-toggle__option { padding: 5px 10px; font-size: 0.75rem; }
+    }
+  </style>
 </head>
 <body>
+
+  <div class="dash-page">
+
+    <!-- ========== STICKY HEADER BAR ========== -->
+    <header class="dash-header" role="banner">
+      <div class="dash-header__inner">
+
+        <!-- Left: Hotel property name + avatar -->
+        <div class="dash-brand">
+          <span class="dash-brand__avatar" aria-hidden="true">FM</span>
+          <span class="dash-brand__name">Fairmont Banff Springs</span>
+        </div>
+
+        <!-- Right: date range toggle + settings -->
+        <div class="dash-header__right">
+          <div class="date-toggle" role="group" aria-label="Date range">
+            <button type="button" class="date-toggle__option" aria-pressed="false">7d</button>
+            <button type="button" class="date-toggle__option" aria-pressed="true">30d</button>
+            <button type="button" class="date-toggle__option" aria-pressed="false">90d</button>
+            <button type="button" class="date-toggle__option" aria-pressed="false">Custom</button>
+          </div>
+
+          <button type="button" class="dash-icon-btn" aria-label="Settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </button>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- ========== MAIN CONTENT (frame only — content added in later steps) ========== -->
+    <main class="dash-main" id="dash-main" role="main">
+      <!-- Temporary scroll spacer so sticky header behavior is testable.
+           Remove before adding real content. -->
+      <div aria-hidden="true" style="height: 200vh;"></div>
+    </main>
+
+  </div>
+
+  <script>
+    // Date range toggle — local state only for now.
+    (function () {
+      const toggle = document.querySelector('.date-toggle');
+      if (!toggle) return;
+      toggle.addEventListener('click', function (e) {
+        const btn = e.target.closest('.date-toggle__option');
+        if (!btn) return;
+        toggle.querySelectorAll('.date-toggle__option').forEach(b => {
+          b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
+        });
+      });
+    })();
+  </script>
+
 </body>
 </html>
