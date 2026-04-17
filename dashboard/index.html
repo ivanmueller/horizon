@@ -216,6 +216,31 @@
     .kpi-card__trend--flat    { color: var(--mid-gray); }
     .kpi-card__trend--neutral { color: var(--mid-gray); }
 
+    .kpi-card__link {
+      appearance: none;
+      align-self: flex-start;
+      background: transparent;
+      border: 0;
+      padding: 0;
+      margin-top: var(--space-1);
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--coral);
+      cursor: pointer;
+      line-height: 1.4;
+    }
+    .kpi-card__link:hover { color: var(--coral-hover); text-decoration: underline; }
+    .kpi-card__link:focus-visible {
+      outline: 2px solid var(--coral);
+      outline-offset: 2px;
+      border-radius: 2px;
+    }
+    .kpi-card__link::after {
+      content: ' →';
+      letter-spacing: 0.02em;
+    }
+
     /* 2x2 breakpoint — tablet and mobile */
     @media (max-width: 1023px) {
       .kpi-grid {
@@ -860,6 +885,180 @@
       margin: var(--space-5) 0;
     }
 
+    /* --- Payout History Lightbox --- */
+    .payout-modal {
+      padding: 0;
+      border: 0;
+      background: #FFFFFF;
+      color: var(--near-black);
+      border-radius: var(--radius-lg);
+      max-width: 560px;
+      width: calc(100% - 32px);
+      max-height: calc(100vh - 64px);
+      box-shadow: 0 20px 60px rgba(26, 26, 46, 0.18),
+                  0 4px 16px rgba(26, 26, 46, 0.08);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .payout-modal::backdrop {
+      background: rgba(0, 0, 0, 0.4);
+    }
+    .payout-modal[open] {
+      animation: booking-modal-in 180ms var(--ease-out);
+    }
+
+    .payout-modal__header {
+      padding: var(--space-5) 52px var(--space-5) var(--space-6);
+      border-bottom: 1px solid var(--border-color);
+      flex: 0 0 auto;
+    }
+    .payout-modal__title {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--near-black);
+      margin: 0;
+      line-height: 1.2;
+    }
+    .payout-modal__subtitle {
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      color: var(--mid-gray);
+      margin-top: 2px;
+      line-height: 1.35;
+    }
+    .payout-modal__body {
+      flex: 1 1 auto;
+      overflow-y: auto;
+    }
+    .payout-modal__empty {
+      padding: var(--space-8) var(--space-6);
+      text-align: center;
+      color: var(--mid-gray);
+      font-size: 0.875rem;
+    }
+
+    .payout-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+    }
+    .payout-table thead th {
+      position: sticky;
+      top: 0;
+      background: #FFFFFF;
+      text-align: left;
+      font-family: var(--font-body);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--mid-gray);
+      padding: 10px var(--space-6);
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+    .payout-table thead th:last-child { width: 24px; padding-left: 0; padding-right: var(--space-4); }
+
+    .payout-table__summary-row {
+      cursor: pointer;
+      border-bottom: 1px solid var(--border-color);
+      transition: background-color var(--duration-fast) var(--ease-out);
+    }
+    .payout-table__summary-row:hover { background: var(--warm-white-alt); }
+    .payout-table__summary-row:focus-visible {
+      outline: 2px solid var(--coral);
+      outline-offset: -2px;
+    }
+    .payout-table__summary-row td {
+      padding: 14px var(--space-6);
+      color: var(--near-black);
+      vertical-align: middle;
+    }
+    .payout-table__summary-row td:last-child {
+      padding-left: 0;
+      padding-right: var(--space-4);
+      text-align: right;
+      width: 24px;
+    }
+    .payout-table__amount {
+      font-family: var(--font-display);
+      font-weight: 600;
+    }
+    .payout-table__method {
+      color: var(--mid-gray);
+      font-size: 0.8125rem;
+    }
+    .payout-table__chevron {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-right: 1.5px solid var(--mid-gray);
+      border-bottom: 1.5px solid var(--mid-gray);
+      transform: rotate(45deg);
+      transition: transform 150ms var(--ease-out);
+      vertical-align: middle;
+    }
+    .payout-table__summary-row[aria-expanded="true"] .payout-table__chevron {
+      transform: rotate(-135deg);
+    }
+    .payout-table__summary-row[aria-expanded="true"] {
+      background: var(--warm-white-alt);
+      border-bottom-color: transparent;
+    }
+
+    .payout-table__detail-row { background: var(--warm-white); }
+    .payout-table__detail-row[hidden] { display: none; }
+    .payout-table__detail-row > td {
+      padding: 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .payout-detail {
+      padding: var(--space-2) var(--space-6) var(--space-4);
+    }
+    .payout-detail__list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .payout-detail__item {
+      display: grid;
+      grid-template-columns: 74px minmax(0, 1.2fr) minmax(0, 1.5fr) auto;
+      column-gap: var(--space-3);
+      padding: 10px 0;
+      align-items: baseline;
+      border-bottom: 1px solid #F0F0EB;
+    }
+    .payout-detail__item:last-child { border-bottom: 0; }
+    .payout-detail__date {
+      color: var(--mid-gray);
+      font-size: 0.8125rem;
+    }
+    .payout-detail__guest {
+      color: var(--near-black);
+      font-weight: 500;
+      font-size: 0.875rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .payout-detail__tour {
+      color: var(--mid-gray);
+      font-size: 0.8125rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .payout-detail__amount {
+      font-family: var(--font-display);
+      font-weight: 600;
+      color: var(--near-black);
+      text-align: right;
+      font-size: 0.875rem;
+    }
+
     /* Responsive trims */
     @media (max-width: 640px) {
       :root { --dash-header-height: 56px; }
@@ -867,6 +1066,16 @@
       .date-toggle__option { padding: 5px 10px; font-size: 0.75rem; }
       .booking-modal__body { padding: var(--space-6) var(--space-5) var(--space-5); }
       .booking-modal__row { grid-template-columns: 1fr; row-gap: 2px; }
+
+      .payout-modal__header { padding-left: var(--space-4); padding-right: 48px; }
+      .payout-table thead th,
+      .payout-table__summary-row td { padding-left: var(--space-4); padding-right: var(--space-4); }
+      .payout-table__col-period,
+      .payout-table__col-method { display: none; }
+      .payout-detail { padding: var(--space-2) var(--space-4) var(--space-4); }
+      .payout-detail__item { grid-template-columns: 1fr auto; column-gap: var(--space-2); }
+      .payout-detail__date,
+      .payout-detail__tour { display: none; }
     }
   </style>
 </head>
@@ -928,6 +1137,7 @@
           <p class="kpi-card__label">Pending Payout</p>
           <p class="kpi-card__value" data-kpi-value>—</p>
           <p class="kpi-card__trend" data-kpi-trend></p>
+          <button type="button" class="kpi-card__link" data-open-payout-history>View payout history</button>
         </article>
       </section>
 
@@ -1014,6 +1224,16 @@
     <div class="booking-modal__body" data-booking-modal-body></div>
   </dialog>
 
+  <!-- Payout History lightbox -->
+  <dialog class="payout-modal" data-payout-modal aria-labelledby="payout-modal-title">
+    <header class="payout-modal__header">
+      <h2 class="payout-modal__title" id="payout-modal-title">Payout History</h2>
+      <p class="payout-modal__subtitle" data-payout-modal-subtitle></p>
+      <button type="button" class="booking-modal__close" data-payout-modal-close aria-label="Close">&times;</button>
+    </header>
+    <div class="payout-modal__body" data-payout-modal-body></div>
+  </dialog>
+
   <!-- Mock data layer (single source of truth for every component) -->
   <script src="/dashboard/data.js"></script>
 
@@ -1065,6 +1285,9 @@
 
   <!-- Booking Detail lightbox -->
   <script src="/dashboard/modal.js"></script>
+
+  <!-- Payout History lightbox -->
+  <script src="/dashboard/payouts.js"></script>
 
 </body>
 </html>
