@@ -226,13 +226,27 @@
       .kpi-card__value { font-size: 1.625rem; }
     }
 
+    /* --- Chart row (chart + leaderboard, 70/30) --- */
+    .chart-row {
+      display: grid;
+      grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
+      gap: var(--space-4);
+      margin-top: var(--space-6);
+      align-items: start;
+    }
+    .chart-row--solo {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    @media (max-width: 1023px) {
+      .chart-row { grid-template-columns: minmax(0, 1fr); }
+    }
+
     /* --- Commission Over Time chart --- */
     .chart-panel {
       background: #FFFFFF;
       border: 1px solid var(--border-color);
       border-radius: var(--radius-lg);
       padding: var(--space-5) var(--space-5) var(--space-4);
-      margin-top: var(--space-6);
     }
     .chart-panel__header {
       display: flex;
@@ -260,6 +274,130 @@
     }
     @media (max-width: 640px) {
       .chart-panel__canvas-wrap { height: 180px; }
+    }
+
+    /* --- Leaderboard card --- */
+    .leaderboard {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: var(--space-5);
+    }
+    .leaderboard[hidden] { display: none; }
+    .leaderboard__summary {
+      list-style: none;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: var(--space-3);
+      cursor: default;
+    }
+    .leaderboard__summary::-webkit-details-marker { display: none; }
+    .leaderboard__title {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.9375rem;
+      color: var(--near-black);
+    }
+    .leaderboard__meta {
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      color: var(--mid-gray);
+    }
+    .leaderboard__chevron {
+      display: none;             /* visible only on mobile */
+      width: 10px;
+      height: 10px;
+      border-right: 1.5px solid var(--mid-gray);
+      border-bottom: 1.5px solid var(--mid-gray);
+      transform: rotate(45deg);
+      margin-left: var(--space-2);
+      transition: transform 200ms var(--ease-out);
+    }
+    .leaderboard[open] .leaderboard__chevron {
+      transform: rotate(-135deg);
+    }
+    .leaderboard__list {
+      list-style: none;
+      padding: 0;
+      margin: var(--space-4) 0 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .leaderboard__row {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr) auto;
+      column-gap: var(--space-3);
+      align-items: center;
+      padding: var(--space-3) 0;
+      border-bottom: 1px solid #F0F0EB;
+    }
+    .leaderboard__row:last-child { border-bottom: 0; }
+    .leaderboard__rank {
+      font-family: var(--font-display);
+      font-weight: 600;
+      color: var(--mid-gray);
+      font-size: 0.875rem;
+      text-align: center;
+      line-height: 24px;
+    }
+    .leaderboard__row--top .leaderboard__rank {
+      background: rgba(201, 162, 74, 0.15);
+      color: #9C7A1F;
+      border-radius: 999px;
+      width: 24px;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8125rem;
+      line-height: 1;
+      margin: 0 auto;
+    }
+    .leaderboard__info {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .leaderboard__name {
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: var(--near-black);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .leaderboard__role {
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      color: var(--mid-gray);
+      line-height: 1.35;
+    }
+    .leaderboard__stats {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      text-align: right;
+    }
+    .leaderboard__amount {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.9375rem;
+      color: var(--near-black);
+      line-height: 1.2;
+    }
+    .leaderboard__count {
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      color: var(--mid-gray);
+      line-height: 1.35;
+    }
+
+    /* Mobile: make the summary look interactive and show chevron */
+    @media (max-width: 767px) {
+      .leaderboard__summary { cursor: pointer; }
+      .leaderboard__chevron { display: inline-block; }
     }
 
     /* Responsive trims */
@@ -331,16 +469,33 @@
         </article>
       </section>
 
-      <!-- Commission Over Time chart -->
-      <section class="chart-panel" aria-label="Commission over time">
-        <header class="chart-panel__header">
-          <h2 class="chart-panel__title">Commission Over Time</h2>
-          <span class="chart-panel__meta">Hover a bar for details</span>
-        </header>
-        <div class="chart-panel__canvas-wrap">
-          <canvas id="commission-chart" aria-label="Commission earned per day" role="img"></canvas>
-        </div>
-      </section>
+      <!-- Chart + Leaderboard row (70/30 on desktop) -->
+      <div class="chart-row" data-chart-row>
+
+        <!-- Commission Over Time chart -->
+        <section class="chart-panel" aria-label="Commission over time">
+          <header class="chart-panel__header">
+            <h2 class="chart-panel__title">Commission Over Time</h2>
+            <span class="chart-panel__meta">Hover a bar for details</span>
+          </header>
+          <div class="chart-panel__canvas-wrap">
+            <canvas id="commission-chart" aria-label="Commission earned per day" role="img"></canvas>
+          </div>
+        </section>
+
+        <!-- Top Staff leaderboard (collapses to accordion on mobile) -->
+        <details class="leaderboard" data-leaderboard open>
+          <summary class="leaderboard__summary">
+            <span>
+              <span class="leaderboard__title">Top Staff</span>
+              <span class="leaderboard__meta" data-leaderboard-meta>Last 30 days</span>
+            </span>
+            <span class="leaderboard__chevron" aria-hidden="true"></span>
+          </summary>
+          <ol class="leaderboard__list" data-leaderboard-list></ol>
+        </details>
+
+      </div>
 
     </main>
 
@@ -385,6 +540,9 @@
   <!-- Chart.js (lightweight bar chart) + Commission Over Time -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
   <script src="/dashboard/chart.js" defer></script>
+
+  <!-- Top Staff leaderboard -->
+  <script src="/dashboard/leaderboard.js"></script>
 
 </body>
 </html>
