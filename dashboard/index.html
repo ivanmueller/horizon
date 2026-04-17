@@ -226,6 +226,42 @@
       .kpi-card__value { font-size: 1.625rem; }
     }
 
+    /* --- Commission Over Time chart --- */
+    .chart-panel {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: var(--space-5) var(--space-5) var(--space-4);
+      margin-top: var(--space-6);
+    }
+    .chart-panel__header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+    }
+    .chart-panel__title {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.9375rem;
+      color: var(--near-black);
+      margin: 0;
+    }
+    .chart-panel__meta {
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      color: var(--mid-gray);
+    }
+    .chart-panel__canvas-wrap {
+      position: relative;
+      width: 100%;
+      height: 240px;
+    }
+    @media (max-width: 640px) {
+      .chart-panel__canvas-wrap { height: 180px; }
+    }
+
     /* Responsive trims */
     @media (max-width: 640px) {
       :root { --dash-header-height: 56px; }
@@ -295,6 +331,17 @@
         </article>
       </section>
 
+      <!-- Commission Over Time chart -->
+      <section class="chart-panel" aria-label="Commission over time">
+        <header class="chart-panel__header">
+          <h2 class="chart-panel__title">Commission Over Time</h2>
+          <span class="chart-panel__meta">Hover a bar for details</span>
+        </header>
+        <div class="chart-panel__canvas-wrap">
+          <canvas id="commission-chart" aria-label="Commission earned per day" role="img"></canvas>
+        </div>
+      </section>
+
     </main>
 
   </div>
@@ -334,6 +381,10 @@
 
   <!-- KPI summary cards -->
   <script src="/dashboard/kpis.js"></script>
+
+  <!-- Chart.js (lightweight bar chart) + Commission Over Time -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+  <script src="/dashboard/chart.js" defer></script>
 
 </body>
 </html>
