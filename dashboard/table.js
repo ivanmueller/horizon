@@ -85,7 +85,7 @@
     const status = STATUS_META[b.status] || { label: b.status, cls: '' };
 
     return (
-      '<tr class="txn-table__row" data-booking-id="' + escapeHtml(b.id) + '">' +
+      '<tr class="txn-table__row" data-booking-id="' + escapeHtml(b.id) + '" tabindex="0" aria-label="View booking details">' +
         '<td class="txn-table__cell txn-col-date"       data-label="Date">' + escapeHtml(formatDate(b.date)) + '</td>' +
         '<td class="txn-table__cell txn-col-guest"      data-label="Guest">' + escapeHtml(b.guest.name) + '</td>' +
         '<td class="txn-table__cell txn-col-tour"       data-label="Tour">' + escapeHtml(tourName) + '</td>' +
