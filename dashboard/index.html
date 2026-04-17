@@ -545,6 +545,219 @@
       .filter-dropdown { min-width: 200px; }
     }
 
+    /* --- Transaction table --- */
+    .txn-section {
+      margin-top: var(--space-4);
+    }
+    .txn-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+    }
+    .txn-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      color: var(--near-black);
+    }
+    .txn-table__th,
+    .txn-table__cell {
+      padding: 0 var(--space-4);
+      text-align: left;
+      vertical-align: middle;
+      min-width: 0;
+    }
+    .txn-table__th {
+      position: sticky;
+      top: var(--dash-header-height);
+      z-index: 5;
+      height: 44px;
+      background: #FFFFFF;
+      border-bottom: 1px solid var(--border-color);
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--mid-gray);
+    }
+    .txn-table__th:first-child { border-top-left-radius: var(--radius-lg); }
+    .txn-table__th:last-child  { border-top-right-radius: var(--radius-lg); }
+
+    .txn-table__row {
+      transition: background-color var(--duration-fast) var(--ease-out);
+    }
+    .txn-table__cell {
+      height: 52px;
+      border-bottom: 1px solid #F0F0EB;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .txn-table__row:last-child .txn-table__cell { border-bottom: 0; }
+    .txn-table__row:hover {
+      background: var(--warm-white-alt);
+    }
+
+    /* Column widths (desktop) */
+    .txn-col-date       { width: 100px; }
+    .txn-col-guest      { width: 160px; }
+    .txn-col-tour       { width: auto; }
+    .txn-col-referrer   { width: 140px; }
+    .txn-col-value      { width: 110px; }
+    .txn-col-commission { width: 110px; }
+    .txn-col-status     { width: 120px; }
+
+    /* Cell content styling */
+    .txn-col-guest .txn-table__cell,
+    td.txn-col-guest {
+      font-weight: 500;
+    }
+    td.txn-col-value,
+    td.txn-col-commission {
+      font-family: var(--font-display);
+      font-weight: 600;
+    }
+    td.txn-col-commission {
+      color: var(--coral);
+    }
+
+    /* Status pills */
+    .txn-status {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      font-weight: 500;
+      line-height: 1.4;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+    }
+    .txn-status--confirmed {
+      background: #E8F5E9;
+      color: #1B5E20;
+    }
+    .txn-status--pending {
+      background: #FFF8E1;
+      color: #8C6D0F;
+    }
+    .txn-status--paid-out {
+      background: var(--warm-white-alt);
+      color: var(--mid-gray);
+    }
+
+    /* Empty state */
+    .txn-empty {
+      padding: var(--space-8) var(--space-5);
+      text-align: center;
+      color: var(--mid-gray);
+      font-size: 0.875rem;
+    }
+
+    /* Footer + Load more */
+    .txn-footer {
+      display: flex;
+      justify-content: center;
+      margin-top: var(--space-5);
+    }
+    .txn-load-more {
+      appearance: none;
+      border: 1px solid var(--border-color);
+      background: #FFFFFF;
+      color: var(--near-black);
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      padding: 10px 20px;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      transition: background-color var(--duration-fast) var(--ease-out),
+                  border-color var(--duration-fast) var(--ease-out);
+    }
+    .txn-load-more:hover {
+      background: var(--warm-white-alt);
+      border-color: var(--light-gray);
+    }
+    .txn-load-more:focus-visible {
+      outline: 2px solid var(--coral);
+      outline-offset: 2px;
+    }
+    .txn-load-more[hidden] { display: none; }
+
+    /* Tablet: hide Booking Value */
+    @media (max-width: 1023px) {
+      .txn-table__th.txn-col-value,
+      .txn-table__cell.txn-col-value {
+        display: none;
+      }
+    }
+
+    /* Mobile: convert table to stacked cards */
+    @media (max-width: 767px) {
+      .txn-card {
+        background: transparent;
+        border: 0;
+      }
+      .txn-table,
+      .txn-table thead,
+      .txn-table tbody,
+      .txn-table tr,
+      .txn-table td {
+        display: block;
+        width: 100%;
+      }
+      .txn-table thead { display: none; }
+      .txn-table__row {
+        background: #FFFFFF;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: var(--space-4);
+        margin-bottom: var(--space-3);
+      }
+      .txn-table__row:hover {
+        background: #FFFFFF;
+        border-color: var(--light-gray);
+      }
+      .txn-table__cell {
+        height: auto;
+        padding: 6px 0;
+        border-bottom: 0;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-3);
+        font-size: 0.875rem;
+      }
+      .txn-table__cell::before {
+        content: attr(data-label);
+        color: var(--mid-gray);
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        flex-shrink: 0;
+      }
+      /* Guest name: big, no label, top of card */
+      td.txn-col-guest {
+        padding-bottom: var(--space-3);
+        margin-bottom: var(--space-2);
+        border-bottom: 1px solid #F0F0EB;
+        font-family: var(--font-display);
+        font-size: 1rem;
+        font-weight: 600;
+      }
+      td.txn-col-guest::before { display: none; }
+      td.txn-col-commission { color: var(--coral); }
+      td.txn-col-status { justify-content: space-between; }
+    }
+
     /* Responsive trims */
     @media (max-width: 640px) {
       :root { --dash-header-height: 56px; }
@@ -661,6 +874,32 @@
         </div>
       </section>
 
+      <!-- Transaction table -->
+      <section class="txn-section" aria-label="Bookings">
+        <div class="txn-card">
+          <table class="txn-table" data-txn-table>
+            <thead>
+              <tr>
+                <th class="txn-table__th txn-col-date"       scope="col">Date</th>
+                <th class="txn-table__th txn-col-guest"      scope="col">Guest Name</th>
+                <th class="txn-table__th txn-col-tour"       scope="col">Tour</th>
+                <th class="txn-table__th txn-col-referrer"   scope="col">Referred By</th>
+                <th class="txn-table__th txn-col-value"      scope="col">Booking Value</th>
+                <th class="txn-table__th txn-col-commission" scope="col">Commission</th>
+                <th class="txn-table__th txn-col-status"     scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody data-txn-body></tbody>
+          </table>
+          <p class="txn-empty" data-txn-empty hidden>No bookings match your filters.</p>
+        </div>
+        <div class="txn-footer">
+          <button type="button" class="txn-load-more" data-txn-loadmore hidden>
+            <span data-txn-loadmore-label>Load more</span>
+          </button>
+        </div>
+      </section>
+
     </main>
 
   </div>
@@ -710,6 +949,9 @@
 
   <!-- Top Staff leaderboard -->
   <script src="/dashboard/leaderboard.js"></script>
+
+  <!-- Transaction table -->
+  <script src="/dashboard/table.js"></script>
 
 </body>
 </html>
