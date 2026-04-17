@@ -38,11 +38,13 @@
   };
 
   // ---- Tour catalogue --------------------------------------
+  // shortName is used in compact contexts (filter pills, table rows);
+  // name is the full title for detail views.
   const tours = [
-    { id: 'lake-louise-canoe',        name: 'Lake Louise Guided Canoe & Moraine Lake Tour', priceCad: 249 },
-    { id: 'banff-highlights',         name: 'Banff: Town Highlights and Gondola Tour',      priceCad: 249 },
-    { id: 'lake-agnes-hike',          name: 'Lake Agnes Tea House Guided Hike',             priceCad: 149 },
-    { id: 'moraine-lake-sightseeing', name: 'Moraine Lake Sightseeing',                     priceCad: 189 }
+    { id: 'lake-louise-canoe',        name: 'Lake Louise Guided Canoe & Moraine Lake Tour', shortName: 'Lake Louise Canoe',      priceCad: 249 },
+    { id: 'banff-highlights',         name: 'Banff: Town Highlights and Gondola Tour',      shortName: 'Banff Highlights',       priceCad: 249 },
+    { id: 'lake-agnes-hike',          name: 'Lake Agnes Tea House Guided Hike',             shortName: 'Lake Agnes Hike',        priceCad: 149 },
+    { id: 'moraine-lake-sightseeing', name: 'Moraine Lake Sightseeing',                     shortName: 'Moraine Lake',           priceCad: 189 }
   ];
 
   // ---- Hotel staff -----------------------------------------
