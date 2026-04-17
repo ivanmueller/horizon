@@ -48,12 +48,20 @@
     return 'Last ' + daysForRange(rangeKey) + ' days';
   }
 
+  // Pull from the shared, filter-aware pool.
+  function pool() {
+    const dash = window.HorizonDashboard;
+    return (dash && typeof dash.getFilteredBookings === 'function')
+      ? dash.getFilteredBookings()
+      : data.bookings;
+  }
+
   // ---- Aggregation ----------------------------------------
   function topStaff(rangeKey) {
     const days = daysForRange(rangeKey);
     const endMs = TODAY_MS;
     const startMs = endMs - (days - 1) * DAY_MS;
-    const inWindow = data.bookings.filter(b => {
+    const inWindow = pool().filter(b => {
       const t = new Date(b.date + 'T00:00:00').getTime();
       return t >= startMs && t <= endMs;
     });
@@ -139,6 +147,9 @@
   }
   window.addEventListener('dash:range-change', function (e) {
     render((e.detail && e.detail.range) || getActiveRange());
+  });
+  window.addEventListener('dash:filters-change', function () {
+    render(getActiveRange());
   });
 
   // ---- Initial render -------------------------------------

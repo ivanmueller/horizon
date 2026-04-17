@@ -55,13 +55,22 @@
     return shortDay(startMs) + ' – ' + longDay(endMs);
   }
 
+  // Pull from the shared, filter-aware pool.
+  function pool() {
+    const dash = window.HorizonDashboard;
+    return (dash && typeof dash.getFilteredBookings === 'function')
+      ? dash.getFilteredBookings()
+      : data.bookings;
+  }
+
   // ---- Aggregation -----------------------------------------
   function dailyBuckets(days) {
+    const src = pool();
     const buckets = [];
     for (let i = days - 1; i >= 0; i--) {
       const dayMs = TODAY_MS - i * DAY_MS;
       const iso = toIso(dayMs);
-      const dayBookings = data.bookings.filter(b => b.date === iso);
+      const dayBookings = src.filter(b => b.date === iso);
       const amount = dayBookings.reduce((s, b) => s + b.commission, 0);
       buckets.push({
         label: shortDay(dayMs),
@@ -76,11 +85,12 @@
   function weeklyBuckets(days) {
     // Build day-level data first, then roll into 7-day bins
     // anchored to today (newest bin always ends on TODAY).
+    const src = pool();
     const daily = [];
     for (let i = days - 1; i >= 0; i--) {
       const dayMs = TODAY_MS - i * DAY_MS;
       const iso = toIso(dayMs);
-      const dayBookings = data.bookings.filter(b => b.date === iso);
+      const dayBookings = src.filter(b => b.date === iso);
       daily.push({
         ms: dayMs,
         amount: dayBookings.reduce((s, b) => s + b.commission, 0),
@@ -201,5 +211,8 @@
 
   window.addEventListener('dash:range-change', function (e) {
     redraw((e.detail && e.detail.range) || getActiveRange());
+  });
+  window.addEventListener('dash:filters-change', function () {
+    redraw(getActiveRange());
   });
 })();

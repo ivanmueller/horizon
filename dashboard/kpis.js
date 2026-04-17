@@ -54,8 +54,18 @@
     return new Date(b.date + 'T00:00:00').getTime();
   }
 
+  // Pull from the shared, filter-aware pool so pill filters flow
+  // through automatically. Falls back to raw bookings if filters.js
+  // hasn't initialised yet.
+  function pool() {
+    const dash = window.HorizonDashboard;
+    return (dash && typeof dash.getFilteredBookings === 'function')
+      ? dash.getFilteredBookings()
+      : data.bookings;
+  }
+
   function filterByWindow(startMs, endMs) {
-    return data.bookings.filter(b => {
+    return pool().filter(b => {
       const t = bookingDateMs(b);
       return t >= startMs && t <= endMs;
     });
@@ -84,7 +94,7 @@
     cur.avg = cur.count ? cur.total / cur.count : 0;
     prv.avg = prv.count ? prv.total / prv.count : 0;
 
-    const pending = data.bookings
+    const pending = pool()
       .filter(b => b.status === 'confirmed')
       .reduce((s, b) => s + b.commission, 0);
 
@@ -174,6 +184,9 @@
 
   window.addEventListener('dash:range-change', function (e) {
     render((e.detail && e.detail.range) || getActiveRange());
+  });
+  window.addEventListener('dash:filters-change', function () {
+    render(getActiveRange());
   });
 
   // Initial render — run after DOM ready regardless of script position.
