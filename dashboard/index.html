@@ -587,7 +587,12 @@
     .txn-table__th:last-child  { border-top-right-radius: var(--radius-lg); }
 
     .txn-table__row {
+      cursor: pointer;
       transition: background-color var(--duration-fast) var(--ease-out);
+    }
+    .txn-table__row:focus-visible {
+      outline: 2px solid var(--coral);
+      outline-offset: -2px;
     }
     .txn-table__cell {
       height: 52px;
@@ -758,11 +763,110 @@
       td.txn-col-status { justify-content: space-between; }
     }
 
+    /* --- Booking Detail Lightbox --- */
+    .booking-modal {
+      padding: 0;
+      border: 0;
+      background: #FFFFFF;
+      color: var(--near-black);
+      border-radius: var(--radius-lg);
+      max-width: 480px;
+      width: calc(100% - 32px);
+      box-shadow: 0 20px 60px rgba(26, 26, 46, 0.18),
+                  0 4px 16px rgba(26, 26, 46, 0.08);
+      overflow: hidden;
+    }
+    .booking-modal::backdrop {
+      background: rgba(0, 0, 0, 0.4);
+    }
+    .booking-modal[open] {
+      animation: booking-modal-in 180ms var(--ease-out);
+    }
+    @keyframes booking-modal-in {
+      from { opacity: 0; transform: translateY(4px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .booking-modal__close {
+      appearance: none;
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 32px;
+      height: 32px;
+      border: 0;
+      border-radius: var(--radius-md);
+      background: transparent;
+      color: var(--mid-gray);
+      font-size: 22px;
+      line-height: 1;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color var(--duration-fast) var(--ease-out),
+                  color var(--duration-fast) var(--ease-out);
+    }
+    .booking-modal__close:hover {
+      background: var(--warm-white-alt);
+      color: var(--near-black);
+    }
+    .booking-modal__close:focus-visible {
+      outline: 2px solid var(--coral);
+      outline-offset: 2px;
+    }
+
+    .booking-modal__body {
+      padding: var(--space-8) var(--space-6) var(--space-6);
+    }
+    .booking-modal__section {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      margin: 0;
+    }
+    .booking-modal__row {
+      display: grid;
+      grid-template-columns: minmax(110px, 40%) minmax(0, 1fr);
+      column-gap: var(--space-4);
+      align-items: baseline;
+    }
+    .booking-modal__row dt {
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--mid-gray);
+    }
+    .booking-modal__row dd {
+      margin: 0;
+      font-family: var(--font-body);
+      font-size: 0.9375rem;
+      font-weight: 500;
+      color: var(--near-black);
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .booking-modal__row--commission dt,
+    .booking-modal__row--commission dd {
+      color: var(--coral);
+      font-weight: 600;
+    }
+    .booking-modal__row--commission dd {
+      font-family: var(--font-display);
+    }
+    .booking-modal__divider {
+      border: 0;
+      border-top: 1px solid var(--border-color);
+      margin: var(--space-5) 0;
+    }
+
     /* Responsive trims */
     @media (max-width: 640px) {
       :root { --dash-header-height: 56px; }
       .dash-brand__name { max-width: 140px; }
       .date-toggle__option { padding: 5px 10px; font-size: 0.75rem; }
+      .booking-modal__body { padding: var(--space-6) var(--space-5) var(--space-5); }
+      .booking-modal__row { grid-template-columns: 1fr; row-gap: 2px; }
     }
   </style>
 </head>
@@ -904,6 +1008,12 @@
 
   </div>
 
+  <!-- Booking Detail lightbox (populated on row click) -->
+  <dialog class="booking-modal" data-booking-modal aria-label="Booking details">
+    <button type="button" class="booking-modal__close" data-booking-modal-close aria-label="Close">&times;</button>
+    <div class="booking-modal__body" data-booking-modal-body></div>
+  </dialog>
+
   <!-- Mock data layer (single source of truth for every component) -->
   <script src="/dashboard/data.js"></script>
 
@@ -952,6 +1062,9 @@
 
   <!-- Transaction table -->
   <script src="/dashboard/table.js"></script>
+
+  <!-- Booking Detail lightbox -->
+  <script src="/dashboard/modal.js"></script>
 
 </body>
 </html>
