@@ -190,10 +190,10 @@
     <header class="dash-header" role="banner">
       <div class="dash-header__inner">
 
-        <!-- Left: Hotel property name + avatar -->
+        <!-- Left: Hotel property name + avatar (populated from HorizonData) -->
         <div class="dash-brand">
-          <span class="dash-brand__avatar" aria-hidden="true">FM</span>
-          <span class="dash-brand__name">Fairmont Banff Springs</span>
+          <span class="dash-brand__avatar" data-property-initials aria-hidden="true"></span>
+          <span class="dash-brand__name" data-property-name></span>
         </div>
 
         <!-- Right: date range toggle + settings -->
@@ -225,7 +225,20 @@
 
   </div>
 
+  <!-- Mock data layer (single source of truth for every component) -->
+  <script src="/dashboard/data.js"></script>
+
   <script>
+    // Hydrate the header from the mock data layer.
+    (function () {
+      const data = window.HorizonData;
+      if (!data) return;
+      const nameEl = document.querySelector('[data-property-name]');
+      const initEl = document.querySelector('[data-property-initials]');
+      if (nameEl) nameEl.textContent = data.property.name;
+      if (initEl) initEl.textContent = data.property.initials;
+    })();
+
     // Date range toggle — local state only for now.
     (function () {
       const toggle = document.querySelector('.date-toggle');
