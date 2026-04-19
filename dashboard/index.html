@@ -552,6 +552,237 @@
     }
     .leaderboard-row[hidden] { display: none; }
 
+    /* --- Prescriptive insight card ---
+       Sits between the diagnostic row and the leaderboard.
+       Amber is the "pay attention" colour — coral stays locked
+       to revenue. A single rule fires at a time; if no rule
+       meets its threshold the whole card is hidden (silence
+       beats a generic filler insight). */
+    .insight-row {
+      margin-top: var(--space-6);
+    }
+    .insight-row[hidden] { display: none; }
+
+    .insight-card {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      column-gap: var(--space-4);
+      align-items: center;
+      padding: var(--space-4) var(--space-5);
+      background: var(--pending-tint);
+      border: 1px solid rgba(186, 117, 23, 0.28);
+      border-left: 4px solid var(--pending);
+      border-radius: var(--radius-lg);
+    }
+    .insight-card__icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--pending);
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .insight-card__icon svg {
+      width: 20px;
+      height: 20px;
+    }
+    .insight-card__body {
+      min-width: 0;
+    }
+    .insight-card__headline {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.9375rem;     /* 15px — one-line hero */
+      color: var(--near-black);
+      line-height: 1.3;
+      margin: 0 0 2px;
+    }
+    .insight-card__explanation {
+      font-family: var(--font-body);
+      font-size: 0.8125rem;     /* 13px — two-line support */
+      color: var(--near-black);
+      line-height: 1.45;
+      margin: 0;
+      opacity: 0.82;
+    }
+    .insight-card__cta {
+      appearance: none;
+      border: 1px solid var(--pending);
+      background: #FFFFFF;
+      color: var(--pending);
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 0.8125rem;
+      padding: 8px 14px;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      white-space: nowrap;
+      line-height: 1;
+      transition: background-color var(--duration-fast) var(--ease-out),
+                  color var(--duration-fast) var(--ease-out);
+    }
+    .insight-card__cta:hover {
+      background: var(--pending);
+      color: #FFFFFF;
+    }
+    .insight-card__cta:focus-visible {
+      outline: 2px solid var(--pending);
+      outline-offset: 2px;
+    }
+    @media (max-width: 767px) {
+      .insight-card {
+        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-rows: auto auto;
+        row-gap: var(--space-3);
+      }
+      .insight-card__cta {
+        grid-column: 1 / -1;
+        justify-self: start;
+      }
+    }
+
+    /* --- Playbook side drawer ---
+       Opens when the insight CTA is clicked. Short written
+       guidance only — never an analytics dump. Uses a native
+       <dialog> styled as a right-edge slide-over so it inherits
+       focus trapping + Escape-to-close for free. */
+    .playbook-drawer {
+      margin: 0 0 0 auto;
+      padding: 0;
+      border: 0;
+      background: #FFFFFF;
+      color: var(--near-black);
+      width: min(420px, 100%);
+      max-width: 100%;
+      height: 100vh;
+      max-height: 100vh;
+      box-shadow: -16px 0 48px rgba(26, 26, 46, 0.14);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .playbook-drawer::backdrop {
+      background: rgba(0, 0, 0, 0.35);
+    }
+    .playbook-drawer[open] {
+      animation: playbook-drawer-in 220ms var(--ease-out);
+    }
+    @keyframes playbook-drawer-in {
+      from { transform: translateX(100%); }
+      to   { transform: translateX(0); }
+    }
+
+    .playbook-drawer__header {
+      flex: 0 0 auto;
+      padding: var(--space-5) var(--space-6) var(--space-4);
+      border-bottom: 1px solid var(--border-color);
+      position: relative;
+    }
+    .playbook-drawer__eyebrow {
+      font-family: var(--font-body);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--pending);
+      margin: 0 0 4px;
+    }
+    .playbook-drawer__title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.125rem;
+      color: var(--near-black);
+      line-height: 1.3;
+      margin: 0;
+    }
+    .playbook-drawer__close {
+      appearance: none;
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 32px;
+      height: 32px;
+      border: 0;
+      border-radius: var(--radius-md);
+      background: transparent;
+      color: var(--mid-gray);
+      font-size: 22px;
+      line-height: 1;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .playbook-drawer__close:hover {
+      background: var(--warm-white-alt);
+      color: var(--near-black);
+    }
+    .playbook-drawer__close:focus-visible {
+      outline: 2px solid var(--pending);
+      outline-offset: 2px;
+    }
+    .playbook-drawer__body {
+      flex: 1 1 auto;
+      overflow-y: auto;
+      padding: var(--space-5) var(--space-6) var(--space-8);
+    }
+    .playbook-drawer__summary {
+      font-family: var(--font-body);
+      font-size: 0.9375rem;
+      color: var(--near-black);
+      line-height: 1.5;
+      margin: 0 0 var(--space-5);
+    }
+    .playbook-drawer__section-title {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.8125rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--mid-gray);
+      margin: 0 0 var(--space-3);
+    }
+    .playbook-drawer__steps {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+    .playbook-drawer__step {
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr);
+      column-gap: var(--space-3);
+      align-items: start;
+    }
+    .playbook-drawer__step-number {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--pending-tint);
+      color: var(--pending);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+    .playbook-drawer__step-body {
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      color: var(--near-black);
+      line-height: 1.5;
+    }
+    .playbook-drawer__step-body strong {
+      font-weight: 600;
+    }
+
     /* --- Leaderboard card --- */
     .leaderboard {
       background: #FFFFFF;
@@ -1482,6 +1713,28 @@
 
       </div>
 
+      <!-- Prescriptive insight — one rule fires at a time and
+           the whole row hides if nothing meets its threshold.
+           Amber == pay attention; coral is reserved for money. -->
+      <section class="insight-row" data-insight-row hidden>
+        <article class="insight-card" data-insight-card>
+          <span class="insight-card__icon" data-insight-icon aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21h6"/>
+              <path d="M10 17h4"/>
+              <path d="M12 3a6 6 0 0 0-3.5 10.9c.5.4.8 1 .9 1.6h5.2c.1-.6.4-1.2.9-1.6A6 6 0 0 0 12 3z"/>
+            </svg>
+          </span>
+          <div class="insight-card__body">
+            <h2 class="insight-card__headline" data-insight-headline></h2>
+            <p class="insight-card__explanation" data-insight-explanation></p>
+          </div>
+          <button type="button" class="insight-card__cta" data-insight-cta>
+            See playbook
+          </button>
+        </article>
+      </section>
+
       <!-- Top Staff leaderboard — now its own row below the
            diagnostic, so chart + funnel share the top grid. -->
       <section class="leaderboard-row" data-leaderboard-row>
@@ -1552,6 +1805,16 @@
     <div class="booking-modal__body" data-booking-modal-body></div>
   </dialog>
 
+  <!-- Playbook side drawer — short written guidance only. -->
+  <dialog class="playbook-drawer" data-playbook-drawer aria-labelledby="playbook-drawer-title">
+    <header class="playbook-drawer__header">
+      <p class="playbook-drawer__eyebrow">Playbook</p>
+      <h2 class="playbook-drawer__title" id="playbook-drawer-title" data-playbook-title></h2>
+      <button type="button" class="playbook-drawer__close" data-playbook-close aria-label="Close">&times;</button>
+    </header>
+    <div class="playbook-drawer__body" data-playbook-body></div>
+  </dialog>
+
   <!-- Payout History lightbox -->
   <dialog class="payout-modal" data-payout-modal aria-labelledby="payout-modal-title">
     <header class="payout-modal__header">
@@ -1607,6 +1870,9 @@
 
   <!-- Conversion funnel -->
   <script src="/dashboard/funnel.js"></script>
+
+  <!-- Prescriptive insight card + playbook drawer -->
+  <script src="/dashboard/insights.js"></script>
 
   <!-- Top Staff leaderboard -->
   <script src="/dashboard/leaderboard.js"></script>
