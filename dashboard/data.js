@@ -126,6 +126,41 @@
     });
   });
 
+  // ---- Daily QR scan counts --------------------------------
+  // Aggregated across every QR placement the hotel has deployed
+  // (lobby display, room key cards, in-room tablet, etc.). Used
+  // to compute the Scan → Book conversion rate and its sparkline.
+  // Pattern: weekday baseline 6–10, weekend lift ~+4, with a
+  // small deterministic variance so the numbers don't look flat.
+  const scans = (function () {
+    const out = [];
+    const start = new Date('2025-10-15T00:00:00'); // ~6 months back — covers 90d current + 90d prior
+    const end = new Date(meta.today + 'T00:00:00');
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const iso = d.toISOString().slice(0, 10);
+      const dow = d.getDay();
+      const weekend = (dow === 0 || dow === 6) ? 4 : 0;
+      const variance = ((d.getDate() * 7 + d.getMonth() * 3) % 5);
+      out.push({ date: iso, count: 6 + weekend + variance });
+    }
+    return out;
+  })();
+
+  // ---- Regional benchmark ---------------------------------
+  // In production this object comes from the server (aggregate
+  // of all partner hotels in the same cohort). Mocked here so
+  // the ribbon has something to render. percentile = this
+  // hotel's rank among peers; multipleOfAverage = how many
+  // times the regional-average-per-room figure this hotel is
+  // pacing at. periodLabel is the natural-language window.
+  const benchmark = {
+    cohortLabel: 'Banff partners',
+    cohortSize: 14,
+    percentile: 82,           // this hotel is at the 82nd percentile → "top 18%"
+    multipleOfAverage: 2.3,   // 2.3× the regional average per room
+    periodLabel: 'this month'
+  };
+
   // ---- Payout cycles --------------------------------------
   // Each payout aggregates the bookings whose payoutId matches.
   const payoutMeta = [
@@ -153,11 +188,14 @@
     staff,
     bookingSources,
     bookings,
-    payouts
+    payouts,
+    scans,
+    benchmark
   };
 
   // Freeze so UI code can't mutate the source of truth.
   Object.freeze(window.HorizonData);
   Object.freeze(window.HorizonData.property);
   Object.freeze(window.HorizonData.meta);
+  Object.freeze(window.HorizonData.benchmark);
 })();
