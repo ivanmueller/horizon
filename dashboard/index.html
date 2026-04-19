@@ -345,16 +345,16 @@
       .kpi-card__sparkline { width: 60px; }
     }
 
-    /* --- Chart row (chart + leaderboard, 70/30) --- */
+    /* --- Diagnostic row (chart + funnel, ~7/3) ---
+       Directly beneath the hero strip. Answers two questions:
+       "are we trending?" (chart) and "where are we losing
+       people?" (funnel). Leaderboard moved to its own row. */
     .chart-row {
       display: grid;
       grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
       gap: var(--space-4);
       margin-top: var(--space-6);
-      align-items: start;
-    }
-    .chart-row--solo {
-      grid-template-columns: minmax(0, 1fr);
+      align-items: stretch;
     }
     @media (max-width: 1023px) {
       .chart-row { grid-template-columns: minmax(0, 1fr); }
@@ -366,6 +366,8 @@
       border: 1px solid var(--border-color);
       border-radius: var(--radius-lg);
       padding: var(--space-5) var(--space-5) var(--space-4);
+      display: flex;
+      flex-direction: column;
     }
     .chart-panel__header {
       display: flex;
@@ -373,6 +375,7 @@
       justify-content: space-between;
       gap: var(--space-3);
       margin-bottom: var(--space-4);
+      flex-wrap: wrap;
     }
     .chart-panel__title {
       font-family: var(--font-display);
@@ -386,14 +389,168 @@
       font-size: 0.8125rem;
       color: var(--mid-gray);
     }
+    /* Inline legend — bar = current period, dashed line = prior.
+       Small and muted so it doesn't compete with the data. */
+    .chart-panel__legend {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-3);
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      color: var(--mid-gray);
+    }
+    .chart-panel__legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      line-height: 1;
+    }
+    .chart-panel__legend-swatch--bar {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      background: var(--coral);
+      display: inline-block;
+    }
+    .chart-panel__legend-swatch--line {
+      width: 14px;
+      height: 0;
+      border-top: 1.5px dashed var(--mid-gray);
+      display: inline-block;
+    }
     .chart-panel__canvas-wrap {
       position: relative;
       width: 100%;
-      height: 240px;
+      flex: 1 1 auto;
+      min-height: 240px;
     }
     @media (max-width: 640px) {
-      .chart-panel__canvas-wrap { height: 180px; }
+      .chart-panel__canvas-wrap { min-height: 180px; }
     }
+
+    /* --- Conversion funnel --- */
+    .funnel {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: var(--space-5);
+      display: flex;
+      flex-direction: column;
+    }
+    .funnel__header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+    }
+    .funnel__title {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.9375rem;
+      color: var(--near-black);
+      margin: 0;
+    }
+    .funnel__meta {
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      color: var(--mid-gray);
+    }
+    .funnel__stages {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+    .funnel__stage {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      column-gap: var(--space-3);
+      row-gap: 4px;
+      align-items: baseline;
+      padding: 8px 12px;
+      border-radius: var(--radius-md);
+      /* Bar width driven by --width inline (1 = top of funnel,
+         narrows as the cohort shrinks). Blue ramp darkens with
+         depth so the eye reads top-to-bottom; final stage
+         overrides to --positive (the satisfying landing). */
+      background: linear-gradient(
+        to right,
+        var(--funnel-fill, var(--info-tint)) 0,
+        var(--funnel-fill, var(--info-tint)) calc(var(--width, 1) * 100%),
+        transparent calc(var(--width, 1) * 100%)
+      );
+      border: 1px solid var(--funnel-border, var(--info-border));
+      border-right: 0;
+    }
+    .funnel__stage--final {
+      --funnel-fill: var(--positive-tint);
+      --funnel-border: rgba(29, 158, 117, 0.25);
+    }
+    .funnel__stage-label {
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--near-black);
+      min-width: 0;
+    }
+    .funnel__stage-count {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--info);
+      justify-self: end;
+      line-height: 1;
+    }
+    .funnel__stage--final .funnel__stage-count {
+      color: var(--positive);
+    }
+    .funnel__stage-pct {
+      grid-column: 1 / -1;
+      font-family: var(--font-body);
+      font-size: 0.6875rem;
+      color: var(--mid-gray);
+      line-height: 1.2;
+    }
+    .funnel__leak {
+      margin-top: var(--space-4);
+      padding-top: var(--space-3);
+      border-top: 1px solid var(--border-color);
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      color: var(--near-black);
+      line-height: 1.4;
+    }
+    .funnel__leak-label {
+      color: var(--mid-gray);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      display: block;
+      margin-bottom: 2px;
+    }
+    .funnel__leak-stage {
+      font-weight: 600;
+    }
+    .funnel__leak-drop {
+      color: var(--negative);
+      font-weight: 600;
+    }
+    .funnel__empty {
+      padding: var(--space-6) 0;
+      text-align: center;
+      color: var(--mid-gray);
+      font-size: 0.8125rem;
+    }
+
+    /* --- Leaderboard row (its own row, below the diagnostic) --- */
+    .leaderboard-row {
+      margin-top: var(--space-6);
+    }
+    .leaderboard-row[hidden] { display: none; }
 
     /* --- Leaderboard card --- */
     .leaderboard {
@@ -1284,21 +1441,50 @@
         </article>
       </section>
 
-      <!-- Chart + Leaderboard row (70/30 on desktop) -->
+      <!-- Diagnostic row: commission chart (wider) + conversion
+           funnel (narrower). Answers "are we trending?" and
+           "where are we losing people?" in one glance. -->
       <div class="chart-row" data-chart-row>
 
-        <!-- Commission Over Time chart -->
+        <!-- Commission Over Time chart — current-period bars,
+             prior-period dashed line overlay -->
         <section class="chart-panel" aria-label="Commission over time">
           <header class="chart-panel__header">
             <h2 class="chart-panel__title">Commission Over Time</h2>
-            <span class="chart-panel__meta">Hover a bar for details</span>
+            <span class="chart-panel__legend" aria-hidden="true">
+              <span class="chart-panel__legend-item">
+                <span class="chart-panel__legend-swatch--bar"></span>
+                This period
+              </span>
+              <span class="chart-panel__legend-item">
+                <span class="chart-panel__legend-swatch--line"></span>
+                Previous period
+              </span>
+            </span>
           </header>
           <div class="chart-panel__canvas-wrap">
-            <canvas id="commission-chart" aria-label="Commission earned per day" role="img"></canvas>
+            <canvas id="commission-chart" aria-label="Commission earned per day, with previous period overlay" role="img"></canvas>
           </div>
         </section>
 
-        <!-- Top Staff leaderboard (collapses to accordion on mobile) -->
+        <!-- Conversion funnel: Scans → Tour Views → Checkout → Bookings -->
+        <section class="funnel" aria-label="Conversion funnel" data-funnel>
+          <header class="funnel__header">
+            <h2 class="funnel__title">Conversion Funnel</h2>
+            <span class="funnel__meta" data-funnel-meta></span>
+          </header>
+          <ol class="funnel__stages" data-funnel-stages></ol>
+          <p class="funnel__leak" data-funnel-leak hidden>
+            <span class="funnel__leak-label">Biggest leak</span>
+            <span data-funnel-leak-body></span>
+          </p>
+        </section>
+
+      </div>
+
+      <!-- Top Staff leaderboard — now its own row below the
+           diagnostic, so chart + funnel share the top grid. -->
+      <section class="leaderboard-row" data-leaderboard-row>
         <details class="leaderboard" data-leaderboard open>
           <summary class="leaderboard__summary">
             <span>
@@ -1309,8 +1495,7 @@
           </summary>
           <ol class="leaderboard__list" data-leaderboard-list></ol>
         </details>
-
-      </div>
+      </section>
 
       <!-- Filter bar (sits above the transaction table, to be added next) -->
       <section class="filter-bar" data-filter-bar aria-label="Filter bookings">
@@ -1419,6 +1604,9 @@
   <!-- Chart.js (lightweight bar chart) + Commission Over Time -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
   <script src="/dashboard/chart.js" defer></script>
+
+  <!-- Conversion funnel -->
+  <script src="/dashboard/funnel.js"></script>
 
   <!-- Top Staff leaderboard -->
   <script src="/dashboard/leaderboard.js"></script>

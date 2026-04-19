@@ -22,11 +22,11 @@
   const TODAY_MS = new Date(data.meta.today + 'T00:00:00').getTime();
   const MAX_ROWS = 5;
 
-  const panel   = document.querySelector('[data-leaderboard]');
-  const listEl  = document.querySelector('[data-leaderboard-list]');
-  const metaEl  = document.querySelector('[data-leaderboard-meta]');
-  const rowEl   = document.querySelector('[data-chart-row]');
-  if (!panel || !listEl || !rowEl) return;
+  const panel  = document.querySelector('[data-leaderboard]');
+  const listEl = document.querySelector('[data-leaderboard-list]');
+  const metaEl = document.querySelector('[data-leaderboard-meta]');
+  const rowEl  = document.querySelector('[data-leaderboard-row]');
+  if (!panel || !listEl) return;
 
   // ---- Helpers --------------------------------------------
   const currencyFmt = new Intl.NumberFormat('en-CA', {
@@ -85,15 +85,13 @@
   function render(rangeKey) {
     const ranked = topStaff(rangeKey);
 
-    // Hide the entire card (and widen the chart) if only one
-    // staff member has bookings in this period.
-    if (ranked.length <= 1) {
-      rowEl.classList.add('chart-row--solo');
-      panel.hidden = true;
-      return;
-    }
-    rowEl.classList.remove('chart-row--solo');
-    panel.hidden = false;
+    // Hide the whole row when only one staff member has bookings
+    // — a leaderboard of one isn't useful. Chart + funnel are in
+    // their own row now, so no grid reflow is needed.
+    const hide = ranked.length <= 1;
+    if (rowEl) rowEl.hidden = hide;
+    panel.hidden = hide;
+    if (hide) return;
 
     if (metaEl) metaEl.textContent = rangeLabel(rangeKey);
 

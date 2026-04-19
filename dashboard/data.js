@@ -146,6 +146,28 @@
     return out;
   })();
 
+  // ---- Funnel: tour-page views + checkout starts -----------
+  // Derived from `scans` with realistic drop-off ratios so the
+  // funnel tells a believable story. Typical hospitality
+  // referral funnel:
+  //   Scan  →  ~65% view a tour page
+  //   View  →  ~18% of scans start checkout  (i.e. a big drop)
+  //   Checkout starts → actual bookings come from the bookings
+  //                     array (not derived), so the final stage
+  //                     is authoritative.
+  //
+  // The view → checkout cliff is intentional — it's the most
+  // common leak for QR-driven traffic and gives the "Biggest
+  // leak" hint something real to point at.
+  const tourViews = scans.map(s => {
+    const variance = ((s.date.charCodeAt(8) + s.date.charCodeAt(9)) % 3) - 1; // -1..+1
+    return { date: s.date, count: Math.max(0, Math.round(s.count * 0.65) + variance) };
+  });
+  const checkoutStarts = scans.map(s => {
+    const variance = ((s.date.charCodeAt(9) * 3) % 2); // 0..1
+    return { date: s.date, count: Math.max(0, Math.round(s.count * 0.18) + variance) };
+  });
+
   // ---- Regional benchmark ---------------------------------
   // In production this object comes from the server (aggregate
   // of all partner hotels in the same cohort). Mocked here so
@@ -190,6 +212,8 @@
     bookings,
     payouts,
     scans,
+    tourViews,
+    checkoutStarts,
     benchmark
   };
 
