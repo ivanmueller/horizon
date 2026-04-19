@@ -154,7 +154,11 @@
       gap: var(--space-3);
     }
 
-    /* Date range pill toggle */
+    /* Date range pill toggle — five presets.
+       On narrow viewports the pill row scrolls horizontally
+       rather than wrapping; GMs skim quickly for the chip
+       they want, and a fixed single-row keeps the header
+       height predictable. */
     .date-toggle {
       display: inline-flex;
       align-items: center;
@@ -162,12 +166,16 @@
       background: var(--warm-white-alt);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-full);
+      max-width: 100%;
+      overflow-x: auto;
+      scrollbar-width: none;
     }
+    .date-toggle::-webkit-scrollbar { display: none; }
     .date-toggle__option {
       appearance: none;
       border: 0;
       background: transparent;
-      padding: 5px 12px;
+      padding: 5px 11px;
       font-family: var(--font-body);
       font-size: 0.8125rem;
       font-weight: 500;
@@ -175,6 +183,8 @@
       border-radius: var(--radius-full);
       cursor: pointer;
       line-height: 1;
+      white-space: nowrap;
+      flex-shrink: 0;
       transition: background-color var(--duration-fast) var(--ease-out),
                   color var(--duration-fast) var(--ease-out);
     }
@@ -1363,31 +1373,45 @@
       color: var(--coral);
     }
 
-    /* Status pills */
+    /* Status pills — fill-based, not text-only. Confirmed +
+       Pending are solid-filled with white text so the status
+       reads at a glance down the ledger column. Paid Out
+       stays deliberately muted — it's settled, not active. */
     .txn-status {
       display: inline-flex;
       align-items: center;
+      gap: 5px;
       padding: 4px 10px;
       border-radius: var(--radius-full);
       font-family: var(--font-body);
       font-size: 0.75rem;
-      font-weight: 500;
+      font-weight: 600;
       line-height: 1.4;
       letter-spacing: 0.01em;
       white-space: nowrap;
     }
+    .txn-status::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.9;
+      flex-shrink: 0;
+    }
     .txn-status--confirmed {
-      background: var(--positive-tint);
-      color: var(--positive);
+      background: var(--positive);
+      color: #FFFFFF;
     }
     .txn-status--pending {
-      background: var(--pending-tint);
-      color: var(--pending);
+      background: var(--pending);
+      color: #FFFFFF;
     }
     .txn-status--paid-out {
       background: var(--warm-white-alt);
       color: var(--mid-gray);
     }
+    .txn-status--paid-out::before { opacity: 0.65; }
 
     /* Empty state */
     .txn-empty {
@@ -1823,10 +1847,11 @@
         <!-- Right: date range toggle + settings -->
         <div class="dash-header__right">
           <div class="date-toggle" role="group" aria-label="Date range">
-            <button type="button" class="date-toggle__option" data-range="7d"     aria-pressed="false">7d</button>
-            <button type="button" class="date-toggle__option" data-range="30d"    aria-pressed="true">30d</button>
-            <button type="button" class="date-toggle__option" data-range="90d"    aria-pressed="false">90d</button>
-            <button type="button" class="date-toggle__option" data-range="custom" aria-pressed="false">Custom</button>
+            <button type="button" class="date-toggle__option" data-range="thisMonth" aria-pressed="true">This Month</button>
+            <button type="button" class="date-toggle__option" data-range="lastMonth" aria-pressed="false">Last Month</button>
+            <button type="button" class="date-toggle__option" data-range="30d"       aria-pressed="false">Last 30 Days</button>
+            <button type="button" class="date-toggle__option" data-range="ytd"       aria-pressed="false">YTD</button>
+            <button type="button" class="date-toggle__option" data-range="custom"    aria-pressed="false">Custom</button>
           </div>
 
           <button type="button" class="dash-icon-btn" aria-label="Settings">

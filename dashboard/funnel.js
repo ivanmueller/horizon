@@ -41,14 +41,12 @@
   // ---- Helpers --------------------------------------------
   const numberFmt = new Intl.NumberFormat('en-CA');
 
-  function daysForRange(rangeKey) {
-    if (rangeKey === '7d') return 7;
-    if (rangeKey === '90d') return 90;
-    return 30;
-  }
-
-  function rangeLabel(rangeKey) {
-    return 'Last ' + daysForRange(rangeKey) + ' days';
+  function getWindow(key) {
+    const fn = window.HorizonDashboard && window.HorizonDashboard.range;
+    if (fn) return fn(key);
+    const endMs = TODAY_MS;
+    const startMs = endMs - 29 * DAY_MS;
+    return { key, startMs, endMs, days: 30, label: 'Last 30 days' };
   }
 
   function bookingDateMs(b) {
@@ -76,17 +74,13 @@
   }
 
   // ---- Stage computation ----------------------------------
-  function computeStages(rangeKey) {
-    const days = daysForRange(rangeKey);
-    const endMs = TODAY_MS;
-    const startMs = endMs - (days - 1) * DAY_MS;
-
-    const scans    = sumInWindow(data.scans,          startMs, endMs);
-    const views    = sumInWindow(data.tourViews,      startMs, endMs);
-    const checkout = sumInWindow(data.checkoutStarts, startMs, endMs);
+  function computeStages(win) {
+    const scans    = sumInWindow(data.scans,          win.startMs, win.endMs);
+    const views    = sumInWindow(data.tourViews,      win.startMs, win.endMs);
+    const checkout = sumInWindow(data.checkoutStarts, win.startMs, win.endMs);
     const bookings = pool().filter(b => {
       const t = bookingDateMs(b);
-      return t >= startMs && t <= endMs;
+      return t >= win.startMs && t <= win.endMs;
     }).length;
 
     return [
@@ -165,10 +159,11 @@
   }
 
   function render(rangeKey) {
-    const stages = computeStages(rangeKey);
+    const win = getWindow(rangeKey);
+    const stages = computeStages(win);
     const top = stages[0].count;
 
-    if (metaEl) metaEl.textContent = rangeLabel(rangeKey);
+    if (metaEl) metaEl.textContent = win.label;
 
     if (top === 0) {
       stagesEl.innerHTML = '<li class="funnel__empty">No scan activity in this window yet.</li>';
@@ -185,7 +180,7 @@
   // ---- Wire up --------------------------------------------
   function getActiveRange() {
     const el = document.querySelector('.date-toggle__option[aria-pressed="true"]');
-    return (el && el.dataset.range) || '30d';
+    return (el && el.dataset.range) || 'thisMonth';
   }
 
   window.addEventListener('dash:range-change', function (e) {

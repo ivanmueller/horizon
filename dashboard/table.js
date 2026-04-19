@@ -19,7 +19,11 @@
   const data = window.HorizonData;
   if (!data) return;
 
-  const PAGE_SIZE = 15;
+  // 10 rows per page reads faster than 15+ and matches the
+  // Airbnb host pattern GMs are already used to. "Load more"
+  // below the table reveals the next 10 on click — no
+  // pagination controls.
+  const PAGE_SIZE = 10;
   let visibleCount = PAGE_SIZE;
 
   // ---- DOM refs --------------------------------------------
