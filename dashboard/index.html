@@ -546,11 +546,224 @@
       font-size: 0.8125rem;
     }
 
-    /* --- Leaderboard row (its own row, below the diagnostic) --- */
-    .leaderboard-row {
+    /* --- Context row: top tours + guest profile + leaderboard ---
+       Three equal-width cards sitting side-by-side. Gives the GM
+       decision ammunition without pretending to be a data
+       warehouse — brochure restock, segment targeting, staff
+       recognition, in one glance. */
+    .context-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--space-4);
       margin-top: var(--space-6);
+      align-items: stretch;
     }
-    .leaderboard-row[hidden] { display: none; }
+    @media (max-width: 1023px) {
+      .context-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
+      .context-row { grid-template-columns: minmax(0, 1fr); }
+    }
+    .context-row[hidden] { display: none; }
+
+    .context-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: var(--space-5);
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .context-card__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-2);
+      margin-bottom: var(--space-4);
+      flex-wrap: wrap;
+    }
+    .context-card__title {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.9375rem;
+      color: var(--near-black);
+      margin: 0;
+    }
+    .context-card__meta {
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      color: var(--mid-gray);
+    }
+    .context-card__empty {
+      padding: var(--space-4) 0;
+      text-align: center;
+      color: var(--mid-gray);
+      font-size: 0.8125rem;
+    }
+
+    /* --- Top Tours card --- */
+    .top-tours__list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+    .top-tours__row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      column-gap: var(--space-3);
+      row-gap: 4px;
+      align-items: baseline;
+    }
+    .top-tours__name {
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--near-black);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+    .top-tours__amount {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: var(--near-black);
+      white-space: nowrap;
+    }
+    .top-tours__row--top .top-tours__amount {
+      color: var(--coral);
+    }
+    .top-tours__bar {
+      grid-column: 1 / -1;
+      height: 4px;
+      width: 100%;
+      background: var(--warm-white-alt);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .top-tours__bar-fill {
+      height: 100%;
+      background: var(--light-gray);
+      border-radius: 2px;
+      transition: width var(--duration-normal) var(--ease-out);
+    }
+    .top-tours__row--top .top-tours__bar-fill {
+      background: var(--coral);
+    }
+    .top-tours__count {
+      grid-column: 1 / -1;
+      font-family: var(--font-body);
+      font-size: 0.6875rem;
+      color: var(--mid-gray);
+      line-height: 1.2;
+    }
+
+    /* --- Guest Profile card --- */
+    .guest-profile {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+    .guest-profile__section-title {
+      font-family: var(--font-body);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--mid-gray);
+      margin: 0 0 var(--space-2);
+    }
+    .guest-profile__countries {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .guest-profile__country {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: var(--space-2);
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      color: var(--near-black);
+    }
+    .guest-profile__country-pct {
+      color: var(--mid-gray);
+      font-size: 0.75rem;
+      font-variant-numeric: tabular-nums;
+    }
+    /* Party composition uses a horizontal segmented bar — a
+       single-row stacked bar of neutral tones that doesn't
+       compete with the coral/green semantics elsewhere. */
+    .guest-profile__bar {
+      display: flex;
+      height: 8px;
+      width: 100%;
+      border-radius: var(--radius-full);
+      overflow: hidden;
+      background: var(--warm-white-alt);
+    }
+    .guest-profile__bar-seg {
+      height: 100%;
+    }
+    .guest-profile__bar-seg--solo   { background: #B8C0CC; }
+    .guest-profile__bar-seg--couple { background: #8C9AAF; }
+    .guest-profile__bar-seg--small  { background: #5C6B82; }
+    .guest-profile__bar-seg--family { background: #384254; }
+    .guest-profile__legend {
+      list-style: none;
+      padding: 0;
+      margin: var(--space-2) 0 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 12px;
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      color: var(--mid-gray);
+    }
+    .guest-profile__legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .guest-profile__legend-swatch {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      display: inline-block;
+    }
+    .guest-profile__lead {
+      display: flex;
+      align-items: baseline;
+      gap: var(--space-2);
+      flex-wrap: wrap;
+    }
+    .guest-profile__lead-value {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: var(--near-black);
+      line-height: 1.1;
+    }
+    .guest-profile__lead-unit {
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      color: var(--mid-gray);
+    }
+    .guest-profile__lead-range {
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      color: var(--mid-gray);
+      margin-left: auto;
+    }
 
     /* --- Prescriptive insight card ---
        Sits between the diagnostic row and the leaderboard.
@@ -784,82 +997,86 @@
     }
 
     /* --- Leaderboard card --- */
+    /* --- Staff leaderboard card ---
+       Rank-1 avatar uses --coral (coral == value → top performer
+       gets the eye); rank 2+ fall to neutral gray. The Kickback
+       pill makes the pricing mode explicit so there's no
+       ambiguity about whether dollars or counts are shown. */
     .leaderboard {
-      background: #FFFFFF;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-lg);
-      padding: var(--space-5);
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
     }
     .leaderboard[hidden] { display: none; }
-    .leaderboard__summary {
-      list-style: none;
+    .leaderboard__titleblock {
       display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: var(--space-3);
-      cursor: default;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
     }
-    .leaderboard__summary::-webkit-details-marker { display: none; }
-    .leaderboard__title {
-      font-family: var(--font-display);
-      font-weight: 600;
-      font-size: 0.9375rem;
-      color: var(--near-black);
-    }
-    .leaderboard__meta {
+    .leaderboard__kickback {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
       font-family: var(--font-body);
-      font-size: 0.8125rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .leaderboard__kickback--on {
+      background: var(--positive-tint);
+      color: var(--positive);
+    }
+    .leaderboard__kickback--off {
+      background: var(--warm-white-alt);
       color: var(--mid-gray);
     }
-    .leaderboard__chevron {
-      display: none;             /* visible only on mobile */
-      width: 10px;
-      height: 10px;
-      border-right: 1.5px solid var(--mid-gray);
-      border-bottom: 1.5px solid var(--mid-gray);
-      transform: rotate(45deg);
-      margin-left: var(--space-2);
-      transition: transform 200ms var(--ease-out);
-    }
-    .leaderboard[open] .leaderboard__chevron {
-      transform: rotate(-135deg);
+    .leaderboard__kickback-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      display: inline-block;
     }
     .leaderboard__list {
       list-style: none;
       padding: 0;
-      margin: var(--space-4) 0 0;
+      margin: 0;
       display: flex;
       flex-direction: column;
     }
     .leaderboard__row {
       display: grid;
-      grid-template-columns: 28px minmax(0, 1fr) auto;
+      grid-template-columns: 32px minmax(0, 1fr) auto;
       column-gap: var(--space-3);
       align-items: center;
       padding: var(--space-3) 0;
       border-bottom: 1px solid #F0F0EB;
     }
     .leaderboard__row:last-child { border-bottom: 0; }
-    .leaderboard__rank {
-      font-family: var(--font-display);
-      font-weight: 600;
-      color: var(--mid-gray);
-      font-size: 0.875rem;
-      text-align: center;
-      line-height: 24px;
-    }
-    .leaderboard__row--top .leaderboard__rank {
-      background: var(--pending-tint);
-      color: var(--pending);
-      border-radius: 999px;
-      width: 24px;
-      height: 24px;
+    .leaderboard__avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--warm-white-alt);
+      color: var(--near-black);
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.8125rem;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.75rem;
+      letter-spacing: 0.02em;
       line-height: 1;
-      margin: 0 auto;
+    }
+    .leaderboard__row--top .leaderboard__avatar {
+      background: var(--coral);
+      color: #FFFFFF;
     }
     .leaderboard__info {
       display: flex;
@@ -900,11 +1117,15 @@
       color: var(--mid-gray);
       line-height: 1.35;
     }
-
-    /* Mobile: make the summary look interactive and show chevron */
-    @media (max-width: 767px) {
-      .leaderboard__summary { cursor: pointer; }
-      .leaderboard__chevron { display: inline-block; }
+    /* Kickbacks OFF: the count becomes the hero line; amount
+       row is hidden by the component so the card reads as
+       recognition rather than compensation. */
+    .leaderboard--count-only .leaderboard__count {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.9375rem;
+      color: var(--near-black);
+      line-height: 1.2;
     }
 
     /* --- Filter bar --- */
@@ -1735,19 +1956,72 @@
         </article>
       </section>
 
-      <!-- Top Staff leaderboard — now its own row below the
-           diagnostic, so chart + funnel share the top grid. -->
-      <section class="leaderboard-row" data-leaderboard-row>
-        <details class="leaderboard" data-leaderboard open>
-          <summary class="leaderboard__summary">
-            <span>
-              <span class="leaderboard__title">Top Staff</span>
-              <span class="leaderboard__meta" data-leaderboard-meta>Last 30 days</span>
+      <!-- Context row — three equal cards: which tours are
+           driving commission, who the guests actually are, and
+           which concierges are referring the most. The staff
+           card is the only one that adapts to pricing model
+           (controlled by property.config.employeeKickbacksEnabled). -->
+      <section class="context-row" data-context-row>
+
+        <!-- Top Tours — which tours to stock more brochures for -->
+        <article class="context-card top-tours" aria-label="Top tours" data-top-tours>
+          <header class="context-card__header">
+            <h2 class="context-card__title">Top Tours</h2>
+            <span class="context-card__meta" data-top-tours-meta></span>
+          </header>
+          <ol class="top-tours__list" data-top-tours-list></ol>
+          <p class="context-card__empty" data-top-tours-empty hidden>No bookings yet in this window.</p>
+        </article>
+
+        <!-- Guest Profile — aggregate origin, party, lead time.
+             Never age/gender/individual — that's the line between
+             useful and creepy. -->
+        <article class="context-card guest-profile" aria-label="Guest profile" data-guest-profile>
+          <header class="context-card__header">
+            <h2 class="context-card__title">Guest Profile</h2>
+            <span class="context-card__meta" data-guest-profile-meta></span>
+          </header>
+          <div>
+            <p class="guest-profile__section-title">Origin</p>
+            <ol class="guest-profile__countries" data-guest-profile-countries></ol>
+          </div>
+          <div>
+            <p class="guest-profile__section-title">Party Composition</p>
+            <div class="guest-profile__bar" data-guest-profile-bar aria-hidden="true"></div>
+            <ul class="guest-profile__legend" data-guest-profile-legend></ul>
+          </div>
+          <div>
+            <p class="guest-profile__section-title">Booking Lead Time</p>
+            <div class="guest-profile__lead">
+              <span class="guest-profile__lead-value" data-guest-profile-lead-avg>—</span>
+              <span class="guest-profile__lead-unit">days avg.</span>
+              <span class="guest-profile__lead-range" data-guest-profile-lead-range></span>
+            </div>
+          </div>
+          <p class="context-card__empty" data-guest-profile-empty hidden>No bookings yet in this window.</p>
+        </article>
+
+        <!-- Staff leaderboard — kickback-aware. Shows dollars
+             per concierge when property.config.employeeKickbacks-
+             Enabled is true; flips to booking counts and the
+             "Top Referring Staff" title when false. -->
+        <article class="context-card leaderboard" aria-label="Staff performance" data-leaderboard>
+          <header class="context-card__header">
+            <div class="leaderboard__titleblock">
+              <h2 class="context-card__title" data-leaderboard-title>Top Staff</h2>
+              <span class="context-card__meta" data-leaderboard-meta></span>
+            </div>
+            <span class="leaderboard__kickback leaderboard__kickback--on"
+                  data-leaderboard-kickback
+                  title="Individual commission kickbacks are enabled for this property">
+              <span class="leaderboard__kickback-dot" aria-hidden="true"></span>
+              <span data-leaderboard-kickback-label>Kickback ON</span>
             </span>
-            <span class="leaderboard__chevron" aria-hidden="true"></span>
-          </summary>
+          </header>
           <ol class="leaderboard__list" data-leaderboard-list></ol>
-        </details>
+          <p class="context-card__empty" data-leaderboard-empty hidden>Not enough staff activity yet.</p>
+        </article>
+
       </section>
 
       <!-- Filter bar (sits above the transaction table, to be added next) -->
@@ -1874,7 +2148,9 @@
   <!-- Prescriptive insight card + playbook drawer -->
   <script src="/dashboard/insights.js"></script>
 
-  <!-- Top Staff leaderboard -->
+  <!-- Context row: top tours, guest profile, staff leaderboard -->
+  <script src="/dashboard/top-tours.js"></script>
+  <script src="/dashboard/guest-profile.js"></script>
   <script src="/dashboard/leaderboard.js"></script>
 
   <!-- Transaction table -->
