@@ -25,7 +25,15 @@
   const property = {
     id: 'fairmont-banff-springs',
     name: 'Fairmont Banff Springs',
-    initials: 'FM'
+    initials: 'FM',
+    // Per-property config overlays. `employeeKickbacksEnabled`
+    // controls whether the staff leaderboard shows dollar
+    // earnings per concierge (true) or booking counts only
+    // (false, relabeled "Top Referring Staff"). Same data
+    // pipeline, different rendering.
+    config: {
+      employeeKickbacksEnabled: true
+    }
   };
 
   const meta = {
@@ -113,16 +121,40 @@
   ];
 
   // ---- Derive bookingValue + commission on each booking ----
+  // Also attaches aggregate-only guest origin + booking lead
+  // time (days between booking and tour date). Origin is used
+  // by the Guest Profile card; names/emails/phones are never
+  // aggregated or displayed there — only the country bucket.
+  const ORIGIN_BY_ID = {
+    bk_001: 'Canada',       bk_002: 'Germany',     bk_003: 'India',
+    bk_004: 'Sweden',       bk_005: 'Japan',       bk_006: 'Nigeria',
+    bk_007: 'Ireland',      bk_008: 'Italy',       bk_009: 'New Zealand',
+    bk_010: 'Brazil',       bk_011: 'UAE',         bk_012: 'USA',
+    bk_013: 'Taiwan',       bk_014: 'Germany',     bk_015: 'UK',
+    bk_016: 'Mexico',       bk_017: 'India',       bk_018: 'Ireland',
+    bk_019: 'India',        bk_020: 'Germany',     bk_021: 'France',
+    bk_022: 'South Korea',  bk_023: 'USA',         bk_024: 'Sweden',
+    bk_025: 'UK',           bk_026: 'Spain',       bk_027: 'Spain',
+    bk_028: 'Denmark'
+  };
+
   const tourById = Object.fromEntries(tours.map(t => [t.id, t]));
   const bookings = rawBookings.map(b => {
     const tour = tourById[b.tourId];
     const bookingValue = tour.priceCad * b.partySize;
     const commission = Math.round(bookingValue * meta.commissionRate * 100) / 100;
+    // Deterministic 1–28 day lead time per booking — enough
+    // spread for the Guest Profile aggregate to feel real
+    // without adding explicit timestamps to every row.
+    const leadTimeDays = ((parseInt(b.id.slice(-3), 10) * 7) % 28) + 1;
+    const originCountry = ORIGIN_BY_ID[b.id] || 'Other';
     return Object.assign({}, b, {
       tourName: tour.name,
       unitPrice: tour.priceCad,
       bookingValue,
-      commission
+      commission,
+      leadTimeDays,
+      guest: Object.assign({}, b.guest, { originCountry })
     });
   });
 
@@ -220,6 +252,7 @@
   // Freeze so UI code can't mutate the source of truth.
   Object.freeze(window.HorizonData);
   Object.freeze(window.HorizonData.property);
+  Object.freeze(window.HorizonData.property.config);
   Object.freeze(window.HorizonData.meta);
   Object.freeze(window.HorizonData.benchmark);
 })();
