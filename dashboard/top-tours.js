@@ -16,7 +16,7 @@
   const data = window.HorizonData;
   if (!data) return;
 
-  const DAY_MS = 86400000;
+  const DAY_MS = (window.HorizonDashboard && window.HorizonDashboard.DAY_MS) || 86400000;
   const TODAY_MS = new Date(data.meta.today + 'T00:00:00').getTime();
 
   const listEl  = document.querySelector('[data-top-tours-list]');
@@ -35,14 +35,11 @@
 
   const tourById = Object.fromEntries(data.tours.map(t => [t.id, t]));
 
-  function daysForRange(rangeKey) {
-    if (rangeKey === '7d') return 7;
-    if (rangeKey === '90d') return 90;
-    return 30;
-  }
-
-  function rangeLabel(rangeKey) {
-    return 'Last ' + daysForRange(rangeKey) + ' days';
+  function getWindow(key) {
+    const fn = window.HorizonDashboard && window.HorizonDashboard.range;
+    if (fn) return fn(key);
+    const endMs = TODAY_MS;
+    return { key, startMs: endMs - 29 * DAY_MS, endMs, days: 30, label: 'Last 30 days' };
   }
 
   function pool() {
@@ -58,14 +55,11 @@
     }[c]));
   }
 
-  function aggregate(rangeKey) {
-    const days = daysForRange(rangeKey);
-    const endMs = TODAY_MS;
-    const startMs = endMs - (days - 1) * DAY_MS;
+  function aggregate(win) {
     const agg = new Map();
     pool().forEach(b => {
       const t = new Date(b.date + 'T00:00:00').getTime();
-      if (t < startMs || t > endMs) return;
+      if (t < win.startMs || t > win.endMs) return;
       if (!agg.has(b.tourId)) {
         agg.set(b.tourId, { tourId: b.tourId, total: 0, count: 0 });
       }
@@ -77,8 +71,9 @@
   }
 
   function render(rangeKey) {
-    const rows = aggregate(rangeKey);
-    if (metaEl) metaEl.textContent = rangeLabel(rangeKey);
+    const win = getWindow(rangeKey);
+    const rows = aggregate(win);
+    if (metaEl) metaEl.textContent = win.label;
 
     if (!rows.length) {
       listEl.innerHTML = '';
@@ -109,7 +104,7 @@
 
   function getActiveRange() {
     const el = document.querySelector('.date-toggle__option[aria-pressed="true"]');
-    return (el && el.dataset.range) || '30d';
+    return (el && el.dataset.range) || 'thisMonth';
   }
 
   window.addEventListener('dash:range-change', function (e) {

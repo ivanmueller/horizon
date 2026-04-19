@@ -35,6 +35,96 @@
     });
   };
 
+  // ---- Date range helpers ---------------------------------
+  // Single source of truth for every widget's "active window"
+  // + its comparison window. Returns absolute timestamps so
+  // the ranges can be arbitrary lengths (This Month / Last
+  // Month / YTD aren't a fixed number of days back — a common
+  // pitfall when every widget computed its own window).
+  const DAY_MS = 86400000;
+  const TODAY = new Date(data.meta.today + 'T00:00:00');
+  const TODAY_MS = TODAY.getTime();
+
+  function startOfMonthMs(y, m)  { return new Date(y, m, 1).getTime(); }
+  function endOfMonthMs(y, m)    { return new Date(y, m + 1, 0).getTime(); }
+  function startOfYearMs(y)      { return new Date(y, 0, 1).getTime(); }
+  function spanDays(startMs, endMs) {
+    return Math.round((endMs - startMs) / DAY_MS) + 1;
+  }
+
+  function rangeWindow(key) {
+    const y = TODAY.getFullYear();
+    const m = TODAY.getMonth();
+    const d = TODAY.getDate();
+
+    let startMs, endMs, priorStartMs, priorEndMs, label, priorLabel;
+
+    switch (key) {
+      case 'thisMonth': {
+        startMs = startOfMonthMs(y, m);
+        endMs   = TODAY_MS;
+        // Prior = same day-of-month range in the previous month.
+        // If the previous month is shorter, cap at its last day.
+        priorStartMs = startOfMonthMs(y, m - 1);
+        const priorMonthEnd = endOfMonthMs(y, m - 1);
+        priorEndMs   = Math.min(priorStartMs + (d - 1) * DAY_MS, priorMonthEnd);
+        label = 'This month';
+        priorLabel = 'Same days, last month';
+        break;
+      }
+      case 'lastMonth': {
+        startMs = startOfMonthMs(y, m - 1);
+        endMs   = endOfMonthMs(y, m - 1);
+        priorStartMs = startOfMonthMs(y, m - 2);
+        priorEndMs   = endOfMonthMs(y, m - 2);
+        label = 'Last month';
+        priorLabel = 'Previous month';
+        break;
+      }
+      case 'ytd': {
+        startMs = startOfYearMs(y);
+        endMs   = TODAY_MS;
+        priorStartMs = startOfYearMs(y - 1);
+        priorEndMs   = new Date(y - 1, m, d).getTime();
+        label = 'Year to date';
+        priorLabel = 'Previous YTD';
+        break;
+      }
+      case 'custom': {
+        // Placeholder until the picker ships — behave like 30d.
+        endMs   = TODAY_MS;
+        startMs = TODAY_MS - 29 * DAY_MS;
+        priorEndMs   = startMs - DAY_MS;
+        priorStartMs = priorEndMs - 29 * DAY_MS;
+        label = 'Custom range';
+        priorLabel = 'Previous window';
+        break;
+      }
+      case '30d':
+      default: {
+        endMs   = TODAY_MS;
+        startMs = TODAY_MS - 29 * DAY_MS;
+        priorEndMs   = startMs - DAY_MS;
+        priorStartMs = priorEndMs - 29 * DAY_MS;
+        label = 'Last 30 days';
+        priorLabel = 'Previous 30 days';
+        break;
+      }
+    }
+
+    return {
+      key,
+      startMs, endMs,
+      priorStartMs, priorEndMs,
+      days: spanDays(startMs, endMs),
+      priorDays: spanDays(priorStartMs, priorEndMs),
+      label, priorLabel
+    };
+  }
+
+  window.HorizonDashboard.range = rangeWindow;
+  window.HorizonDashboard.DAY_MS = DAY_MS;
+
   // ---- Filter definitions ---------------------------------
   const STATUS_OPTIONS = [
     { value: 'confirmed', label: 'Confirmed' },

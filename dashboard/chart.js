@@ -8,10 +8,12 @@
              aligned to the current bars (bucket N of the line =
              the same positional bucket N days earlier).
 
-   The prior-period line is deliberately recessive: thin, dashed,
-   gray. The current period must dominate visually per the brand
-   rule "coral == revenue"; the line is pure comparison context.
-   Redraws on 'dash:range-change' and 'dash:filters-change'.
+   Bucket granularity is driven by the active window size
+   (daily for ≤ 35 days, weekly beyond). The five preset
+   range chips — This Month, Last Month, Last 30 Days, YTD,
+   Custom — all resolve through window.HorizonDashboard.range
+   so the chart stays in lockstep with the KPIs, funnel, and
+   context cards.
    ============================================================ */
 (function () {
   'use strict';
@@ -21,14 +23,28 @@
 
   const DAY_MS = 86400000;
   const TODAY_MS = new Date(data.meta.today + 'T00:00:00').getTime();
-  const CORAL        = 'rgba(255, 107, 74, 0.8)';
-  const CORAL_HOVER  = 'rgba(255, 107, 74, 1)';
-  const PRIOR_LINE   = 'rgba(107, 114, 128, 0.75)'; // --mid-gray
+  const CORAL       = 'rgba(255, 107, 74, 0.8)';
+  const CORAL_HOVER = 'rgba(255, 107, 74, 1)';
+  const PRIOR_LINE  = 'rgba(107, 114, 128, 0.75)'; // --mid-gray
 
   // ---- Global Chart.js defaults (brand fonts) --------------
   Chart.defaults.font.family = "'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif";
   Chart.defaults.font.size = 12;
   Chart.defaults.color = '#6B7280';
+
+  // ---- Central range helper --------------------------------
+  function getWindow(key) {
+    const fn = window.HorizonDashboard && window.HorizonDashboard.range;
+    if (fn) return fn(key);
+    const endMs = TODAY_MS;
+    const startMs = endMs - 29 * DAY_MS;
+    return {
+      key, startMs, endMs, days: 30, label: 'Last 30 days',
+      priorStartMs: startMs - 30 * DAY_MS,
+      priorEndMs:   startMs - DAY_MS,
+      priorDays: 30, priorLabel: 'Previous 30 days'
+    };
+  }
 
   // ---- Date helpers ---------------------------------------
   function toIso(ms) {
@@ -54,19 +70,13 @@
     const end = new Date(endMs);
     const sameMonth = start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear();
     if (sameMonth) {
-      return start.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) + '–' + end.getDate();
+      return start.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) + '\u2013' + end.getDate();
     }
-    return shortDay(startMs) + '–' + shortDay(endMs);
+    return shortDay(startMs) + '\u2013' + shortDay(endMs);
   }
 
   function longRange(startMs, endMs) {
-    return shortDay(startMs) + ' – ' + longDay(endMs);
-  }
-
-  function daysForRange(rangeKey) {
-    if (rangeKey === '7d') return 7;
-    if (rangeKey === '90d') return 90;
-    return 30;
+    return shortDay(startMs) + ' \u2013 ' + longDay(endMs);
   }
 
   // Pull from the shared, filter-aware pool.
@@ -78,20 +88,18 @@
   }
 
   // ---- Aggregation -----------------------------------------
-  // Parameterised on endMs so we can reuse the same functions
-  // for both the current period (endMs = today) and the prior
-  // period (endMs = currentStart - 1 day).
-  function dailyBuckets(days, endMs) {
+  // Parameterised on (startMs, endMs) so current + prior
+  // windows share a single implementation.
+  function dailyBuckets(startMs, endMs) {
     const src = pool();
     const buckets = [];
-    for (let i = days - 1; i >= 0; i--) {
-      const dayMs = endMs - i * DAY_MS;
-      const iso = toIso(dayMs);
+    for (let t = startMs; t <= endMs; t += DAY_MS) {
+      const iso = toIso(t);
       const dayBookings = src.filter(b => b.date === iso);
       const amount = dayBookings.reduce((s, b) => s + b.commission, 0);
       buckets.push({
-        label: shortDay(dayMs),
-        tooltipTitle: longDay(dayMs),
+        label: shortDay(t),
+        tooltipTitle: longDay(t),
         amount: Math.round(amount * 100) / 100,
         count: dayBookings.length
       });
@@ -99,17 +107,17 @@
     return buckets;
   }
 
-  function weeklyBuckets(days, endMs) {
-    // Build day-level data then roll into 7-day bins anchored
-    // to endMs (newest bin always ends on endMs).
+  function weeklyBuckets(startMs, endMs) {
+    // Build day-level first, then roll into 7-day bins anchored
+    // to endMs so the newest bin always closes on the window
+    // end (works cleanly for YTD + Custom too).
     const src = pool();
     const daily = [];
-    for (let i = days - 1; i >= 0; i--) {
-      const dayMs = endMs - i * DAY_MS;
-      const iso = toIso(dayMs);
+    for (let t = startMs; t <= endMs; t += DAY_MS) {
+      const iso = toIso(t);
       const dayBookings = src.filter(b => b.date === iso);
       daily.push({
-        ms: dayMs,
+        ms: t,
         amount: dayBookings.reduce((s, b) => s + b.commission, 0),
         count: dayBookings.length
       });
@@ -120,11 +128,11 @@
       const slice = daily.slice(start, end + 1);
       const amount = slice.reduce((s, d) => s + d.amount, 0);
       const count = slice.reduce((s, d) => s + d.count, 0);
-      const startMs = slice[0].ms;
-      const endMsBin = slice[slice.length - 1].ms;
+      const sMs = slice[0].ms;
+      const eMs = slice[slice.length - 1].ms;
       out.unshift({
-        label: shortRange(startMs, endMsBin),
-        tooltipTitle: longRange(startMs, endMsBin),
+        label: shortRange(sMs, eMs),
+        tooltipTitle: longRange(sMs, eMs),
         amount: Math.round(amount * 100) / 100,
         count
       });
@@ -132,17 +140,11 @@
     return out;
   }
 
-  function bucketsForRange(rangeKey, endMs) {
-    if (rangeKey === '7d')  return dailyBuckets(7, endMs);
-    if (rangeKey === '90d') return weeklyBuckets(90, endMs);
-    return dailyBuckets(30, endMs); // 30d + custom
-  }
-
-  function priorEndMs(rangeKey) {
-    const days = daysForRange(rangeKey);
-    // Current period covers (today - (days-1)) … today, so the
-    // prior period ends the day before current starts.
-    return TODAY_MS - days * DAY_MS;
+  function bucketsForWindow(startMs, endMs) {
+    const span = Math.round((endMs - startMs) / DAY_MS) + 1;
+    return span > 35
+      ? weeklyBuckets(startMs, endMs)
+      : dailyBuckets(startMs, endMs);
   }
 
   // ---- Chart init -----------------------------------------
@@ -150,8 +152,20 @@
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
 
-  let currentBuckets = bucketsForRange(getActiveRange(), TODAY_MS);
-  let priorBuckets   = bucketsForRange(getActiveRange(), priorEndMs(getActiveRange()));
+  let win = getWindow(getActiveRange());
+  let currentBuckets = bucketsForWindow(win.startMs, win.endMs);
+  let priorBuckets   = bucketsForWindow(win.priorStartMs, win.priorEndMs);
+
+  // When current + prior bucket counts mismatch (e.g. months
+  // of different length under "This Month"), pad/trim the
+  // prior series to the current length so indices align.
+  function alignPrior(cur, prv) {
+    if (prv.length === cur.length) return prv;
+    const out = prv.slice(0, cur.length);
+    while (out.length < cur.length) out.push({ amount: 0, count: 0, label: '', tooltipTitle: '' });
+    return out;
+  }
+  priorBuckets = alignPrior(currentBuckets, priorBuckets);
 
   const chart = new Chart(ctx, {
     type: 'bar',
@@ -167,7 +181,7 @@
           borderRadius: 4,
           borderSkipped: false,
           maxBarThickness: 40,
-          order: 2    // drawn first → ends up behind the line
+          order: 2
         },
         {
           type: 'line',
@@ -184,7 +198,7 @@
           pointHoverBorderWidth: 2,
           fill: false,
           tension: 0.25,
-          order: 1    // drawn last → sits on top of the bars
+          order: 1
         }
       ]
     },
@@ -218,7 +232,7 @@
                 ? currentBuckets[item.dataIndex]
                 : priorBuckets[item.dataIndex];
               const prefix = isBar ? 'This period: ' : 'Previous: ';
-              const amount = '$' + bucket.amount.toFixed(2) + ' ' + data.meta.currency;
+              const amount = '$' + (bucket.amount || 0).toFixed(2) + ' ' + data.meta.currency;
               if (isBar) {
                 const bookings = bucket.count === 1 ? '1 booking' : bucket.count + ' bookings';
                 return [prefix + amount, '  ' + bookings];
@@ -257,8 +271,9 @@
 
   // ---- Redraw on range / filter change --------------------
   function redraw(rangeKey) {
-    currentBuckets = bucketsForRange(rangeKey, TODAY_MS);
-    priorBuckets   = bucketsForRange(rangeKey, priorEndMs(rangeKey));
+    win = getWindow(rangeKey);
+    currentBuckets = bucketsForWindow(win.startMs, win.endMs);
+    priorBuckets   = alignPrior(currentBuckets, bucketsForWindow(win.priorStartMs, win.priorEndMs));
     chart.data.labels = currentBuckets.map(b => b.label);
     chart.data.datasets[0].data = currentBuckets.map(b => b.amount);
     chart.data.datasets[1].data = priorBuckets.map(b => b.amount);
@@ -267,7 +282,7 @@
 
   function getActiveRange() {
     const el = document.querySelector('.date-toggle__option[aria-pressed="true"]');
-    return (el && el.dataset.range) || '30d';
+    return (el && el.dataset.range) || 'thisMonth';
   }
 
   window.addEventListener('dash:range-change', function (e) {

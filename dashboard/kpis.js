@@ -30,6 +30,24 @@
   const DAY_MS = 86400000;
   const TODAY_MS = new Date(data.meta.today + 'T00:00:00').getTime();
 
+  // Centralised range helper — defined in filters.js and
+  // exposed on window.HorizonDashboard. Every widget on the
+  // page reads its active window through this so the five
+  // preset chips (This Month, Last Month, Last 30 Days, YTD,
+  // Custom) resolve consistently.
+  function getWindow(key) {
+    const fn = window.HorizonDashboard && window.HorizonDashboard.range;
+    if (fn) return fn(key);
+    const endMs = TODAY_MS;
+    const startMs = endMs - 29 * DAY_MS;
+    return {
+      key, startMs, endMs, days: 30, label: 'Last 30 days',
+      priorStartMs: startMs - 30 * DAY_MS,
+      priorEndMs:   startMs - DAY_MS,
+      priorDays: 30, priorLabel: 'Previous 30 days'
+    };
+  }
+
   // Resolve brand colours from CSS custom properties so the
   // sparklines automatically follow any future token changes.
   const SPARK_COLORS = {
@@ -80,12 +98,6 @@
     return y + '-' + m + '-' + day;
   }
 
-  function daysForRange(rangeKey) {
-    if (rangeKey === '7d') return 7;
-    if (rangeKey === '90d') return 90;
-    return 30; // 30d + custom (until the date picker ships)
-  }
-
   function daysUntil(iso) {
     const target = new Date(iso + 'T00:00:00').getTime();
     return Math.max(0, Math.round((target - TODAY_MS) / DAY_MS));
@@ -125,19 +137,15 @@
 
   // ---- Metric computation ----------------------------------
   function computeMetrics(rangeKey) {
-    const days = daysForRange(rangeKey);
-    const endMs = TODAY_MS;
-    const startMs = endMs - (days - 1) * DAY_MS;
-    const priorEnd = startMs - DAY_MS;
-    const priorStart = priorEnd - (days - 1) * DAY_MS;
+    const win = getWindow(rangeKey);
 
     const bookingsPool = pool();
-    const cur = filterByWindow(bookingsPool, startMs, endMs);
-    const prv = filterByWindow(bookingsPool, priorStart, priorEnd);
+    const cur = filterByWindow(bookingsPool, win.startMs, win.endMs);
+    const prv = filterByWindow(bookingsPool, win.priorStartMs, win.priorEndMs);
 
     const sum = arr => arr.reduce((s, b) => s + b.commission, 0);
-    const curScans = scanCountInWindow(startMs, endMs);
-    const prvScans = scanCountInWindow(priorStart, priorEnd);
+    const curScans = scanCountInWindow(win.startMs, win.endMs);
+    const prvScans = scanCountInWindow(win.priorStartMs, win.priorEndMs);
 
     const current = {
       total: sum(cur),
@@ -160,7 +168,7 @@
       .filter(b => b.status === 'confirmed')
       .reduce((s, b) => s + b.commission, 0);
 
-    return { current, prior, pending, startMs, endMs, days };
+    return { current, prior, pending, win };
   }
 
   // ---- Daily series (for sparklines) -----------------------
@@ -313,7 +321,7 @@
       value: formatCurrency(m.current.total),
       trendDir: commTrend.dir,
       trendText: pctTrendText(commTrend),
-      spark: sparklineSvg(dailyCommission(m.startMs, m.endMs),
+      spark: sparklineSvg(dailyCommission(m.win.startMs, m.win.endMs),
                           SPARK_COLORS['total-commission'])
     });
 
@@ -323,7 +331,7 @@
       value: formatPct(m.current.rate),
       trendDir: rateTrend.dir,
       trendText: pointsTrendText(rateTrend, 'pp'),
-      spark: sparklineSvg(dailyScanRate(m.startMs, m.endMs),
+      spark: sparklineSvg(dailyScanRate(m.win.startMs, m.win.endMs),
                           SPARK_COLORS['scan-book-rate'])
     });
 
@@ -333,7 +341,7 @@
       value: formatCurrency(m.current.avg, 2),
       trendDir: avgTrend.dir,
       trendText: pctTrendText(avgTrend),
-      spark: sparklineSvg(dailyAvg(m.startMs, m.endMs),
+      spark: sparklineSvg(dailyAvg(m.win.startMs, m.win.endMs),
                           SPARK_COLORS['avg-commission'])
     });
 

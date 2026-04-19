@@ -44,10 +44,17 @@
   if (!row || !headline || !explain || !cta) return;
 
   // ---- Helpers --------------------------------------------
-  function daysForRange(rangeKey) {
-    if (rangeKey === '7d') return 7;
-    if (rangeKey === '90d') return 90;
-    return 30;
+  function getWindow(key) {
+    const fn = window.HorizonDashboard && window.HorizonDashboard.range;
+    if (fn) return fn(key);
+    const endMs = TODAY_MS;
+    const startMs = endMs - 29 * DAY_MS;
+    return {
+      key, startMs, endMs, days: 30, label: 'Last 30 days',
+      priorStartMs: startMs - 30 * DAY_MS,
+      priorEndMs:   startMs - DAY_MS,
+      priorDays: 30
+    };
   }
 
   function pool() {
@@ -83,24 +90,19 @@
 
   // ---- Context built once per render ----------------------
   function buildContext(rangeKey) {
-    const days = daysForRange(rangeKey);
-    const endMs = TODAY_MS;
-    const startMs = endMs - (days - 1) * DAY_MS;
-    const priorEnd = startMs - DAY_MS;
-    const priorStart = priorEnd - (days - 1) * DAY_MS;
-
-    const bkCur = bookingsInWindow(startMs, endMs);
+    const win = getWindow(rangeKey);
+    const bkCur = bookingsInWindow(win.startMs, win.endMs);
 
     const ctx = {
-      rangeKey, days,
-      scansCur:    sumInWindow(data.scans,          startMs, endMs),
-      viewsCur:    sumInWindow(data.tourViews,      startMs, endMs),
-      checkoutCur: sumInWindow(data.checkoutStarts, startMs, endMs),
+      rangeKey, win, days: win.days,
+      scansCur:    sumInWindow(data.scans,          win.startMs, win.endMs),
+      viewsCur:    sumInWindow(data.tourViews,      win.startMs, win.endMs),
+      checkoutCur: sumInWindow(data.checkoutStarts, win.startMs, win.endMs),
       bookingsCur: bkCur.length,
-      scansPrv:    sumInWindow(data.scans,          priorStart, priorEnd),
-      viewsPrv:    sumInWindow(data.tourViews,      priorStart, priorEnd),
-      checkoutPrv: sumInWindow(data.checkoutStarts, priorStart, priorEnd),
-      bookingsPrv: bookingsInWindow(priorStart, priorEnd).length,
+      scansPrv:    sumInWindow(data.scans,          win.priorStartMs, win.priorEndMs),
+      viewsPrv:    sumInWindow(data.tourViews,      win.priorStartMs, win.priorEndMs),
+      checkoutPrv: sumInWindow(data.checkoutStarts, win.priorStartMs, win.priorEndMs),
+      bookingsPrv: bookingsInWindow(win.priorStartMs, win.priorEndMs).length,
       byTour: {}
     };
     bkCur.forEach(b => { ctx.byTour[b.tourId] = (ctx.byTour[b.tourId] || 0) + 1; });
@@ -305,7 +307,7 @@
 
   function getActiveRange() {
     const el = document.querySelector('.date-toggle__option[aria-pressed="true"]');
-    return (el && el.dataset.range) || '30d';
+    return (el && el.dataset.range) || 'thisMonth';
   }
 
   window.addEventListener('dash:range-change', function (e) {

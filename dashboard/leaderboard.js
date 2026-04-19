@@ -46,14 +46,11 @@
   });
   const formatCurrency = n => currencyFmt.format(n) + ' ' + data.meta.currency;
 
-  function daysForRange(rangeKey) {
-    if (rangeKey === '7d') return 7;
-    if (rangeKey === '90d') return 90;
-    return 30;
-  }
-
-  function rangeLabel(rangeKey) {
-    return 'Last ' + daysForRange(rangeKey) + ' days';
+  function getWindow(key) {
+    const fn = window.HorizonDashboard && window.HorizonDashboard.range;
+    if (fn) return fn(key);
+    const endMs = TODAY_MS;
+    return { key, startMs: endMs - 29 * DAY_MS, endMs, days: 30, label: 'Last 30 days' };
   }
 
   function pool() {
@@ -78,14 +75,11 @@
   }
 
   // ---- Aggregation ----------------------------------------
-  function topStaff(rangeKey) {
-    const days = daysForRange(rangeKey);
-    const endMs = TODAY_MS;
-    const startMs = endMs - (days - 1) * DAY_MS;
+  function topStaff(win) {
     const byStaff = new Map();
     pool().forEach(b => {
       const t = new Date(b.date + 'T00:00:00').getTime();
-      if (t < startMs || t > endMs) return;
+      if (t < win.startMs || t > win.endMs) return;
       if (!byStaff.has(b.staffId)) {
         byStaff.set(b.staffId, { staffId: b.staffId, total: 0, count: 0 });
       }
@@ -161,8 +155,9 @@
 
   function render(rangeKey) {
     applyMode();
-    const ranked = topStaff(rangeKey);
-    if (metaEl) metaEl.textContent = rangeLabel(rangeKey);
+    const win = getWindow(rangeKey);
+    const ranked = topStaff(win);
+    if (metaEl) metaEl.textContent = win.label;
 
     // A leaderboard of one isn't useful — hide the list and
     // show a gentle empty state instead of the whole card.
@@ -179,7 +174,7 @@
   // ---- Wire up --------------------------------------------
   function getActiveRange() {
     const el = document.querySelector('.date-toggle__option[aria-pressed="true"]');
-    return (el && el.dataset.range) || '30d';
+    return (el && el.dataset.range) || 'thisMonth';
   }
   window.addEventListener('dash:range-change', function (e) {
     render((e.detail && e.detail.range) || getActiveRange());

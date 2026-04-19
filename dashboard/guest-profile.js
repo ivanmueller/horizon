@@ -40,14 +40,11 @@
   ];
 
   // ---- Helpers --------------------------------------------
-  function daysForRange(rangeKey) {
-    if (rangeKey === '7d') return 7;
-    if (rangeKey === '90d') return 90;
-    return 30;
-  }
-
-  function rangeLabel(rangeKey) {
-    return 'Last ' + daysForRange(rangeKey) + ' days';
+  function getWindow(key) {
+    const fn = window.HorizonDashboard && window.HorizonDashboard.range;
+    if (fn) return fn(key);
+    const endMs = TODAY_MS;
+    return { key, startMs: endMs - 29 * DAY_MS, endMs, days: 30, label: 'Last 30 days' };
   }
 
   function pool() {
@@ -63,13 +60,10 @@
     }[c]));
   }
 
-  function inWindow(rangeKey) {
-    const days = daysForRange(rangeKey);
-    const endMs = TODAY_MS;
-    const startMs = endMs - (days - 1) * DAY_MS;
+  function inWindow(win) {
     return pool().filter(b => {
       const t = new Date(b.date + 'T00:00:00').getTime();
-      return t >= startMs && t <= endMs;
+      return t >= win.startMs && t <= win.endMs;
     });
   }
 
@@ -167,8 +161,9 @@
   }
 
   function render(rangeKey) {
-    const bookings = inWindow(rangeKey);
-    if (metaEl) metaEl.textContent = rangeLabel(rangeKey);
+    const win = getWindow(rangeKey);
+    const bookings = inWindow(win);
+    if (metaEl) metaEl.textContent = win.label;
 
     if (!bookings.length) {
       if (emptyEl) emptyEl.hidden = false;
@@ -189,7 +184,7 @@
   // ---- Wire up --------------------------------------------
   function getActiveRange() {
     const el = document.querySelector('.date-toggle__option[aria-pressed="true"]');
-    return (el && el.dataset.range) || '30d';
+    return (el && el.dataset.range) || 'thisMonth';
   }
 
   window.addEventListener('dash:range-change', function (e) {
