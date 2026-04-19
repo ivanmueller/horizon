@@ -35,7 +35,51 @@
       --pending:        #BA7517;
       --pending-tint:   rgba(186, 117, 23, 0.14);
       --info:           #185FA5;
-      --info-tint:      rgba(24, 95, 165, 0.10);
+      --info-tint:      rgba(24, 95, 165, 0.08);
+      --info-border:    rgba(24, 95, 165, 0.18);
+      /* Negative delta only — reserved for down-trends.
+         Coral is the revenue accent and must never signal "down". */
+      --negative:       #C4443B;
+    }
+
+    /* ============================================================
+       Benchmark ribbon — sits above the KPI grid. Low-saturation
+       blue background keeps it informational, never promotional.
+       ============================================================ */
+    .benchmark-ribbon {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: 10px var(--space-5);
+      background: var(--info-tint);
+      border: 1px solid var(--info-border);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--space-5);
+    }
+    .benchmark-ribbon__icon {
+      width: 18px;
+      height: 18px;
+      color: var(--info);
+      flex-shrink: 0;
+    }
+    .benchmark-ribbon__text {
+      margin: 0;
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      line-height: 1.4;
+      color: var(--near-black);
+      min-width: 0;
+    }
+    .benchmark-ribbon__text strong {
+      color: var(--info);
+      font-weight: 600;
+    }
+    @media (max-width: 640px) {
+      .benchmark-ribbon {
+        padding: 10px var(--space-4);
+        gap: var(--space-2);
+      }
+      .benchmark-ribbon__text { font-size: 0.8125rem; }
     }
 
     html, body {
@@ -202,9 +246,12 @@
       padding: var(--space-5);
       display: flex;
       flex-direction: column;
-      gap: var(--space-2);
+      gap: var(--space-1);
       min-width: 0;
     }
+    /* Label → Value → Footer(delta + sparkline). Label sits
+       above the number so the eye hits the label first, then
+       the hero value, then peripheral context. */
     .kpi-card__label {
       font-family: var(--font-body);
       font-size: 0.8125rem;       /* 13px */
@@ -214,22 +261,53 @@
     }
     .kpi-card__value {
       font-family: var(--font-display);
-      font-size: clamp(1.75rem, 2.4vw, 2rem);  /* 28–32px */
+      font-size: 1.5rem;          /* 24px — hero number */
       font-weight: 700;
       color: var(--near-black);
-      line-height: 1.1;
+      line-height: 1.15;
       letter-spacing: -0.01em;
+      margin-top: 2px;
+    }
+    /* Coral is reserved EXCLUSIVELY for the commission value so
+       the eye instinctively tracks revenue. No other KPI value
+       — and no delta — may be coral. */
+    .kpi-card--commission .kpi-card__value { color: var(--coral); }
+
+    .kpi-card__footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-3);
+      margin-top: var(--space-2);
+      min-height: 20px;
     }
     .kpi-card__trend {
       font-family: var(--font-body);
-      font-size: 0.8125rem;       /* 13px */
+      font-size: 0.75rem;         /* 12px — tiny delta */
       font-weight: 500;
-      line-height: 1.3;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
     }
+    /* Deltas use green/red, NEVER coral. Coral == revenue only. */
     .kpi-card__trend--up      { color: var(--positive); }
-    .kpi-card__trend--down    { color: var(--mid-gray); }
+    .kpi-card__trend--down    { color: var(--negative); }
     .kpi-card__trend--flat    { color: var(--mid-gray); }
     .kpi-card__trend--neutral { color: var(--mid-gray); }
+
+    .kpi-card__sparkline {
+      flex: 0 0 auto;
+      width: 80px;
+      height: 20px;
+      display: block;
+    }
+    .kpi-card__sparkline svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
 
     .kpi-card__link {
       appearance: none;
@@ -239,15 +317,15 @@
       padding: 0;
       margin-top: var(--space-1);
       font-family: var(--font-body);
-      font-size: 0.8125rem;
+      font-size: 0.75rem;
       font-weight: 500;
-      color: var(--coral);
+      color: var(--info);
       cursor: pointer;
       line-height: 1.4;
     }
-    .kpi-card__link:hover { color: var(--coral-hover); text-decoration: underline; }
+    .kpi-card__link:hover { color: var(--near-black); text-decoration: underline; }
     .kpi-card__link:focus-visible {
-      outline: 2px solid var(--coral);
+      outline: 2px solid var(--info);
       outline-offset: 2px;
       border-radius: 2px;
     }
@@ -263,7 +341,8 @@
       }
     }
     @media (max-width: 420px) {
-      .kpi-card__value { font-size: 1.625rem; }
+      .kpi-card__value { font-size: 1.375rem; }
+      .kpi-card__sparkline { width: 60px; }
     }
 
     /* --- Chart row (chart + leaderboard, 70/30) --- */
@@ -1155,27 +1234,52 @@
     <!-- ========== MAIN CONTENT ========== -->
     <main class="dash-main" id="dash-main" role="main">
 
-      <!-- KPI summary cards -->
+      <!-- Benchmark ribbon — the psychological hook: every visit
+           frames performance in competitive terms against the
+           regional cohort. Populated from HorizonData.benchmark. -->
+      <aside class="benchmark-ribbon" role="complementary" aria-label="Benchmark vs. regional partners">
+        <svg class="benchmark-ribbon__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 3v18h18"/>
+          <polyline points="7 14 11 10 14 13 20 7"/>
+        </svg>
+        <p class="benchmark-ribbon__text" data-benchmark-text>—</p>
+      </aside>
+
+      <!-- KPI summary cards — exactly four. A fifth card would
+           dilute the hierarchy and GMs stop registering which
+           number matters most. Coral appears only on the
+           commission value; deltas are green/red, never coral. -->
       <section class="kpi-grid" aria-label="Commission summary">
-        <article class="kpi-card" data-kpi="total-commission">
-          <p class="kpi-card__label">Total Commission Earned</p>
+        <article class="kpi-card kpi-card--commission" data-kpi="total-commission">
+          <p class="kpi-card__label">Commission Earned</p>
           <p class="kpi-card__value" data-kpi-value>—</p>
-          <p class="kpi-card__trend" data-kpi-trend></p>
+          <div class="kpi-card__footer">
+            <span class="kpi-card__trend" data-kpi-trend></span>
+            <span class="kpi-card__sparkline" data-kpi-sparkline aria-hidden="true"></span>
+          </div>
         </article>
-        <article class="kpi-card" data-kpi="bookings-count">
-          <p class="kpi-card__label">Bookings This Period</p>
+        <article class="kpi-card" data-kpi="scan-book-rate">
+          <p class="kpi-card__label">Scan → Book Rate</p>
           <p class="kpi-card__value" data-kpi-value>—</p>
-          <p class="kpi-card__trend" data-kpi-trend></p>
+          <div class="kpi-card__footer">
+            <span class="kpi-card__trend" data-kpi-trend></span>
+            <span class="kpi-card__sparkline" data-kpi-sparkline aria-hidden="true"></span>
+          </div>
         </article>
         <article class="kpi-card" data-kpi="avg-commission">
-          <p class="kpi-card__label">Avg. Commission per Booking</p>
+          <p class="kpi-card__label">Avg. per Booking</p>
           <p class="kpi-card__value" data-kpi-value>—</p>
-          <p class="kpi-card__trend" data-kpi-trend></p>
+          <div class="kpi-card__footer">
+            <span class="kpi-card__trend" data-kpi-trend></span>
+            <span class="kpi-card__sparkline" data-kpi-sparkline aria-hidden="true"></span>
+          </div>
         </article>
-        <article class="kpi-card" data-kpi="pending-payout">
-          <p class="kpi-card__label">Pending Payout</p>
+        <article class="kpi-card" data-kpi="next-payout">
+          <p class="kpi-card__label">Next Payout</p>
           <p class="kpi-card__value" data-kpi-value>—</p>
-          <p class="kpi-card__trend" data-kpi-trend></p>
+          <div class="kpi-card__footer">
+            <span class="kpi-card__trend" data-kpi-trend></span>
+          </div>
           <button type="button" class="kpi-card__link" data-open-payout-history>View payout history</button>
         </article>
       </section>

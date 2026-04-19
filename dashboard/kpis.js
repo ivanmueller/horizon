@@ -1,18 +1,25 @@
 /* ============================================================
-   Horizon Dashboard — KPI summary cards
+   Horizon Dashboard — Hero strip (benchmark ribbon + KPI cards)
    ------------------------------------------------------------
-   Computes four headline metrics from HorizonData and renders
-   them into the .kpi-grid row. Responds to the date-range
-   toggle via the 'dash:range-change' custom event dispatched by
-   the header.
+   Renders the four hero KPIs and the competitive ribbon that
+   sits above them.
 
-     1. Total Commission Earned   (% trend vs. previous period)
-     2. Bookings This Period      (absolute trend vs. previous)
-     3. Avg Commission per Booking(% trend vs. previous period)
-     4. Pending Payout            (no trend — shows next payout)
+     1. Commission Earned       — coral value, coral sparkline
+     2. Scan → Book Rate        — conversion across all QR
+                                  placements in the active window
+     3. Avg. per Booking        — commission / booking count
+     4. Next Payout             — confirmed-but-unpaid total +
+                                  next payout date / countdown
 
-   Pending payout is point-in-time (sum of 'confirmed' bookings),
-   so it does not recompute on range changes.
+   Brand colour rules enforced here:
+     • Coral is used ONLY on the commission value + its sparkline.
+     • Deltas use green (▲) / red (▼) / gray (flat) — never coral.
+     • Other sparklines render in mid-gray so the eye keeps
+       tracking revenue as the single coral signal on the row.
+
+   Reacts to both 'dash:range-change' (header toggle) and
+   'dash:filters-change' (pill filters) so every widget stays
+   in sync.
    ============================================================ */
 (function () {
   'use strict';
@@ -23,7 +30,24 @@
   const DAY_MS = 86400000;
   const TODAY_MS = new Date(data.meta.today + 'T00:00:00').getTime();
 
-  // ---- Helpers ---------------------------------------------
+  // Resolve brand colours from CSS custom properties so the
+  // sparklines automatically follow any future token changes.
+  const SPARK_COLORS = {
+    'total-commission': readVar('--coral',    '#FF6B4A'),
+    'scan-book-rate':   readVar('--mid-gray', '#6B7280'),
+    'avg-commission':   readVar('--mid-gray', '#6B7280')
+  };
+
+  function readVar(name, fallback) {
+    try {
+      const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+      return v || fallback;
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  // ---- Formatters ------------------------------------------
   const currencyFmt = (decimals) => new Intl.NumberFormat('en-CA', {
     style: 'currency',
     currency: data.meta.currency,
@@ -37,26 +61,43 @@
     return fmt.format(n) + ' ' + data.meta.currency;
   }
 
+  function formatPct(n, decimals) {
+    const d = decimals == null ? 1 : decimals;
+    return n.toFixed(d) + '%';
+  }
+
   function formatPrettyDate(iso) {
-    const dt = new Date(iso + 'T00:00:00');
-    return dt.toLocaleDateString('en-CA', {
+    return new Date(iso + 'T00:00:00').toLocaleDateString('en-CA', {
       month: 'long', day: 'numeric', year: 'numeric'
     });
+  }
+
+  function toIso(ms) {
+    const d = new Date(ms);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
   }
 
   function daysForRange(rangeKey) {
     if (rangeKey === '7d') return 7;
     if (rangeKey === '90d') return 90;
-    return 30; // 30d and custom (until the date picker ships)
+    return 30; // 30d + custom (until the date picker ships)
   }
 
-  function bookingDateMs(b) {
-    return new Date(b.date + 'T00:00:00').getTime();
+  function daysUntil(iso) {
+    const target = new Date(iso + 'T00:00:00').getTime();
+    return Math.max(0, Math.round((target - TODAY_MS) / DAY_MS));
   }
 
-  // Pull from the shared, filter-aware pool so pill filters flow
-  // through automatically. Falls back to raw bookings if filters.js
-  // hasn't initialised yet.
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  // Pull from the shared, filter-aware booking pool.
   function pool() {
     const dash = window.HorizonDashboard;
     return (dash && typeof dash.getFilteredBookings === 'function')
@@ -64,45 +105,136 @@
       : data.bookings;
   }
 
-  function filterByWindow(startMs, endMs) {
-    return pool().filter(b => {
+  function bookingDateMs(b) {
+    return new Date(b.date + 'T00:00:00').getTime();
+  }
+
+  function filterByWindow(bookings, startMs, endMs) {
+    return bookings.filter(b => {
       const t = bookingDateMs(b);
       return t >= startMs && t <= endMs;
     });
   }
 
+  function scanCountInWindow(startMs, endMs) {
+    return data.scans.reduce((sum, row) => {
+      const t = new Date(row.date + 'T00:00:00').getTime();
+      return (t >= startMs && t <= endMs) ? sum + row.count : sum;
+    }, 0);
+  }
+
   // ---- Metric computation ----------------------------------
   function computeMetrics(rangeKey) {
     const days = daysForRange(rangeKey);
-    const currentEnd = TODAY_MS;
-    const currentStart = currentEnd - (days - 1) * DAY_MS;
-    const priorEnd = currentStart - DAY_MS;
+    const endMs = TODAY_MS;
+    const startMs = endMs - (days - 1) * DAY_MS;
+    const priorEnd = startMs - DAY_MS;
     const priorStart = priorEnd - (days - 1) * DAY_MS;
 
-    const current = filterByWindow(currentStart, currentEnd);
-    const prior = filterByWindow(priorStart, priorEnd);
+    const bookingsPool = pool();
+    const cur = filterByWindow(bookingsPool, startMs, endMs);
+    const prv = filterByWindow(bookingsPool, priorStart, priorEnd);
 
-    const sumCommission = arr => arr.reduce((s, b) => s + b.commission, 0);
-    const cur = {
-      total: sumCommission(current),
-      count: current.length
-    };
-    const prv = {
-      total: sumCommission(prior),
-      count: prior.length
-    };
-    cur.avg = cur.count ? cur.total / cur.count : 0;
-    prv.avg = prv.count ? prv.total / prv.count : 0;
+    const sum = arr => arr.reduce((s, b) => s + b.commission, 0);
+    const curScans = scanCountInWindow(startMs, endMs);
+    const prvScans = scanCountInWindow(priorStart, priorEnd);
 
-    const pending = pool()
+    const current = {
+      total: sum(cur),
+      count: cur.length,
+      scans: curScans,
+      rate: curScans ? (cur.length / curScans) * 100 : 0,
+      avg:  cur.length ? sum(cur) / cur.length : 0
+    };
+    const prior = {
+      total: sum(prv),
+      count: prv.length,
+      scans: prvScans,
+      rate: prvScans ? (prv.length / prvScans) * 100 : 0,
+      avg:  prv.length ? sum(prv) / prv.length : 0
+    };
+
+    // Pending payout — the amount that will land in the next
+    // cycle. Point-in-time, so unaffected by the date toggle.
+    const pending = bookingsPool
       .filter(b => b.status === 'confirmed')
       .reduce((s, b) => s + b.commission, 0);
 
-    return { current: cur, prior: prv, pending };
+    return { current, prior, pending, startMs, endMs, days };
+  }
+
+  // ---- Daily series (for sparklines) -----------------------
+  function dailyIsoList(startMs, endMs) {
+    const out = [];
+    for (let t = startMs; t <= endMs; t += DAY_MS) out.push(toIso(t));
+    return out;
+  }
+
+  function dailyCommission(startMs, endMs) {
+    const byDate = new Map();
+    pool().forEach(b => {
+      byDate.set(b.date, (byDate.get(b.date) || 0) + b.commission);
+    });
+    return dailyIsoList(startMs, endMs).map(iso => byDate.get(iso) || 0);
+  }
+
+  function dailyScanRate(startMs, endMs) {
+    const bookByDate = new Map();
+    pool().forEach(b => {
+      bookByDate.set(b.date, (bookByDate.get(b.date) || 0) + 1);
+    });
+    const scanByDate = new Map();
+    data.scans.forEach(s => scanByDate.set(s.date, s.count));
+    return dailyIsoList(startMs, endMs).map(iso => {
+      const s = scanByDate.get(iso) || 0;
+      const b = bookByDate.get(iso) || 0;
+      return s > 0 ? (b / s) * 100 : 0;
+    });
+  }
+
+  function dailyAvg(startMs, endMs) {
+    const totalByDate = new Map();
+    const countByDate = new Map();
+    pool().forEach(b => {
+      totalByDate.set(b.date, (totalByDate.get(b.date) || 0) + b.commission);
+      countByDate.set(b.date, (countByDate.get(b.date) || 0) + 1);
+    });
+    return dailyIsoList(startMs, endMs).map(iso => {
+      const c = countByDate.get(iso) || 0;
+      return c ? (totalByDate.get(iso) / c) : 0;
+    });
+  }
+
+  // ---- Sparkline renderer ----------------------------------
+  // Tiny SVG line, normalised to the given viewBox. A flat
+  // series (or all zeros) draws at the vertical midpoint so
+  // the card never looks broken.
+  function sparklineSvg(values, color) {
+    const W = 80, H = 20, PAD = 2;
+    if (!values.length) return '';
+    const max = Math.max.apply(null, values);
+    const min = Math.min.apply(null, values);
+    const range = (max - min) || 1;
+    const step = values.length > 1 ? W / (values.length - 1) : 0;
+    const innerH = H - PAD * 2;
+    const flat = (max - min) === 0;
+    let d = '';
+    values.forEach((v, i) => {
+      const x = i * step;
+      const y = flat
+        ? (H / 2)
+        : (PAD + innerH - ((v - min) / range) * innerH);
+      d += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ' ' + y.toFixed(1);
+    });
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" ' +
+           'xmlns="http://www.w3.org/2000/svg">' +
+           '<path d="' + d + '" fill="none" stroke="' + color + '" ' +
+           'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+           '</svg>';
   }
 
   // ---- Trend helpers ---------------------------------------
-  // Returns { dir: 'up'|'down'|'flat'|'new', magnitude: number }
+  // Percentage change → '▲ +12.4% vs. prev.' / gray 'Flat' / 'New'.
   function trendPct(current, prior) {
     if (prior === 0 && current === 0) return { dir: 'flat', magnitude: 0 };
     if (prior === 0) return { dir: 'new', magnitude: null };
@@ -111,69 +243,110 @@
     return { dir: pct > 0 ? 'up' : 'down', magnitude: Math.abs(pct) };
   }
 
-  function trendAbs(current, prior) {
+  // Absolute-point change (used for the Scan→Book rate, where
+  // a percentage-of-a-percentage gets confusing).
+  function trendPoints(current, prior) {
     const delta = current - prior;
-    if (delta === 0) return { dir: 'flat', magnitude: 0 };
+    if (Math.abs(delta) < 0.05) return { dir: 'flat', magnitude: 0 };
     return { dir: delta > 0 ? 'up' : 'down', magnitude: Math.abs(delta) };
   }
 
-  function trendText(trend, kind) {
-    const suffix = ' vs. previous period';
-    if (trend.dir === 'flat') return 'Flat' + suffix;
-    if (trend.dir === 'new')  return 'New' + suffix;
-    const arrow = trend.dir === 'up' ? '▲' : '▼';
-    const sign  = trend.dir === 'up' ? '+' : '−';
-    if (kind === 'pct')     return arrow + ' ' + sign + trend.magnitude.toFixed(1) + '%' + suffix;
-    if (kind === 'abs')     return arrow + ' ' + sign + trend.magnitude + suffix;
-    return arrow + suffix;
-  }
-
-  function trendClass(trend) {
-    if (trend.dir === 'up')   return 'kpi-card__trend--up';
-    if (trend.dir === 'down') return 'kpi-card__trend--down';
+  function trendClass(dir) {
+    if (dir === 'up')   return 'kpi-card__trend--up';
+    if (dir === 'down') return 'kpi-card__trend--down';
+    if (dir === 'neutral') return 'kpi-card__trend--neutral';
     return 'kpi-card__trend--flat';
   }
 
-  // ---- DOM updates ----------------------------------------
-  function setCardText(key, value, trend, trendKind) {
-    const card = document.querySelector('[data-kpi="' + key + '"]');
-    if (!card) return;
-    card.querySelector('[data-kpi-value]').textContent = value;
-    const t = card.querySelector('[data-kpi-trend]');
-    t.className = 'kpi-card__trend ' + trendClass(trend);
-    t.textContent = trendText(trend, trendKind);
+  function pctTrendText(t) {
+    const tail = ' vs. prev.';
+    if (t.dir === 'flat') return 'Flat' + tail;
+    if (t.dir === 'new')  return 'New'  + tail;
+    const arrow = t.dir === 'up' ? '▲' : '▼';
+    const sign  = t.dir === 'up' ? '+' : '−';
+    return arrow + ' ' + sign + t.magnitude.toFixed(1) + '%' + tail;
   }
 
+  function pointsTrendText(t, unit) {
+    const tail = ' vs. prev.';
+    if (t.dir === 'flat') return 'Flat' + tail;
+    const arrow = t.dir === 'up' ? '▲' : '▼';
+    const sign  = t.dir === 'up' ? '+' : '−';
+    return arrow + ' ' + sign + t.magnitude.toFixed(1) + unit + tail;
+  }
+
+  // ---- DOM helpers -----------------------------------------
+  function updateCard(key, payload) {
+    const card = document.querySelector('[data-kpi="' + key + '"]');
+    if (!card) return;
+    const valEl  = card.querySelector('[data-kpi-value]');
+    const trnEl  = card.querySelector('[data-kpi-trend]');
+    const sprkEl = card.querySelector('[data-kpi-sparkline]');
+    if (valEl) valEl.textContent = payload.value;
+    if (trnEl) {
+      trnEl.className = 'kpi-card__trend ' + trendClass(payload.trendDir);
+      trnEl.textContent = payload.trendText;
+    }
+    if (sprkEl) sprkEl.innerHTML = payload.spark || '';
+  }
+
+  // ---- Benchmark ribbon ------------------------------------
+  function renderBenchmark() {
+    const el = document.querySelector('[data-benchmark-text]');
+    const b  = data.benchmark;
+    if (!el || !b) return;
+    const topPct = Math.max(1, 100 - b.percentile);
+    el.innerHTML =
+      'You\u2019re in the <strong>top ' + topPct + '%</strong> of ' +
+      escapeHtml(b.cohortLabel) + ' ' + escapeHtml(b.periodLabel) +
+      ' \u2014 <strong>' + b.multipleOfAverage.toFixed(1) + '\u00D7</strong> ' +
+      'the regional average per room.';
+  }
+
+  // ---- Master render --------------------------------------
   function render(rangeKey) {
     const m = computeMetrics(rangeKey);
 
-    setCardText(
-      'total-commission',
-      formatCurrency(m.current.total),
-      trendPct(m.current.total, m.prior.total),
-      'pct'
-    );
-    setCardText(
-      'bookings-count',
-      String(m.current.count),
-      trendAbs(m.current.count, m.prior.count),
-      'abs'
-    );
-    setCardText(
-      'avg-commission',
-      formatCurrency(m.current.avg, 2),
-      trendPct(m.current.avg, m.prior.avg),
-      'pct'
-    );
+    // Card 1 — Commission Earned
+    const commTrend = trendPct(m.current.total, m.prior.total);
+    updateCard('total-commission', {
+      value: formatCurrency(m.current.total),
+      trendDir: commTrend.dir,
+      trendText: pctTrendText(commTrend),
+      spark: sparklineSvg(dailyCommission(m.startMs, m.endMs),
+                          SPARK_COLORS['total-commission'])
+    });
 
-    // Pending Payout — no trend; subtext is the next payout date.
-    const pendingCard = document.querySelector('[data-kpi="pending-payout"]');
-    if (pendingCard) {
-      pendingCard.querySelector('[data-kpi-value]').textContent = formatCurrency(m.pending);
-      const sub = pendingCard.querySelector('[data-kpi-trend]');
-      sub.className = 'kpi-card__trend kpi-card__trend--neutral';
-      sub.textContent = 'Next payout: ' + formatPrettyDate(data.meta.nextPayoutDate);
-    }
+    // Card 2 — Scan → Book Rate
+    const rateTrend = trendPoints(m.current.rate, m.prior.rate);
+    updateCard('scan-book-rate', {
+      value: formatPct(m.current.rate),
+      trendDir: rateTrend.dir,
+      trendText: pointsTrendText(rateTrend, 'pp'),
+      spark: sparklineSvg(dailyScanRate(m.startMs, m.endMs),
+                          SPARK_COLORS['scan-book-rate'])
+    });
+
+    // Card 3 — Avg. per Booking
+    const avgTrend = trendPct(m.current.avg, m.prior.avg);
+    updateCard('avg-commission', {
+      value: formatCurrency(m.current.avg, 2),
+      trendDir: avgTrend.dir,
+      trendText: pctTrendText(avgTrend),
+      spark: sparklineSvg(dailyAvg(m.startMs, m.endMs),
+                          SPARK_COLORS['avg-commission'])
+    });
+
+    // Card 4 — Next Payout
+    const next = data.meta.nextPayoutDate;
+    const d = daysUntil(next);
+    const rel = d === 0 ? 'today' : (d === 1 ? 'tomorrow' : 'in ' + d + ' days');
+    updateCard('next-payout', {
+      value: formatCurrency(m.pending),
+      trendDir: 'neutral',
+      trendText: formatPrettyDate(next) + ' \u00B7 ' + rel,
+      spark: ''
+    });
   }
 
   // ---- Wire up --------------------------------------------
@@ -189,10 +362,14 @@
     render(getActiveRange());
   });
 
-  // Initial render — run after DOM ready regardless of script position.
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () { render(getActiveRange()); });
-  } else {
+  function init() {
+    renderBenchmark();
     render(getActiveRange());
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
   }
 })();
