@@ -56,20 +56,34 @@ Optional flag: `--days=365` widens the availability window.
 Reads `partners.json`, flattens active hotels + active employees into
 the canonical set of tracking codes via the rule in
 `PARTNERS_NAMING.md` (`trackingCode = code.toUpperCase().replace(/-/g, "_")`),
-and verifies the naming convention is internally consistent. Then lists
-existing sales agents from Bokun and diffs.
+and verifies the naming convention is internally consistent. Then probes
+a list of candidate Bokun endpoints to find which one this account uses
+for partner / agent / affiliate management:
+
+```
+/sales-agent.json/find-all
+/sales-agent.json/list
+/extranet/sales-agent.json/find-all
+/affiliate.json/find-all
+/channel.json/find-all
+/booking-channel.json/find-all
+```
+
+First non-404 wins. Override the probe with `--list-path=<path>` and
+`--create-path=<path>` if your account uses something not in the list
+(Bokun support can confirm the exact path).
 
 Default run: prints a plan (what exists, what's missing). No writes.
-With `--apply`: creates the missing sales agents via
-`POST /sales-agent.json/create` using the exact tracking code from
-`partners.json`. Commission / kickback percentages get copied across
-where present; finance-side configuration (currency, payout schedule,
-etc.) still belongs in the Bokun extranet UI.
+With `--apply`: creates the missing sales agents using the exact
+tracking code from `partners.json`. Commission / kickback percentages
+get copied across where present; finance-side configuration (currency,
+payout schedule, etc.) still belongs in the Bokun extranet UI.
 
-If the sales-agent endpoints return 404, your Bokun tier surfaces
-partner management under a different path (Bokun accounts vary); the
-script falls back to step-by-step manual instructions for the extranet
-UI so nothing blocks.
+If every candidate path returns 404 — which happens on Bokun account
+tiers that don't expose partner CRUD over the Vendor REST API at all —
+the script falls back to step-by-step manual instructions for the
+extranet UI. Re-run after manual registration to verify the codes are
+present.
 
 ## Ongoing workflow
 

@@ -15,23 +15,56 @@
 import { bokunFetch } from "./api.mjs";
 import { expectedTrackingCodes } from "./partners.mjs";
 
-const LIST_PATH = "/sales-agent.json/find-all";
-const CREATE_PATH = "/sales-agent.json/create";
+// Bokun exposes partner / agent / affiliate management under different
+// paths depending on account tier and which subsystem is enabled.
+// Try them in order of decreasing specificity. First non-404 wins.
+// Override with --list-path=... / --create-path=... if your account
+// uses something not in this list.
+const CANDIDATE_LIST_PATHS = [
+  "/sales-agent.json/find-all",
+  "/sales-agent.json/list",
+  "/extranet/sales-agent.json/find-all",
+  "/affiliate.json/find-all",
+  "/channel.json/find-all",
+  "/booking-channel.json/find-all",
+];
+const DEFAULT_CREATE_PATH = "/sales-agent.json/create";
 
 function parseArgs(argv) {
-  return {
-    apply: argv.includes("--apply"),
-  };
+  const out = { apply: false, listPath: null, createPath: null };
+  for (const a of argv) {
+    if (a === "--apply") out.apply = true;
+    const lp = a.match(/^--list-path=(.+)$/);
+    if (lp) out.listPath = lp[1];
+    const cp = a.match(/^--create-path=(.+)$/);
+    if (cp) out.createPath = cp[1];
+  }
+  return out;
 }
 
-async function listExistingAgents() {
-  // Bokun returns either a bare array or { items: [...] } depending on
-  // endpoint variant — handle both.
-  const res = await bokunFetch("GET", LIST_PATH);
+function unwrapList(res) {
   if (Array.isArray(res)) return res;
   if (res && Array.isArray(res.items)) return res.items;
   if (res && Array.isArray(res.results)) return res.results;
   return [];
+}
+
+// Probe candidate list paths until one returns a non-404. Returns
+// { path, agents } on success, throws the last error otherwise.
+async function discoverAndList(explicitPath) {
+  const paths = explicitPath ? [explicitPath] : CANDIDATE_LIST_PATHS;
+  let lastErr;
+  for (const p of paths) {
+    try {
+      const res = await bokunFetch("GET", p);
+      return { path: p, agents: unwrapList(res) };
+    } catch (e) {
+      lastErr = e;
+      if (e.status === 404) continue; // try the next candidate
+      throw e; // 401/403/5xx — bail, that's a real problem
+    }
+  }
+  throw lastErr;
 }
 
 function normalizeCode(s) {
@@ -91,18 +124,27 @@ async function main() {
   }
 
   let existing;
+  let listPath;
   try {
-    existing = await listExistingAgents();
+    const r = await discoverAndList(args.listPath);
+    existing = r.agents;
+    listPath = r.path;
+    console.log(`\nListed sales agents via: ${listPath}`);
   } catch (e) {
-    console.error(`\nCould not list existing sales agents: ${e.message}`);
     if (e.status === 404) {
-      console.error(
-        `Endpoint ${LIST_PATH} returned 404. Your Bokun account may ` +
-          "expose a different path (e.g. /affiliate.json/*). Check the " +
-          "Bokun REST API reference for your account and update LIST_PATH " +
-          "in scripts/bokun/sync-partners.mjs.",
+      console.log(
+        "\nNo partner-management endpoint responded — Bokun's Vendor REST API " +
+          "on this account does not expose sales-agent / affiliate / channel CRUD.",
       );
+      console.log(
+        "This is normal on many tiers. Partner registration is then a manual " +
+          "extranet operation; the script can still verify codes are present " +
+          "once you re-run with --list-path=<path-Bokun-support-confirmed>.",
+      );
+      manualInstructions(expected);
+      process.exit(1);
     }
+    console.error(`\nCould not list existing sales agents: ${e.message}`);
     manualInstructions(expected);
     process.exit(1);
   }
@@ -141,7 +183,8 @@ async function main() {
     process.exit(1);
   }
 
-  console.log("\nApplying — creating missing sales agents…");
+  const createPath = args.createPath || DEFAULT_CREATE_PATH;
+  console.log(`\nApplying — POST ${createPath} for each missing entry…`);
   let created = 0;
   let failed = 0;
   const failures = [];
@@ -149,7 +192,7 @@ async function main() {
     const payload = buildCreatePayload(entry);
     process.stdout.write(`  + ${entry.trackingCode} … `);
     try {
-      await bokunFetch("POST", CREATE_PATH, payload);
+      await bokunFetch("POST", createPath, payload);
       console.log("created");
       created++;
     } catch (e) {
