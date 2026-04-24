@@ -1,0 +1,36 @@
+{
+  "hotels": [
+    {
+      "code": "fairmont-ll",
+      "name": "Fairmont Chateau Lake Louise",
+      "type": "kickback",
+      "status": "active",
+      "effective_date": "2026-05-01",
+      "default_tracking_code": "FAIRMONT_LL",
+      "commission_pct": 10,
+      "kickback_pool_pct": null,
+      "employees": [
+        {
+          "code": "fairmont-ll-js",
+          "name": "Jane Smith",
+          "tracking_code": "FAIRMONT_LL_JS",
+          "kickback_pct": 5,
+          "status": "active"
+        }
+      ],
+      "notes": "Concierge desk, 3 active staff as of May 2026"
+    },
+    {
+      "code": "post-hotel",
+      "name": "The Post Hotel",
+      "type": "pool",
+      "status": "active",
+      "effective_date": "2026-05-15",
+      "default_tracking_code": "POST_HOTEL",
+      "commission_pct": 12,
+      "kickback_pool_pct": null,
+      "employees": [],
+      "notes": "Property-level pool, no individual kickbacks"
+    }
+  ]
+}
