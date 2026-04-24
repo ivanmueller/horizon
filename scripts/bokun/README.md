@@ -56,12 +56,24 @@ Optional flag: `--days=365` widens the availability window.
 Reads `partners.json`, flattens active hotels + active employees into
 the canonical set of tracking codes via the rule in
 `PARTNERS_NAMING.md` (`trackingCode = code.toUpperCase().replace(/-/g, "_")`),
-and verifies the naming convention is internally consistent. Then probes
-a list of candidate Bokun endpoints to find which one this account uses
-for partner / agent / affiliate management:
+and verifies the naming convention is internally consistent.
+
+The Horizon Tours Bokun account exposes referrals under **Settings →
+Referral tracking** in the extranet. The form's *Identification number*
+field is the lookup key that bookings get matched against, so each row
+in `partners.json` maps to one Referral tracking entry where
+Identification number = the canonical `trackingCode`.
+
+The script probes likely API paths in this order — first non-404 wins:
 
 ```
-/sales-agent.json/find-all
+/referral.json/find-all
+/referral.json/list
+/referral-tracking.json/find-all
+/referral-tracking.json/list
+/extranet/referral.json/find-all
+/extranet/referral-tracking.json/find-all
+/sales-agent.json/find-all   (older Bokun accounts)
 /sales-agent.json/list
 /extranet/sales-agent.json/find-all
 /affiliate.json/find-all
@@ -69,21 +81,19 @@ for partner / agent / affiliate management:
 /booking-channel.json/find-all
 ```
 
-First non-404 wins. Override the probe with `--list-path=<path>` and
-`--create-path=<path>` if your account uses something not in the list
-(Bokun support can confirm the exact path).
+Override with `--list-path=<path>` and `--create-path=<path>` if Bokun
+support confirms a different path for your account.
 
 Default run: prints a plan (what exists, what's missing). No writes.
-With `--apply`: creates the missing sales agents using the exact
-tracking code from `partners.json`. Commission / kickback percentages
-get copied across where present; finance-side configuration (currency,
-payout schedule, etc.) still belongs in the Bokun extranet UI.
+With `--apply`: creates missing referrals via `POST` using the
+extranet form's field names (`title`, `identificationNumber`,
+`commission`).
 
-If every candidate path returns 404 — which happens on Bokun account
-tiers that don't expose partner CRUD over the Vendor REST API at all —
-the script falls back to step-by-step manual instructions for the
-extranet UI. Re-run after manual registration to verify the codes are
-present.
+If every candidate path returns 404 — which happens on Bokun tiers that
+don't expose referral CRUD over the Vendor REST API — the script falls
+back to step-by-step extranet instructions: title, identification
+number, and commission for each row. Re-run after manual registration
+to confirm.
 
 ## Ongoing workflow
 
