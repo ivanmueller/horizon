@@ -15,12 +15,19 @@
 import { bokunFetch } from "./api.mjs";
 import { expectedTrackingCodes } from "./partners.mjs";
 
-// Bokun exposes partner / agent / affiliate management under different
+// Bokun exposes partner / agent / referral management under different
 // paths depending on account tier and which subsystem is enabled.
-// Try them in order of decreasing specificity. First non-404 wins.
-// Override with --list-path=... / --create-path=... if your account
-// uses something not in this list.
+// Try them in order. First non-404 wins. The Horizon Tours account
+// uses Settings → Referral tracking, so referral.json variants come
+// first. Override with --list-path=... / --create-path=... if your
+// account uses something else.
 const CANDIDATE_LIST_PATHS = [
+  "/referral.json/find-all",
+  "/referral.json/list",
+  "/referral-tracking.json/find-all",
+  "/referral-tracking.json/list",
+  "/extranet/referral.json/find-all",
+  "/extranet/referral-tracking.json/find-all",
   "/sales-agent.json/find-all",
   "/sales-agent.json/list",
   "/extranet/sales-agent.json/find-all",
@@ -28,7 +35,7 @@ const CANDIDATE_LIST_PATHS = [
   "/channel.json/find-all",
   "/booking-channel.json/find-all",
 ];
-const DEFAULT_CREATE_PATH = "/sales-agent.json/create";
+const DEFAULT_CREATE_PATH = "/referral.json/create";
 
 function parseArgs(argv) {
   const out = { apply: false, listPath: null, createPath: null };
@@ -71,29 +78,35 @@ function normalizeCode(s) {
   return String(s || "").trim().toUpperCase();
 }
 
-// Extract the tracking code from a Bokun sales-agent object. Different
-// Bokun accounts surface it under slightly different keys, so check a
-// few.
+// Extract the tracking code from a Bokun referral / agent object.
+// The extranet form labels this "Identification number" — that's the
+// field bookings get matched against. Different endpoints serialize
+// it under different keys, so check the likely ones in order.
 function agentTrackingCode(a) {
   return normalizeCode(
-    a.trackingCode ?? a.tracking_code ?? a.code ?? a.reference ?? a.title,
+    a.identificationNumber ??
+      a.identification_number ??
+      a.trackingCode ??
+      a.tracking_code ??
+      a.code ??
+      a.reference ??
+      a.title,
   );
 }
 
 function buildCreatePayload(entry) {
-  // Minimal payload that covers kickback + pool hotels. The Bokun
-  // sales-agent object accepts richer fields (commissionRate, currency,
-  // etc.) — leave those to be set in the Bokun extranet where
-  // finance-side configuration lives.
+  // Mirrors the Settings → Referral tracking form. Title + Identification
+  // number + Commission are the only fields that affect attribution;
+  // tax/email/flags can stay extranet-managed.
   const payload = {
     title: entry.displayName,
-    trackingCode: entry.trackingCode,
+    identificationNumber: entry.trackingCode,
   };
   if (entry.kind === "hotel" && typeof entry.commissionPct === "number") {
-    payload.commissionRate = entry.commissionPct;
+    payload.commission = entry.commissionPct;
   }
   if (entry.kind === "employee" && typeof entry.kickbackPct === "number") {
-    payload.commissionRate = entry.kickbackPct;
+    payload.commission = entry.kickbackPct;
   }
   return payload;
 }
@@ -101,11 +114,17 @@ function buildCreatePayload(entry) {
 function manualInstructions(missing) {
   console.log("\nManual fallback (Bokun extranet):");
   console.log("  1. Log into https://extranet.bokun.io");
-  console.log("  2. Open Sales → Agents (or Channels → Affiliates)");
-  console.log("  3. For each row below, create a new sales agent with the");
-  console.log("     EXACT trackingCode shown — spelling and case matter:");
+  console.log("  2. Settings → Referral tracking → Create a Referral tracking");
+  console.log("  3. For each row below, create one entry. Identification");
+  console.log("     number must be EXACT — it's what bookings match on.");
+  console.log("     Title is shown in reports; commission is the % rate.");
+  console.log("");
+  console.log("       Identification number    Commission   Title");
   for (const m of missing) {
-    console.log(`     • ${m.trackingCode.padEnd(24)} ${m.displayName}`);
+    const pct = m.kind === "hotel" ? m.commissionPct : m.kickbackPct;
+    console.log(
+      `     • ${m.trackingCode.padEnd(24)} ${String(pct ?? "").padEnd(12)} ${m.displayName}`,
+    );
   }
   console.log("  4. Re-run this script to confirm:");
   console.log("       node --env-file=scripts/bokun/.env scripts/bokun/sync-partners.mjs");
