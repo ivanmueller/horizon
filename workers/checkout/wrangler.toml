@@ -3,7 +3,7 @@ main            = "index.js"
 compatibility_date = "2024-09-23"
 
 # After deploying, copy the worker URL from the Cloudflare dashboard
-# and set WORKER_URL in tours/lake-louise-moraine-lake-sightseeing/index.html
+# and set WORKER_URL in tours/Banff-Hidden-Gem-Canoe-Tour/index.html
 
 # Secrets — set these via the CLI, never commit them:
 #   wrangler secret put STRIPE_SECRET_KEY

@@ -51,7 +51,7 @@
   const tours = [
     { id: 'lake-louise-canoe',        name: 'Lake Louise Guided Canoe & Moraine Lake Tour', shortName: 'Lake Louise Canoe',      priceCad: 249 },
     { id: 'banff-highlights',         name: 'Banff: Town Highlights and Gondola Tour',      shortName: 'Banff Highlights',       priceCad: 249 },
-    { id: 'lake-agnes-hike',          name: 'Lake Agnes Tea House Guided Hike',             shortName: 'Lake Agnes Hike',        priceCad: 149 },
+    { id: 'banff-hidden-gem-canoe',   name: 'Banff: Canoe Tour, Moraine Lake & Lake Louise', shortName: 'Hidden Gem Canoe',      priceCad: 249.99 },
     { id: 'moraine-lake-sightseeing', name: 'Moraine Lake Sightseeing',                     shortName: 'Moraine Lake',           priceCad: 189 }
   ];
 
@@ -85,34 +85,34 @@
     { id: 'bk_001', date: '2026-04-28', guest: { name: 'Sarah Chen',       contact: 'sarah.c@example.com' },       tourId: 'lake-louise-canoe',        partySize: 2, staffId: 's1', source: 'QR Code — Lobby Display',       status: 'pending',   payoutId: null },
     { id: 'bk_002', date: '2026-04-25', guest: { name: 'Markus Weber',     contact: '+49 30 555 1847' },           tourId: 'banff-highlights',         partySize: 4, staffId: 's2', source: 'Concierge Referral',            status: 'confirmed', payoutId: 'po_2026_05' },
     { id: 'bk_003', date: '2026-04-22', guest: { name: 'Priya Raman',      contact: 'priya.r@example.com' },       tourId: 'moraine-lake-sightseeing', partySize: 3, staffId: 's1', source: 'QR Code — Room Key Card',       status: 'pending',   payoutId: null },
-    { id: 'bk_004', date: '2026-04-20', guest: { name: 'Emma Lindqvist',   contact: '+46 70 555 8820' },           tourId: 'lake-agnes-hike',          partySize: 2, staffId: 's3', source: 'Front Desk Recommendation',     status: 'confirmed', payoutId: 'po_2026_05' },
+    { id: 'bk_004', date: '2026-04-20', guest: { name: 'Emma Lindqvist',   contact: '+46 70 555 8820' },           tourId: 'banff-hidden-gem-canoe',          partySize: 2, staffId: 's3', source: 'Front Desk Recommendation',     status: 'confirmed', payoutId: 'po_2026_05' },
     { id: 'bk_005', date: '2026-04-18', guest: { name: 'Hiro Tanaka',      contact: 'hiro.t@example.com' },        tourId: 'lake-louise-canoe',        partySize: 2, staffId: 's5', source: 'In-Room Tablet',                status: 'confirmed', payoutId: 'po_2026_05' },
 
     // ---- April (this payout cycle, confirmed) ----
     { id: 'bk_006', date: '2026-04-17', guest: { name: 'Aisha Okonkwo',    contact: 'aisha.o@example.com' },       tourId: 'banff-highlights',         partySize: 3, staffId: 's1', source: 'Concierge Referral',            status: 'confirmed', payoutId: 'po_2026_05' },
-    { id: 'bk_007', date: '2026-04-15', guest: { name: 'Liam McCarthy',    contact: '+353 1 555 6612' },           tourId: 'lake-agnes-hike',          partySize: 2, staffId: 's2', source: 'QR Code — Lobby Display',       status: 'confirmed', payoutId: 'po_2026_05' },
+    { id: 'bk_007', date: '2026-04-15', guest: { name: 'Liam McCarthy',    contact: '+353 1 555 6612' },           tourId: 'banff-hidden-gem-canoe',          partySize: 2, staffId: 's2', source: 'QR Code — Lobby Display',       status: 'confirmed', payoutId: 'po_2026_05' },
     { id: 'bk_008', date: '2026-04-13', guest: { name: 'Sophia Rossi',     contact: 'sophia.r@example.com' },      tourId: 'lake-louise-canoe',        partySize: 2, staffId: 's1', source: 'QR Code — Room Key Card',       status: 'confirmed', payoutId: 'po_2026_05' },
     { id: 'bk_009', date: '2026-04-11', guest: { name: 'Noah Wiremu',      contact: '+64 4 555 2130' },            tourId: 'moraine-lake-sightseeing', partySize: 4, staffId: 's3', source: 'Front Desk Recommendation',     status: 'confirmed', payoutId: 'po_2026_05' },
     { id: 'bk_010', date: '2026-04-08', guest: { name: 'Rafael Mendes',    contact: 'rafael.m@example.com' },      tourId: 'banff-highlights',         partySize: 2, staffId: 's2', source: 'Concierge Referral',            status: 'confirmed', payoutId: 'po_2026_05' },
-    { id: 'bk_011', date: '2026-04-05', guest: { name: 'Zara Ahmed',       contact: '+971 4 555 0918' },           tourId: 'lake-agnes-hike',          partySize: 3, staffId: 's1', source: 'In-Room Tablet',                status: 'confirmed', payoutId: 'po_2026_05' },
+    { id: 'bk_011', date: '2026-04-05', guest: { name: 'Zara Ahmed',       contact: '+971 4 555 0918' },           tourId: 'banff-hidden-gem-canoe',          partySize: 3, staffId: 's1', source: 'In-Room Tablet',                status: 'confirmed', payoutId: 'po_2026_05' },
     { id: 'bk_012', date: '2026-04-03', guest: { name: 'Connor Walsh',     contact: 'connor.w@example.com' },      tourId: 'lake-louise-canoe',        partySize: 2, staffId: 's4', source: 'QR Code — Lobby Display',       status: 'confirmed', payoutId: 'po_2026_05' },
     { id: 'bk_013', date: '2026-04-01', guest: { name: 'Mei-Lin Tseng',    contact: 'meilin.t@example.com' },      tourId: 'moraine-lake-sightseeing', partySize: 2, staffId: 's1', source: 'Concierge Referral',            status: 'confirmed', payoutId: 'po_2026_05' },
 
     // ---- March (paid out Apr 1) ----
     { id: 'bk_014', date: '2026-03-30', guest: { name: 'Oliver Becker',    contact: '+49 89 555 4427' },           tourId: 'banff-highlights',         partySize: 3, staffId: 's2', source: 'QR Code — Lobby Display',       status: 'paid_out',  payoutId: 'po_2026_04' },
     { id: 'bk_015', date: '2026-03-25', guest: { name: 'Isla MacLeod',     contact: 'isla.m@example.com' },        tourId: 'lake-louise-canoe',        partySize: 2, staffId: 's1', source: 'Front Desk Recommendation',     status: 'paid_out',  payoutId: 'po_2026_04' },
-    { id: 'bk_016', date: '2026-03-20', guest: { name: 'Diego Herrera',    contact: 'diego.h@example.com' },       tourId: 'lake-agnes-hike',          partySize: 4, staffId: 's3', source: 'In-Room Tablet',                status: 'paid_out',  payoutId: 'po_2026_04' },
+    { id: 'bk_016', date: '2026-03-20', guest: { name: 'Diego Herrera',    contact: 'diego.h@example.com' },       tourId: 'banff-hidden-gem-canoe',          partySize: 4, staffId: 's3', source: 'In-Room Tablet',                status: 'paid_out',  payoutId: 'po_2026_04' },
     { id: 'bk_017', date: '2026-03-15', guest: { name: 'Anika Gupta',      contact: '+91 11 555 7731' },           tourId: 'moraine-lake-sightseeing', partySize: 2, staffId: 's1', source: 'Concierge Referral',            status: 'paid_out',  payoutId: 'po_2026_04' },
     { id: 'bk_018', date: '2026-03-10', guest: { name: "Finn O'Sullivan",  contact: 'finn.o@example.com' },        tourId: 'lake-louise-canoe',        partySize: 2, staffId: 's5', source: 'QR Code — Room Key Card',       status: 'paid_out',  payoutId: 'po_2026_04' },
     { id: 'bk_019', date: '2026-03-05', guest: { name: 'Maya Patel',       contact: 'maya.p@example.com' },        tourId: 'banff-highlights',         partySize: 3, staffId: 's2', source: 'Front Desk Recommendation',     status: 'paid_out',  payoutId: 'po_2026_04' },
-    { id: 'bk_020', date: '2026-03-02', guest: { name: 'Thomas Müller',    contact: '+49 40 555 1123' },           tourId: 'lake-agnes-hike',          partySize: 2, staffId: 's1', source: 'QR Code — Lobby Display',       status: 'paid_out',  payoutId: 'po_2026_04' },
+    { id: 'bk_020', date: '2026-03-02', guest: { name: 'Thomas Müller',    contact: '+49 40 555 1123' },           tourId: 'banff-hidden-gem-canoe',          partySize: 2, staffId: 's1', source: 'QR Code — Lobby Display',       status: 'paid_out',  payoutId: 'po_2026_04' },
 
     // ---- February (paid out Mar 1) ----
     { id: 'bk_021', date: '2026-02-28', guest: { name: 'Camille Laurent',  contact: 'camille.l@example.com' },     tourId: 'banff-highlights',         partySize: 2, staffId: 's3', source: 'Concierge Referral',            status: 'paid_out',  payoutId: 'po_2026_03' },
     { id: 'bk_022', date: '2026-02-20', guest: { name: 'Jin-Ho Park',      contact: '+82 2 555 0473' },            tourId: 'moraine-lake-sightseeing', partySize: 4, staffId: 's2', source: 'In-Room Tablet',                status: 'paid_out',  payoutId: 'po_2026_03' },
     { id: 'bk_023', date: '2026-02-14', guest: { name: 'Rebecca Stone',    contact: 'rebecca.s@example.com' },     tourId: 'lake-louise-canoe',        partySize: 2, staffId: 's1', source: 'QR Code — Lobby Display',       status: 'paid_out',  payoutId: 'po_2026_03' },
     { id: 'bk_024', date: '2026-02-08', guest: { name: 'Henrik Lindqvist', contact: '+46 8 555 9027' },            tourId: 'banff-highlights',         partySize: 3, staffId: 's4', source: 'Front Desk Recommendation',     status: 'paid_out',  payoutId: 'po_2026_03' },
-    { id: 'bk_025', date: '2026-02-02', guest: { name: 'Chloe Bennett',    contact: 'chloe.b@example.com' },       tourId: 'lake-agnes-hike',          partySize: 2, staffId: 's1', source: 'QR Code — Room Key Card',       status: 'paid_out',  payoutId: 'po_2026_03' },
+    { id: 'bk_025', date: '2026-02-02', guest: { name: 'Chloe Bennett',    contact: 'chloe.b@example.com' },       tourId: 'banff-hidden-gem-canoe',          partySize: 2, staffId: 's1', source: 'QR Code — Room Key Card',       status: 'paid_out',  payoutId: 'po_2026_03' },
 
     // ---- January (paid out Feb 1) ----
     { id: 'bk_026', date: '2026-01-30', guest: { name: 'Adrian Costa',     contact: 'adrian.c@example.com' },      tourId: 'banff-highlights',         partySize: 2, staffId: 's2', source: 'Concierge Referral',            status: 'paid_out',  payoutId: 'po_2026_02' },
