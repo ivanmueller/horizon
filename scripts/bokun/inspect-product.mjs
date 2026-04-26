@@ -19,6 +19,7 @@
 //   node --env-file=scripts/bokun/.env scripts/bokun/inspect-product.mjs [productId]
 //   node --env-file=scripts/bokun/.env scripts/bokun/inspect-product.mjs 1162721 --dry-checkout
 //   node --env-file=scripts/bokun/.env scripts/bokun/inspect-product.mjs --dry-checkout --coupon=MYCODE
+//   node --env-file=scripts/bokun/.env scripts/bokun/inspect-product.mjs --dry-checkout --date=2026-06-01
 //
 // Defaults: productId 1162721 (Banff-Hidden-Gem-Canoe-Tour),
 // availability window = today + 60 days, currency = CAD.
@@ -26,6 +27,11 @@
 // --coupon=CODE attaches the value as BookingRequest.promoCode. Combined
 // with --dry-checkout the coupon is validated and applied to the returned
 // amount, but no booking is reserved (the options call is non-destructive).
+//
+// --date=YYYY-MM-DD targets a specific availability slot. Use this when
+// the auto-picked first-bookable date is inside the API window but before
+// Bokun's per-product booking cutoff (which the availabilities endpoint
+// doesn't surface), or when you want to test a particular departure.
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import { bokunFetch } from "./api.mjs";
@@ -40,6 +46,8 @@ const productId = args.find((a) => /^\d+$/.test(a)) || DEFAULT_PRODUCT_ID;
 const dryCheckout = args.includes("--dry-checkout");
 const couponArg = args.find((a) => a.startsWith("--coupon="));
 const coupon = couponArg ? couponArg.slice("--coupon=".length) : null;
+const dateArg = args.find((a) => a.startsWith("--date="));
+const targetDate = dateArg ? dateArg.slice("--date=".length) : null;
 
 mkdirSync(DUMP_DIR, { recursive: true });
 
@@ -238,11 +246,21 @@ async function main() {
   // ---------------------------------------------------------------- 0b.5 dry
   if (dryCheckout) {
     hr("0b.5  Dry checkout-options  (POST /checkout.json/options/booking-request)");
-    const firstBookable = (avail || []).find(
-      (a) => !a.soldOut && (a.unlimitedAvailability || (a.availabilityCount ?? 0) >= 1),
-    );
+    // If --date=YYYY-MM-DD was passed, target that exact day (the auto-pick
+    // first-bookable can land on a slot that's inside the API window but
+    // before Bokun's per-product booking cutoff). Otherwise fall back to
+    // the first row that has spots.
+    const firstBookable = targetDate
+      ? (avail || []).find((a) => dateToYmd(a.date) === targetDate)
+      : (avail || []).find(
+          (a) => !a.soldOut && (a.unlimitedAvailability || (a.availabilityCount ?? 0) >= 1),
+        );
     if (!firstBookable) {
-      console.log("  no bookable slot in window — skipping");
+      if (targetDate) {
+        console.log(`  no slot found for --date=${targetDate} in availability window — skipping`);
+      } else {
+        console.log("  no bookable slot in window — skipping");
+      }
     } else {
       const adultCategory = (product.pricingCategories || []).find(
         (c) => /adult/i.test(c.title) || /adult/i.test(c.fullTitle || ""),
