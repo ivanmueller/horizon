@@ -18,9 +18,14 @@
 // Usage:
 //   node --env-file=scripts/bokun/.env scripts/bokun/inspect-product.mjs [productId]
 //   node --env-file=scripts/bokun/.env scripts/bokun/inspect-product.mjs 1162721 --dry-checkout
+//   node --env-file=scripts/bokun/.env scripts/bokun/inspect-product.mjs --dry-checkout --coupon=MYCODE
 //
 // Defaults: productId 1162721 (Banff-Hidden-Gem-Canoe-Tour),
 // availability window = today + 60 days, currency = CAD.
+//
+// --coupon=CODE attaches the value as BookingRequest.promoCode. Combined
+// with --dry-checkout the coupon is validated and applied to the returned
+// amount, but no booking is reserved (the options call is non-destructive).
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import { bokunFetch } from "./api.mjs";
@@ -33,6 +38,8 @@ const DUMP_DIR = "scripts/bokun/.dumps";
 const args = process.argv.slice(2);
 const productId = args.find((a) => /^\d+$/.test(a)) || DEFAULT_PRODUCT_ID;
 const dryCheckout = args.includes("--dry-checkout");
+const couponArg = args.find((a) => a.startsWith("--coupon="));
+const coupon = couponArg ? couponArg.slice("--coupon=".length) : null;
 
 mkdirSync(DUMP_DIR, { recursive: true });
 
@@ -283,12 +290,18 @@ async function main() {
               passengers: [{ pricingCategoryId: adultCategory.id }],
             },
           ],
+          // BookingRequest.promoCode (top-level, per OpenAPI). Present only
+          // when --coupon=CODE was passed. The /options endpoint is
+          // non-reserving — Bokun validates the code, applies the discount
+          // to the returned amount, but no booking is held.
+          ...(coupon ? { promoCode: coupon } : {}),
         };
         row("dry-target.date (asYMD)", bookingDate);
         row("dry-target.startTimeId", firstBookable.startTimeId);
         row("dry-target.passenger", `1 × [${adultCategory.id}] ${adultCategory.title}`);
         row("dry-target.pickup", usePickup ? `place ${pickupPlaceId}` : "(omitted — no pickup IDs)");
         row("dry-target.dropoff", useDropoff ? `place ${dropoffPlaceId}` : "(omitted — no dropoff IDs)");
+        row("dry-target.promoCode", coupon || "(none)");
 
         const r = await tryFetch(
           "POST",
