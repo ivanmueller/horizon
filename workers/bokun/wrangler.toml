@@ -1,0 +1,19 @@
+name               = "horizon-bokun"
+main               = "index.js"
+compatibility_date = "2024-09-23"
+
+# Vars (committed):
+[vars]
+BOKUN_API_BASE = "https://api.bokun.io"
+
+# Secrets (NOT committed; set via CLI from inside workers/bokun/):
+#   wrangler secret put BOKUN_ACCESS_KEY
+#   wrangler secret put BOKUN_SECRET_KEY
+
+# KV namespace for caching product config + pickup places + availability.
+# One-time setup, from inside workers/bokun/:
+#   wrangler kv:namespace create CACHE
+# Paste the returned id below, then `wrangler deploy`.
+[[kv_namespaces]]
+binding = "CACHE"
+id      = ""    # ← paste id from `wrangler kv:namespace create CACHE`
