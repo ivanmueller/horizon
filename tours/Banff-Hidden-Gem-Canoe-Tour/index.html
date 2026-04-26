@@ -963,6 +963,123 @@
     }
     .bp-expansion__breakdown { font-size: 0.82rem; color: var(--mid-gray); margin-bottom: 2px; }
     .bp-expansion__tax { font-size: 0.78rem; color: var(--mid-gray); }
+    .bp-expansion__validation {
+      margin: 0 16px 12px;
+      padding: 10px 12px;
+      border-radius: 6px;
+      background: #FEF3C7;
+      border: 1px solid #FCD34D;
+      color: #92400E;
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+    .bp-expansion__validation--error {
+      background: #FEE2E2;
+      border-color: #FCA5A5;
+      color: #991B1B;
+    }
+    #bookNowBtn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+    /* ── Booking modal (Day 5/6) ──────────────────────────────── */
+    .bk-modal {
+      position: fixed; inset: 0;
+      z-index: 9999;
+      display: flex; align-items: flex-start; justify-content: center;
+      padding: 24px;
+      overflow-y: auto;
+    }
+    .bk-modal[hidden] { display: none; }
+    .bk-modal__backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55);
+    }
+    .bk-modal__card {
+      position: relative; z-index: 1;
+      background: #fff;
+      border-radius: 12px;
+      max-width: 560px; width: 100%;
+      margin-top: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+      overflow: hidden;
+    }
+    .bk-modal__close {
+      position: absolute; top: 12px; right: 12px;
+      width: 32px; height: 32px;
+      border: none; background: rgba(0,0,0,0.05);
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 22px; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .bk-modal__close:hover { background: rgba(0,0,0,0.1); }
+    .bk-modal__body { padding: 24px; }
+    .bk-modal__title { font-size: 1.4rem; font-weight: 700; margin: 0 0 16px; }
+    .bk-modal__section { margin-bottom: 20px; }
+    .bk-modal__section h3 { font-size: 0.95rem; font-weight: 700; margin: 0 0 10px; }
+    .bk-modal__field {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 0.85rem;
+      color: var(--mid-gray);
+    }
+    .bk-modal__field input, .bk-modal__field select {
+      display: block; width: 100%;
+      margin-top: 4px;
+      padding: 10px 12px;
+      border: 1px solid #D1D5DB;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      background: #fff;
+      color: var(--near-black);
+      box-sizing: border-box;
+    }
+    .bk-modal__field input:focus, .bk-modal__field select:focus {
+      outline: 2px solid var(--coral);
+      outline-offset: 1px;
+      border-color: transparent;
+    }
+    .bk-modal__row {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    }
+    .bk-modal__summary {
+      background: #F3F4F6;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 0.88rem;
+      color: var(--near-black);
+    }
+    .bk-modal__summary-row {
+      display: flex; justify-content: space-between; gap: 12px; padding: 2px 0;
+    }
+    .bk-modal__summary-row strong { font-weight: 600; text-align: right; }
+    .bk-modal__error {
+      margin-top: 12px;
+      padding: 10px 12px;
+      background: #FEE2E2;
+      border: 1px solid #FCA5A5;
+      border-radius: 6px;
+      color: #991B1B;
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+    .bk-modal__footer {
+      margin-top: 16px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .bk-modal__total { font-size: 1.05rem; font-weight: 700; }
+    .bk-modal__footer .btn { flex: 1; }
+    @media (max-width: 480px) {
+      .bk-modal { padding: 0; }
+      .bk-modal__card {
+        margin-top: 0;
+        min-height: 100vh;
+        border-radius: 0;
+      }
+      .bk-modal__row { grid-template-columns: 1fr; }
+    }
 
     /* Travellers */
     .bp-travellers__row {
@@ -1192,15 +1309,15 @@
 
       <!-- GYG-style booking expansion (triggered by Check Availability in sidebar) -->
       <div class="bp-expansion" id="bpExpansion" hidden>
-        <div class="bp-expansion__header">1 option available</div>
+        <div class="bp-expansion__header" id="expansionHeader">1 option available</div>
         <div class="bp-expansion__card">
           <div class="bp-expansion__top">
-            <div class="bp-expansion__badge">Only 9 spots left</div>
-            <div class="bp-expansion__tour-title">Banff: Canoe Tour, Moraine Lake & Lake Louise</div>
+            <div class="bp-expansion__badge" id="expansionBadge" hidden></div>
+            <div class="bp-expansion__tour-title" id="expansionTitle">Banff: Canoe Tour, Moraine Lake & Lake Louise</div>
             <div class="bp-expansion__meta">
               <span class="bp-expansion__meta-item">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                7 hours
+                <span id="expansionDuration">9 hours</span>
               </span>
               <span class="bp-expansion__meta-item">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
@@ -1226,19 +1343,20 @@
           <div class="bp-expansion__section">
             <div class="bp-expansion__time-label">Starting time</div>
             <div class="bp-expansion__time-date" id="expansionDate"></div>
-            <div class="bp-expansion__time-value">8:30 AM</div>
+            <div class="bp-expansion__time-value" id="expansionStartTime">8:00 AM</div>
           </div>
           <hr class="bp-expansion__divider">
           <div class="bp-expansion__section">
             <div class="bp-expansion__policy-row">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-              <span>Cancel before <strong id="expansionCancelDate"></strong> at 8:30 AM for a full refund</span>
+              <span>Cancel before <strong id="expansionCancelDate"></strong> at <span id="expansionCancelTime">8:00 AM</span> for a full refund</span>
             </div>
             <div class="bp-expansion__policy-row">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
               <span>You can reserve now &amp; pay later. <a href="#">Learn more</a></span>
             </div>
           </div>
+          <div class="bp-expansion__validation" id="expansionValidation" hidden></div>
           <div class="bp-expansion__footer">
             <div>
               <div class="bp-expansion__total" id="expansionTotal"></div>
@@ -1923,9 +2041,6 @@
     <img class="photo-lightbox__img" id="lightboxImg" src="" alt="">
   </div>
 
-  <!-- ⚠️  After deploying the Cloudflare Worker, replace the URL below with your worker's URL -->
-  <script>var CHECKOUT_WORKER_URL = 'https://horizon-checkout.ivan-mueller02.workers.dev/checkout';</script>
-
   <!-- Bokun proxy Worker — sources of truth for product config, pickup/dropoff places, and pricing.
        The booking panel renders dynamically once window.BOKUN.ready fires. The existing Stripe-direct
        booking flow stays live until Day 6 swaps it for the Bokun two-call flow; until then the Stripe
@@ -2602,6 +2717,21 @@
       return (window.BOKUN && window.BOKUN.lowestAdultPrice) || 0;
     }
 
+    function formatBokunTime(hhmm) {
+      // Bokun startTime is 24-hour "HH:MM"; render as "8:00 AM" for the UI.
+      if (!hhmm || !/^\d{1,2}:\d{2}$/.test(hhmm)) return hhmm || '';
+      var parts = hhmm.split(':');
+      var h = parseInt(parts[0], 10);
+      var m = parts[1];
+      var suffix = h >= 12 ? 'PM' : 'AM';
+      var h12 = h % 12 || 12;
+      return h12 + ':' + m + ' ' + suffix;
+    }
+
+    function totalParticipants(counts) {
+      return Object.keys(counts).reduce(function (sum, k) { return sum + (counts[k] || 0); }, 0);
+    }
+
     function populateExpansion(/* data */) {
       var dateIso = document.getElementById('dateBtn').dataset.selectedDate || '';
       document.getElementById('expansionDate').textContent       = dateIso ? formatDate(dateIso) : '';
@@ -2609,9 +2739,50 @@
 
       var counts = bokunCounts();
       var product = window.BOKUN && window.BOKUN.product;
+      var slot = (window.bokunBooking && window.bokunBooking.slot) || null;
       var currency = (window.BOKUN && window.BOKUN.currency) || 'CAD';
       var currencyPrefix = currency === 'CAD' ? 'CA$' : currency + ' ';
 
+      // Title + duration from product (was hardcoded "7 hours").
+      if (product) {
+        var titleEl = document.getElementById('expansionTitle');
+        if (titleEl && product.title) titleEl.textContent = product.title;
+        var durEl = document.getElementById('expansionDuration');
+        if (durEl) durEl.textContent = product.durationText || product.duration || '';
+      }
+
+      // Start time from the picked slot (was hardcoded "8:30 AM").
+      var startStr = slot && slot.startTime ? formatBokunTime(slot.startTime) : '';
+      var stEl = document.getElementById('expansionStartTime');
+      if (stEl && startStr) stEl.textContent = startStr;
+      var ctEl = document.getElementById('expansionCancelTime');
+      if (ctEl && startStr) ctEl.textContent = startStr;
+
+      // Spot-count badge \u2014 dynamic from slot. Hidden when unlimited or
+      // when there's plenty of room (>10 left). Only nudges scarcity when
+      // it's real.
+      var badge = document.getElementById('expansionBadge');
+      if (badge) {
+        if (slot && !slot.unlimitedAvailability && slot.availabilityCount != null && slot.availabilityCount <= 10) {
+          if (slot.availabilityCount <= 0) {
+            badge.textContent = 'Sold out';
+          } else if (slot.availabilityCount === 1) {
+            badge.textContent = 'Only 1 spot left';
+          } else {
+            badge.textContent = 'Only ' + slot.availabilityCount + ' spots left';
+          }
+          badge.hidden = false;
+        } else {
+          badge.hidden = true;
+        }
+      }
+
+      // Build per-category breakdown + total. Bokun counts every passenger
+      // toward availability (infants included), so the validation below
+      // sums all categories \u2014 but the displayed total still treats
+      // infants as complimentary on this product (line price = 0 path
+      // would be wrong; the existing UX called them complimentary so the
+      // breakdown copy matches that).
       var total = 0;
       var parts = [];
       if (product && product.pricingCategories) {
@@ -2619,11 +2790,6 @@
           var n = counts[c.title.toLowerCase()] || 0;
           if (n === 0) return;
           var price = categoryPrice(c);
-          // Infants on this product are technically priced the same as adults
-          // by Bokun, but the booking-panel UX has always treated them as
-          // "complimentary" \u2014 surface that messaging while still summing
-          // them in the underlying total so Bokun's records match what we
-          // collect from the customer.
           if (/infant/i.test(c.title)) {
             parts.push(n + ' ' + c.title + (n > 1 ? 's' : '') + ' (complimentary)');
           } else {
@@ -2634,6 +2800,38 @@
       }
       document.getElementById('expansionTotal').textContent = currencyPrefix + total.toFixed(2);
       document.getElementById('expansionBreakdown').textContent = parts.join(' \u00b7 ');
+
+      // \u2500\u2500 Validation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+      var totalP = totalParticipants(counts);
+      var validation = document.getElementById('expansionValidation');
+      var bookBtn = document.getElementById('bookNowBtn');
+      var msg = '';
+      var isError = false;
+
+      if (!dateIso) {
+        msg = 'Please pick a date.';
+      } else if (totalP === 0) {
+        msg = 'Please add at least one traveller.';
+      } else if (slot && !slot.unlimitedAvailability && slot.availabilityCount != null && totalP > slot.availabilityCount) {
+        msg = 'Only ' + slot.availabilityCount + ' spots remaining for this departure. Reduce the number of travellers or pick another date.';
+        isError = true;
+      } else if (slot && slot.minParticipantsToBookNow != null && totalP < slot.minParticipantsToBookNow) {
+        msg = 'Minimum ' + slot.minParticipantsToBookNow + ' participant' + (slot.minParticipantsToBookNow > 1 ? 's' : '') + ' required to book this departure.';
+        isError = true;
+      }
+
+      if (validation) {
+        if (msg) {
+          validation.textContent = msg;
+          validation.hidden = false;
+          validation.classList.toggle('bp-expansion__validation--error', isError);
+        } else {
+          validation.hidden = true;
+        }
+      }
+      if (bookBtn) {
+        bookBtn.disabled = !!msg;
+      }
     }
 
     function showExpansion() {
@@ -2681,28 +2879,15 @@
     });
 
 
-    // "Book now" — send to Stripe Checkout
+    // "Book now" — open the Bokun booking modal (contact form +
+    // per-passenger names + pickup/dropoff). The modal handles /options
+    // + /submit and the redirect to Bokun's hosted payment page.
     bookBtn.addEventListener('click', function() {
-      var data = getBookingData();
-      bookBtn.disabled = true;
-      bookBtn.textContent = 'Redirecting to checkout\u2026';
-
-      fetch(CHECKOUT_WORKER_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date: data.date, adults: data.adults, youth: data.youth, infants: data.infants }),
-      })
-        .then(function(res) { return res.json(); })
-        .then(function(d) {
-          if (d.url) { window.location.href = d.url; }
-          else { throw new Error(d.error || 'No checkout URL returned'); }
-        })
-        .catch(function(err) {
-          console.error('Checkout error:', err);
-          bookBtn.disabled = false;
-          bookBtn.textContent = 'Book now';
-          alert('Something went wrong starting checkout. Please try again or contact us.');
-        });
+      if (typeof window.__horizonOpenBookingModal === 'function') {
+        window.__horizonOpenBookingModal();
+      } else {
+        console.error('Booking modal not initialized');
+      }
     });
   })();
   </script>
@@ -2933,6 +3118,394 @@
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') closeMap();
     });
+  })();
+  </script>
+
+  <!-- Booking modal — opens from the expansion's "Book now" button.
+       Collects contact info + per-passenger names + pickup/dropoff and
+       runs the Bokun /checkout.json/options + /checkout.json/submit flow
+       via the proxy Worker. On success Bokun returns a redirectRequest.url
+       that we follow into their hosted Stripe page. -->
+  <div class="bk-modal" id="bookingModal" hidden role="dialog" aria-modal="true" aria-labelledby="bookingModalTitle">
+    <div class="bk-modal__backdrop" id="bookingModalBackdrop"></div>
+    <div class="bk-modal__card">
+      <button class="bk-modal__close" id="bookingModalClose" aria-label="Close">×</button>
+      <div class="bk-modal__body">
+        <h2 class="bk-modal__title" id="bookingModalTitle">Complete your booking</h2>
+
+        <section class="bk-modal__section">
+          <div class="bk-modal__summary" id="bookingModalSummary"></div>
+        </section>
+
+        <section class="bk-modal__section">
+          <h3>Contact information</h3>
+          <div class="bk-modal__row">
+            <label class="bk-modal__field">First name
+              <input id="contactFirstName" type="text" autocomplete="given-name" required>
+            </label>
+            <label class="bk-modal__field">Last name
+              <input id="contactLastName" type="text" autocomplete="family-name" required>
+            </label>
+          </div>
+          <label class="bk-modal__field">Email
+            <input id="contactEmail" type="email" autocomplete="email" required>
+          </label>
+          <label class="bk-modal__field">Phone
+            <input id="contactPhone" type="tel" autocomplete="tel" placeholder="+1 403 555 1234" required>
+          </label>
+        </section>
+
+        <section class="bk-modal__section" id="modalPassengersSection" hidden>
+          <h3>Travellers</h3>
+          <div id="modalPassengers"></div>
+        </section>
+
+        <section class="bk-modal__section">
+          <h3>Pickup &amp; drop-off</h3>
+          <label class="bk-modal__field">Pickup location
+            <select id="modalPickup"></select>
+          </label>
+          <label class="bk-modal__field">Drop-off location
+            <select id="modalDropoff"></select>
+          </label>
+        </section>
+
+        <div class="bk-modal__error" id="bookingModalError" hidden></div>
+
+        <div class="bk-modal__footer">
+          <div class="bk-modal__total" id="bookingModalTotal"></div>
+          <button class="btn btn--primary btn--lg" id="payBtn" disabled>Pay</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    var modal       = document.getElementById('bookingModal');
+    var backdrop    = document.getElementById('bookingModalBackdrop');
+    var closeBtn    = document.getElementById('bookingModalClose');
+    var summaryEl   = document.getElementById('bookingModalSummary');
+    var passengersSection = document.getElementById('modalPassengersSection');
+    var passengersEl = document.getElementById('modalPassengers');
+    var pickupSel   = document.getElementById('modalPickup');
+    var dropoffSel  = document.getElementById('modalDropoff');
+    var errorEl     = document.getElementById('bookingModalError');
+    var payBtn      = document.getElementById('payBtn');
+    var totalEl     = document.getElementById('bookingModalTotal');
+    var fnEl        = document.getElementById('contactFirstName');
+    var lnEl        = document.getElementById('contactLastName');
+    var emEl        = document.getElementById('contactEmail');
+    var phEl        = document.getElementById('contactPhone');
+
+    function escapeHtml(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+      });
+    }
+    function fmtCurrency(amount) {
+      var currency = (window.BOKUN && window.BOKUN.currency) || 'CAD';
+      var prefix = currency === 'CAD' ? 'CA$' : currency + ' ';
+      return prefix + Number(amount || 0).toFixed(2);
+    }
+    function formatBokunTime(hhmm) {
+      if (!hhmm || !/^\d{1,2}:\d{2}$/.test(hhmm)) return hhmm || '';
+      var parts = hhmm.split(':');
+      var h = parseInt(parts[0], 10);
+      var suffix = h >= 12 ? 'PM' : 'AM';
+      var h12 = h % 12 || 12;
+      return h12 + ':' + parts[1] + ' ' + suffix;
+    }
+    var DAYS_LONG = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var MONTHS_LONG = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    function formatDateLabel(iso) {
+      if (!iso) return '';
+      var p = iso.split('-').map(Number);
+      var d = new Date(p[0], p[1] - 1, p[2]);
+      return DAYS_LONG[d.getDay()] + ', ' + MONTHS_LONG[d.getMonth()] + ' ' + d.getDate() + ', ' + p[0];
+    }
+    function categoryPrice(c) {
+      var pricing = window.BOKUN && window.BOKUN.pricePerCategory;
+      if (pricing && pricing[c.id]) return pricing[c.id].amount;
+      return (window.BOKUN && window.BOKUN.lowestAdultPrice) || 0;
+    }
+
+    function lockBody(lock) {
+      document.body.style.overflow = lock ? 'hidden' : '';
+    }
+    function closeModal() {
+      modal.hidden = true;
+      lockBody(false);
+    }
+    function openModal() {
+      populateModal();
+      modal.hidden = false;
+      lockBody(true);
+      setTimeout(function () { fnEl.focus(); }, 50);
+    }
+
+    function populateModal() {
+      var product = window.BOKUN && window.BOKUN.product;
+      var slot    = window.bokunBooking && window.bokunBooking.slot;
+      var counts  = (window.bokunBooking && window.bokunBooking.counts) || {};
+      var dateIso = (window.bokunBooking && window.bokunBooking.date) || '';
+
+      var dateLabel = formatDateLabel(dateIso);
+      var time = slot && slot.startTime ? formatBokunTime(slot.startTime) : '';
+      var total = 0;
+      var travellersList = [];
+      var passengerSeats = []; // { category, indexInCategory }
+
+      if (product && product.pricingCategories) {
+        product.pricingCategories.forEach(function (c) {
+          var n = counts[c.title.toLowerCase()] || 0;
+          if (n === 0) return;
+          var price = categoryPrice(c);
+          if (!/infant/i.test(c.title)) total += n * price;
+          travellersList.push(n + ' ' + c.title + (n > 1 ? 's' : ''));
+          for (var i = 0; i < n; i++) {
+            passengerSeats.push({ category: c, indexInCategory: i });
+          }
+        });
+      }
+
+      summaryEl.innerHTML =
+        '<div class="bk-modal__summary-row"><span>Tour</span><strong>' + escapeHtml(product && product.title || '') + '</strong></div>' +
+        '<div class="bk-modal__summary-row"><span>Date</span><strong>' + escapeHtml(dateLabel + (time ? ' · ' + time : '')) + '</strong></div>' +
+        '<div class="bk-modal__summary-row"><span>Travellers</span><strong>' + escapeHtml(travellersList.join(', ')) + '</strong></div>' +
+        '<div class="bk-modal__summary-row" style="margin-top:6px;border-top:1px solid #E5E7EB;padding-top:8px;"><span>Total</span><strong>' + escapeHtml(fmtCurrency(total)) + '</strong></div>';
+
+      totalEl.textContent = fmtCurrency(total);
+
+      // Per-passenger first/last name fields. We collect them for every seat
+      // (including infants) since Bokun's options-response questions block
+      // showed firstName/lastName as required across the board.
+      if (passengerSeats.length === 0) {
+        passengersSection.hidden = true;
+        passengersEl.innerHTML = '';
+      } else {
+        passengersSection.hidden = false;
+        passengersEl.innerHTML = passengerSeats.map(function (p, idx) {
+          var cat = p.category;
+          return (
+            '<div class="bk-modal__row" style="margin-bottom:8px;">' +
+              '<label class="bk-modal__field">' + escapeHtml(cat.title) + ' ' + (p.indexInCategory + 1) + ' first name' +
+                '<input type="text" class="bk-pax-fn" data-cat-id="' + cat.id + '" data-pax-idx="' + idx + '" required>' +
+              '</label>' +
+              '<label class="bk-modal__field">Last name' +
+                '<input type="text" class="bk-pax-ln" data-cat-id="' + cat.id + '" data-pax-idx="' + idx + '" required>' +
+              '</label>' +
+            '</div>'
+          );
+        }).join('');
+      }
+
+      var pickups  = (window.BOKUN && window.BOKUN.pickupPlaces)  || [];
+      var dropoffs = (window.BOKUN && window.BOKUN.dropoffPlaces) || pickups;
+      pickupSel.innerHTML  = pickups.map(function (p)  { return '<option value="' + p.id + '">' + escapeHtml(p.title) + '</option>'; }).join('');
+      dropoffSel.innerHTML = dropoffs.map(function (p) { return '<option value="' + p.id + '">' + escapeHtml(p.title) + '</option>'; }).join('');
+
+      errorEl.hidden = true;
+      payBtn.textContent = 'Pay ' + fmtCurrency(total);
+      validateModal();
+    }
+
+    function validateModal() {
+      var fn = fnEl.value.trim();
+      var ln = lnEl.value.trim();
+      var em = emEl.value.trim();
+      var ph = phEl.value.trim();
+      var emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em);
+      var paxOk = Array.prototype.every.call(passengersEl.querySelectorAll('input'), function (i) {
+        return i.value.trim().length > 0;
+      });
+      var ok = !!(fn && ln && emailOk && ph && pickupSel.value && dropoffSel.value && paxOk);
+      payBtn.disabled = !ok;
+    }
+
+    ['input', 'change'].forEach(function (evt) {
+      modal.addEventListener(evt, function (e) {
+        if (e.target.matches('input, select')) validateModal();
+      });
+    });
+
+    closeBtn.addEventListener('click', closeModal);
+    backdrop.addEventListener('click', closeModal);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !modal.hidden) closeModal();
+    });
+
+    function buildBookingRequest() {
+      var product = window.BOKUN.product;
+      var slot    = window.bokunBooking.slot;
+      var dateIso = window.bokunBooking.date;
+
+      var paxByIdx = {};
+      passengersEl.querySelectorAll('input.bk-pax-fn').forEach(function (i) {
+        var k = parseInt(i.dataset.paxIdx, 10);
+        paxByIdx[k] = paxByIdx[k] || { catId: parseInt(i.dataset.catId, 10) };
+        paxByIdx[k].fn = i.value.trim();
+      });
+      passengersEl.querySelectorAll('input.bk-pax-ln').forEach(function (i) {
+        var k = parseInt(i.dataset.paxIdx, 10);
+        paxByIdx[k] = paxByIdx[k] || { catId: parseInt(i.dataset.catId, 10) };
+        paxByIdx[k].ln = i.value.trim();
+      });
+      var passengers = Object.keys(paxByIdx).sort(function (a, b) { return a - b; }).map(function (k) {
+        var p = paxByIdx[k];
+        return {
+          pricingCategoryId: p.catId,
+          passengerDetails: [
+            { questionId: 'firstName', values: [p.fn] },
+            { questionId: 'lastName',  values: [p.ln] },
+          ],
+        };
+      });
+
+      var rateId = (slot && slot.defaultRateId) ||
+                   (product.rates && product.rates[0] && product.rates[0].id);
+
+      return {
+        mainContactDetails: [
+          { questionId: 'firstName',   values: [fnEl.value.trim()] },
+          { questionId: 'lastName',    values: [lnEl.value.trim()] },
+          { questionId: 'email',       values: [emEl.value.trim()] },
+          { questionId: 'phoneNumber', values: [phEl.value.trim()] },
+        ],
+        activityBookings: [{
+          activityId:    BOKUN_PRODUCT_ID,
+          rateId:        rateId,
+          date:          dateIso,
+          startTimeId:   slot.startTimeId,
+          pickup:        true,
+          pickupPlaceId: parseInt(pickupSel.value, 10),
+          dropoff:       true,
+          dropoffPlaceId: parseInt(dropoffSel.value, 10),
+          passengers:    passengers,
+        }],
+      };
+    }
+
+    function showError(message) {
+      errorEl.textContent = message;
+      errorEl.hidden = false;
+    }
+
+    function followRedirect(rr) {
+      if (!rr || !rr.url) throw new Error('No redirect URL returned from Bokun.');
+      if ((rr.method || 'get').toLowerCase() === 'post') {
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = rr.url;
+        (rr.parameters || []).forEach(function (p) {
+          var inp = document.createElement('input');
+          inp.type = 'hidden'; inp.name = p.name; inp.value = p.value;
+          form.appendChild(inp);
+        });
+        document.body.appendChild(form);
+        form.submit();
+      } else {
+        window.location.href = rr.url;
+      }
+    }
+
+    function postJson(path, body) {
+      return fetch(BOKUN_API_BASE + path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }).then(function (r) {
+        return r.json().then(function (j) { return { status: r.status, body: j }; });
+      });
+    }
+
+    function bokunMessage(resp) {
+      // Worker wraps Bokun's body as { error: 'upstream', body: { message, fields } }
+      return resp && resp.body && resp.body.body && resp.body.body.message;
+    }
+
+    payBtn.addEventListener('click', function () {
+      errorEl.hidden = true;
+      payBtn.disabled = true;
+      var originalLabel = payBtn.textContent;
+      payBtn.textContent = 'Processing…';
+
+      var bookingRequest;
+      try {
+        bookingRequest = buildBookingRequest();
+      } catch (e) {
+        console.error('build error', e);
+        showError('Something went wrong building your booking. Please refresh and try again.');
+        payBtn.disabled = false;
+        payBtn.textContent = originalLabel;
+        return;
+      }
+
+      // /options — validate + get amount + uti.
+      postJson('/api/checkout/options', bookingRequest)
+        .then(function (resp) {
+          if (resp.status >= 400) {
+            throw new Error('options: ' + (bokunMessage(resp) || resp.status));
+          }
+          var options = (resp.body && resp.body.options) || (Array.isArray(resp.body) ? resp.body : []);
+          var opt = options.find(function (o) { return o.type === 'CUSTOMER_FULL_PAYMENT'; }) ||
+                    options.find(function (o) { return o.type === 'CUSTOMER_NO_PAYMENT'; }) ||
+                    options[0];
+          if (!opt) throw new Error('options: no checkout option returned');
+
+          var checkoutRequest = {
+            source:                        'DIRECT_REQUEST',
+            checkoutOption:                opt.type,
+            directBooking:                 bookingRequest,
+            amount:                        opt.amount,
+            currency:                      opt.currency,
+            sendNotificationToMainContact: true,
+            showPricesInNotification:      true,
+            successUrl: window.location.origin + '/booking-confirmed/',
+            errorUrl:   window.location.origin + '/tours/Banff-Hidden-Gem-Canoe-Tour/?booking=failed',
+            cancelUrl:  window.location.origin + '/tours/Banff-Hidden-Gem-Canoe-Tour/',
+          };
+          if (opt.type === 'CUSTOMER_FULL_PAYMENT') {
+            checkoutRequest.paymentMethod = 'CARD';
+            var uti = opt.paymentMethods && opt.paymentMethods.cardProvider && opt.paymentMethods.cardProvider.uti;
+            if (uti) checkoutRequest.uti = uti;
+          }
+          return postJson('/api/checkout/submit', checkoutRequest);
+        })
+        .then(function (resp) {
+          if (resp.status >= 400) {
+            var msg = bokunMessage(resp) || '';
+            // Known channel-config error until Bokun support flips us to
+            // REDIRECT. Show user-friendly copy instead of the raw message.
+            if (/When paying with token, you must supply token/i.test(msg)) {
+              throw new Error('Card payments are being configured. Please contact us to book by phone, or try again later.');
+            }
+            // Same for the coupon-at-submit issue we documented.
+            if (/Invalid checkout option/i.test(msg)) {
+              throw new Error('We can\'t complete this booking right now. Please try again, or contact us for help.');
+            }
+            throw new Error('submit: ' + (msg || resp.status));
+          }
+          if (resp.body && resp.body.redirectRequest) {
+            followRedirect(resp.body.redirectRequest);
+            return;
+          }
+          if (resp.body && resp.body.booking && resp.body.booking.confirmationCode) {
+            window.location.href = window.location.origin +
+              '/booking-confirmed/?code=' + encodeURIComponent(resp.body.booking.confirmationCode);
+            return;
+          }
+          throw new Error('submit: unexpected response shape');
+        })
+        .catch(function (err) {
+          console.error('[booking] submit failed', err);
+          showError(err.message || 'Something went wrong. Please try again.');
+          payBtn.disabled = false;
+          payBtn.textContent = originalLabel;
+        });
+    });
+
+    window.__horizonOpenBookingModal = openModal;
   })();
   </script>
 </body>
