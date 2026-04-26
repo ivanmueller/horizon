@@ -34,9 +34,20 @@
 // doesn't surface), or when you want to test a particular departure.
 //
 // --submit-real ⚠ ACTUALLY POSTS to /checkout.json/submit and CREATES A
-// REAL RESERVATION in Bokun. Requires both --coupon and --date so the
-// reservation is $0 and lands on a known-bookable slot. Cancel the
-// resulting booking from the dashboard immediately after the run.
+// REAL RESERVATION in Bokun. Always requires --date. By default also
+// requires --coupon (so the reservation is $0). To submit a paid
+// reservation — useful for definitively testing whether the channel
+// returns a redirectRequest.url for the REDIRECT flow — pass
+// --allow-paid alongside --submit-real (without --coupon).
+//
+// When the resulting CheckoutOption is CUSTOMER_FULL_PAYMENT, the
+// inspector adds paymentMethod="CARD" and the cardProvider.uti from
+// the /options response, but never paymentToken. That lets us observe:
+//   - REDIRECT channel → response carries redirectRequest.url
+//   - TOKEN channel    → 400 demanding paymentToken
+//
+// Cancel any reservation produced by --submit-real from the Bokun
+// dashboard right after the run.
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import { bokunFetch } from "./api.mjs";
@@ -54,12 +65,25 @@ const coupon = couponArg ? couponArg.slice("--coupon=".length) : null;
 const dateArg = args.find((a) => a.startsWith("--date="));
 const targetDate = dateArg ? dateArg.slice("--date=".length) : null;
 const submitReal = args.includes("--submit-real");
+const allowPaid = args.includes("--allow-paid");
 
-if (submitReal && (!coupon || !targetDate)) {
+if (submitReal && !targetDate) {
   console.error(
-    "--submit-real requires both --coupon=CODE and --date=YYYY-MM-DD.\n" +
-      "  Refusing to run without them: the coupon ensures the reservation is $0,\n" +
-      "  and an explicit date avoids landing on a slot inside Bokun's booking cutoff.",
+    "--submit-real requires --date=YYYY-MM-DD.\n" +
+      "  Refusing to run without an explicit date — the auto-pick can land on a\n" +
+      "  slot inside Bokun's per-product booking cutoff.",
+  );
+  process.exit(2);
+}
+if (submitReal && !coupon && !allowPaid) {
+  console.error(
+    "--submit-real without --coupon=CODE will create a REAL paid reservation.\n" +
+      "  If you intend to test the REDIRECT flow with a real card, re-run with\n" +
+      "  --allow-paid added to confirm.\n" +
+      "\n" +
+      "  Reminder: at no point does this script transmit your card data. /submit\n" +
+      "  returns a redirectRequest.url (on REDIRECT channels) which you open in a\n" +
+      "  browser to enter card details on Bokun's hosted Stripe page.",
   );
   process.exit(2);
 }
@@ -391,12 +415,23 @@ async function main() {
 
             // ------------------------------------------------------ 0b.5b real submit
             // Optional: actually POST /checkout.json/submit. CREATES A REAL
-            // RESERVATION. Guarded by --submit-real and the require-coupon-
-            // and-date check at the top of the script.
+            // RESERVATION. Guarded by --submit-real and the requires-date
+            // check at the top of the script.
             if (submitReal) {
               hr("0b.5b  REAL submit  (POST /checkout.json/submit)  ⚠ creates a real booking");
-              console.log("  ⚠ This call creates a real reservation in Bokun. Cancel it from the");
-              console.log("  ⚠ dashboard immediately after this run.\n");
+              const isPaid = opt.type === "CUSTOMER_FULL_PAYMENT";
+              const cardProviderUti = opt.paymentMethods?.cardProvider?.uti;
+              if (isPaid) {
+                console.log(`  ⚠ Submitting a REAL paid reservation: ${opt.amount} ${opt.currency}`);
+                console.log("  ⚠ Bokun should reply with redirectRequest.url — open it in a browser");
+                console.log("  ⚠ to enter card details on their hosted Stripe page. If you do NOT");
+                console.log("  ⚠ open the URL or do NOT complete payment, no money changes hands,");
+                console.log("  ⚠ but the reservation still holds a seat — cancel from the dashboard.");
+              } else {
+                console.log("  ⚠ This call creates a real reservation in Bokun. Cancel it from the");
+                console.log("  ⚠ dashboard immediately after this run.");
+              }
+              console.log("");
 
               const checkoutRequest = {
                 source: "DIRECT_REQUEST",
@@ -409,10 +444,17 @@ async function main() {
                 successUrl: "https://gowithhorizon.com/booking/confirmed",
                 errorUrl: "https://gowithhorizon.com/booking/failed",
                 cancelUrl: "https://gowithhorizon.com/tours/Banff-Hidden-Gem-Canoe-Tour/",
-                // uti / paymentMethod / paymentToken intentionally omitted
-                // for the CUSTOMER_NO_PAYMENT case (nothing to charge).
-                // For a non-zero amount we'd also send paymentMethod="CARD"
-                // and the uti from the options response.
+                // For CUSTOMER_FULL_PAYMENT we attach paymentMethod=CARD
+                // and the uti returned by /options. We deliberately do NOT
+                // include paymentToken — that's the field a TOKEN-flow
+                // channel would require us to populate via Stripe.js
+                // tokenization. Omitting it lets us observe Bokun's
+                // behavior:
+                //   - REDIRECT channel → returns redirectRequest.url
+                //     pointing to a Bokun-hosted Stripe page
+                //   - TOKEN channel    → 400 demanding paymentToken,
+                //     definitively confirming TOKEN config
+                ...(isPaid ? { paymentMethod: "CARD", ...(cardProviderUti ? { uti: cardProviderUti } : {}) } : {}),
               };
 
               const sr = await tryFetch(
@@ -436,20 +478,27 @@ async function main() {
                   row("redirectRequest.url", sr.data.redirectRequest.url);
                   row("redirectRequest.method", sr.data.redirectRequest.method ?? "(none)");
                   console.log(
-                    "\n  ✓ redirectRequest.url is populated — channel does support REDIRECT.\n" +
-                      "    The TOKEN providerType label on /options does NOT mean redirects are off.",
+                    "\n  ✓ redirectRequest.url is populated — channel DOES support REDIRECT.\n" +
+                      "    The TOKEN providerType label on /options does NOT mean redirects are off.\n" +
+                      "    Open the URL above in a browser to see Bokun's hosted payment page.",
+                  );
+                } else if (isPaid) {
+                  console.log(
+                    "\n  ✗ no redirectRequest on a paid submit — channel is genuinely TOKEN.\n" +
+                      "    Bokun expected paymentToken in the request but didn't get one. The\n" +
+                      "    integration would need client-side Stripe.js tokenization to proceed,\n" +
+                      "    or you'd email Bokun support to flip the channel to REDIRECT.",
                   );
                 } else {
                   console.log(
                     "\n  ✗ no redirectRequest in the response. At $0 this is expected on either\n" +
                       "    flavor (TOKEN or REDIRECT) — Bokun has nothing to charge so nothing\n" +
-                      "    to redirect to. Inconclusive about the TOKEN/REDIRECT question; only\n" +
-                      "    a non-zero submit (paymentMethod=CARD with uti) would settle it.",
+                      "    to redirect to. Inconclusive about the TOKEN/REDIRECT question.",
                   );
                 }
                 console.log(
                   "\n  ⚠ A real reservation was created. Find it in your Bokun dashboard\n" +
-                    "    by confirmationCode above and cancel it now.",
+                    `    by confirmationCode "${sr.data?.booking?.confirmationCode}" and cancel it.`,
                 );
               }
             }
