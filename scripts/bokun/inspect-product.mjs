@@ -165,6 +165,40 @@ async function main() {
     );
   }
 
+  // ---------------------------------------------------------------- 0b.3b
+  // Drop-off places — Bokun models them separately from pickups even when
+  // most round-trip tours return to the same place. Some products expose a
+  // distinct list, others share the pickup list. Hunt the same way.
+  const dropoffAttempts = [
+    `/activity.json/${productId}/dropoff-places`,
+    `/activity.json/${productId}/drop-off-places`,
+    `/activity.json/${productId}/dropoff-places?lang=EN&currency=${CURRENCY}`,
+    defaultRate?.id ? `/activity.json/${productId}/dropoff-places?rateId=${defaultRate.id}` : null,
+  ].filter(Boolean);
+
+  hr("0b.3b  Drop-off places  (multiple endpoint variants)");
+  let dropoffs = [];
+  for (const path of dropoffAttempts) {
+    const r = await tryFetch("GET", path);
+    if (!r.ok) {
+      console.log(`  ${path}\n      → ${r.error.status || "?"}: ${r.error.message.split("\n")[0]}`);
+      continue;
+    }
+    const list = Array.isArray(r.data) ? r.data : r.data?.dropoffPlaces || r.data?.places || [];
+    console.log(`  ${path}\n      → returned ${list.length} entries`);
+    if (list.length > 0 && dropoffs.length === 0) {
+      dropoffs = list;
+      dump("dropoff-places", r.data);
+      for (const p of list) {
+        row(`        [${p.id}] ${p.title || p.name}`, p.address || p.description || "");
+      }
+    }
+  }
+  if (dropoffs.length === 0) {
+    console.log("\n  (no dedicated drop-off list — falling back to pickups list for the dry test.)");
+    dropoffs = pickups;
+  }
+
   // ---------------------------------------------------------------- 0b.4
   const start = ymd(new Date());
   const end = ymd(new Date(Date.now() + WINDOW_DAYS * 86400 * 1000));
@@ -210,8 +244,15 @@ async function main() {
         console.log("  could not locate an Adult pricing category — skipping");
       } else {
         const bookingDate = dateToYmd(firstBookable.date);
+        // The rate for this product has pickupSelectionType=PRESELECTED
+        // and dropoffSelectionType=PRESELECTED — both are mandatory. You
+        // cannot send `dropoff: false` and omit the place ID; Bokun rejects
+        // with "Invalid ActivityBookingRequest - drop off, but no drop off
+        // place specified". So we always send both for products like this.
         const usePickup = pickups.length > 0;
+        const useDropoff = dropoffs.length > 0;
         const pickupPlaceId = usePickup ? pickups[0].id : undefined;
+        const dropoffPlaceId = useDropoff ? dropoffs[0].id : undefined;
 
         // Per Bokun's official OpenAPI spec (Bokun/katla, rest-v1-api-2026-03-03.yaml):
         //   BookingRequest.mainContactDetails is an ARRAY of AnswerDto
@@ -237,7 +278,8 @@ async function main() {
               startTimeId: firstBookable.startTimeId,
               pickup: usePickup,
               ...(pickupPlaceId ? { pickupPlaceId } : {}),
-              dropoff: false,
+              dropoff: useDropoff,
+              ...(dropoffPlaceId ? { dropoffPlaceId } : {}),
               passengers: [{ pricingCategoryId: adultCategory.id }],
             },
           ],
@@ -246,6 +288,7 @@ async function main() {
         row("dry-target.startTimeId", firstBookable.startTimeId);
         row("dry-target.passenger", `1 × [${adultCategory.id}] ${adultCategory.title}`);
         row("dry-target.pickup", usePickup ? `place ${pickupPlaceId}` : "(omitted — no pickup IDs)");
+        row("dry-target.dropoff", useDropoff ? `place ${dropoffPlaceId}` : "(omitted — no dropoff IDs)");
 
         const r = await tryFetch(
           "POST",
