@@ -347,7 +347,14 @@ async function main() {
             row("option.amount", `${opt.amount} ${opt.currency}  (formatted: ${opt.formattedAmount ?? "—"})`);
             row("option.cardProvider.providerType", opt.paymentMethods?.cardProvider?.providerType);
             row("option.cardProvider.uti present", String(Boolean(opt.paymentMethods?.cardProvider?.uti)));
-            if (opt.paymentMethods?.cardProvider?.providerType !== "REDIRECT") {
+            // The TOKEN-vs-REDIRECT gate only matters when there's actually
+            // a payment to take. CUSTOMER_NO_PAYMENT (e.g. 100%-off coupon
+            // zeroing the total) returns no cardProvider at all, which is
+            // expected — don't fire the warning in that case.
+            if (
+              opt.type !== "CUSTOMER_NO_PAYMENT" &&
+              opt.paymentMethods?.cardProvider?.providerType !== "REDIRECT"
+            ) {
               console.log(
                 "\n  WARNING: providerType is not REDIRECT. The build assumes the hosted-payment-page\n" +
                   "  flow. Contact Bokun support to switch the channel before continuing.",
