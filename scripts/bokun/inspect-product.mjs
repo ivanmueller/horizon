@@ -311,7 +311,9 @@ async function main() {
             console.log("  no checkout option returned (raw response saved)");
           } else {
             row("option.type", opt.type);
-            row("option.amount", `${opt.amount?.amount} ${opt.amount?.currency}`);
+            // Per OpenAPI: CheckoutOption.amount is a number, currency a
+            // sibling string, formattedAmount a sibling display string.
+            row("option.amount", `${opt.amount} ${opt.currency}  (formatted: ${opt.formattedAmount ?? "—"})`);
             row("option.cardProvider.providerType", opt.paymentMethods?.cardProvider?.providerType);
             row("option.cardProvider.uti present", String(Boolean(opt.paymentMethods?.cardProvider?.uti)));
             if (opt.paymentMethods?.cardProvider?.providerType !== "REDIRECT") {
