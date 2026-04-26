@@ -32,6 +32,11 @@
 // the auto-picked first-bookable date is inside the API window but before
 // Bokun's per-product booking cutoff (which the availabilities endpoint
 // doesn't surface), or when you want to test a particular departure.
+//
+// --submit-real ⚠ ACTUALLY POSTS to /checkout.json/submit and CREATES A
+// REAL RESERVATION in Bokun. Requires both --coupon and --date so the
+// reservation is $0 and lands on a known-bookable slot. Cancel the
+// resulting booking from the dashboard immediately after the run.
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import { bokunFetch } from "./api.mjs";
@@ -48,6 +53,16 @@ const couponArg = args.find((a) => a.startsWith("--coupon="));
 const coupon = couponArg ? couponArg.slice("--coupon=".length) : null;
 const dateArg = args.find((a) => a.startsWith("--date="));
 const targetDate = dateArg ? dateArg.slice("--date=".length) : null;
+const submitReal = args.includes("--submit-real");
+
+if (submitReal && (!coupon || !targetDate)) {
+  console.error(
+    "--submit-real requires both --coupon=CODE and --date=YYYY-MM-DD.\n" +
+      "  Refusing to run without them: the coupon ensures the reservation is $0,\n" +
+      "  and an explicit date avoids landing on a slot inside Bokun's booking cutoff.",
+  );
+  process.exit(2);
+}
 
 mkdirSync(DUMP_DIR, { recursive: true });
 
@@ -347,11 +362,83 @@ async function main() {
             row("option.amount", `${opt.amount} ${opt.currency}  (formatted: ${opt.formattedAmount ?? "—"})`);
             row("option.cardProvider.providerType", opt.paymentMethods?.cardProvider?.providerType);
             row("option.cardProvider.uti present", String(Boolean(opt.paymentMethods?.cardProvider?.uti)));
-            if (opt.paymentMethods?.cardProvider?.providerType !== "REDIRECT") {
+            // The TOKEN-vs-REDIRECT gate only matters when there's actually
+            // a payment to take. CUSTOMER_NO_PAYMENT (e.g. 100%-off coupon
+            // zeroing the total) returns no cardProvider at all, which is
+            // expected — don't fire the warning in that case.
+            if (
+              opt.type !== "CUSTOMER_NO_PAYMENT" &&
+              opt.paymentMethods?.cardProvider?.providerType !== "REDIRECT"
+            ) {
               console.log(
                 "\n  WARNING: providerType is not REDIRECT. The build assumes the hosted-payment-page\n" +
                   "  flow. Contact Bokun support to switch the channel before continuing.",
               );
+            }
+
+            // ------------------------------------------------------ 0b.5b real submit
+            // Optional: actually POST /checkout.json/submit. CREATES A REAL
+            // RESERVATION. Guarded by --submit-real and the require-coupon-
+            // and-date check at the top of the script.
+            if (submitReal) {
+              hr("0b.5b  REAL submit  (POST /checkout.json/submit)  ⚠ creates a real booking");
+              console.log("  ⚠ This call creates a real reservation in Bokun. Cancel it from the");
+              console.log("  ⚠ dashboard immediately after this run.\n");
+
+              const checkoutRequest = {
+                source: "DIRECT_REQUEST",
+                checkoutOption: opt.type,
+                directBooking: bookingRequest,
+                amount: opt.amount,
+                currency: opt.currency,
+                sendNotificationToMainContact: false,
+                showPricesInNotification: false,
+                successUrl: "https://gowithhorizon.com/booking/confirmed",
+                errorUrl: "https://gowithhorizon.com/booking/failed",
+                cancelUrl: "https://gowithhorizon.com/tours/Banff-Hidden-Gem-Canoe-Tour/",
+                // uti / paymentMethod / paymentToken intentionally omitted
+                // for the CUSTOMER_NO_PAYMENT case (nothing to charge).
+                // For a non-zero amount we'd also send paymentMethod="CARD"
+                // and the uti from the options response.
+              };
+
+              const sr = await tryFetch(
+                "POST",
+                `/checkout.json/submit?currency=${CURRENCY}`,
+                checkoutRequest,
+              );
+              if (!sr.ok) {
+                console.log(`  /checkout.json/submit rejected: ${sr.error.message}`);
+                if (sr.error.body) console.log("  response body:", JSON.stringify(sr.error.body, null, 2));
+                console.log("  (request body that was sent:)");
+                console.log(JSON.stringify(checkoutRequest, null, 2));
+              } else {
+                dump("checkout-submit-response", sr.data);
+                row("booking.confirmationCode", sr.data?.booking?.confirmationCode ?? "(missing)");
+                row("booking.bookingId", sr.data?.booking?.bookingId ?? "(missing)");
+                row("booking.totalPrice", sr.data?.booking?.totalPrice ?? "(missing)");
+                row("booking.status", sr.data?.booking?.status ?? "(missing)");
+                row("redirectRequest present", String(Boolean(sr.data?.redirectRequest)));
+                if (sr.data?.redirectRequest) {
+                  row("redirectRequest.url", sr.data.redirectRequest.url);
+                  row("redirectRequest.method", sr.data.redirectRequest.method ?? "(none)");
+                  console.log(
+                    "\n  ✓ redirectRequest.url is populated — channel does support REDIRECT.\n" +
+                      "    The TOKEN providerType label on /options does NOT mean redirects are off.",
+                  );
+                } else {
+                  console.log(
+                    "\n  ✗ no redirectRequest in the response. At $0 this is expected on either\n" +
+                      "    flavor (TOKEN or REDIRECT) — Bokun has nothing to charge so nothing\n" +
+                      "    to redirect to. Inconclusive about the TOKEN/REDIRECT question; only\n" +
+                      "    a non-zero submit (paymentMethod=CARD with uti) would settle it.",
+                  );
+                }
+                console.log(
+                  "\n  ⚠ A real reservation was created. Find it in your Bokun dashboard\n" +
+                    "    by confirmationCode above and cancel it now.",
+                );
+              }
             }
           }
         }
