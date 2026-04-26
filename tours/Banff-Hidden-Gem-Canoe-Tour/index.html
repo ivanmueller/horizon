@@ -803,6 +803,9 @@
       margin-bottom: 12px;
       letter-spacing: 0.01em;
     }
+    /* `display: inline-block` above wins over the UA `[hidden] { display: none }`,
+       so we have to opt back into hiding when the JS toggles the attribute off. */
+    .bp-expansion__badge[hidden] { display: none; }
     .bp-expansion__tour-title {
       font-size: 1.05rem;
       font-weight: 700;
