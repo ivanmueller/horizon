@@ -1106,7 +1106,7 @@
 
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%23FF6B4A'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
   <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"TouristTrip","name":"Banff: Canoe Tour, Moraine Lake & Lake Louise","offers":{"@type":"Offer","price":"249.99","priceCurrency":"CAD"},"provider":{"@type":"TouristTripOrganizer","name":"Horizon Tours"}}
+  {"@context":"https://schema.org","@type":"TouristTrip","name":"Banff: Canoe Tour, Moraine Lake & Lake Louise","offers":{"@type":"Offer","price":"249","priceCurrency":"CAD"},"provider":{"@type":"TouristTripOrganizer","name":"Horizon Tours"}}
   </script>
 </head>
 <body class="page--white-bg">
@@ -1746,7 +1746,7 @@
         <div class="booking-panel__sell-out">Likely to sell out</div>
         <div class="booking-panel__price">
           <div class="booking-panel__from">From</div>
-          <span class="booking-panel__price-amount">$249.99</span><span class="booking-panel__price-unit"> CAD per person</span>
+          <span class="booking-panel__price-amount">$249</span><span class="booking-panel__price-unit"> CAD per person</span>
         </div>
         <!-- Travellers selector -->
         <div class="bp-field">
@@ -1756,37 +1756,12 @@
             <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
           </button>
           <div class="bp-dropdown" id="travellersDropdown" hidden>
-            <div class="bp-travellers__row">
-              <div class="bp-travellers__info">
-                <div class="bp-travellers__name">Adult</div>
-                <div class="bp-travellers__age">Age 18–99</div>
-              </div>
-              <div class="bp-stepper">
-                <button class="bp-stepper__btn" id="btn-minus-adult" aria-label="Remove adult" disabled>−</button>
-                <span class="bp-stepper__count" id="count-adult">1</span>
-                <button class="bp-stepper__btn" id="btn-plus-adult" aria-label="Add adult">+</button>
-              </div>
-            </div>
-            <div class="bp-travellers__row">
-              <div class="bp-travellers__info">
-                <div class="bp-travellers__name">Youth</div>
-                <div class="bp-travellers__age">Age 4–17</div>
-              </div>
-              <div class="bp-stepper">
-                <button class="bp-stepper__btn" id="btn-minus-youth" aria-label="Remove youth" disabled>−</button>
-                <span class="bp-stepper__count" id="count-youth">0</span>
-                <button class="bp-stepper__btn" id="btn-plus-youth" aria-label="Add youth">+</button>
-              </div>
-            </div>
-            <div class="bp-travellers__row" style="border-bottom:none;">
-              <div class="bp-travellers__info">
-                <div class="bp-travellers__name">Infant</div>
-                <div class="bp-travellers__age">Age 3 and younger</div>
-              </div>
-              <div class="bp-stepper">
-                <button class="bp-stepper__btn" id="btn-minus-infant" aria-label="Remove infant" disabled>−</button>
-                <span class="bp-stepper__count" id="count-infant">0</span>
-                <button class="bp-stepper__btn" id="btn-plus-infant" aria-label="Add infant">+</button>
+            <!-- Rendered dynamically from window.BOKUN.product.pricingCategories on bokun:ready.
+                 Each row gets stepper IDs based on the category title slug (count-adult,
+                 count-senior, count-youth, count-child, count-infant). -->
+            <div id="bp-travellers-rows" aria-live="polite">
+              <div class="bp-travellers__row" style="border-bottom:none;justify-content:center;color:#6B7280;">
+                Loading travellers…
               </div>
             </div>
             <div class="bp-travellers__footer">
@@ -1941,16 +1916,25 @@
   <!-- ⚠️  After deploying the Cloudflare Worker, replace the URL below with your worker's URL -->
   <script>var CHECKOUT_WORKER_URL = 'https://horizon-checkout.ivan-mueller02.workers.dev/checkout';</script>
 
-  <!-- Bokun proxy Worker — sources of truth for product config, pickup/dropoff places, and availability.
-       Day 2: data is loaded on page-load and stashed on window.BOKUN_* for later days to consume.
-       Visible UI is unchanged in Day 2; the existing Stripe-direct booking flow stays live until
-       Day 6 swaps it for the Bokun two-call flow. -->
+  <!-- Bokun proxy Worker — sources of truth for product config, pickup/dropoff places, and pricing.
+       The booking panel renders dynamically once window.BOKUN.ready fires. The existing Stripe-direct
+       booking flow stays live until Day 6 swaps it for the Bokun two-call flow; until then the Stripe
+       handler reads counts from window.bokunBooking and the per-person price from window.BOKUN. -->
   <script>
     var BOKUN_API_BASE  = 'https://horizon-bokun.ivan-mueller02.workers.dev';
     var BOKUN_PRODUCT_ID = 1162721;
-    window.BOKUN = { product: null, pickupPlaces: null, dropoffPlaces: null, ready: false, error: null };
+    window.BOKUN = {
+      product: null, pickupPlaces: null, dropoffPlaces: null, availability: null,
+      pricePerCategory: null, lowestAdultPrice: null, currency: 'CAD',
+      ready: false, error: null,
+    };
+
+    function bokunYmd(d) { return d.toISOString().slice(0, 10); }
 
     (function loadBokunData() {
+      var today = new Date();
+      var start = bokunYmd(today);
+      var end = bokunYmd(new Date(today.getTime() + 60 * 86400 * 1000));
       Promise.all([
         fetch(BOKUN_API_BASE + '/api/product/' + BOKUN_PRODUCT_ID).then(function (r) {
           if (!r.ok) throw new Error('product fetch ' + r.status);
@@ -1960,12 +1944,50 @@
           if (!r.ok) throw new Error('pickup-places fetch ' + r.status);
           return r.json();
         }),
+        fetch(BOKUN_API_BASE + '/api/availability/' + BOKUN_PRODUCT_ID + '?start=' + start + '&end=' + end).then(function (r) {
+          if (!r.ok) throw new Error('availability fetch ' + r.status);
+          return r.json();
+        }),
       ]).then(function (results) {
         var product = results[0];
         var places = results[1] || {};
+        var avail = Array.isArray(results[2]) ? results[2] : [];
         window.BOKUN.product = product;
         window.BOKUN.pickupPlaces = places.pickupPlaces || [];
         window.BOKUN.dropoffPlaces = places.dropoffPlaces || [];
+        window.BOKUN.availability = avail;
+
+        // Pull price-per-category from the first slot that has prices. Bokun
+        // returns the same prices for every slot of a given product unless
+        // there's seasonal pricing; for this product all slots are identical.
+        var sample = avail.find(function (s) {
+          return s && s.pricesByRate && s.pricesByRate[0] && s.pricesByRate[0].pricePerCategoryUnit;
+        });
+        if (sample) {
+          var entries = sample.pricesByRate[0].pricePerCategoryUnit;
+          var byCategoryId = {};
+          entries.forEach(function (p) {
+            byCategoryId[p.id] = { amount: p.amount.amount, currency: p.amount.currency };
+          });
+          window.BOKUN.pricePerCategory = byCategoryId;
+          window.BOKUN.currency = entries[0] && entries[0].amount.currency || 'CAD';
+          // Lowest adult price across the window (covers seasonal variation).
+          var adultCat = (product.pricingCategories || []).find(function (c) {
+            return /adult/i.test(c.title);
+          });
+          if (adultCat) {
+            var minAdult = Infinity;
+            avail.forEach(function (s) {
+              if (!s.pricesByRate || !s.pricesByRate[0]) return;
+              var p = s.pricesByRate[0].pricePerCategoryUnit.find(function (x) {
+                return x.id === adultCat.id;
+              });
+              if (p && p.amount.amount < minAdult) minAdult = p.amount.amount;
+            });
+            if (minAdult !== Infinity) window.BOKUN.lowestAdultPrice = minAdult;
+          }
+        }
+
         window.BOKUN.ready = true;
         console.log('[BOKUN] loaded', {
           title: product && product.title,
@@ -1975,7 +1997,14 @@
           }),
           pickupCount: window.BOKUN.pickupPlaces.length,
           dropoffCount: window.BOKUN.dropoffPlaces.length,
+          slots: avail.length,
+          lowestAdultPrice: window.BOKUN.lowestAdultPrice,
+          currency: window.BOKUN.currency,
         });
+
+        applyHeaderPrice();
+        applyJsonLd();
+
         document.dispatchEvent(new CustomEvent('bokun:ready', { detail: window.BOKUN }));
       }).catch(function (err) {
         window.BOKUN.error = err;
@@ -1983,6 +2012,32 @@
         document.dispatchEvent(new CustomEvent('bokun:error', { detail: err }));
       });
     })();
+
+    function applyHeaderPrice() {
+      var amt = window.BOKUN.lowestAdultPrice;
+      if (amt == null) return;
+      var amtEl = document.querySelector('.booking-panel__price-amount');
+      var unitEl = document.querySelector('.booking-panel__price-unit');
+      if (amtEl) amtEl.textContent = '$' + amt;
+      if (unitEl) unitEl.textContent = ' ' + window.BOKUN.currency + ' per person';
+    }
+
+    function applyJsonLd() {
+      var amt = window.BOKUN.lowestAdultPrice;
+      if (amt == null) return;
+      var script = document.querySelector('script[type="application/ld+json"]');
+      if (!script) return;
+      try {
+        var data = JSON.parse(script.textContent);
+        if (data.offers) {
+          data.offers.price = String(amt);
+          data.offers.priceCurrency = window.BOKUN.currency;
+        }
+        script.textContent = JSON.stringify(data);
+      } catch (e) {
+        console.warn('[BOKUN] could not patch JSON-LD', e);
+      }
+    }
   </script>
 
   <script src="/js/main.js"></script>
@@ -2123,22 +2178,83 @@
   <!-- Booking panel: travellers + date picker -->
   <script>
   (function() {
-    // ── Travellers ──────────────────────────────────────────────
-    var counts = { adult: 1, youth: 0, infant: 0 };
-    var mins   = { adult: 1, youth: 0, infant: 0 };
+    // ── Travellers (dynamically rendered from window.BOKUN.product) ──────────
+    // Counts live on window.bokunBooking so the legacy Stripe handler below
+    // can read them. They're indexed by category-title slug ("adult",
+    // "senior", "youth", "child", "infant") which Bokun's titles map to
+    // cleanly via toLowerCase().
+    window.bokunBooking = window.bokunBooking || { counts: { adult: 1 }, mins: { adult: 1 } };
+
+    function slug(s) { return String(s || '').toLowerCase().trim(); }
+    function ageBand(c) {
+      if (c.minAge != null && c.maxAge != null) return 'Age ' + c.minAge + '–' + c.maxAge;
+      if (c.minAge != null) return 'Age ' + c.minAge + '+';
+      return c.fullTitle && c.fullTitle !== c.title ? c.fullTitle : '';
+    }
+
+    function renderRows(categories) {
+      var container = document.getElementById('bp-travellers-rows');
+      if (!container) return;
+      var html = categories.map(function (c, i) {
+        var s = slug(c.title);
+        var initial = window.bokunBooking.counts[s] || 0;
+        var min = window.bokunBooking.mins[s] || 0;
+        var last = (i === categories.length - 1);
+        return (
+          '<div class="bp-travellers__row"' + (last ? ' style="border-bottom:none;"' : '') + '>' +
+            '<div class="bp-travellers__info">' +
+              '<div class="bp-travellers__name">' + escapeHtml(c.title) + '</div>' +
+              '<div class="bp-travellers__age">' + escapeHtml(ageBand(c)) + '</div>' +
+            '</div>' +
+            '<div class="bp-stepper">' +
+              '<button class="bp-stepper__btn" id="btn-minus-' + s + '" aria-label="Remove ' + escapeAttr(c.title) + '"' + (initial <= min ? ' disabled' : '') + '>−</button>' +
+              '<span class="bp-stepper__count" id="count-' + s + '">' + initial + '</span>' +
+              '<button class="bp-stepper__btn" id="btn-plus-' + s + '" aria-label="Add ' + escapeAttr(c.title) + '">+</button>' +
+            '</div>' +
+          '</div>'
+        );
+      }).join('');
+      container.innerHTML = html;
+
+      categories.forEach(function (c) {
+        var s = slug(c.title);
+        document.getElementById('btn-plus-' + s).addEventListener('click', function () { changeCount(s, 1); });
+        document.getElementById('btn-minus-' + s).addEventListener('click', function () { changeCount(s, -1); });
+      });
+      updateTravellersLabel();
+    }
+
+    function escapeHtml(s) { return String(s).replace(/[&<>"']/g, function (m) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+    }); }
+    function escapeAttr(s) { return escapeHtml(s); }
 
     function updateTravellersLabel() {
       var parts = [];
-      if (counts.adult > 0) parts.push('Adult x ' + counts.adult);
-      if (counts.youth > 0) parts.push('Youth x ' + counts.youth);
-      if (counts.infant > 0) parts.push('Infant x ' + counts.infant);
-      document.getElementById('travellersLabel').textContent = parts.join(', ');
+      var counts = window.bokunBooking.counts || {};
+      var product = window.BOKUN && window.BOKUN.product;
+      if (product && product.pricingCategories) {
+        product.pricingCategories.forEach(function (c) {
+          var n = counts[slug(c.title)] || 0;
+          if (n > 0) parts.push(c.title + ' x ' + n);
+        });
+      } else {
+        Object.keys(counts).forEach(function (k) {
+          if (counts[k] > 0) parts.push(k.charAt(0).toUpperCase() + k.slice(1) + ' x ' + counts[k]);
+        });
+      }
+      var lbl = document.getElementById('travellersLabel');
+      if (lbl) lbl.textContent = parts.join(', ') || 'Select travellers';
     }
 
-    function changeCount(type, delta) {
-      counts[type] = Math.max(mins[type], counts[type] + delta);
-      document.getElementById('count-' + type).textContent = counts[type];
-      document.getElementById('btn-minus-' + type).disabled = counts[type] <= mins[type];
+    function changeCount(s, delta) {
+      var counts = window.bokunBooking.counts;
+      var mins = window.bokunBooking.mins;
+      counts[s] = Math.max(mins[s] || 0, (counts[s] || 0) + delta);
+      var countEl = document.getElementById('count-' + s);
+      var minusEl = document.getElementById('btn-minus-' + s);
+      if (countEl) countEl.textContent = counts[s];
+      if (minusEl) minusEl.disabled = counts[s] <= (mins[s] || 0);
       updateTravellersLabel();
       var exp = document.getElementById('bpExpansion');
       if (exp && !exp.hidden && typeof window.__horizonShowExpansion === 'function') {
@@ -2146,9 +2262,28 @@
       }
     }
 
-    ['adult','youth','infant'].forEach(function(type) {
-      document.getElementById('btn-plus-' + type).addEventListener('click', function() { changeCount(type, 1); });
-      document.getElementById('btn-minus-' + type).addEventListener('click', function() { changeCount(type, -1); });
+    function applyFromBokun() {
+      var product = window.BOKUN && window.BOKUN.product;
+      if (!product || !product.pricingCategories) return;
+      // Default mins: Adult is required (1), everyone else 0. Adult starts at 1.
+      product.pricingCategories.forEach(function (c) {
+        var s = slug(c.title);
+        if (s === 'adult') {
+          window.bokunBooking.mins[s] = 1;
+          if (!window.bokunBooking.counts[s]) window.bokunBooking.counts[s] = 1;
+        } else {
+          window.bokunBooking.mins[s] = 0;
+          if (window.bokunBooking.counts[s] == null) window.bokunBooking.counts[s] = 0;
+        }
+      });
+      renderRows(product.pricingCategories);
+    }
+
+    if (window.BOKUN && window.BOKUN.ready) applyFromBokun();
+    document.addEventListener('bokun:ready', applyFromBokun);
+    document.addEventListener('bokun:error', function () {
+      var c = document.getElementById('bp-travellers-rows');
+      if (c) c.innerHTML = '<div class="bp-travellers__row" style="border-bottom:none;justify-content:center;color:#B91C1C;">Couldn\'t load tour info. Please refresh.</div>';
     });
 
     var travellersBtn      = document.getElementById('travellersBtn');
@@ -2300,12 +2435,21 @@
     var MONTHS_LONG = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     var DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
+    function bokunCounts() {
+      return (window.bokunBooking && window.bokunBooking.counts) || {};
+    }
+
     function getBookingData() {
+      // The Stripe Worker expects { date, adults, youth, infants }. With Bokun
+      // data driving the rows, we have up to 5 categories \u2014 collapse non-paying
+      // / equivalent ones into Stripe's 3 buckets so the existing handler keeps
+      // working until Day 6 swaps to /checkout.json/submit.
+      var c = bokunCounts();
       return {
         date:    document.getElementById('dateBtn').dataset.selectedDate || '',
-        adults:  parseInt(document.getElementById('count-adult').textContent,  10) || 0,
-        youth:   parseInt(document.getElementById('count-youth').textContent,  10) || 0,
-        infants: parseInt(document.getElementById('count-infant').textContent, 10) || 0,
+        adults:  (c.adult || 0) + (c.senior || 0),
+        youth:   (c.youth || 0) + (c.child || 0),
+        infants: (c.infant || 0),
       };
     }
 
@@ -2322,15 +2466,46 @@
       return MONTHS_LONG[d.getMonth()] + ' ' + d.getDate();
     }
 
-    function populateExpansion(data) {
-      document.getElementById('expansionDate').textContent       = formatDate(data.date);
-      document.getElementById('expansionCancelDate').textContent = formatCancelDate(data.date);
-      var total = (data.adults + data.youth) * 249.99;
-      document.getElementById('expansionTotal').textContent = 'CA$' + total.toFixed(2);
+    function categoryPrice(category) {
+      // Look up per-category price from /availability if loaded; otherwise
+      // fall back to the lowest-adult price (this product prices everyone the
+      // same so the fallback is right for it).
+      var pricing = window.BOKUN && window.BOKUN.pricePerCategory;
+      if (pricing && pricing[category.id]) return pricing[category.id].amount;
+      return (window.BOKUN && window.BOKUN.lowestAdultPrice) || 0;
+    }
+
+    function populateExpansion(/* data */) {
+      var dateIso = document.getElementById('dateBtn').dataset.selectedDate || '';
+      document.getElementById('expansionDate').textContent       = dateIso ? formatDate(dateIso) : '';
+      document.getElementById('expansionCancelDate').textContent = dateIso ? formatCancelDate(dateIso) : '';
+
+      var counts = bokunCounts();
+      var product = window.BOKUN && window.BOKUN.product;
+      var currency = (window.BOKUN && window.BOKUN.currency) || 'CAD';
+      var currencyPrefix = currency === 'CAD' ? 'CA$' : currency + ' ';
+
+      var total = 0;
       var parts = [];
-      if (data.adults  > 0) parts.push(data.adults  + ' Adult'  + (data.adults  > 1 ? 's' : '') + ' \u00d7 CA$249.99');
-      if (data.youth   > 0) parts.push(data.youth   + ' Youth \u00d7 CA$249.99');
-      if (data.infants > 0) parts.push(data.infants + ' Infant' + (data.infants > 1 ? 's' : '') + ' (complimentary)');
+      if (product && product.pricingCategories) {
+        product.pricingCategories.forEach(function (c) {
+          var n = counts[c.title.toLowerCase()] || 0;
+          if (n === 0) return;
+          var price = categoryPrice(c);
+          // Infants on this product are technically priced the same as adults
+          // by Bokun, but the booking-panel UX has always treated them as
+          // "complimentary" \u2014 surface that messaging while still summing
+          // them in the underlying total so Bokun's records match what we
+          // collect from the customer.
+          if (/infant/i.test(c.title)) {
+            parts.push(n + ' ' + c.title + (n > 1 ? 's' : '') + ' (complimentary)');
+          } else {
+            parts.push(n + ' ' + c.title + (n > 1 ? 's' : '') + ' \u00d7 ' + currencyPrefix + price);
+            total += n * price;
+          }
+        });
+      }
+      document.getElementById('expansionTotal').textContent = currencyPrefix + total.toFixed(2);
       document.getElementById('expansionBreakdown').textContent = parts.join(' \u00b7 ');
     }
 
