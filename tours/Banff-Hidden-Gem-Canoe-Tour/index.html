@@ -963,6 +963,25 @@
     }
     .bp-expansion__breakdown { font-size: 0.82rem; color: var(--mid-gray); margin-bottom: 2px; }
     .bp-expansion__tax { font-size: 0.78rem; color: var(--mid-gray); }
+    .bp-expansion__validation {
+      margin: 0 16px 12px;
+      padding: 10px 12px;
+      border-radius: 6px;
+      background: #FEF3C7;
+      border: 1px solid #FCD34D;
+      color: #92400E;
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+    .bp-expansion__validation--error {
+      background: #FEE2E2;
+      border-color: #FCA5A5;
+      color: #991B1B;
+    }
+    #bookNowBtn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
 
     /* Travellers */
     .bp-travellers__row {
@@ -1192,15 +1211,15 @@
 
       <!-- GYG-style booking expansion (triggered by Check Availability in sidebar) -->
       <div class="bp-expansion" id="bpExpansion" hidden>
-        <div class="bp-expansion__header">1 option available</div>
+        <div class="bp-expansion__header" id="expansionHeader">1 option available</div>
         <div class="bp-expansion__card">
           <div class="bp-expansion__top">
-            <div class="bp-expansion__badge">Only 9 spots left</div>
-            <div class="bp-expansion__tour-title">Banff: Canoe Tour, Moraine Lake & Lake Louise</div>
+            <div class="bp-expansion__badge" id="expansionBadge" hidden></div>
+            <div class="bp-expansion__tour-title" id="expansionTitle">Banff: Canoe Tour, Moraine Lake & Lake Louise</div>
             <div class="bp-expansion__meta">
               <span class="bp-expansion__meta-item">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                7 hours
+                <span id="expansionDuration">9 hours</span>
               </span>
               <span class="bp-expansion__meta-item">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
@@ -1226,19 +1245,20 @@
           <div class="bp-expansion__section">
             <div class="bp-expansion__time-label">Starting time</div>
             <div class="bp-expansion__time-date" id="expansionDate"></div>
-            <div class="bp-expansion__time-value">8:30 AM</div>
+            <div class="bp-expansion__time-value" id="expansionStartTime">8:00 AM</div>
           </div>
           <hr class="bp-expansion__divider">
           <div class="bp-expansion__section">
             <div class="bp-expansion__policy-row">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-              <span>Cancel before <strong id="expansionCancelDate"></strong> at 8:30 AM for a full refund</span>
+              <span>Cancel before <strong id="expansionCancelDate"></strong> at <span id="expansionCancelTime">8:00 AM</span> for a full refund</span>
             </div>
             <div class="bp-expansion__policy-row">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
               <span>You can reserve now &amp; pay later. <a href="#">Learn more</a></span>
             </div>
           </div>
+          <div class="bp-expansion__validation" id="expansionValidation" hidden></div>
           <div class="bp-expansion__footer">
             <div>
               <div class="bp-expansion__total" id="expansionTotal"></div>
@@ -2602,6 +2622,21 @@
       return (window.BOKUN && window.BOKUN.lowestAdultPrice) || 0;
     }
 
+    function formatBokunTime(hhmm) {
+      // Bokun startTime is 24-hour "HH:MM"; render as "8:00 AM" for the UI.
+      if (!hhmm || !/^\d{1,2}:\d{2}$/.test(hhmm)) return hhmm || '';
+      var parts = hhmm.split(':');
+      var h = parseInt(parts[0], 10);
+      var m = parts[1];
+      var suffix = h >= 12 ? 'PM' : 'AM';
+      var h12 = h % 12 || 12;
+      return h12 + ':' + m + ' ' + suffix;
+    }
+
+    function totalParticipants(counts) {
+      return Object.keys(counts).reduce(function (sum, k) { return sum + (counts[k] || 0); }, 0);
+    }
+
     function populateExpansion(/* data */) {
       var dateIso = document.getElementById('dateBtn').dataset.selectedDate || '';
       document.getElementById('expansionDate').textContent       = dateIso ? formatDate(dateIso) : '';
@@ -2609,9 +2644,50 @@
 
       var counts = bokunCounts();
       var product = window.BOKUN && window.BOKUN.product;
+      var slot = (window.bokunBooking && window.bokunBooking.slot) || null;
       var currency = (window.BOKUN && window.BOKUN.currency) || 'CAD';
       var currencyPrefix = currency === 'CAD' ? 'CA$' : currency + ' ';
 
+      // Title + duration from product (was hardcoded "7 hours").
+      if (product) {
+        var titleEl = document.getElementById('expansionTitle');
+        if (titleEl && product.title) titleEl.textContent = product.title;
+        var durEl = document.getElementById('expansionDuration');
+        if (durEl) durEl.textContent = product.durationText || product.duration || '';
+      }
+
+      // Start time from the picked slot (was hardcoded "8:30 AM").
+      var startStr = slot && slot.startTime ? formatBokunTime(slot.startTime) : '';
+      var stEl = document.getElementById('expansionStartTime');
+      if (stEl && startStr) stEl.textContent = startStr;
+      var ctEl = document.getElementById('expansionCancelTime');
+      if (ctEl && startStr) ctEl.textContent = startStr;
+
+      // Spot-count badge \u2014 dynamic from slot. Hidden when unlimited or
+      // when there's plenty of room (>10 left). Only nudges scarcity when
+      // it's real.
+      var badge = document.getElementById('expansionBadge');
+      if (badge) {
+        if (slot && !slot.unlimitedAvailability && slot.availabilityCount != null && slot.availabilityCount <= 10) {
+          if (slot.availabilityCount <= 0) {
+            badge.textContent = 'Sold out';
+          } else if (slot.availabilityCount === 1) {
+            badge.textContent = 'Only 1 spot left';
+          } else {
+            badge.textContent = 'Only ' + slot.availabilityCount + ' spots left';
+          }
+          badge.hidden = false;
+        } else {
+          badge.hidden = true;
+        }
+      }
+
+      // Build per-category breakdown + total. Bokun counts every passenger
+      // toward availability (infants included), so the validation below
+      // sums all categories \u2014 but the displayed total still treats
+      // infants as complimentary on this product (line price = 0 path
+      // would be wrong; the existing UX called them complimentary so the
+      // breakdown copy matches that).
       var total = 0;
       var parts = [];
       if (product && product.pricingCategories) {
@@ -2619,11 +2695,6 @@
           var n = counts[c.title.toLowerCase()] || 0;
           if (n === 0) return;
           var price = categoryPrice(c);
-          // Infants on this product are technically priced the same as adults
-          // by Bokun, but the booking-panel UX has always treated them as
-          // "complimentary" \u2014 surface that messaging while still summing
-          // them in the underlying total so Bokun's records match what we
-          // collect from the customer.
           if (/infant/i.test(c.title)) {
             parts.push(n + ' ' + c.title + (n > 1 ? 's' : '') + ' (complimentary)');
           } else {
@@ -2634,6 +2705,38 @@
       }
       document.getElementById('expansionTotal').textContent = currencyPrefix + total.toFixed(2);
       document.getElementById('expansionBreakdown').textContent = parts.join(' \u00b7 ');
+
+      // \u2500\u2500 Validation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+      var totalP = totalParticipants(counts);
+      var validation = document.getElementById('expansionValidation');
+      var bookBtn = document.getElementById('bookNowBtn');
+      var msg = '';
+      var isError = false;
+
+      if (!dateIso) {
+        msg = 'Please pick a date.';
+      } else if (totalP === 0) {
+        msg = 'Please add at least one traveller.';
+      } else if (slot && !slot.unlimitedAvailability && slot.availabilityCount != null && totalP > slot.availabilityCount) {
+        msg = 'Only ' + slot.availabilityCount + ' spots remaining for this departure. Reduce the number of travellers or pick another date.';
+        isError = true;
+      } else if (slot && slot.minParticipantsToBookNow != null && totalP < slot.minParticipantsToBookNow) {
+        msg = 'Minimum ' + slot.minParticipantsToBookNow + ' participant' + (slot.minParticipantsToBookNow > 1 ? 's' : '') + ' required to book this departure.';
+        isError = true;
+      }
+
+      if (validation) {
+        if (msg) {
+          validation.textContent = msg;
+          validation.hidden = false;
+          validation.classList.toggle('bp-expansion__validation--error', isError);
+        } else {
+          validation.hidden = true;
+        }
+      }
+      if (bookBtn) {
+        bookBtn.disabled = !!msg;
+      }
     }
 
     function showExpansion() {
