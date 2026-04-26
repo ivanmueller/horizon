@@ -11,9 +11,17 @@ BOKUN_API_BASE = "https://api.bokun.io"
 #   wrangler secret put BOKUN_SECRET_KEY
 
 # KV namespace for caching product config + pickup places + availability.
+#
 # One-time setup, from inside workers/bokun/:
-#   wrangler kv:namespace create CACHE
-# Paste the returned id below, then `wrangler deploy`.
-[[kv_namespaces]]
-binding = "CACHE"
-id      = ""    # ← paste id from `wrangler kv:namespace create CACHE`
+#   1. wrangler kv namespace create CACHE
+#   2. Copy the printed `id` (32-char hex)
+#   3. Uncomment the [[kv_namespaces]] block below and paste the id
+#   4. wrangler deploy
+#
+# (Wrangler validates the whole config before running any subcommand,
+#  so the block needs to stay commented until you have a real id —
+#  an empty `id = ""` fails validation.)
+#
+# [[kv_namespaces]]
+# binding = "CACHE"
+# id      = "PASTE_ID_HERE"
