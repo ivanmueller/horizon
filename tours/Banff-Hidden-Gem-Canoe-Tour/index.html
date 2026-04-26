@@ -1232,6 +1232,60 @@
       line-height: 1.65;
       margin: 0 0 var(--space-2);
     }
+
+    /* ── Mobile booking-panel overrides ─────────────────────────
+       The global stylesheet converts .booking-panel into a sticky
+       bottom bar (position: fixed; display: flex) at ≤960px, which
+       was sized for a simple "From $X + Book now" two-element row.
+       Our enhanced panel has badge + price + travellers picker +
+       date picker + check-availability button + guarantees, which
+       can't fit a single horizontal line on a 375px viewport — the
+       result was a row of crushed elements clipped past the screen
+       edge. Defeat the sticky-bar mode and render the panel as a
+       normal block in the document flow at narrow widths. */
+    @media (max-width: 960px) {
+      .tour-detail--with-hero { grid-template-columns: 1fr !important; }
+      .booking-panel {
+        position: static !important;
+        top: auto !important;
+        bottom: auto !important;
+        left: auto !important;
+        right: auto !important;
+        display: block !important;
+        height: auto !important;
+        border-radius: var(--radius-xl) !important;
+        padding: var(--space-5) !important;
+        box-shadow: var(--elevation-3) !important;
+        margin: 0 auto var(--space-6) !important;
+        z-index: auto !important;
+        max-width: 480px;
+        width: 100%;
+      }
+      .booking-panel__details { display: block !important; }
+      .mobile-booking-spacer { display: none !important; }
+      .tour-detail--with-hero .booking-panel__sell-out {
+        margin: calc(-1 * var(--space-5)) auto var(--space-3) calc(-1 * var(--space-5));
+      }
+    }
+    /* Calendar dropdown stacks the 2-month layout vertically and fills
+       the booking-panel width, instead of the desktop 660px right-aligned
+       layout that overflows mobile viewports. */
+    @media (max-width: 640px) {
+      .bp-calendar {
+        width: auto !important;
+        min-width: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        padding: 16px !important;
+      }
+      .bp-cal__header  { grid-template-columns: 1fr !important; gap: 0 !important; margin-bottom: 8px; }
+      .bp-cal__months  { grid-template-columns: 1fr !important; gap: 16px !important; }
+      /* The Next button lives in the second month-hd; it needs to stay
+         visible after we hide the second month title — pull it back into
+         the (now full-width) first row. */
+      .bp-cal__header > div:nth-child(2) { display: flex; justify-content: flex-end; }
+      .bp-cal__header > div:nth-child(2) .bp-cal__month-title { display: none; }
+    }
   </style>
 
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%23FF6B4A'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
