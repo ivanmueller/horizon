@@ -1056,17 +1056,27 @@
     }
     .cal-day {
       aspect-ratio: 1;
-      display: flex; align-items: center; justify-content: center;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 2px;
       border: none; background: none;
-      cursor: pointer; border-radius: 50%;
+      cursor: pointer; border-radius: 8px;
       font-size: 0.82rem;
       color: var(--near-black);
       font-family: inherit;
       transition: background 0.1s;
+      padding: 0;
     }
     .cal-day:hover:not(:disabled) { background: #F3F4F6; }
-    .cal-day--past { color: #C0C0C0; text-decoration: line-through; cursor: default; }
-    .cal-day--selected { background: var(--coral) !important; color: #fff !important; font-weight: 700; }
+    .cal-day--past         { color: #C0C0C0; text-decoration: line-through; cursor: default; }
+    .cal-day--unavailable  { color: #C0C0C0; cursor: default; }
+    .cal-day--available    { font-weight: 600; }
+    .cal-day--selected     { background: var(--coral) !important; color: #fff !important; font-weight: 700; border-radius: 50%; }
+    .cal-day--selected .cal-day__price { color: #fff; }
+    .cal-day__num   { line-height: 1; }
+    .cal-day__price {
+      font-size: 0.6rem; line-height: 1; font-weight: 500; color: #6B7280;
+      letter-spacing: -0.02em;
+    }
     .tour-detail--with-hero .booking-panel__price {
       margin-bottom: var(--space-3);
     }
@@ -2308,12 +2318,102 @@
     });
     travellersContinue.addEventListener('click', closeTravellers);
 
-    // ── Calendar ────────────────────────────────────────────────
-    var TODAY = new Date(2026, 3, 7); // April 7 2026
+    // ── Calendar (driven by window.BOKUN.availability) ──────────
+    function startOfDay(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+    var TODAY = startOfDay(new Date());
     var calStart = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1);
     var selectedDate = null;
     var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
     var DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+    // YYYY-MM-DD → array of slot rows. Built from window.BOKUN.availability
+    // when bokun:ready fires; rebuilt when extra months are lazy-fetched.
+    var availabilityByDate = {};
+    // Latest date we've fetched availability for (Date object or null).
+    var fetchedThrough = null;
+    // Months currently being fetched, to dedupe rapid next-clicks.
+    var fetchInFlight = null;
+
+    function ymdFromMillis(ms) { return new Date(ms).toISOString().slice(0, 10); }
+    function ymdFromLocal(d) {
+      return d.getFullYear() + '-' +
+        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+        String(d.getDate()).padStart(2, '0');
+    }
+
+    function indexAvailability(slots) {
+      availabilityByDate = {};
+      var maxDate = null;
+      (slots || []).forEach(function (s) {
+        if (!s || s.date == null) return;
+        var ymd = ymdFromMillis(s.date);
+        if (!availabilityByDate[ymd]) availabilityByDate[ymd] = [];
+        availabilityByDate[ymd].push(s);
+        var d = new Date(s.date);
+        if (!maxDate || d > maxDate) maxDate = d;
+      });
+      if (maxDate) fetchedThrough = startOfDay(maxDate);
+    }
+
+    function isBookable(ymd) {
+      var slots = availabilityByDate[ymd];
+      if (!slots || slots.length === 0) return false;
+      return slots.some(function (s) {
+        return !s.soldOut && (s.unlimitedAvailability || (s.availabilityCount || 0) > 0);
+      });
+    }
+
+    function adultPriceFor(ymd) {
+      var slots = availabilityByDate[ymd];
+      if (!slots || !slots.length) return null;
+      var adult = (window.BOKUN && window.BOKUN.product &&
+        (window.BOKUN.product.pricingCategories || []).find(function (c) { return /adult/i.test(c.title); }));
+      if (!adult) return null;
+      var min = Infinity;
+      slots.forEach(function (s) {
+        if (!s.pricesByRate || !s.pricesByRate[0]) return;
+        var p = s.pricesByRate[0].pricePerCategoryUnit.find(function (x) { return x.id === adult.id; });
+        if (p && p.amount.amount < min) min = p.amount.amount;
+      });
+      return min === Infinity ? null : min;
+    }
+
+    function ensureAvailabilityThrough(targetDate) {
+      // Returns a promise. No-op if we already have data through targetDate.
+      if (fetchedThrough && fetchedThrough >= targetDate) return Promise.resolve();
+      if (fetchInFlight) return fetchInFlight;
+      var startDate = fetchedThrough
+        ? new Date(fetchedThrough.getTime() + 86400 * 1000)
+        : TODAY;
+      var endDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate() + 30);
+      var qs = '?start=' + ymdFromLocal(startDate) + '&end=' + ymdFromLocal(endDate);
+      fetchInFlight = fetch(BOKUN_API_BASE + '/api/availability/' + BOKUN_PRODUCT_ID + qs)
+        .then(function (r) {
+          if (!r.ok) throw new Error('availability fetch ' + r.status);
+          return r.json();
+        })
+        .then(function (slots) {
+          if (!Array.isArray(slots)) return;
+          window.BOKUN.availability = (window.BOKUN.availability || []).concat(slots);
+          indexAvailability(window.BOKUN.availability);
+          renderCalendar();
+        })
+        .catch(function (e) { console.error('[BOKUN] extra availability fetch failed', e); })
+        .then(function () { fetchInFlight = null; });
+      return fetchInFlight;
+    }
+
+    function onBokunReadyForCalendar() {
+      if (window.BOKUN && window.BOKUN.availability) {
+        indexAvailability(window.BOKUN.availability);
+      }
+      // Refresh in case the dropdown was already open with placeholder data.
+      // Null-check covers the (rare) case where bokun:ready resolves before
+      // the calendarDropdown var is initialized further down this IIFE.
+      if (calendarDropdown && !calendarDropdown.hidden) renderCalendar();
+    }
+    if (window.BOKUN && window.BOKUN.ready) onBokunReadyForCalendar();
+    document.addEventListener('bokun:ready', onBokunReadyForCalendar);
 
     function renderCalendar() {
       var m1 = new Date(calStart.getFullYear(), calStart.getMonth(), 1);
@@ -2322,7 +2422,6 @@
       document.getElementById('calMonth2').textContent = MONTHS[m2.getMonth()] + ' ' + m2.getFullYear();
       renderMonth('calGrid1', m1);
       renderMonth('calGrid2', m2);
-      // Disable prev if already on current month
       var prevBtn = document.getElementById('calPrev');
       prevBtn.disabled = (m1.getFullYear() === TODAY.getFullYear() && m1.getMonth() === TODAY.getMonth());
     }
@@ -2331,9 +2430,11 @@
       var grid = document.getElementById(gridId);
       grid.innerHTML = '';
       var y = monthDate.getFullYear(), m = monthDate.getMonth();
-      var firstDow = new Date(y, m, 1).getDay(); // 0=Sun
-      var offset = (firstDow === 0) ? 6 : firstDow - 1; // convert to Mon-start
+      var firstDow = new Date(y, m, 1).getDay();
+      var offset = (firstDow === 0) ? 6 : firstDow - 1; // Monday-start
       var daysInMonth = new Date(y, m + 1, 0).getDate();
+      var currency = (window.BOKUN && window.BOKUN.currency) || 'CAD';
+      var currencyPrefix = currency === 'CAD' ? '$' : currency + ' ';
 
       for (var i = 0; i < offset; i++) {
         grid.appendChild(document.createElement('span'));
@@ -2343,35 +2444,56 @@
         (function(day) {
           var btn = document.createElement('button');
           btn.className = 'cal-day';
-          btn.textContent = day;
           var thisDate = new Date(y, m, day);
+          var ymd = ymdFromLocal(thisDate);
           var isPast = thisDate < TODAY;
-          var isSelected = selectedDate &&
-            thisDate.getFullYear() === selectedDate.getFullYear() &&
-            thisDate.getMonth()    === selectedDate.getMonth() &&
-            thisDate.getDate()     === selectedDate.getDate();
+          var bookable = !isPast && isBookable(ymd);
+          var isSelected = selectedDate && ymdFromLocal(selectedDate) === ymd;
+
+          var numEl = document.createElement('span');
+          numEl.className = 'cal-day__num';
+          numEl.textContent = day;
+          btn.appendChild(numEl);
 
           if (isPast) {
             btn.classList.add('cal-day--past');
             btn.disabled = true;
-          } else if (isSelected) {
-            btn.classList.add('cal-day--selected');
+          } else if (!bookable) {
+            btn.classList.add('cal-day--unavailable');
+            btn.disabled = true;
+          } else {
+            btn.classList.add('cal-day--available');
+            var price = adultPriceFor(ymd);
+            if (price != null) {
+              var priceEl = document.createElement('span');
+              priceEl.className = 'cal-day__price';
+              priceEl.textContent = currencyPrefix + price;
+              btn.appendChild(priceEl);
+            }
           }
+          if (isSelected) btn.classList.add('cal-day--selected');
 
-          btn.addEventListener('click', function() {
-            selectedDate = new Date(y, m, day);
-            var label = MONTHS[m] + ' ' + day + ', ' + y;
-            document.getElementById('dateLabel').textContent = label;
-            // Store ISO date string so the checkout handler can read it
-            var iso = y + '-' + String(m + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
-            document.getElementById('dateBtn').dataset.selectedDate = iso;
-            closeCalendar();
-            renderCalendar(); // re-render to update selection highlight
-            // Auto-open the booking expansion after a date is picked
-            setTimeout(function() {
-              if (typeof window.__horizonShowExpansion === 'function') window.__horizonShowExpansion();
-            }, 150);
-          });
+          if (bookable) {
+            btn.addEventListener('click', function() {
+              selectedDate = thisDate;
+              // For Banff Hidden Gem there's only one start time per day.
+              // Products with multiple start times will need a follow-up
+              // time-picker; we capture all slots so that picker can show them.
+              var slots = availabilityByDate[ymd] || [];
+              var slot = slots[0];
+              window.bokunBooking.date = ymd;
+              window.bokunBooking.slot = slot;
+              window.bokunBooking.startTimeId = slot && slot.startTimeId;
+              window.bokunBooking.rateId = slot && slot.defaultRateId;
+              document.getElementById('dateLabel').textContent = MONTHS[m] + ' ' + day + ', ' + y;
+              document.getElementById('dateBtn').dataset.selectedDate = ymd;
+              closeCalendar();
+              renderCalendar();
+              setTimeout(function() {
+                if (typeof window.__horizonShowExpansion === 'function') window.__horizonShowExpansion();
+              }, 150);
+            });
+          }
           grid.appendChild(btn);
         })(d);
       }
@@ -2406,6 +2528,11 @@
     document.getElementById('calNext').addEventListener('click', function(e) {
       e.stopPropagation();
       calStart = new Date(calStart.getFullYear(), calStart.getMonth() + 1, 1);
+      // Two months are visible (calStart and the next one). Lazy-fetch
+      // availability through the end of the second visible month if we're
+      // past what we have. ensureAvailabilityThrough re-renders on success.
+      var rangeEnd = new Date(calStart.getFullYear(), calStart.getMonth() + 2, 0);
+      ensureAvailabilityThrough(rangeEnd);
       renderCalendar();
     });
 
