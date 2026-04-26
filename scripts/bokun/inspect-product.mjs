@@ -213,13 +213,22 @@ async function main() {
         const usePickup = pickups.length > 0;
         const pickupPlaceId = usePickup ? pickups[0].id : undefined;
 
+        // Per Bokun's official OpenAPI spec (Bokun/katla, rest-v1-api-2026-03-03.yaml):
+        //   BookingRequest.mainContactDetails is an ARRAY of AnswerDto
+        //     ({ questionId: string, values: string[] }), not a structured
+        //     { firstName, lastName, email, phoneNumber } object.
+        //   The canonical questionIds are CustomerFieldEnum values
+        //     (UPPER_SNAKE): FIRST_NAME, LAST_NAME, EMAIL, PHONE_NUMBER.
+        //   Sending the wrong shape produces a generic
+        //     "Invalid JSON in body" with empty `fields` because Jackson
+        //     can't bind the input to the expected schema.
         const bookingRequest = {
-          mainContactDetails: {
-            firstName: "Inspect",
-            lastName: "DryRun",
-            email: "inspect@example.com",
-            phoneNumber: "+14035550100",
-          },
+          mainContactDetails: [
+            { questionId: "FIRST_NAME", values: ["Inspect"] },
+            { questionId: "LAST_NAME", values: ["DryRun"] },
+            { questionId: "EMAIL", values: ["inspect@example.com"] },
+            { questionId: "PHONE_NUMBER", values: ["+14035550100"] },
+          ],
           activityBookings: [
             {
               activityId: Number(productId),
@@ -250,10 +259,13 @@ async function main() {
           console.log(JSON.stringify(bookingRequest, null, 2));
         } else {
           dump("checkout-options-response", r.data);
-          const opts = r.data;
-          const opt = Array.isArray(opts) ? opts.find((o) => o.type === "CUSTOMER_FULL_PAYMENT") : opts;
+          // Per the OpenAPI Checkout schema, the response is
+          //   { options: CheckoutOption[], questions: BookingQuestionsDto }
+          // not a bare array.
+          const opts = Array.isArray(r.data) ? r.data : r.data?.options || [];
+          const opt = opts.find((o) => o.type === "CUSTOMER_FULL_PAYMENT") || opts[0];
           if (!opt) {
-            console.log("  no CUSTOMER_FULL_PAYMENT option returned (raw response saved)");
+            console.log("  no checkout option returned (raw response saved)");
           } else {
             row("option.type", opt.type);
             row("option.amount", `${opt.amount?.amount} ${opt.amount?.currency}`);
