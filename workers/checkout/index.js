@@ -54,7 +54,7 @@ export default {
       'metadata[adults]': String(adults),
       'metadata[youth]': String(youth),
       'metadata[infants]': String(infants),
-      'metadata[tour]': 'lake-agnes-tea-house-hike',
+      'metadata[tour]': 'banff-hidden-gem-canoe-tour',
     });
 
     const stripeRes = await fetch('https://api.stripe.com/v1/checkout/sessions', {
