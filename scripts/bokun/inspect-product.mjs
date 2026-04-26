@@ -294,21 +294,26 @@ async function main() {
         const pickupPlaceId = usePickup ? pickups[0].id : undefined;
         const dropoffPlaceId = useDropoff ? dropoffs[0].id : undefined;
 
-        // Per Bokun's official OpenAPI spec (Bokun/katla, rest-v1-api-2026-03-03.yaml):
-        //   BookingRequest.mainContactDetails is an ARRAY of AnswerDto
-        //     ({ questionId: string, values: string[] }), not a structured
-        //     { firstName, lastName, email, phoneNumber } object.
-        //   The canonical questionIds are CustomerFieldEnum values
-        //     (UPPER_SNAKE): FIRST_NAME, LAST_NAME, EMAIL, PHONE_NUMBER.
-        //   Sending the wrong shape produces a generic
-        //     "Invalid JSON in body" with empty `fields` because Jackson
-        //     can't bind the input to the expected schema.
+        // BookingRequest.mainContactDetails is an array of AnswerDto
+        //   ({ questionId: string, values: string[] }).
+        // The actual questionId strings are camelCase ("firstName",
+        // "lastName", "email", "phoneNumber") — NOT the UPPER_SNAKE
+        // CustomerFieldEnum values found in the OpenAPI (those describe
+        // field types in product config, not answer keys).
+        // /options doesn't validate question completeness; only /submit
+        // does, and it returns "MISSING" with the expected questionId
+        // for each missing answer. That's how we discovered the casing.
+        //
+        // For activities like this one, /submit also requires per-
+        // passenger firstName + lastName via PassengerBookingRequest
+        // .passengerDetails. Sending only { pricingCategoryId } yields
+        // the same "MISSING" errors at submit time.
         const bookingRequest = {
           mainContactDetails: [
-            { questionId: "FIRST_NAME", values: ["Inspect"] },
-            { questionId: "LAST_NAME", values: ["DryRun"] },
-            { questionId: "EMAIL", values: ["inspect@example.com"] },
-            { questionId: "PHONE_NUMBER", values: ["+14035550100"] },
+            { questionId: "firstName", values: ["Inspect"] },
+            { questionId: "lastName", values: ["DryRun"] },
+            { questionId: "email", values: ["inspect@example.com"] },
+            { questionId: "phoneNumber", values: ["+14035550100"] },
           ],
           activityBookings: [
             {
@@ -320,7 +325,15 @@ async function main() {
               ...(pickupPlaceId ? { pickupPlaceId } : {}),
               dropoff: useDropoff,
               ...(dropoffPlaceId ? { dropoffPlaceId } : {}),
-              passengers: [{ pricingCategoryId: adultCategory.id }],
+              passengers: [
+                {
+                  pricingCategoryId: adultCategory.id,
+                  passengerDetails: [
+                    { questionId: "firstName", values: ["Inspect"] },
+                    { questionId: "lastName", values: ["DryRun"] },
+                  ],
+                },
+              ],
             },
           ],
           // BookingRequest.promoCode (top-level, per OpenAPI). Present only
