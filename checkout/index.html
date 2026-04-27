@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout · Horizon Tours</title>
+  <meta name="robots" content="noindex">
+
+  <!-- Fonts (matching the rest of the site) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&family=Plus+Jakarta+Sans:wght@700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Global tokens + components -->
+  <link rel="stylesheet" href="/css/style.css">
+
+  <!-- Stripe.js — loaded here so step 8 can mount the Payment Element. -->
+  <script src="https://js.stripe.com/v3/" defer></script>
+
+  <!--
+    Page-specific styles for the checkout shell. Kept inline for now while
+    only one checkout page exists; promote to /css/style.css under a .co-*
+    namespace once a second tour adopts the same flow.
+  -->
+  <style>
+    body { background: var(--warm-white-alt); }
+
+    /* ── Minimal header — strip nav to keep focus on closing the sale. ─── */
+    .co-header {
+      background: #fff;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .co-header__inner {
+      max-width: var(--container-max);
+      margin: 0 auto;
+      padding: var(--space-4) var(--container-padding);
+      display: flex; align-items: center; gap: var(--space-6);
+    }
+    .co-header__logo {
+      display: inline-flex; align-items: center; gap: var(--space-2);
+      text-decoration: none;
+    }
+    .co-header__logo-text {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.25rem; color: var(--coral); font-weight: 700;
+    }
+    .co-header__cobrand {
+      flex: 1;
+      font-size: var(--text-sm); color: var(--mid-gray);
+      line-height: 1.3;
+    }
+    .co-header__cobrand strong { color: var(--near-black); font-weight: 600; }
+    .co-header__secure {
+      display: inline-flex; align-items: center; gap: var(--space-2);
+      font-size: var(--text-sm); color: var(--mid-gray);
+    }
+    .co-header__secure svg { color: #16A34A; }
+
+    /* ── Spot-hold timer banner (soft coral, never alarming) ─────────── */
+    .co-timer {
+      background: var(--coral-light);
+      border-bottom: 1px solid rgba(255, 107, 74, 0.12);
+    }
+    .co-timer__inner {
+      max-width: var(--container-max);
+      margin: 0 auto;
+      padding: var(--space-3) var(--container-padding);
+      display: flex; align-items: center; gap: var(--space-2);
+      font-size: var(--text-sm); color: var(--near-black);
+    }
+    .co-timer__inner svg { color: var(--coral); flex-shrink: 0; }
+    .co-timer__remaining {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      color: var(--coral-hover);
+    }
+    .co-timer--expired .co-timer__remaining { color: #B91C1C; }
+
+    /* ── Page grid ────────────────────────────────────────────────────── */
+    .co-page {
+      max-width: var(--container-max);
+      margin: 0 auto;
+      padding: var(--space-6) var(--container-padding) var(--space-12);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: var(--space-8);
+      align-items: start;
+    }
+    .co-main { display: flex; flex-direction: column; gap: var(--space-5); }
+    .co-rail { display: flex; flex-direction: column; gap: var(--space-4); position: sticky; top: var(--space-4); }
+
+    /* ── Accordion sections ──────────────────────────────────────────── */
+    .co-section {
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+    }
+    .co-section__head {
+      display: flex; align-items: center; gap: var(--space-3);
+      padding: var(--space-4) var(--space-5);
+    }
+    .co-section--open .co-section__head { border-bottom: 1px solid var(--border-color); }
+    .co-section__num {
+      width: 28px; height: 28px; border-radius: 999px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--coral); color: #fff;
+      font-weight: 700; font-size: 0.875rem;
+      flex-shrink: 0;
+    }
+    .co-section--locked .co-section__num {
+      background: var(--light-gray); color: var(--mid-gray);
+    }
+    .co-section__title {
+      font-family: var(--font-display);
+      font-size: var(--text-lg);
+      font-weight: 600;
+      color: var(--near-black);
+    }
+    .co-section--locked .co-section__title { color: var(--mid-gray); }
+    .co-section__chip {
+      margin-left: auto;
+      font-size: var(--text-sm);
+      color: var(--mid-gray);
+    }
+    .co-section__body { padding: var(--space-5); }
+    .co-section--locked .co-section__body,
+    .co-section:not(.co-section--open) .co-section__body { display: none; }
+    .co-placeholder {
+      color: var(--mid-gray);
+      font-size: var(--text-sm);
+      font-style: italic;
+      margin: 0;
+    }
+
+    /* ── What happens after you book ─────────────────────────────────── */
+    .co-whn {
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--card-shadow);
+      padding: var(--space-5);
+    }
+    .co-whn__title {
+      font-family: var(--font-display);
+      font-size: var(--text-lg);
+      font-weight: 600;
+      color: var(--near-black);
+      margin: 0 0 var(--space-3);
+    }
+    .co-whn__list {
+      list-style: none; padding: 0; margin: 0;
+      display: flex; flex-direction: column; gap: var(--space-3);
+    }
+    .co-whn__list li {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: var(--space-3);
+      font-size: var(--text-sm);
+      color: var(--mid-gray);
+      line-height: 1.5;
+    }
+    .co-whn__list li::before {
+      content: counter(whn);
+      counter-increment: whn;
+      width: 24px; height: 24px;
+      background: rgba(22, 163, 74, 0.08);
+      color: #16A34A;
+      border-radius: 999px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 700;
+      grid-row: span 2;
+      align-self: start;
+    }
+    .co-whn__list { counter-reset: whn; }
+    .co-whn__list strong { color: var(--near-black); font-weight: 600; }
+
+    /* ── Right rail: order summary ───────────────────────────────────── */
+    .co-summary {
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+    }
+    .co-summary__hero {
+      aspect-ratio: 16 / 9;
+      background: linear-gradient(135deg, #c4dfe6, #66a5ad);
+      background-size: cover; background-position: center;
+    }
+    .co-summary__body { padding: var(--space-4) var(--space-5); }
+    .co-summary__title {
+      font-family: var(--font-display);
+      font-size: var(--text-base);
+      font-weight: 600;
+      color: var(--near-black);
+      margin: 0 0 var(--space-1);
+      line-height: 1.3;
+    }
+    .co-summary__meta {
+      font-size: var(--text-sm);
+      color: var(--mid-gray);
+      margin: 0 0 var(--space-1);
+    }
+    .co-summary__rating {
+      font-size: var(--text-sm);
+      color: var(--mid-gray);
+      margin: 0 0 var(--space-3);
+    }
+    .co-summary__rating .stars { color: #F59E0B; letter-spacing: 1px; }
+    .co-summary__lines {
+      list-style: none; padding: 0; margin: 0 0 var(--space-3);
+      border-top: 1px solid var(--border-color);
+      padding-top: var(--space-3);
+    }
+    .co-summary__line {
+      display: flex; justify-content: space-between; gap: var(--space-3);
+      font-size: var(--text-sm); color: var(--near-black);
+      padding: 2px 0;
+    }
+    .co-summary__total {
+      display: flex; justify-content: space-between;
+      padding-top: var(--space-3);
+      border-top: 1px solid var(--border-color);
+      font-weight: 600; color: var(--near-black);
+    }
+    .co-summary__total strong { font-weight: 700; }
+    .co-summary__taxnote {
+      font-size: var(--text-xs);
+      color: var(--mid-gray);
+      margin: var(--space-1) 0 0;
+      text-align: right;
+    }
+
+    /* ── Right rail: trust + help cards ──────────────────────────────── */
+    .co-trust, .co-help {
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--card-shadow);
+      padding: var(--space-4) var(--space-5);
+    }
+    .co-trust__title, .co-help__title {
+      font-family: var(--font-display);
+      font-size: var(--text-base);
+      font-weight: 600;
+      color: var(--near-black);
+      margin: 0 0 var(--space-3);
+    }
+    .co-trust__list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+    .co-trust__list li {
+      display: flex; gap: var(--space-2); align-items: flex-start;
+      font-size: var(--text-sm); color: var(--near-black); line-height: 1.4;
+    }
+    .co-trust__list svg { color: #16A34A; flex-shrink: 0; margin-top: 2px; }
+    .co-help__copy { font-size: var(--text-sm); color: var(--mid-gray); margin: 0; line-height: 1.5; }
+    .co-help__copy a { color: var(--coral); text-decoration: none; font-weight: 600; }
+    .co-help__copy a:hover { text-decoration: underline; }
+
+    /* ── Expired / error state ───────────────────────────────────────── */
+    .co-expired {
+      max-width: 540px;
+      margin: 80px auto;
+      text-align: center;
+      padding: var(--space-8) var(--space-6);
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--card-shadow);
+    }
+    .co-expired h1 {
+      font-family: var(--font-display);
+      font-size: var(--text-2xl);
+      margin: 0 0 var(--space-3);
+    }
+    .co-expired p { color: var(--mid-gray); line-height: 1.5; margin: 0 0 var(--space-5); }
+
+    /* ── Skeleton state while booking + product load ─────────────────── */
+    .co-skel { color: transparent; background: linear-gradient(90deg, #EEE, #F5F5F5, #EEE);
+               background-size: 200% 100%; animation: coShimmer 1.4s infinite; border-radius: 4px; display: inline-block; min-width: 80px; }
+    @keyframes coShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    /* ── Mobile: rail collapses below main, summary becomes a sticky drawer ── */
+    @media (max-width: 880px) {
+      .co-page { grid-template-columns: minmax(0, 1fr); gap: var(--space-5); }
+      .co-rail { position: static; order: -1; }
+      .co-trust, .co-help { display: none; } /* keep mobile lean — trust/help moves into the page on step 12 */
+      .co-header__cobrand { flex-basis: 100%; order: 99; padding-top: var(--space-2); }
+      .co-header__inner { flex-wrap: wrap; gap: var(--space-3); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header: logo + hotel co-brand + Secure indicator. No nav — focus on closing. -->
+  <header class="co-header">
+    <div class="co-header__inner">
+      <a class="co-header__logo" href="/" aria-label="Horizon Tours Home">
+        <svg width="32" height="32" viewBox="0 0 36 36" aria-hidden="true">
+          <rect width="36" height="36" rx="8" fill="#FF6B4A"/>
+          <path d="M13 7v22M13 18c0-6 12-6 12 0v11" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>
+        </svg>
+        <span class="co-header__logo-text">horizon</span>
+      </a>
+      <div class="co-header__cobrand" id="cobrandSlot" hidden>
+        Booked through <strong id="cobrandHotelName"></strong>
+      </div>
+      <div class="co-header__secure">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="11" width="18" height="11" rx="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        <span>Secure checkout</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Spot-hold timer banner — visible from page load until expiry. -->
+  <div class="co-timer" id="spotHoldTimer" hidden>
+    <div class="co-timer__inner">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="12 6 12 12 16 14"/>
+      </svg>
+      <span>We're holding your spot for <span class="co-timer__remaining" id="spotHoldRemaining">--:--</span> minutes.</span>
+    </div>
+  </div>
+
+  <!-- Main + right rail. Main hosts the two accordions + What-happens-next.
+       Sections 1 + 2 contents are placeholders until steps 6 / 7 / 8. -->
+  <main class="co-page" id="checkoutMain" hidden>
+    <div class="co-main">
+      <section class="co-section co-section--open" id="sectionTravelers">
+        <header class="co-section__head">
+          <span class="co-section__num">1</span>
+          <span class="co-section__title">Pickup &amp; travelers</span>
+        </header>
+        <div class="co-section__body" id="sectionTravelersBody">
+          <p class="co-placeholder">Pickup auto-select, lead traveler, and additional travelers go here (step 6).</p>
+        </div>
+      </section>
+
+      <section class="co-section co-section--locked" id="sectionPayment">
+        <header class="co-section__head">
+          <span class="co-section__num">2</span>
+          <span class="co-section__title">Payment</span>
+          <span class="co-section__chip">Complete step 1 first</span>
+        </header>
+      </section>
+
+      <section class="co-whn">
+        <h3 class="co-whn__title">What happens after you book</h3>
+        <ol class="co-whn__list">
+          <li><strong>Instant confirmation by email and SMS.</strong>&nbsp;Booking reference and meeting-point details land in your inbox right away.</li>
+          <li><strong>Reminder the night before</strong>&nbsp;with your guide's name and direct number, plus pickup time and weather check.</li>
+          <li><strong>Weather backup plan</strong>&nbsp;— full refund or reschedule if we have to cancel for weather.</li>
+        </ol>
+      </section>
+    </div>
+
+    <aside class="co-rail">
+      <section class="co-summary" id="orderSummary" aria-label="Order summary">
+        <div class="co-summary__hero" id="summaryImage" role="img" aria-label="Tour photo"></div>
+        <div class="co-summary__body">
+          <h3 class="co-summary__title" id="summaryTitle"><span class="co-skel">&nbsp;</span></h3>
+          <p class="co-summary__meta" id="summaryMeta"><span class="co-skel">&nbsp;</span></p>
+          <p class="co-summary__rating" id="summaryRating" hidden></p>
+          <ul class="co-summary__lines" id="summaryLines"></ul>
+          <div class="co-summary__total">
+            <span>Total</span>
+            <strong id="summaryTotal"><span class="co-skel">&nbsp;</span></strong>
+          </div>
+          <p class="co-summary__taxnote">All taxes included</p>
+        </div>
+      </section>
+
+      <section class="co-trust">
+        <h4 class="co-trust__title">Book with confidence</h4>
+        <ul class="co-trust__list">
+          <li>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Free cancellation until 6 PM the day before
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Pay nothing today — option at next step
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Lowest price guarantee
+          </li>
+        </ul>
+      </section>
+
+      <section class="co-help">
+        <h4 class="co-help__title">Need help?</h4>
+        <p class="co-help__copy">
+          Call your concierge or text us at <a href="tel:+14035550142">(403) 555-0142</a>.
+        </p>
+      </section>
+    </aside>
+  </main>
+
+  <!-- Shown when /api/booking/state/:id 404s or the timer hits 0. -->
+  <div class="co-expired" id="checkoutExpired" hidden>
+    <h1>Your hold expired</h1>
+    <p>Spot holds last 45 minutes. Pick a new date and we'll set you up again.</p>
+    <a class="btn btn--primary btn--lg" href="/tours/Banff-Hidden-Gem-Canoe-Tour/" id="expiredBackLink">Back to the tour</a>
+  </div>
+
+  <script>
+  (function () {
+    var BOKUN_API_BASE = 'https://horizon-bokun.ivan-mueller02.workers.dev';
+    var TOUR_PATH = '/tours/Banff-Hidden-Gem-Canoe-Tour/';
+    var UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    var els = {
+      timer:            document.getElementById('spotHoldTimer'),
+      timerRemaining:   document.getElementById('spotHoldRemaining'),
+      cobrandSlot:      document.getElementById('cobrandSlot'),
+      cobrandHotelName: document.getElementById('cobrandHotelName'),
+      main:             document.getElementById('checkoutMain'),
+      expired:          document.getElementById('checkoutExpired'),
+      expiredBackLink:  document.getElementById('expiredBackLink'),
+      summaryImage:     document.getElementById('summaryImage'),
+      summaryTitle:     document.getElementById('summaryTitle'),
+      summaryMeta:      document.getElementById('summaryMeta'),
+      summaryRating:    document.getElementById('summaryRating'),
+      summaryLines:     document.getElementById('summaryLines'),
+      summaryTotal:     document.getElementById('summaryTotal'),
+    };
+
+    // Shared state — populated as fetches resolve. Sections 1/2 (built in
+    // later steps) read from this object on the same window scope.
+    window.HORIZON_CHECKOUT = {
+      bookingId: null,
+      booking:   null,   // /api/booking/state/:id payload
+      product:   null,   // Bokun product config
+      pickups:   null,   // Bokun pickup-places
+      hotel:     null,   // partners.json record matching booking.hotel slug
+      currency:  'CAD',
+    };
+
+    // ── Boot ─────────────────────────────────────────────────────────
+    var params = new URLSearchParams(window.location.search);
+    var id = params.get('id') || '';
+    if (!UUID_RE.test(id)) { showExpired(); return; }
+    window.HORIZON_CHECKOUT.bookingId = id;
+
+    Promise.all([
+      fetchBookingState(id),
+      fetchPartners(),
+    ])
+      .then(function (results) {
+        var booking = results[0];
+        var partners = results[1];
+        window.HORIZON_CHECKOUT.booking = booking;
+        window.HORIZON_CHECKOUT.currency = booking.currency || 'CAD';
+
+        // Resolve the hotel record (if any). Co-brand the header before
+        // network calls finish so trust signals appear immediately.
+        if (booking.hotel) {
+          window.HORIZON_CHECKOUT.hotel = findHotel(partners, booking.hotel);
+          renderCobrand(window.HORIZON_CHECKOUT.hotel);
+        }
+        if (booking.hotel) {
+          els.expiredBackLink.href = TOUR_PATH + '?hotel=' + encodeURIComponent(booking.hotel);
+        }
+
+        // Reveal the main grid + start the timer ticker.
+        els.main.hidden = false;
+        startTimer(booking.expires_at);
+
+        // Fire product + pickup-places fetches in parallel, then render
+        // the summary card. These don't gate the timer or the header.
+        return Promise.all([
+          fetchProduct(booking.tour_id),
+          fetchPickupPlaces(booking.tour_id),
+        ]).then(function (r) {
+          window.HORIZON_CHECKOUT.product = r[0];
+          window.HORIZON_CHECKOUT.pickups = r[1];
+          renderSummary();
+          // Sections 1/2 are wired in later steps; expose a single hook
+          // they can call once they exist.
+          document.dispatchEvent(new CustomEvent('horizon:checkout-ready', {
+            detail: window.HORIZON_CHECKOUT,
+          }));
+        });
+      })
+      .catch(function (err) {
+        console.error('Checkout boot failed:', err);
+        showExpired();
+      });
+
+    // ── Fetch helpers ────────────────────────────────────────────────
+    function fetchBookingState(id) {
+      return fetch(BOKUN_API_BASE + '/api/booking/state/' + encodeURIComponent(id))
+        .then(function (r) {
+          if (r.status === 404) { showExpired(); throw new Error('expired'); }
+          if (!r.ok) throw new Error('booking state ' + r.status);
+          return r.json();
+        });
+    }
+    function fetchPartners() {
+      return fetch('/partners.json')
+        .then(function (r) { return r.ok ? r.json() : { hotels: [] }; })
+        .catch(function () { return { hotels: [] }; });
+    }
+    function fetchProduct(id) {
+      return fetch(BOKUN_API_BASE + '/api/product/' + id).then(function (r) {
+        if (!r.ok) throw new Error('product ' + r.status);
+        return r.json();
+      });
+    }
+    function fetchPickupPlaces(id) {
+      return fetch(BOKUN_API_BASE + '/api/pickup-places/' + id)
+        .then(function (r) { return r.ok ? r.json() : { pickupPlaces: [], dropoffPlaces: [] }; })
+        .catch(function () { return { pickupPlaces: [], dropoffPlaces: [] }; });
+    }
+
+    // ── Hotel lookup ────────────────────────────────────────────────
+    function findHotel(partners, slug) {
+      var hotels = (partners && partners.hotels) || [];
+      for (var i = 0; i < hotels.length; i++) {
+        if (hotels[i].code === slug && hotels[i].status === 'active') return hotels[i];
+      }
+      return null;
+    }
+    function renderCobrand(hotel) {
+      if (!hotel) return;
+      els.cobrandHotelName.textContent = hotel.name;
+      els.cobrandSlot.hidden = false;
+    }
+
+    // ── Order summary ───────────────────────────────────────────────
+    function renderSummary() {
+      var booking = window.HORIZON_CHECKOUT.booking;
+      var product = window.HORIZON_CHECKOUT.product;
+      var currency = window.HORIZON_CHECKOUT.currency;
+      var prefix = currency === 'CAD' ? 'CA$' : currency + ' ';
+
+      // Hero image — fall back to gradient if product photos aren't loaded yet.
+      var photo = pickPhoto(product);
+      if (photo) {
+        els.summaryImage.style.backgroundImage = 'url("' + photo + '")';
+      }
+
+      els.summaryTitle.textContent = (product && product.title) || 'Hidden Gem Canoe Tour';
+
+      var metaParts = [];
+      if (booking.date) metaParts.push(formatDate(booking.date));
+      if (booking.time) metaParts.push(formatTime(booking.time));
+      els.summaryMeta.textContent = metaParts.join(' · ');
+
+      // Editorial rating — until we surface real reviews, leave hidden.
+      els.summaryRating.hidden = true;
+
+      // Line items: one per non-empty pricing category, infants treated as
+      // complimentary on this product (matches the tour-page convention).
+      var lines = buildLineItems(booking, product, prefix);
+      els.summaryLines.innerHTML = '';
+      lines.forEach(function (line) {
+        var li = document.createElement('li');
+        li.className = 'co-summary__line';
+        li.innerHTML = '<span></span><strong></strong>';
+        li.firstChild.textContent = line.label;
+        li.lastChild.textContent = line.amount;
+        els.summaryLines.appendChild(li);
+      });
+
+      var total = lines.reduce(function (sum, l) { return sum + (l.value || 0); }, 0);
+      els.summaryTotal.innerHTML = '';
+      els.summaryTotal.textContent = prefix + total.toFixed(2);
+    }
+
+    function buildLineItems(booking, product, prefix) {
+      var lines = [];
+      if (!product || !product.pricingCategories) {
+        // Pre-product render — synthesize a placeholder line from booking counts.
+        var n = (booking.adults || 0) + (booking.youth || 0);
+        if (n) lines.push({ label: n + (n === 1 ? ' traveller' : ' travellers'), amount: '—', value: 0 });
+        return lines;
+      }
+      var pricing = pricePerCategory(product);
+      product.pricingCategories.forEach(function (c) {
+        var key = (c.title || '').toLowerCase();
+        var n = countFor(booking, key);
+        if (!n) return;
+        if (/infant/i.test(c.title)) {
+          lines.push({ label: n + ' ' + plural(c.title, n) + ' (complimentary)', amount: prefix + '0.00', value: 0 });
+          return;
+        }
+        var price = (pricing[c.id] && pricing[c.id].amount) || 0;
+        var subtotal = n * price;
+        lines.push({
+          label: n + ' ' + plural(c.title, n),
+          amount: prefix + subtotal.toFixed(2),
+          value: subtotal,
+        });
+      });
+      return lines;
+    }
+    // Count buckets in the booking_id pouch follow Stripe-friendly naming
+    // (adults/youth/infants); on the canoe tour these align with Bokun's
+    // {Adult, Senior, Youth, Child, Infant} categories per the existing
+    // collapse logic on the tour page.
+    function countFor(booking, key) {
+      if (key === 'adult' || key === 'senior') return (key === 'adult') ? (booking.adults || 0) : 0;
+      if (key === 'youth' || key === 'child')  return (key === 'youth') ? (booking.youth  || 0) : 0;
+      if (key === 'infant') return booking.infants || 0;
+      return 0;
+    }
+    function pricePerCategory(product) {
+      var out = {};
+      var rate = product && product.rates && product.rates[0];
+      if (!rate || !rate.pricesByCategory) return out;
+      Object.keys(rate.pricesByCategory).forEach(function (catId) {
+        var p = rate.pricesByCategory[catId];
+        out[catId] = { amount: (p && p.amount) || 0 };
+      });
+      return out;
+    }
+    function pickPhoto(product) {
+      if (!product) return null;
+      // Bokun's product payload exposes a `keyPhoto` and `photos[]`. Try the
+      // hero first, fall back to first photo, then null (gradient backdrop).
+      if (product.keyPhoto && product.keyPhoto.derived && product.keyPhoto.derived.length) {
+        return product.keyPhoto.derived[0].url;
+      }
+      if (product.photos && product.photos.length) {
+        var p = product.photos[0];
+        return (p.derived && p.derived[0] && p.derived[0].url) || p.originalUrl || null;
+      }
+      return null;
+    }
+
+    // ── Spot-hold timer ─────────────────────────────────────────────
+    var timerHandle = null;
+    function startTimer(expiresAtMs) {
+      if (!expiresAtMs) return;
+      els.timer.hidden = false;
+      tickTimer(expiresAtMs);
+      if (timerHandle) clearInterval(timerHandle);
+      timerHandle = setInterval(function () { tickTimer(expiresAtMs); }, 1000);
+    }
+    function tickTimer(expiresAtMs) {
+      var ms = expiresAtMs - Date.now();
+      if (ms <= 0) {
+        clearInterval(timerHandle);
+        els.timer.classList.add('co-timer--expired');
+        els.timerRemaining.textContent = '00:00';
+        // Don't immediately blow away the page — the user might be mid-payment.
+        // Sections 1/2 will block submit when expired in later steps.
+        document.dispatchEvent(new CustomEvent('horizon:hold-expired'));
+        return;
+      }
+      var totalSec = Math.floor(ms / 1000);
+      var min = Math.floor(totalSec / 60);
+      var sec = totalSec % 60;
+      els.timerRemaining.textContent = pad2(min) + ':' + pad2(sec);
+    }
+    function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+
+    // ── Expired view ────────────────────────────────────────────────
+    function showExpired() {
+      els.main.hidden = true;
+      els.timer.hidden = true;
+      els.expired.hidden = false;
+    }
+
+    // ── Formatters ──────────────────────────────────────────────────
+    var DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    var MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    function formatDate(iso) {
+      // Avoid the timezone footgun by parsing components manually.
+      var p = (iso || '').split('-').map(Number);
+      if (p.length !== 3) return iso;
+      var d = new Date(p[0], p[1] - 1, p[2]);
+      return DAYS_SHORT[d.getDay()] + ', ' + MONTHS_SHORT[d.getMonth()] + ' ' + d.getDate() + ', ' + p[0];
+    }
+    function formatTime(hhmm) {
+      if (!hhmm || !/^\d{1,2}:\d{2}$/.test(hhmm)) return hhmm || '';
+      var parts = hhmm.split(':');
+      var h = parseInt(parts[0], 10);
+      var suffix = h >= 12 ? 'PM' : 'AM';
+      var h12 = h % 12 || 12;
+      return h12 + ':' + parts[1] + ' ' + suffix;
+    }
+    function plural(word, n) {
+      if (n === 1) return word;
+      // Naive plural — works for "Adult", "Youth", "Child" → "Adults", "Youths", "Children"
+      if (/child$/i.test(word)) return word.replace(/child$/i, 'children');
+      return word + 's';
+    }
+  })();
+  </script>
+</body>
+</html>
