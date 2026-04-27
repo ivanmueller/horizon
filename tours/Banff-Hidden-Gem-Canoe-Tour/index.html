@@ -1435,7 +1435,7 @@
               <div class="bp-expansion__breakdown" id="expansionBreakdown"></div>
               <div class="bp-expansion__tax">All taxes and fees included</div>
             </div>
-            <button class="btn btn--primary btn--lg" id="bookNowBtn" type="button">Book now</button>
+            <button class="btn btn--primary btn--lg" id="bookNowBtn" type="button">Continue to checkout</button>
           </div>
         </div>
       </div>
@@ -2124,6 +2124,20 @@
     // (pk_live_…) when going to production. The matching secret key lives in
     // Worker secret storage; see workers/bokun/wrangler.toml.
     var STRIPE_PUBLISHABLE_KEY = 'pk_live_51T9CLyH6E6PAtcrweBwc1ubizlC2hwsdkmeLKGsccwd4J15s6QXTfbUHaef2e92aSXsuINXxvd5igvmt3l141JLH00ulBjkXGK';
+
+    // Hotel co-brand context — set when a guest scans a lobby QR code at
+    // /tours/Banff-Hidden-Gem-Canoe-Tour/?hotel=<slug>. The slug persists
+    // through the booking_id state pouch into the dedicated checkout page
+    // so trust signals + concierge contact stay co-branded end-to-end.
+    window.HORIZON = window.HORIZON || {};
+    (function readHotelParam() {
+      try {
+        var raw = new URLSearchParams(window.location.search).get('hotel');
+        if (raw && /^[a-z0-9-]{2,40}$/i.test(raw)) {
+          window.HORIZON.hotel = raw.trim().toLowerCase();
+        }
+      } catch (e) { /* no URL API or malformed query — silently skip */ }
+    })();
     window.BOKUN = {
       product: null, pickupPlaces: null, dropoffPlaces: null, availability: null,
       pricePerCategory: null, lowestAdultPrice: null, currency: 'CAD',
@@ -2955,15 +2969,65 @@
     });
 
 
-    // "Book now" — open the Bokun booking modal (contact form +
-    // per-passenger names + pickup/dropoff). The modal handles /options
-    // + /submit and the redirect to Bokun's hosted payment page.
+    // "Continue to checkout" — mint a booking_id, persist the cart + hotel
+    // in the worker's BOOKINGS KV pouch (45-min TTL), then hard-navigate to
+    // /checkout/?id=<booking_id>. The dedicated checkout page collects
+    // travelers + payment and calls the existing Bokun /options + /submit
+    // chain unchanged. Hard nav is intentional (back-button, analytics
+    // anchor, mobile reliability).
     bookBtn.addEventListener('click', function() {
-      if (typeof window.__horizonOpenBookingModal === 'function') {
-        window.__horizonOpenBookingModal();
-      } else {
-        console.error('Booking modal not initialized');
-      }
+      if (bookBtn.disabled) return;
+      var data = getBookingData();
+      var slot = (window.bokunBooking && window.bokunBooking.slot) || null;
+
+      var payload = {
+        tour_id:     BOKUN_PRODUCT_ID,
+        date:        data.date,
+        time:        slot && slot.startTime ? slot.startTime : null,
+        activity_id: window.bokunBooking && window.bokunBooking.startTimeId,
+        rate_id:     window.bokunBooking && window.bokunBooking.rateId,
+        adults:      data.adults,
+        youth:       data.youth,
+        infants:     data.infants,
+        hotel:       window.HORIZON && window.HORIZON.hotel || null,
+        currency:    (window.BOKUN && window.BOKUN.currency) || 'CAD',
+      };
+
+      var originalLabel = bookBtn.textContent;
+      bookBtn.disabled = true;
+      bookBtn.textContent = 'Continuing…';
+
+      fetch(BOKUN_API_BASE + '/api/booking/initiate', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+      })
+        .then(function (r) {
+          return r.json().then(function (body) { return { ok: r.ok, body: body }; });
+        })
+        .then(function (res) {
+          if (!res.ok || !res.body || !res.body.booking_id) {
+            throw new Error((res.body && res.body.error) || 'initiate_failed');
+          }
+          // Fire analytics for the dashboard funnel before navigating away.
+          try {
+            document.dispatchEvent(new CustomEvent('horizon:checkout_started', {
+              detail: { booking_id: res.body.booking_id, tour_id: BOKUN_PRODUCT_ID, hotel: payload.hotel },
+            }));
+          } catch (e) { /* no-op */ }
+          window.location.href = '/checkout/?id=' + encodeURIComponent(res.body.booking_id);
+        })
+        .catch(function (err) {
+          console.error('Booking initiate failed:', err);
+          bookBtn.disabled = false;
+          bookBtn.textContent = originalLabel;
+          var validation = document.getElementById('expansionValidation');
+          if (validation) {
+            validation.textContent = 'Sorry — we couldn’t hold your spot. Please try again.';
+            validation.hidden = false;
+            validation.classList.add('bp-expansion__validation--error');
+          }
+        });
     });
   })();
   </script>
