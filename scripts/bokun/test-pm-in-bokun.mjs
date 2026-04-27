@@ -99,15 +99,16 @@ async function main() {
     pmId = presetPm;
     console.log("  using preset --pm=" + pmId);
   } else {
+    // Stripe disables raw card-data API access by default; use the canonical
+    // test token instead (tok_visa → 4242 4242 4242 4242). For SCA testing,
+    // pass --pm=pm_card_threeDSecureRequired (or similar) — the full list is
+    // at https://stripe.com/docs/testing#test-account-numbers.
     const pm = await stripeRequest("POST", "/v1/payment_methods", {
       type: "card",
-      "card[number]": "4242424242424242",
-      "card[exp_month]": "12",
-      "card[exp_year]": "2030",
-      "card[cvc]": "123",
+      "card[token]": "tok_visa",
     });
     pmId = pm.id;
-    console.log("  created  " + pmId + "  (test card 4242)");
+    console.log("  created  " + pmId + "  (test token tok_visa → 4242)");
   }
 
   hr("step 2 — Bokun product / slot lookup");
