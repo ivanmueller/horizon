@@ -846,14 +846,24 @@
         els.main.hidden = false;
         startTimer(booking.expires_at);
 
-        // Fire product + pickup-places fetches in parallel, then render
-        // the summary card. These don't gate the timer or the header.
+        // Fire product + pickup-places + availability fetches in parallel,
+        // then render the summary card. Availability is what carries the
+        // real per-slot prices — product config alone shows $0.
         return Promise.all([
           fetchProduct(booking.tour_id),
           fetchPickupPlaces(booking.tour_id),
+          fetchAvailabilityForDate(booking.tour_id, booking.date),
         ]).then(function (r) {
           window.HORIZON_CHECKOUT.product = r[0];
           window.HORIZON_CHECKOUT.pickups = r[1];
+          // Match the chosen slot by startTimeId so prices come from the
+          // exact departure the user picked, not a sibling slot at a
+          // different time.
+          var slots = Array.isArray(r[2]) ? r[2] : [];
+          var slot = slots.find(function (s) {
+            return s && Number(s.startTimeId) === Number(booking.activity_id);
+          }) || slots[0] || null;
+          window.HORIZON_CHECKOUT.slot = slot;
           renderSummary();
           // Sections 1/2 are wired in later steps; expose a single hook
           // they can call once they exist.
@@ -891,6 +901,16 @@
       return fetch(BOKUN_API_BASE + '/api/pickup-places/' + id)
         .then(function (r) { return r.ok ? r.json() : { pickupPlaces: [], dropoffPlaces: [] }; })
         .catch(function () { return { pickupPlaces: [], dropoffPlaces: [] }; });
+    }
+    function fetchAvailabilityForDate(id, date) {
+      // Single-day window so the response stays tiny — we only need the
+      // slot the user picked. Falls back to an empty array on failure so
+      // renderSummary degrades to product-config prices.
+      if (!date) return Promise.resolve([]);
+      var qs = '?start=' + encodeURIComponent(date) + '&end=' + encodeURIComponent(date);
+      return fetch(BOKUN_API_BASE + '/api/availability/' + id + qs)
+        .then(function (r) { return r.ok ? r.json() : []; })
+        .catch(function () { return []; });
     }
 
     // ── Hotel lookup ────────────────────────────────────────────────
@@ -990,7 +1010,24 @@
       return 0;
     }
     function pricePerCategory(product) {
+      // Prefer the chosen slot's pricesByRate[0].pricePerCategoryUnit —
+      // that's the same shape the tour page reads off availability and
+      // it carries the real per-departure prices. Falls back to the
+      // product config's rates[0].pricesByCategory if the slot didn't
+      // load (rare; ?fresh=1 won't always have data for far-future dates).
       var out = {};
+      var slot = window.HORIZON_CHECKOUT && window.HORIZON_CHECKOUT.slot;
+      var slotEntries =
+        slot && slot.pricesByRate && slot.pricesByRate[0] &&
+        slot.pricesByRate[0].pricePerCategoryUnit;
+      if (Array.isArray(slotEntries) && slotEntries.length) {
+        slotEntries.forEach(function (p) {
+          if (p && p.id != null) {
+            out[p.id] = { amount: (p.amount && p.amount.amount) || 0 };
+          }
+        });
+        return out;
+      }
       var rate = product && product.rates && product.rates[0];
       if (!rate || !rate.pricesByCategory) return out;
       Object.keys(rate.pricesByCategory).forEach(function (catId) {
