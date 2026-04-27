@@ -281,6 +281,168 @@
                background-size: 200% 100%; animation: coShimmer 1.4s infinite; border-radius: 4px; display: inline-block; min-width: 80px; }
     @keyframes coShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
+    /* ── Pickup block ────────────────────────────────────────────────── */
+    .co-pickup { margin-bottom: var(--space-5); }
+    .co-pickup__auto {
+      display: flex; align-items: center; gap: var(--space-3);
+      background: rgba(22, 163, 74, 0.06);
+      border: 1px solid rgba(22, 163, 74, 0.25);
+      border-radius: var(--radius-lg);
+      padding: var(--space-3) var(--space-4);
+      margin-top: var(--space-2);
+    }
+    .co-pickup__auto-icon { color: #16A34A; flex-shrink: 0; }
+    .co-pickup__auto-info { flex: 1; min-width: 0; line-height: 1.35; }
+    .co-pickup__auto-info strong {
+      display: block; color: var(--near-black);
+      font-weight: 600; font-size: var(--text-base);
+    }
+    .co-pickup__auto-info span {
+      font-size: var(--text-sm); color: var(--mid-gray);
+    }
+    .co-pickup__auto-status {
+      display: inline-flex; align-items: center; gap: 4px;
+      color: #16A34A; font-size: var(--text-sm); font-weight: 600;
+      flex-shrink: 0;
+    }
+    .co-pickup__change {
+      display: inline-block;
+      background: none; border: 0; padding: 0; margin-top: var(--space-3);
+      color: var(--coral); font-weight: 600; font-size: var(--text-sm);
+      cursor: pointer; text-decoration: none;
+    }
+    .co-pickup__change:hover { text-decoration: underline; }
+    .co-pickup__list {
+      margin-top: var(--space-3);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: var(--space-3);
+      background: var(--warm-white-alt);
+    }
+    .co-pickup__options {
+      list-style: none; padding: 0; margin: var(--space-2) 0 0;
+      max-height: 220px; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .co-pickup__option {
+      display: flex; align-items: flex-start; gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-size: var(--text-sm);
+      color: var(--near-black);
+      line-height: 1.4;
+    }
+    .co-pickup__option:hover { background: rgba(255, 107, 74, 0.06); }
+    .co-pickup__option--selected { background: var(--coral-light); }
+    .co-pickup__option--selected::before { content: '✓'; color: var(--coral); font-weight: 700; }
+    .co-pickup__option:not(.co-pickup__option--selected)::before { content: ''; width: 0.7em; }
+    .co-pickup__empty { margin: var(--space-2) 0 0; }
+
+    /* ── Form fields ─────────────────────────────────────────────────── */
+    .co-form__heading {
+      font-family: var(--font-display);
+      font-size: var(--text-base);
+      font-weight: 600;
+      color: var(--near-black);
+      margin: 0 0 var(--space-2);
+    }
+    .co-form { margin-bottom: var(--space-4); }
+    .co-form__row {
+      display: grid; gap: var(--space-3);
+      margin-bottom: var(--space-3);
+    }
+    .co-form__row--two { grid-template-columns: 1fr 1fr; }
+    .co-form__row--phone { grid-template-columns: 110px 1fr; }
+    .co-form__field { display: block; margin-bottom: var(--space-3); }
+    .co-form__row .co-form__field { margin-bottom: 0; }
+    .co-form__label {
+      display: block;
+      font-size: var(--text-xs);
+      color: var(--mid-gray);
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    .co-form__input {
+      display: block; width: 100%;
+      min-height: 48px;        /* mobile touch target — spec requires ≥48 */
+      padding: var(--space-3) var(--space-4);
+      border: 1px solid var(--light-gray);
+      border-radius: var(--radius-md);
+      font-family: inherit;
+      font-size: var(--text-base);
+      color: var(--near-black);
+      background: #fff;
+      box-sizing: border-box;
+      transition: border-color var(--duration-fast) var(--ease-out),
+                  box-shadow var(--duration-fast) var(--ease-out);
+    }
+    .co-form__input:focus {
+      outline: none;
+      border-color: var(--coral);
+      box-shadow: 0 0 0 3px var(--coral-glow);
+    }
+    .co-form__field--invalid .co-form__input {
+      border-color: #DC2626;
+      background: #FEF2F2;
+    }
+    .co-form__error {
+      display: block;
+      font-size: var(--text-xs);
+      color: #B91C1C;
+      margin-top: 4px;
+    }
+    .co-form__hint {
+      font-size: var(--text-xs);
+      color: var(--mid-gray);
+      margin: var(--space-1) 0 var(--space-3);
+      line-height: 1.4;
+    }
+
+    .co-additional {
+      margin-top: var(--space-4);
+      padding-top: var(--space-4);
+      border-top: 1px solid var(--border-color);
+    }
+    .co-additional__heading {
+      font-size: var(--text-sm);
+      color: var(--near-black);
+      font-weight: 600;
+      margin: 0 0 4px;
+    }
+    .co-additional__hint {
+      font-size: var(--text-xs);
+      color: var(--mid-gray);
+      margin: 0 0 var(--space-3);
+    }
+    .co-additional__row { margin-bottom: var(--space-3); }
+    .co-additional__row-label {
+      font-size: var(--text-xs);
+      color: var(--mid-gray);
+      margin: 0 0 4px;
+    }
+
+    /* ── CTA ────────────────────────────────────────────────────────── */
+    .co-section__cta {
+      margin-top: var(--space-4);
+      padding-top: var(--space-4);
+      border-top: 1px solid var(--border-color);
+      display: flex; flex-direction: column; align-items: stretch; gap: var(--space-2);
+    }
+    .co-cta {
+      width: 100%;
+      min-height: 52px;        /* spec: ≥44px touch target — bumped to match button proportions */
+    }
+    .co-cta:disabled { opacity: 0.55; cursor: not-allowed; }
+    .co-cta-hint {
+      font-size: var(--text-xs);
+      color: var(--mid-gray);
+      margin: 0;
+      text-align: center;
+      min-height: 1.2em;        /* keeps layout stable when message toggles */
+    }
+    .co-cta-hint--error { color: #B91C1C; }
+
     /* ── Mobile: rail collapses below main, summary becomes a sticky drawer ── */
     @media (max-width: 880px) {
       .co-page { grid-template-columns: minmax(0, 1fr); gap: var(--space-5); }
@@ -288,6 +450,11 @@
       .co-trust, .co-help { display: none; } /* keep mobile lean — trust/help moves into the page on step 12 */
       .co-header__cobrand { flex-basis: 100%; order: 99; padding-top: var(--space-2); }
       .co-header__inner { flex-wrap: wrap; gap: var(--space-3); }
+    }
+    @media (max-width: 480px) {
+      .co-form__row--two { grid-template-columns: 1fr; }
+      .co-pickup__auto { flex-wrap: wrap; }
+      .co-pickup__auto-status { flex-basis: 100%; padding-left: 30px; }
     }
   </style>
 </head>
@@ -336,7 +503,93 @@
           <span class="co-section__title">Pickup &amp; travelers</span>
         </header>
         <div class="co-section__body" id="sectionTravelersBody">
-          <p class="co-placeholder">Pickup auto-select, lead traveler, and additional travelers go here (step 6).</p>
+          <!-- Pickup block. Auto-select is the highest-leverage trust moment in
+               the flow: the user opens the page and the system already knows
+               where they're staying. The Change link reveals the full Bokun
+               pickup-places list as a fallback. -->
+          <div class="co-pickup">
+            <h4 class="co-form__heading">Pickup location</h4>
+
+            <div class="co-pickup__auto" id="pickupAuto" hidden>
+              <span class="co-pickup__auto-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                  <circle cx="12" cy="10" r="3"/>
+                </svg>
+              </span>
+              <div class="co-pickup__auto-info">
+                <strong id="pickupAutoName">—</strong>
+                <span id="pickupAutoMeta">auto-selected based on your hotel</span>
+              </div>
+              <span class="co-pickup__auto-status">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                Confirmed
+              </span>
+            </div>
+
+            <button type="button" class="co-pickup__change" id="pickupChangeLink" aria-expanded="false" aria-controls="pickupList">
+              Change pickup location
+            </button>
+
+            <div class="co-pickup__list" id="pickupList" hidden>
+              <input type="search" class="co-form__input" id="pickupSearch" placeholder="Search pickup locations" aria-label="Search pickup locations">
+              <ul class="co-pickup__options" id="pickupOptions" role="listbox"></ul>
+              <p class="co-form__hint co-pickup__empty" id="pickupEmpty" hidden>No pickup locations match your search.</p>
+            </div>
+          </div>
+
+          <!-- Lead traveler. Email is the keystone field — it's where the
+               confirmation goes — so the field order isn't accidental. -->
+          <div class="co-form">
+            <h4 class="co-form__heading">Lead traveler</h4>
+
+            <div class="co-form__row co-form__row--two">
+              <label class="co-form__field">
+                <span class="co-form__label">First name</span>
+                <input class="co-form__input" id="leadFirst" type="text" autocomplete="given-name" required>
+              </label>
+              <label class="co-form__field">
+                <span class="co-form__label">Last name</span>
+                <input class="co-form__input" id="leadLast" type="text" autocomplete="family-name" required>
+              </label>
+            </div>
+
+            <label class="co-form__field">
+              <span class="co-form__label">Email</span>
+              <input class="co-form__input" id="leadEmail" type="email" autocomplete="email" inputmode="email" required>
+            </label>
+
+            <div class="co-form__row co-form__row--phone">
+              <label class="co-form__field co-form__field--country">
+                <span class="co-form__label sr-only">Country code</span>
+                <select class="co-form__input" id="leadCountry" aria-label="Country code">
+                  <option value="+1-CA" selected>+1 CA</option>
+                  <option value="+1-US">+1 US</option>
+                  <option value="+44">+44 UK</option>
+                  <option value="+61">+61 AU</option>
+                  <option value="other">Other</option>
+                </select>
+              </label>
+              <label class="co-form__field">
+                <span class="co-form__label sr-only">Mobile number</span>
+                <input class="co-form__input" id="leadPhone" type="tel" autocomplete="tel" inputmode="tel" placeholder="Mobile number" required>
+              </label>
+            </div>
+            <p class="co-form__hint">For pickup confirmation and weather updates only.</p>
+
+            <!-- Additional travelers — one row per non-lead passenger. The
+                 prompt copy frames extra typing as a benefit ("helps your guide
+                 greet you by name") rather than friction. Names here are
+                 helpful-but-not-required; only the lead is enforced. -->
+            <div id="additionalTravelers" class="co-additional"></div>
+          </div>
+
+          <div class="co-section__cta">
+            <button type="button" class="btn btn--primary btn--lg co-cta" id="continueToPayment" disabled>
+              Continue to payment
+            </button>
+            <p class="co-cta-hint" id="continueToPaymentHint">Add your details to continue.</p>
+          </div>
         </div>
       </section>
 
@@ -692,6 +945,321 @@
       if (/child$/i.test(word)) return word.replace(/child$/i, 'children');
       return word + 's';
     }
+  })();
+  </script>
+
+  <!--
+    Section 1 wiring — Pickup & travelers.
+    Listens for horizon:checkout-ready (fired by the boot script above once
+    booking + product + pickups are all loaded) so it can match the hotel
+    against Bokun's pickup-places and render the form.
+  -->
+  <script>
+  (function () {
+    var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    var DIGITS_RE = /\d/g;
+
+    var els = {
+      pickupAuto:        document.getElementById('pickupAuto'),
+      pickupAutoName:    document.getElementById('pickupAutoName'),
+      pickupAutoMeta:    document.getElementById('pickupAutoMeta'),
+      pickupChangeLink:  document.getElementById('pickupChangeLink'),
+      pickupList:        document.getElementById('pickupList'),
+      pickupSearch:      document.getElementById('pickupSearch'),
+      pickupOptions:     document.getElementById('pickupOptions'),
+      pickupEmpty:       document.getElementById('pickupEmpty'),
+      leadFirst:         document.getElementById('leadFirst'),
+      leadLast:          document.getElementById('leadLast'),
+      leadEmail:         document.getElementById('leadEmail'),
+      leadCountry:       document.getElementById('leadCountry'),
+      leadPhone:         document.getElementById('leadPhone'),
+      additional:        document.getElementById('additionalTravelers'),
+      cta:               document.getElementById('continueToPayment'),
+      ctaHint:           document.getElementById('continueToPaymentHint'),
+    };
+
+    // Local module state. Mirrored onto window.HORIZON_CHECKOUT once dirty so
+    // step 7/8/9 can pick it up without coupling to internal lookups.
+    var state = {
+      pickupPlaces: [],
+      selectedPickup: null,
+      autoMatched: false,
+      filterText: '',
+      additional: [],
+    };
+
+    document.addEventListener('horizon:checkout-ready', function () { init(window.HORIZON_CHECKOUT); });
+    // If the event already fired before this script ran (script is below the
+    // boot script so this is unlikely, but defensive), re-check on load.
+    if (window.HORIZON_CHECKOUT && window.HORIZON_CHECKOUT.product) init(window.HORIZON_CHECKOUT);
+
+    function init(ctx) {
+      if (init.done) return;
+      init.done = true;
+
+      var pickups = (ctx.pickups && (ctx.pickups.pickupPlaces || ctx.pickups.PickupPlaces)) || [];
+      state.pickupPlaces = pickups.filter(function (p) { return p && (p.title || p.name); });
+
+      // Auto-select: try to match the hotel's name against pickup place titles.
+      // Bokun pickup zones typically include the location name (e.g. "Lake
+      // Louise area pickup"); we score by shared lowercase tokens so a hotel
+      // like "Fairmont Chateau Lake Louise" lines up with the Lake-Louise
+      // zone. Falls back to the first pickup if there's no clear winner.
+      if (ctx.hotel && state.pickupPlaces.length) {
+        var match = bestPickupForHotel(ctx.hotel, state.pickupPlaces);
+        if (match) {
+          state.selectedPickup = match;
+          state.autoMatched = true;
+          renderAutoCard(ctx.hotel, match);
+        }
+      }
+
+      if (!state.selectedPickup && state.pickupPlaces.length) {
+        // No hotel context (or no plausible match) — keep the auto card
+        // hidden, expand the list, force the user to pick. The expander
+        // takes its place visually.
+        els.pickupAuto.hidden = true;
+        els.pickupList.hidden = false;
+        els.pickupChangeLink.setAttribute('aria-expanded', 'true');
+        els.pickupChangeLink.textContent = 'Choose a pickup location';
+      }
+
+      renderPickupOptions();
+      renderAdditionalTravelers(ctx.booking, ctx.product);
+      wirePickupExpander();
+      wireFormValidation();
+      validate();
+    }
+
+    // ── Pickup matching ────────────────────────────────────────────
+    function bestPickupForHotel(hotel, pickups) {
+      var name = (hotel.name || '').toLowerCase();
+      // Tokens that would identify a pickup zone; ignore generic words.
+      var stopwords = { hotel: 1, the: 1, a: 1, of: 1, '&': 1, 'at': 1, 'inn': 1, 'lodge': 1, 'resort': 1, 'chateau': 1 };
+      var tokens = name.split(/[^a-z0-9]+/).filter(function (t) { return t && !stopwords[t]; });
+      if (!tokens.length) return pickups[0];
+
+      var best = null, bestScore = 0;
+      pickups.forEach(function (p) {
+        var hay = ((p.title || p.name || '') + ' ' + (p.address || '')).toLowerCase();
+        var score = tokens.reduce(function (s, t) { return hay.indexOf(t) !== -1 ? s + 1 : s; }, 0);
+        if (score > bestScore) { bestScore = score; best = p; }
+      });
+      // Require at least one token overlap; otherwise call it no match so
+      // the user is forced to pick rather than getting silently routed to
+      // the wrong town.
+      return bestScore > 0 ? best : null;
+    }
+
+    function renderAutoCard(hotel, pickup) {
+      els.pickupAutoName.textContent = hotel.name;
+      // Show the matched zone in lighter text underneath so the user sees
+      // both their hotel and which pickup zone they're in.
+      els.pickupAutoMeta.textContent = (pickup.title || pickup.name) +
+        ' · auto-selected based on your hotel';
+      els.pickupAuto.hidden = false;
+    }
+
+    function renderPickupOptions() {
+      els.pickupOptions.innerHTML = '';
+      var q = state.filterText.toLowerCase().trim();
+      var matches = state.pickupPlaces.filter(function (p) {
+        if (!q) return true;
+        var hay = ((p.title || p.name || '') + ' ' + (p.address || '')).toLowerCase();
+        return hay.indexOf(q) !== -1;
+      });
+      if (!matches.length) { els.pickupEmpty.hidden = false; return; }
+      els.pickupEmpty.hidden = true;
+      matches.forEach(function (p) {
+        var li = document.createElement('li');
+        li.className = 'co-pickup__option' +
+          (state.selectedPickup && state.selectedPickup.id === p.id ? ' co-pickup__option--selected' : '');
+        li.setAttribute('role', 'option');
+        li.setAttribute('tabindex', '0');
+        li.dataset.pickupId = String(p.id);
+        var title = p.title || p.name || '(unnamed)';
+        var addr = p.address ? ' — ' + p.address : '';
+        li.textContent = title + addr;
+        li.addEventListener('click', function () { selectPickup(p); });
+        li.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectPickup(p); }
+        });
+        els.pickupOptions.appendChild(li);
+      });
+    }
+
+    function selectPickup(p) {
+      state.selectedPickup = p;
+      state.autoMatched = false; // user has overridden
+      // Update the visible card to show the chosen pickup's own label.
+      els.pickupAutoName.textContent = p.title || p.name;
+      els.pickupAutoMeta.textContent = p.address ? p.address : 'Selected';
+      els.pickupAuto.hidden = false;
+      // Collapse the list.
+      els.pickupList.hidden = true;
+      els.pickupChangeLink.setAttribute('aria-expanded', 'false');
+      els.pickupChangeLink.textContent = 'Change pickup location';
+      renderPickupOptions();
+      validate();
+    }
+
+    function wirePickupExpander() {
+      els.pickupChangeLink.addEventListener('click', function () {
+        var open = !els.pickupList.hidden;
+        els.pickupList.hidden = open;
+        els.pickupChangeLink.setAttribute('aria-expanded', String(!open));
+        if (!open) setTimeout(function () { els.pickupSearch.focus(); }, 50);
+      });
+      els.pickupSearch.addEventListener('input', function () {
+        state.filterText = els.pickupSearch.value;
+        renderPickupOptions();
+      });
+    }
+
+    // ── Additional travelers ──────────────────────────────────────
+    function renderAdditionalTravelers(booking, product) {
+      var total = (booking.adults || 0) + (booking.youth || 0) + (booking.infants || 0);
+      var extra = Math.max(0, total - 1);
+      els.additional.innerHTML = '';
+      if (!extra) return;
+
+      var heading = document.createElement('p');
+      heading.className = 'co-additional__heading';
+      heading.textContent = extra === 1
+        ? 'Additional traveler'
+        : 'Additional travelers (' + extra + ')';
+      var hint = document.createElement('p');
+      hint.className = 'co-additional__hint';
+      hint.textContent = 'Add for the manifest — helps your guide greet you by name. Optional.';
+      els.additional.appendChild(heading);
+      els.additional.appendChild(hint);
+
+      // Pre-allocate state slots; render each row.
+      state.additional = new Array(extra).fill(null).map(function () {
+        return { firstName: '', lastName: '' };
+      });
+
+      for (var i = 0; i < extra; i++) {
+        (function (idx) {
+          var row = document.createElement('div');
+          row.className = 'co-additional__row';
+          var label = document.createElement('p');
+          label.className = 'co-additional__row-label';
+          label.textContent = 'Traveler ' + (idx + 2); // lead is #1
+          var fieldRow = document.createElement('div');
+          fieldRow.className = 'co-form__row co-form__row--two';
+          var first = document.createElement('input');
+          first.type = 'text';
+          first.className = 'co-form__input';
+          first.placeholder = 'First name';
+          first.autocomplete = 'given-name';
+          first.addEventListener('input', function () { state.additional[idx].firstName = first.value.trim(); });
+          var last = document.createElement('input');
+          last.type = 'text';
+          last.className = 'co-form__input';
+          last.placeholder = 'Last name';
+          last.autocomplete = 'family-name';
+          last.addEventListener('input', function () { state.additional[idx].lastName = last.value.trim(); });
+          fieldRow.appendChild(wrapField(first));
+          fieldRow.appendChild(wrapField(last));
+          row.appendChild(label);
+          row.appendChild(fieldRow);
+          els.additional.appendChild(row);
+        })(i);
+      }
+    }
+    function wrapField(input) {
+      var f = document.createElement('label');
+      f.className = 'co-form__field';
+      f.appendChild(input);
+      return f;
+    }
+
+    // ── Validation ────────────────────────────────────────────────
+    function wireFormValidation() {
+      // On-blur validation only — keystroke-level feels nagging and
+      // amplifies user anxiety (per the spec).
+      [els.leadFirst, els.leadLast, els.leadEmail, els.leadPhone].forEach(function (el) {
+        el.addEventListener('blur', function () { markFieldValidity(el); validate(); });
+        el.addEventListener('input', function () {
+          // Clear the inline error as soon as they start typing again.
+          var field = el.closest('.co-form__field');
+          if (field) field.classList.remove('co-form__field--invalid');
+          validate();
+        });
+      });
+      els.leadCountry.addEventListener('change', validate);
+    }
+
+    function markFieldValidity(el) {
+      var field = el.closest('.co-form__field');
+      if (!field) return;
+      var ok = checkField(el);
+      field.classList.toggle('co-form__field--invalid', !ok);
+    }
+
+    function checkField(el) {
+      var v = (el.value || '').trim();
+      if (!v) return false;
+      if (el === els.leadEmail) return EMAIL_RE.test(v);
+      if (el === els.leadPhone) {
+        var digits = (v.match(DIGITS_RE) || []).length;
+        return digits >= 7; // permissive — the worker validates server-side
+      }
+      return true;
+    }
+
+    function firstMissingMessage() {
+      if (!state.selectedPickup)         return 'Pick a pickup location to continue.';
+      if (!checkField(els.leadFirst))    return 'Add your first name.';
+      if (!checkField(els.leadLast))     return 'Add your last name.';
+      if (!checkField(els.leadEmail))    return 'Add a valid email.';
+      if (!checkField(els.leadPhone))    return 'Add a valid mobile number.';
+      return '';
+    }
+
+    function validate() {
+      var missing = firstMissingMessage();
+      els.cta.disabled = !!missing;
+      els.cta.title = missing || '';
+      if (missing) {
+        els.ctaHint.textContent = missing;
+        els.ctaHint.classList.remove('co-cta-hint--error');
+      } else {
+        els.ctaHint.textContent = 'Looks good — continue to secure payment.';
+        els.ctaHint.classList.remove('co-cta-hint--error');
+      }
+      // Snapshot to the shared context so step 7/9 can read it.
+      window.HORIZON_CHECKOUT.section1 = {
+        pickup:    state.selectedPickup,
+        lead:      readLead(),
+        additional: state.additional.slice(),
+        valid:     !missing,
+      };
+    }
+
+    function readLead() {
+      return {
+        firstName: (els.leadFirst.value || '').trim(),
+        lastName:  (els.leadLast.value || '').trim(),
+        email:     (els.leadEmail.value || '').trim(),
+        country:   els.leadCountry.value,
+        phone:     (els.leadPhone.value || '').trim(),
+      };
+    }
+
+    // ── Continue to payment ────────────────────────────────────────
+    els.cta.addEventListener('click', function () {
+      if (els.cta.disabled) return;
+      // Step 7 will replace this with the in-page accordion transition.
+      // For now, fire an event + drop a hash so navigation works and the
+      // analytics can pick it up.
+      validate(); // refresh the shared context one more time
+      document.dispatchEvent(new CustomEvent('horizon:section1-complete', {
+        detail: window.HORIZON_CHECKOUT.section1,
+      }));
+      if (location.hash !== '#payment') location.hash = '#payment';
+    });
   })();
   </script>
 </body>
