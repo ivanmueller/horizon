@@ -245,11 +245,30 @@ async function main() {
   } else {
     const msg = submitErr?.message || "(no message)";
     const body = submitErr?.body;
+    const blob = msg + " " + JSON.stringify(body || "");
     console.log("  ✗ Bokun rejected the submit. Inspect the message:");
     console.log("    " + msg.split("\n")[0]);
     if (body) console.log("    body: " + JSON.stringify(body));
     console.log("");
-    if (/invalid token format|invalid token|tok_/i.test(msg + JSON.stringify(body || ""))) {
+    if (/a similar object exists in test mode, but a live mode key was used/i.test(blob)) {
+      console.log("  ✓ ARCHITECTURE A IS VIABLE — Bokun accepted the pm_xxx format.");
+      console.log("");
+      console.log("    The only reason Stripe rejected was that your test-mode pm_xxx isn't");
+      console.log("    visible to Bokun's live-mode Stripe Connect link. That means:");
+      console.log("      - Bokun's TOKEN-mode flow accepts Stripe PaymentMethod IDs ✓");
+      console.log("      - The end-to-end charge would have proceeded with a live-mode pm ✓");
+      console.log("");
+      console.log("    To finish 0b.1 you need either:");
+      console.log("      (a) a test-mode Stripe Connect link on the Bokun side (check the");
+      console.log("          extranet → Payment providers; some Bokun tiers expose a separate");
+      console.log("          test connection, others don't), or");
+      console.log("      (b) skip ahead to live testing — sk_live_/pk_live_ + a real card,");
+      console.log("          one booking, refund yourself via Stripe Dashboard afterwards.");
+    } else if (/inactive|not.*test|live mode key was used/i.test(blob)) {
+      console.log("  → Test/live mode mismatch between your Stripe key and Bokun's Stripe");
+      console.log("    Connect link. Confirm Bokun is connected to a test Stripe account,");
+      console.log("    or switch this test to live mode (sk_live_/pk_live_ + real card).");
+    } else if (/invalid token format|invalid token|tok_/i.test(blob)) {
       console.log("  → Looks like a token-format rejection. Use Architecture B (PaymentIntent +");
       console.log("    RESERVE_FOR_EXTERNAL_PAYMENT). The SetupIntent flow is not viable here.");
     } else if (/no such payment_method|payment_method.*not found/i.test(msg)) {
