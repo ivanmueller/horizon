@@ -1,9 +1,11 @@
 {
+  "_notes": "bokun_tracking_code is the long hex string Bokun auto-generates for each referral entry. Find it in Bokun extranet → Settings → Referral tracking → Tracking code column. The slug ('code' field) is what we put in URLs (?hotel=fairmont-ll); the worker looks up bokun_tracking_code from this file at submit time and forwards it to Bokun for attribution. Edit this file and redeploy when adding a new partner — no QR-code reprint required.",
   "hotels": [
     {
       "code": "fairmont-ll",
       "name": "Fairmont Chateau Lake Louise",
       "location": "Banff",
+      "bokun_tracking_code": "PASTE_HEX_FROM_BOKUN",
       "type": "kickback",
       "status": "active",
       "effective_date": "2026-05-01",
@@ -15,6 +17,7 @@
           "code": "fairmont-ll-js",
           "name": "Jane Smith",
           "tracking_code": "FAIRMONT_LL_JS",
+          "bokun_tracking_code": "PASTE_HEX_FROM_BOKUN",
           "kickback_pct": 5,
           "status": "active"
         }
@@ -25,6 +28,7 @@
       "code": "post-hotel",
       "name": "The Post Hotel",
       "location": "Banff",
+      "bokun_tracking_code": "PASTE_HEX_FROM_BOKUN",
       "type": "pool",
       "status": "active",
       "effective_date": "2026-05-15",
