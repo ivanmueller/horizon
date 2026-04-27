@@ -112,6 +112,24 @@
     .co-section--locked .co-section__num {
       background: var(--light-gray); color: var(--mid-gray);
     }
+    /* Section that's been completed once: green check overlay on the number.
+       The "1" stays in the DOM for screen readers; the ::after badges over it. */
+    .co-section--done .co-section__num {
+      background: #16A34A; color: transparent; position: relative;
+    }
+    .co-section--done .co-section__num::after {
+      content: '✓';
+      color: #fff; font-weight: 700; font-size: 0.95rem;
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    /* Collapsed-but-not-locked section heads are clickable to re-expand. */
+    .co-section:not(.co-section--open):not(.co-section--locked) .co-section__head {
+      cursor: pointer;
+    }
+    .co-section:not(.co-section--open):not(.co-section--locked) .co-section__head:hover {
+      background: rgba(255, 107, 74, 0.04);
+    }
     .co-section__title {
       font-family: var(--font-display);
       font-size: var(--text-lg);
@@ -498,9 +516,10 @@
   <main class="co-page" id="checkoutMain" hidden>
     <div class="co-main">
       <section class="co-section co-section--open" id="sectionTravelers">
-        <header class="co-section__head">
+        <header class="co-section__head" id="sectionTravelersHead">
           <span class="co-section__num">1</span>
           <span class="co-section__title">Pickup &amp; travelers</span>
+          <span class="co-section__chip" id="travelersChip" hidden></span>
         </header>
         <div class="co-section__body" id="sectionTravelersBody">
           <!-- Pickup block. Auto-select is the highest-leverage trust moment in
@@ -594,11 +613,14 @@
       </section>
 
       <section class="co-section co-section--locked" id="sectionPayment">
-        <header class="co-section__head">
+        <header class="co-section__head" id="sectionPaymentHead">
           <span class="co-section__num">2</span>
           <span class="co-section__title">Payment</span>
-          <span class="co-section__chip">Complete step 1 first</span>
+          <span class="co-section__chip" id="paymentChip">Complete step 1 first</span>
         </header>
+        <div class="co-section__body" id="sectionPaymentBody">
+          <p class="co-placeholder">Pay now / Reserve toggle, wallets, card form, and Book now CTA go here (step 8).</p>
+        </div>
       </section>
 
       <section class="co-whn">
@@ -1251,15 +1273,139 @@
     // ── Continue to payment ────────────────────────────────────────
     els.cta.addEventListener('click', function () {
       if (els.cta.disabled) return;
-      // Step 7 will replace this with the in-page accordion transition.
-      // For now, fire an event + drop a hash so navigation works and the
-      // analytics can pick it up.
       validate(); // refresh the shared context one more time
+      // The transition IIFE below listens for this and handles the
+      // accordion swap. Hash update is done there too so a programmatic
+      // hash bump doesn't double-trigger.
       document.dispatchEvent(new CustomEvent('horizon:section1-complete', {
         detail: window.HORIZON_CHECKOUT.section1,
       }));
-      if (location.hash !== '#payment') location.hash = '#payment';
     });
+  })();
+  </script>
+
+  <!--
+    Section 1 ⇄ Section 2 transition.
+    No URL navigation, no booking_id change, no timer reset — same page,
+    same state pouch. Hash flips between #travelers and #payment so back/
+    forward + refresh land on the right surface.
+  -->
+  <script>
+  (function () {
+    var s1     = document.getElementById('sectionTravelers');
+    var s2     = document.getElementById('sectionPayment');
+    var s1Head = document.getElementById('sectionTravelersHead');
+    var s2Head = document.getElementById('sectionPaymentHead');
+    var s1Chip = document.getElementById('travelersChip');
+    var s2Chip = document.getElementById('paymentChip');
+
+    // Section 2 is "locked" only until the first time we open it. After
+    // that it stays openable from the chip even if the user goes back to
+    // edit Section 1 — the form data is preserved across the toggle.
+    var paymentEverOpened = false;
+
+    document.addEventListener('horizon:section1-complete', openPayment);
+
+    s1Head.addEventListener('click', function () {
+      if (s1.classList.contains('co-section--open')) return;
+      openTravelers();
+    });
+    s2Head.addEventListener('click', function () {
+      if (s2.classList.contains('co-section--open')) return;
+      if (s2.classList.contains('co-section--locked')) return;
+      openPayment();
+    });
+
+    window.addEventListener('hashchange', applyHash);
+
+    function openPayment() {
+      var data = (window.HORIZON_CHECKOUT && window.HORIZON_CHECKOUT.section1) || null;
+      if (!data || !data.valid) {
+        // Defensive: if Section 1 isn't valid, don't let the hash or a
+        // stale event drag us forward into payment with bad state.
+        openTravelers();
+        return;
+      }
+      s1.classList.remove('co-section--open');
+      s1.classList.add('co-section--done');
+      renderTravelersChip(data);
+
+      s2.classList.remove('co-section--locked');
+      s2.classList.add('co-section--open');
+      s2Chip.hidden = true;
+      paymentEverOpened = true;
+
+      setHash('#payment');
+      smoothScrollTo(s2);
+    }
+
+    function openTravelers() {
+      s1.classList.add('co-section--open');
+      s1Chip.hidden = true;
+
+      s2.classList.remove('co-section--open');
+      if (paymentEverOpened) {
+        // Show a soft "Payment ready" chip so it's clear the section
+        // can be re-entered without losing payment state.
+        s2Chip.textContent = 'Payment ready';
+        s2Chip.hidden = false;
+      } else {
+        s2Chip.textContent = 'Complete step 1 first';
+        s2Chip.hidden = false;
+      }
+
+      setHash('#travelers');
+      smoothScrollTo(s1);
+    }
+
+    function renderTravelersChip(data) {
+      var parts = [];
+      if (data.lead && data.lead.firstName) {
+        var name = data.lead.firstName + (data.lead.lastName ? ' ' + data.lead.lastName : '');
+        parts.push(name);
+      }
+      var booking = (window.HORIZON_CHECKOUT && window.HORIZON_CHECKOUT.booking) || {};
+      var total = (booking.adults || 0) + (booking.youth || 0) + (booking.infants || 0);
+      if (total) parts.push(total + (total === 1 ? ' traveler' : ' travelers'));
+      if (data.pickup) {
+        var pickupLabel = data.pickup.title || data.pickup.name || '';
+        // Trim long zone names so the chip doesn't wrap aggressively.
+        if (pickupLabel.length > 40) pickupLabel = pickupLabel.slice(0, 37) + '…';
+        if (pickupLabel) parts.push(pickupLabel);
+      }
+      s1Chip.textContent = parts.join(' · ');
+      s1Chip.hidden = !s1Chip.textContent;
+    }
+
+    function applyHash() {
+      // Initial load + back/forward navigation. We don't auto-jump to
+      // #payment on first paint because Section 1 form fields are blank
+      // after a hard refresh — opening payment with no traveler data
+      // would feel broken.
+      if (location.hash === '#travelers') {
+        if (!s1.classList.contains('co-section--open')) openTravelers();
+      } else if (location.hash === '#payment') {
+        if (paymentEverOpened && !s2.classList.contains('co-section--open')) openPayment();
+      }
+    }
+
+    function setHash(hash) {
+      // Avoid pushing duplicate history entries when the hash already matches.
+      if (location.hash === hash) return;
+      // Use replaceState so we don't pollute history with every toggle —
+      // back-button from /checkout/?id=...#payment still goes to the tour
+      // page, not to /checkout/?id=...#travelers.
+      var url = location.pathname + location.search + hash;
+      history.replaceState(null, '', url);
+    }
+
+    function smoothScrollTo(el) {
+      var rect = el.getBoundingClientRect();
+      var docTop = rect.top + window.pageYOffset;
+      // Leave room above so the timer banner stays visible.
+      var offset = 70;
+      window.scrollTo({ top: Math.max(0, docTop - offset), behavior: 'smooth' });
+    }
   })();
   </script>
 </body>
