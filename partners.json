@@ -3,6 +3,7 @@
     {
       "code": "fairmont-ll",
       "name": "Fairmont Chateau Lake Louise",
+      "location": "Banff",
       "type": "kickback",
       "status": "active",
       "effective_date": "2026-05-01",
@@ -23,6 +24,7 @@
     {
       "code": "post-hotel",
       "name": "The Post Hotel",
+      "location": "Banff",
       "type": "pool",
       "status": "active",
       "effective_date": "2026-05-15",

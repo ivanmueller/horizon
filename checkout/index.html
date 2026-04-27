@@ -1158,23 +1158,21 @@
     }
 
     // ── Pickup matching ────────────────────────────────────────────
+    // Hotel records in partners.json carry a `location` field ("Banff" or
+    // "Canmore") that maps directly onto the Bokun pickup zones. We pick
+    // the first pickup place whose title or address contains the location
+    // keyword (case-insensitive, word-boundary). No location → no auto
+    // match; the user picks explicitly.
     function bestPickupForHotel(hotel, pickups) {
-      var name = (hotel.name || '').toLowerCase();
-      // Tokens that would identify a pickup zone; ignore generic words.
-      var stopwords = { hotel: 1, the: 1, a: 1, of: 1, '&': 1, 'at': 1, 'inn': 1, 'lodge': 1, 'resort': 1, 'chateau': 1 };
-      var tokens = name.split(/[^a-z0-9]+/).filter(function (t) { return t && !stopwords[t]; });
-      if (!tokens.length) return pickups[0];
-
-      var best = null, bestScore = 0;
-      pickups.forEach(function (p) {
-        var hay = ((p.title || p.name || '') + ' ' + (p.address || '')).toLowerCase();
-        var score = tokens.reduce(function (s, t) { return hay.indexOf(t) !== -1 ? s + 1 : s; }, 0);
-        if (score > bestScore) { bestScore = score; best = p; }
-      });
-      // Require at least one token overlap; otherwise call it no match so
-      // the user is forced to pick rather than getting silently routed to
-      // the wrong town.
-      return bestScore > 0 ? best : null;
+      var loc = (hotel.location || '').toLowerCase().trim();
+      if (!loc) return null;
+      var rx = new RegExp('\\b' + loc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
+      for (var i = 0; i < pickups.length; i++) {
+        var p = pickups[i];
+        var hay = (p.title || p.name || '') + ' ' + (p.address || '');
+        if (rx.test(hay)) return p;
+      }
+      return null;
     }
 
     function renderAutoCard(hotel, pickup) {
