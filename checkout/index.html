@@ -1809,7 +1809,15 @@
         document.dispatchEvent(new CustomEvent('horizon:booking_confirmed', {
           detail: { confirmationCode: booking.confirmationCode, bookingId: ctx.bookingId },
         }));
-        window.location.href = '/booking-confirmed/' + qs;
+        // Fire-and-forget ledger write for the hotel-manager dashboard.
+        // We don't block the redirect on it — the booking is already
+        // confirmed in Bokun, so the worst case is a missing ledger row
+        // we can backfill from Bokun's bookings list later.
+        recordToLedger(ctx, booking).then(function () {
+          window.location.href = '/booking-confirmed/' + qs;
+        }, function () {
+          window.location.href = '/booking-confirmed/' + qs;
+        });
         return;
       }
 
@@ -1821,6 +1829,40 @@
       }
 
       throw new Error('unexpected_submit_shape');
+    }
+
+    // Writes one record to the hotel-manager ledger. Only fires when
+    // there's a hotel slug — direct (non-partner) bookings aren't recorded
+    // to any per-hotel ledger by design. Bokun stays the source of truth
+    // for accounting; this is a fast, opinionated index for the dashboard.
+    function recordToLedger(ctx, booking) {
+      var hotelSlug = ctx.booking && ctx.booking.hotel;
+      if (!hotelSlug) return Promise.resolve();
+      var lead = (ctx.section1 && ctx.section1.lead) || {};
+      var payload = {
+        booking_id:          ctx.bookingId || null,
+        hotel:               hotelSlug,
+        confirmation_code:   booking.confirmationCode,
+        tour_id:             ctx.booking.tour_id,
+        tour_title:          (ctx.product && ctx.product.title) || null,
+        date:                ctx.booking.date,
+        time:                ctx.booking.time || null,
+        adults:              ctx.booking.adults || 0,
+        youth:               ctx.booking.youth || 0,
+        infants:             ctx.booking.infants || 0,
+        amount:              typeof ctx.totalAmount === 'number' ? ctx.totalAmount : null,
+        currency:            ctx.booking.currency || 'CAD',
+        lead_name:           ((lead.firstName || '') + ' ' + (lead.lastName || '')).trim() || null,
+        lead_email:          lead.email || null,
+        bokun_tracking_code: (ctx.hotel && ctx.hotel.bokun_tracking_code) || null,
+      };
+      return fetch(BOKUN_API_BASE + '/api/dashboard/record', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }).catch(function (err) {
+        console.warn('Ledger record failed (non-blocking):', err);
+      });
     }
 
     function buildBookingRequest(ctx) {
@@ -1904,20 +1946,21 @@
       };
 
       // ── Partner attribution ────────────────────────────────────────────
-      // The booking-time JSON property that Bokun matches against the
-      // partner's identificationNumber (e.g. FAIRMONT_LL) is not yet
-      // confirmed for this account / channel. We register partners via
-      // sync-partners.mjs but the canonical booking field is one of:
-      //   - req.trackingCode
-      //   - req.activityBookings[i].agent.identificationNumber
-      //   - req.activityBookings[i].vendorAgent / .reseller
-      //   - req.salesAgentReference / req.bookingChannelReference
-      // Bokun support will tell us. Until then we attach trackingCode at
-      // the top level (a conservative guess; if Bokun ignores it, the
-      // booking still completes — just unattributed).
-      // TODO(partner-attribution): replace with the confirmed field name.
-      if (ctx.hotel && ctx.hotel.default_tracking_code) {
-        req.trackingCode = ctx.hotel.default_tracking_code;
+      // partners.json carries each hotel's bokun_tracking_code (the long
+      // hex string Bokun auto-generates per referral; visible in the
+      // extranet → Settings → Referral tracking → Tracking code column).
+      // We pass it at the top level as `trackingCode` since that matches
+      // the URL-mode parameter Bokun documents for widget tracking
+      // (?trackingCode=<hex>). If their API actually wants a different
+      // property name, swap this single line — partners.json + the URL
+      // contract stays the same.
+      // TODO(partner-attribution): once Bokun support confirms the field
+      // name, update this assignment. Confirmed by booking via
+      // ?hotel=fairmont-ll and verifying the booking shows up in the
+      // matching Referral tracking report.
+      var hex = ctx.hotel && ctx.hotel.bokun_tracking_code;
+      if (hex && hex !== 'PASTE_HEX_FROM_BOKUN') {
+        req.trackingCode = hex;
       }
 
       return req;
