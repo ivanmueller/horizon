@@ -11,6 +11,10 @@
 // Stripe orchestration (TOKEN-mode SetupIntent flow — see 0B_VALIDATION.md):
 //   POST /api/stripe/setup-intent      create Customer + off_session SetupIntent
 //
+// Booking state handoff (tour page → checkout page; KV-backed, 45min TTL):
+//   POST /api/booking/initiate         mint booking_id, persist cart + hotel
+//   GET  /api/booking/state/:id        read cart back on the checkout page
+//
 // Secrets (Worker secret storage, never on disk):
 //   BOKUN_ACCESS_KEY, BOKUN_SECRET_KEY  — HMAC signing for Bokun
 //   STRIPE_SECRET_KEY                   — sk_test_... or sk_live_...
@@ -23,6 +27,8 @@ const CURRENCY = "CAD";
 const TTL_PRODUCT = 3600; // 1h — product config rarely changes
 const TTL_PICKUP = 3600; // 1h — pickup places rarely change
 const TTL_AVAIL = 300; // 5min — overridable with ?fresh=1
+const TTL_BOOKING = 45 * 60; // 45min — checkout spot-hold window
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default {
   async fetch(request, env) {
@@ -66,6 +72,23 @@ export default {
         segs[2] === "setup-intent"
       ) {
         return await handleStripeSetupIntent(request, env);
+      }
+      if (
+        request.method === "POST" &&
+        segs[0] === "api" &&
+        segs[1] === "booking" &&
+        segs[2] === "initiate"
+      ) {
+        return await handleBookingInitiate(request, env);
+      }
+      if (
+        request.method === "GET" &&
+        segs[0] === "api" &&
+        segs[1] === "booking" &&
+        segs[2] === "state" &&
+        segs[3]
+      ) {
+        return await handleBookingState(segs[3], env, request);
       }
       return jsonResponse({ error: "Not found" }, 404, request);
     } catch (err) {
@@ -144,6 +167,88 @@ async function handleCheckoutSubmit(request, env) {
   const r = await bokunFetch("POST", `/checkout.json/submit?currency=${CURRENCY}`, body, env);
   if (!r.ok) return passThroughError(r, request);
   return jsonResponse(r.data, 200, request);
+}
+
+// ── Booking state handoff ──────────────────────────────────────────────────
+// The tour page POSTs the cart here, gets a booking_id, and redirects the
+// browser to /checkout/?id=<booking_id>. The checkout page then GETs the
+// state back. KV TTL is 45min — when it expires the entry is gone and the
+// checkout page treats it as a stale link.
+//
+// This is purely a state pouch for the surface handoff. The real Bokun hold
+// still happens at /api/checkout/options time, exactly as before.
+async function handleBookingInitiate(request, env) {
+  if (!env.BOOKINGS) {
+    return jsonResponse(
+      { error: "BOOKINGS KV namespace not configured on worker" },
+      500,
+      request,
+    );
+  }
+
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+
+  const tourId = Number.parseInt(body.tour_id, 10);
+  if (!Number.isFinite(tourId) || tourId <= 0) {
+    return jsonResponse({ error: "tour_id (positive integer) required" }, 400, request);
+  }
+  if (typeof body.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(body.date)) {
+    return jsonResponse({ error: "date (YYYY-MM-DD) required" }, 400, request);
+  }
+  const adults = Number.parseInt(body.adults, 10) || 0;
+  const youth = Number.parseInt(body.youth, 10) || 0;
+  const infants = Number.parseInt(body.infants, 10) || 0;
+  if (adults + youth + infants < 1) {
+    return jsonResponse({ error: "at least one traveller required" }, 400, request);
+  }
+
+  const now = Date.now();
+  const expiresAt = now + TTL_BOOKING * 1000;
+  const bookingId = crypto.randomUUID();
+
+  const state = {
+    booking_id: bookingId,
+    tour_id: tourId,
+    date: body.date,
+    time: typeof body.time === "string" ? body.time : null,
+    activity_id: body.activity_id ?? null, // Bokun availability slot id, if known
+    rate_id: body.rate_id ?? null,
+    adults,
+    youth,
+    infants,
+    hotel: typeof body.hotel === "string" ? body.hotel.trim().toLowerCase() : null,
+    price_total: typeof body.price_total === "number" ? body.price_total : null,
+    currency: typeof body.currency === "string" ? body.currency : CURRENCY,
+    created_at: now,
+    expires_at: expiresAt,
+  };
+
+  await env.BOOKINGS.put(`booking:${bookingId}`, JSON.stringify(state), {
+    expirationTtl: TTL_BOOKING,
+  });
+
+  return jsonResponse({ booking_id: bookingId, expires_at: expiresAt }, 200, request);
+}
+
+async function handleBookingState(id, env, request) {
+  if (!env.BOOKINGS) {
+    return jsonResponse(
+      { error: "BOOKINGS KV namespace not configured on worker" },
+      500,
+      request,
+    );
+  }
+  if (!UUID_RE.test(id)) {
+    return jsonResponse({ error: "invalid booking_id" }, 400, request);
+  }
+  const state = await env.BOOKINGS.get(`booking:${id}`, "json");
+  if (!state) {
+    // KV TTL has elapsed (or the id is bogus). The checkout page treats
+    // this as "your spot-hold expired, start over."
+    return jsonResponse({ error: "expired_or_unknown" }, 404, request);
+  }
+  return jsonResponse(state, 200, request);
 }
 
 // ── Stripe ──────────────────────────────────────────────────────────────────
