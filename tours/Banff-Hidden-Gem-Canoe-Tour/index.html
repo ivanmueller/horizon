@@ -3301,6 +3301,12 @@
       elements = stripe.elements({
         mode: 'setup',
         currency: ((window.BOKUN && window.BOKUN.currency) || 'CAD').toLowerCase(),
+        // Card-only. Klarna / Affirm / etc. show up automatically when this
+        // is omitted (because they're enabled in the Stripe Dashboard), but
+        // they don't work with Bokun's TOKEN flow — Bokun charges the stored
+        // PaymentMethod server-side via Stripe's API, which only cards
+        // support without a per-purchase customer redirect.
+        paymentMethodTypes: ['card'],
         setupFutureUsage: 'off_session',
         paymentMethodCreation: 'manual',
       });
