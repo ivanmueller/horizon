@@ -114,6 +114,138 @@
       flex-wrap: wrap;
     }
     .confirm-actions .btn { flex: 1; min-width: 200px; }
+
+    /* ── Hotel co-brand line in the hero ───────────────────────────── */
+    .confirm-hero__cobrand {
+      display: inline-block;
+      padding: 4px 12px;
+      margin-bottom: var(--space-3);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: var(--radius-full);
+      color: rgba(255, 255, 255, 0.85);
+      font-size: 0.85rem;
+      letter-spacing: 0.02em;
+    }
+    .confirm-hero__cobrand strong { color: #fff; font-weight: 600; }
+
+    /* ── Status tracker (replaces the old confirm-list for the
+          "What happens next" card) ─────────────────────────────────── */
+    .confirm-tracker { list-style: none; padding: 0; margin: var(--space-3) 0 0; }
+    .confirm-tracker__item {
+      display: flex; gap: var(--space-3);
+      padding: var(--space-3) 0;
+      border-top: 1px solid rgba(0,0,0,0.06);
+      line-height: 1.55;
+    }
+    .confirm-tracker__item:first-child { border-top: 0; padding-top: 0; }
+    .confirm-tracker__icon {
+      flex-shrink: 0;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: rgba(255,107,74,0.10);
+      color: var(--coral);
+      font-weight: 700;
+      font-size: 0.85rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .confirm-tracker__item--done .confirm-tracker__icon {
+      background: #16A34A; color: #fff;
+    }
+    .confirm-tracker__body strong {
+      display: block;
+      color: var(--near-black);
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .confirm-tracker__body p {
+      color: var(--mid-gray); font-size: 0.9rem; margin: 0;
+    }
+
+    /* ── Reservation summary (date / time / travelers / pickup) ─────── */
+    .confirm-summary { list-style: none; padding: 0; margin: var(--space-3) 0 0; }
+    .confirm-summary li {
+      display: flex; justify-content: space-between; gap: var(--space-3);
+      padding: var(--space-2) 0;
+      border-top: 1px solid rgba(0,0,0,0.05);
+      font-size: 0.95rem;
+    }
+    .confirm-summary li:first-child { border-top: 0; }
+    .confirm-summary li > span { color: var(--mid-gray); }
+    .confirm-summary li > strong { color: var(--near-black); font-weight: 600; text-align: right; }
+
+    /* ── Calendar buttons row ───────────────────────────────────────── */
+    .confirm-calbtns {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: var(--space-2);
+      margin-top: var(--space-3);
+    }
+    .confirm-calbtns .btn { width: 100%; }
+
+    /* ── Soft account creation card ─────────────────────────────────── */
+    .confirm-card--soft {
+      background: var(--warm-white-alt);
+      border-style: dashed;
+    }
+    .confirm-account {
+      display: flex; gap: var(--space-2); flex-wrap: wrap;
+      margin-top: var(--space-3);
+    }
+    .confirm-account input {
+      flex: 1; min-width: 180px;
+      min-height: 44px;
+      padding: 8px 12px;
+      border: 1px solid var(--light-gray);
+      border-radius: var(--radius-md);
+      font: inherit;
+      background: #fff;
+      color: var(--near-black);
+    }
+    .confirm-account .btn { flex-shrink: 0; }
+
+    /* ── Cross-sell grid ────────────────────────────────────────────── */
+    .confirm-crosssell {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: var(--space-3);
+      margin-top: var(--space-3);
+    }
+    .confirm-tour {
+      display: block;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      background: #fff;
+      transition: transform var(--duration-fast) var(--ease-out),
+                  box-shadow var(--duration-fast) var(--ease-out);
+    }
+    .confirm-tour:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--card-shadow-hover, 0 8px 20px rgba(0,0,0,0.08));
+    }
+    .confirm-tour__hero {
+      aspect-ratio: 16 / 10;
+      background-size: cover;
+      background-position: center;
+      background-color: #DDD;
+    }
+    .confirm-tour__body {
+      padding: var(--space-3) var(--space-4);
+      line-height: 1.4;
+    }
+    .confirm-tour__body strong {
+      display: block;
+      font-weight: 600;
+      color: var(--near-black);
+      margin-bottom: 2px;
+    }
+    .confirm-tour__body span { color: var(--mid-gray); font-size: 0.88rem; }
+
+    /* Stack confirm-card sections instead of squishing them on mobile */
+    .confirm-body > .confirm-card + .confirm-card { margin-top: var(--space-4); }
   </style>
 </head>
 <body>
@@ -136,7 +268,8 @@
       <div class="confirm-hero__check" aria-hidden="true">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
-      <h1 class="confirm-hero__title">Booking confirmed</h1>
+      <p class="confirm-hero__cobrand" id="confirmCobrand" hidden>Booked through <strong id="confirmCobrandName">your hotel</strong></p>
+      <h1 class="confirm-hero__title">You're booked!</h1>
       <p class="confirm-hero__subtitle">Your seat is held. A confirmation email with your voucher and full trip details is on its way.</p>
       <div class="confirm-code" id="confirmCodeBlock" hidden>
         <span class="confirm-code__label">Confirmation code</span>
@@ -146,19 +279,112 @@
   </div>
 
   <main class="confirm-body">
-    <div class="confirm-card">
+    <!-- Status tracker — replaces the static checkout-stage promise with
+         post-booking proof. Item 1 is already done (with timestamp); 2/3
+         show scheduled dates derived from the booking. -->
+    <section class="confirm-card">
       <h2>What happens next</h2>
-      <ul class="confirm-list">
-        <li><span class="confirm-list__num">1</span><span>Check your inbox for the confirmation email — it has your voucher, the meeting point, and the operator's contact info. If you don't see it within 10 minutes, check spam or <a href="/contact/">get in touch</a>.</span></li>
-        <li><span class="confirm-list__num">2</span><span>The day before your tour, we'll send a reminder with weather and pickup timing. Pickup windows are usually a 10-minute block from your hotel or chosen meeting point.</span></li>
-        <li><span class="confirm-list__num">3</span><span>Free cancellation up to 24 hours before your tour starts — just reply to the confirmation email and we'll refund your card.</span></li>
-      </ul>
+      <ol class="confirm-tracker">
+        <li class="confirm-tracker__item confirm-tracker__item--done">
+          <span class="confirm-tracker__icon" aria-hidden="true">✓</span>
+          <div class="confirm-tracker__body">
+            <strong>Confirmation sent</strong>
+            <p>To <span id="trackerEmail">your inbox</span> — <span id="trackerSentTime">just now</span></p>
+          </div>
+        </li>
+        <li class="confirm-tracker__item">
+          <span class="confirm-tracker__icon" aria-hidden="true">2</span>
+          <div class="confirm-tracker__body">
+            <strong>Reminder SMS the night before</strong>
+            <p id="trackerReminderWhen">We'll text you with your guide's name and direct number.</p>
+          </div>
+        </li>
+        <li class="confirm-tracker__item">
+          <span class="confirm-tracker__icon" aria-hidden="true">3</span>
+          <div class="confirm-tracker__body">
+            <strong>Weather check 24 hours before</strong>
+            <p id="trackerWeatherWhen">If we cancel for weather, you get a full refund or free reschedule.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
 
+    <!-- Reservation summary — shown only when the booking_id KV pouch is
+         still alive (within 45 min of /initiate). After expiry the user
+         still has the confirmation code, just without the rich detail. -->
+    <section class="confirm-card" id="bookingSummaryCard" hidden>
+      <h2>Your reservation</h2>
+      <ul class="confirm-summary">
+        <li><span>Tour</span><strong id="summaryTour">—</strong></li>
+        <li><span>Date</span><strong id="summaryDate">—</strong></li>
+        <li><span>Time</span><strong id="summaryTime">—</strong></li>
+        <li><span>Travelers</span><strong id="summaryTravelers">—</strong></li>
+        <li id="summaryPickupRow" hidden><span>Pickup</span><strong id="summaryPickup">—</strong></li>
+      </ul>
+    </section>
+
+    <!-- Calendar buttons — populated client-side from booking date + time. -->
+    <section class="confirm-card" id="calendarCard" hidden>
+      <h2>Add to your calendar</h2>
+      <p style="margin:0 0 var(--space-3); color:var(--mid-gray);">
+        Save the date so you don't miss your tour.
+      </p>
+      <div class="confirm-calbtns">
+        <a class="btn btn--outline" id="appleCalendarBtn" href="#" download="horizon-tour.ics">Apple Calendar</a>
+        <a class="btn btn--outline" id="googleCalendarBtn" href="#" target="_blank" rel="noopener">Google Calendar</a>
+        <a class="btn btn--outline" id="downloadIcsBtn" href="#" download="horizon-tour.ics">Download .ics</a>
+      </div>
+    </section>
+
+    <!-- Soft account creation prompt. The booking is already complete so
+         this carries no risk; we surface it as a low-friction add. The
+         password / actual signup is wired in a later sprint — the input
+         is read-only and the button is a "Coming soon" placeholder, like
+         Reserve & pay later in checkout. -->
+    <section class="confirm-card confirm-card--soft">
+      <h2>Save your details for next time?</h2>
+      <p>We'll remember your name, email, and phone so your next Horizon booking is one click. Passwordless sign-in is coming soon.</p>
+      <div class="confirm-account">
+        <input type="email" id="accountEmail" placeholder="Email" readonly>
+        <button class="btn btn--primary" id="accountSaveBtn" disabled>Coming soon</button>
+      </div>
+    </section>
+
+    <!-- Cross-sell — 2 static cards. Hidden whichever tour was just
+         booked (so we don't push the same one back). -->
+    <section class="confirm-card">
+      <h2>You might also enjoy</h2>
+      <div class="confirm-crosssell" id="crossSellGrid">
+        <a class="confirm-tour" href="/tours/lake-louise-sunrise-canoe/" data-tour-slug="lake-louise-sunrise-canoe">
+          <div class="confirm-tour__hero" style="background-image:url('/images/LakeLouise-Canoe.jpg')"></div>
+          <div class="confirm-tour__body">
+            <strong>Lake Louise Sunrise Canoe</strong>
+            <span>From CA$249 per person</span>
+          </div>
+        </a>
+        <a class="confirm-tour" href="/tours/banff-town-highlights-gondola/" data-tour-slug="banff-town-highlights-gondola">
+          <div class="confirm-tour__hero" style="background-image:url('/images/Gondola/banff_gondola_hero.webp')"></div>
+          <div class="confirm-tour__body">
+            <strong>Banff Town Highlights &amp; Gondola</strong>
+            <span>From CA$199 per person</span>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Concierge contact — uses the hotel cobrand if present, else the
+         brand line. Hotel co-brand persists end-to-end (spec). -->
+    <section class="confirm-card">
+      <h2>Questions?</h2>
+      <p id="conciergeCopy">
+        Text us at <a href="tel:+14035550142">(403) 555-0142</a> or email
+        <a href="mailto:hello@gowithhorizon.com">hello@gowithhorizon.com</a>.
+      </p>
       <div class="confirm-actions">
         <a href="/tours/" class="btn btn--secondary">Browse more tours</a>
         <a href="/contact/" class="btn btn--primary">Contact us</a>
       </div>
-    </div>
+    </section>
   </main>
 
   <footer class="footer" role="contentinfo">
@@ -200,15 +426,241 @@
 
   <script>
     (function () {
+      var BOKUN_API_BASE = 'https://horizon-bokun.ivan-mueller02.workers.dev';
+      var DEFAULT_DURATION_MIN = 180; // 3h fallback when product config isn't fetched
+      var TOUR_SLUG_BY_BOKUN_ID = {
+        '1162721': 'Banff-Hidden-Gem-Canoe-Tour',
+      };
+      var DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
       var params = new URLSearchParams(window.location.search);
-      var code = params.get('code');
+      var code  = params.get('code');
+      var id    = params.get('id');
+      var hotel = params.get('hotel');
+
+      // ── Confirmation code ──────────────────────────────────────────
       if (code && /^[A-Za-z0-9-]{4,40}$/.test(code)) {
         var block = document.getElementById('confirmCodeBlock');
         var label = document.getElementById('confirmCode');
-        if (block && label) {
-          label.textContent = code;
-          block.hidden = false;
+        if (block && label) { label.textContent = code; block.hidden = false; }
+      }
+
+      // ── Tracker timestamp (item 1) ─────────────────────────────────
+      var sentEl = document.getElementById('trackerSentTime');
+      if (sentEl) sentEl.textContent = formatRelativeNow();
+
+      // ── Hotel co-brand + concierge copy ───────────────────────────
+      if (hotel && /^[a-z0-9-]{2,40}$/i.test(hotel)) {
+        fetch('/partners.json', { cache: 'no-store' })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (data) {
+            if (!data || !data.hotels) return;
+            var rec = data.hotels.find(function (h) {
+              return h.code === hotel.toLowerCase() && h.status === 'active';
+            });
+            if (!rec) return;
+            var cobrand = document.getElementById('confirmCobrand');
+            var cobrandName = document.getElementById('confirmCobrandName');
+            if (cobrand && cobrandName) {
+              cobrandName.textContent = rec.name;
+              cobrand.hidden = false;
+            }
+            var copy = document.getElementById('conciergeCopy');
+            if (copy) {
+              copy.innerHTML =
+                'Your concierge at <strong>' + escapeHtml(rec.name) + '</strong> can reach us directly, or text us at ' +
+                '<a href="tel:+14035550142">(403) 555-0142</a> &middot; ' +
+                '<a href="mailto:hello@gowithhorizon.com">hello@gowithhorizon.com</a>.';
+            }
+          })
+          .catch(function (e) { console.warn('partners.json fetch failed', e); });
+      }
+
+      // ── Booking summary + calendar buttons ────────────────────────
+      // booking_id KV stays alive for 45 min after /initiate. The user
+      // typically lands here within seconds of /submit, so the pouch is
+      // fresh; we render the rich card. After expiry the GET 404s and
+      // we just leave the summary + calendar cards hidden.
+      if (id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+        fetch(BOKUN_API_BASE + '/api/booking/state/' + encodeURIComponent(id), { cache: 'no-store' })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (state) {
+            if (!state) return;
+            renderSummary(state);
+            renderCalendar(state);
+            renderCrossSellExclusion(state);
+            renderTrackerSchedule(state);
+          })
+          .catch(function (e) { console.warn('booking state fetch failed', e); });
+      }
+
+      // ── Renderers ─────────────────────────────────────────────────
+      function renderSummary(state) {
+        var slug = TOUR_SLUG_BY_BOKUN_ID[String(state.tour_id)] || '';
+        var title = humanizeSlug(slug) || 'Horizon Tour';
+        document.getElementById('summaryTour').textContent     = title;
+        document.getElementById('summaryDate').textContent     = formatLongDate(state.date);
+        document.getElementById('summaryTime').textContent     = state.time ? format12h(state.time) : 'Confirmed via email';
+        document.getElementById('summaryTravelers').textContent = travelerSummary(state);
+        document.getElementById('bookingSummaryCard').hidden = false;
+      }
+
+      function renderCalendar(state) {
+        if (!state.date || !state.time) return;
+        var slug = TOUR_SLUG_BY_BOKUN_ID[String(state.tour_id)] || '';
+        var title = humanizeSlug(slug) || 'Horizon Tour';
+        var startISO = combineDateTime(state.date, state.time);
+        var endISO   = addMinutes(startISO, DEFAULT_DURATION_MIN);
+
+        var details = 'Booking #' + (code || '') + (id ? ' · Reference: ' + id : '');
+        var location = 'Banff National Park, Alberta';
+
+        var ics = buildIcs({
+          uid:         (id || code || randomUid()) + '@gowithhorizon.com',
+          summary:     title,
+          description: details,
+          location:    location,
+          startISO:    startISO,
+          endISO:      endISO,
+        });
+        var icsHref = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
+
+        var apple = document.getElementById('appleCalendarBtn');
+        var dl    = document.getElementById('downloadIcsBtn');
+        if (apple) apple.href = icsHref;
+        if (dl)    dl.href    = icsHref;
+
+        var google = document.getElementById('googleCalendarBtn');
+        if (google) {
+          google.href = 'https://calendar.google.com/calendar/render?action=TEMPLATE' +
+            '&text=' + encodeURIComponent(title) +
+            '&dates=' + toGoogleDateRange(startISO, endISO) +
+            '&details=' + encodeURIComponent(details) +
+            '&location=' + encodeURIComponent(location) +
+            '&ctz=America/Edmonton';
         }
+        document.getElementById('calendarCard').hidden = false;
+      }
+
+      function renderCrossSellExclusion(state) {
+        var slug = TOUR_SLUG_BY_BOKUN_ID[String(state.tour_id)] || '';
+        if (!slug) return;
+        var grid = document.getElementById('crossSellGrid');
+        if (!grid) return;
+        // Match case-insensitive against the data attribute since the
+        // canoe tour's directory uses mixed case but cross-sells lower.
+        Array.prototype.forEach.call(grid.querySelectorAll('[data-tour-slug]'), function (el) {
+          if (el.getAttribute('data-tour-slug').toLowerCase() === slug.toLowerCase()) {
+            el.style.display = 'none';
+          }
+        });
+      }
+
+      function renderTrackerSchedule(state) {
+        if (!state.date) return;
+        var tourDate = new Date(state.date + 'T00:00:00');
+        var night = new Date(tourDate); night.setDate(night.getDate() - 1);
+        var weather = new Date(tourDate); weather.setDate(weather.getDate() - 1);
+
+        var rEl = document.getElementById('trackerReminderWhen');
+        if (rEl) rEl.textContent = 'We’ll text you on ' + formatShortDate(night) +
+          ' with your guide’s name and direct number.';
+
+        var wEl = document.getElementById('trackerWeatherWhen');
+        if (wEl) wEl.textContent = 'We check forecasts on ' + formatShortDate(weather) +
+          '. Full refund or free reschedule if we cancel.';
+      }
+
+      // ── Helpers ───────────────────────────────────────────────────
+      function travelerSummary(state) {
+        var bits = [];
+        if (state.adults)  bits.push(state.adults  + ' adult'  + (state.adults  === 1 ? '' : 's'));
+        if (state.youth)   bits.push(state.youth   + ' youth');
+        if (state.infants) bits.push(state.infants + ' infant' + (state.infants === 1 ? '' : 's'));
+        return bits.join(', ') || '—';
+      }
+      function formatLongDate(ymd) {
+        if (!ymd) return '—';
+        var p = ymd.split('-').map(Number);
+        var d = new Date(p[0], p[1]-1, p[2]);
+        return DAYS[d.getDay()] + ', ' + MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + p[0];
+      }
+      function formatShortDate(d) {
+        return MONTHS[d.getMonth()] + ' ' + d.getDate();
+      }
+      function format12h(hhmm) {
+        var p = hhmm.split(':');
+        var h = parseInt(p[0], 10);
+        var suffix = h >= 12 ? 'PM' : 'AM';
+        return ((h % 12) || 12) + ':' + p[1] + ' ' + suffix;
+      }
+      function combineDateTime(ymd, hhmm) {
+        // Build an ISO string anchored to America/Edmonton (UTC-6 in
+        // summer, UTC-7 in winter). Banff DST observance roughly
+        // matches months 3-10; the canoe tour runs in summer 2026 so
+        // we treat -06:00 as the default.
+        var month = parseInt(ymd.split('-')[1], 10);
+        var offset = (month >= 3 && month <= 10) ? '-06:00' : '-07:00';
+        return ymd + 'T' + hhmm + ':00' + offset;
+      }
+      function addMinutes(iso, minutes) {
+        var d = new Date(iso);
+        d.setMinutes(d.getMinutes() + minutes);
+        return d.toISOString();
+      }
+      function toGoogleDateRange(startISO, endISO) {
+        function fmt(s) {
+          // Accepts either "2026-07-15T18:30:00-06:00" or full ISO Z.
+          // Google wants YYYYMMDDTHHMMSSZ (UTC) — convert via Date.
+          return new Date(s).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+        }
+        return fmt(startISO) + '/' + fmt(endISO);
+      }
+      function buildIcs(o) {
+        function fmt(s) {
+          // VEVENT DTSTART/DTEND — use floating local time with TZID.
+          // o.startISO is "2026-07-15T18:30:00-06:00"; strip TZ + ms,
+          // remove punctuation. Result: 20260715T183000.
+          return s.split('T')[0].replace(/-/g,'') + 'T' +
+                 s.split('T')[1].slice(0,8).replace(/:/g,'');
+        }
+        return [
+          'BEGIN:VCALENDAR',
+          'VERSION:2.0',
+          'PRODID:-//Horizon Tours//EN',
+          'CALSCALE:GREGORIAN',
+          'BEGIN:VEVENT',
+          'UID:' + o.uid,
+          'DTSTAMP:' + new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z'),
+          'DTSTART;TZID=America/Edmonton:' + fmt(o.startISO),
+          'DTEND;TZID=America/Edmonton:'   + fmt(o.endISO),
+          'SUMMARY:'     + escapeIcs(o.summary),
+          'DESCRIPTION:' + escapeIcs(o.description),
+          'LOCATION:'    + escapeIcs(o.location),
+          'END:VEVENT',
+          'END:VCALENDAR',
+        ].join('\r\n');
+      }
+      function escapeIcs(s) {
+        // ICS values escape backslash/semicolon/comma with a leading
+        // backslash; newlines become the literal two-char sequence \n.
+        return String(s || '')
+          .replace(/[\\;,]/g, '\\$&')
+          .replace(/\n/g, '\\n');
+      }
+      function escapeHtml(s) {
+        return String(s||'').replace(/[&<>"']/g, function (m) {
+          return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m];
+        });
+      }
+      function humanizeSlug(slug) {
+        return slug.replace(/[-_]+/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); }).trim();
+      }
+      function randomUid() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
+      function formatRelativeNow() {
+        var d = new Date();
+        return d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
       }
     })();
   </script>
