@@ -1714,5 +1714,267 @@
     }
   })();
   </script>
+
+  <!--
+    Step 9 — Bokun /options + /submit handoff. Listens for
+    horizon:section2-complete (fired by Section 2 once Stripe has
+    confirmed the SetupIntent and we have a pm_xxx). Builds the
+    BookingRequest, calls the existing worker endpoints unchanged, and
+    on success redirects to /booking-confirmed/.
+  -->
+  <script>
+  (function () {
+    var BOKUN_API_BASE = 'https://horizon-bokun.ivan-mueller02.workers.dev';
+    var TOUR_PATH = '/tours/Banff-Hidden-Gem-Canoe-Tour/';
+
+    document.addEventListener('horizon:section2-complete', function (e) {
+      submitBooking(e.detail);
+    });
+
+    function submitBooking(section2) {
+      var ctx = window.HORIZON_CHECKOUT || {};
+      try {
+        var bookingRequest = buildBookingRequest(ctx);
+        callOptions(bookingRequest)
+          .then(function (opt) {
+            return callSubmit(bookingRequest, opt, section2.paymentMethodId);
+          })
+          .then(handleSubmitResponse)
+          .catch(handleError);
+      } catch (err) {
+        handleError(err);
+      }
+    }
+
+    function callOptions(req) {
+      return fetch(BOKUN_API_BASE + '/api/checkout/options', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(req),
+      })
+        .then(parseJson)
+        .then(function (res) {
+          if (!res.ok) throw new Error('options_' + ((res.body && res.body.error) || res.status));
+          var options = res.body.options || (Array.isArray(res.body) ? res.body : []);
+          // CUSTOMER_FULL_PAYMENT is the option type that supports the
+          // pm_xxx token flow (validated in Phase 0b.1, see 0B_VALIDATION.md).
+          var pick = options.find(function (o) { return o.type === 'CUSTOMER_FULL_PAYMENT'; })
+                  || options[0];
+          if (!pick) throw new Error('no_payment_option');
+          return pick;
+        });
+    }
+
+    function callSubmit(req, opt, paymentMethodId) {
+      var origin = window.location.origin;
+      var checkoutRequest = {
+        source:                       'DIRECT_REQUEST',
+        checkoutOption:               'CUSTOMER_FULL_PAYMENT',
+        directBooking:                req,
+        amount:                       opt.amount,
+        currency:                     opt.currency,
+        paymentMethod:                'CARD',
+        paymentToken:                 { token: paymentMethodId },
+        sendNotificationToMainContact: true,
+        showPricesInNotification:     true,
+        successUrl: origin + '/booking-confirmed/',
+        errorUrl:   origin + TOUR_PATH + '?booking=failed',
+        cancelUrl:  origin + TOUR_PATH,
+      };
+      var uti = opt.paymentMethods && opt.paymentMethods.cardProvider && opt.paymentMethods.cardProvider.uti;
+      if (uti) checkoutRequest.uti = uti;
+
+      return fetch(BOKUN_API_BASE + '/api/checkout/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(checkoutRequest),
+      })
+        .then(parseJson)
+        .then(function (res) {
+          if (!res.ok) throw new Error('submit_' + ((res.body && res.body.error) || res.status));
+          return res.body;
+        });
+    }
+
+    function handleSubmitResponse(body) {
+      var booking = body && body.booking;
+      var redirectRequest = body && body.redirectRequest;
+
+      if (booking && booking.confirmationCode) {
+        // TOKEN-mode success — Bokun confirmed the booking inline.
+        var ctx = window.HORIZON_CHECKOUT || {};
+        var qs = '?code=' + encodeURIComponent(booking.confirmationCode);
+        if (ctx.bookingId)        qs += '&id=' + encodeURIComponent(ctx.bookingId);
+        if (ctx.booking && ctx.booking.hotel) {
+          qs += '&hotel=' + encodeURIComponent(ctx.booking.hotel);
+        }
+        document.dispatchEvent(new CustomEvent('horizon:booking_confirmed', {
+          detail: { confirmationCode: booking.confirmationCode, bookingId: ctx.bookingId },
+        }));
+        window.location.href = '/booking-confirmed/' + qs;
+        return;
+      }
+
+      if (redirectRequest && redirectRequest.url) {
+        // REDIRECT-mode — channel sends us to Bokun's hosted Stripe page.
+        // Less ideal UX, but it's a valid path; just follow it.
+        window.location.href = redirectRequest.url;
+        return;
+      }
+
+      throw new Error('unexpected_submit_shape');
+    }
+
+    function buildBookingRequest(ctx) {
+      var booking = ctx.booking || {};
+      var product = ctx.product || {};
+      var s1 = ctx.section1 || {};
+      var lead = s1.lead || {};
+      var pickup = s1.pickup || {};
+
+      if (!s1.valid)       throw new Error('section1_invalid');
+      if (!pickup.id)      throw new Error('no_pickup_selected');
+      if (!booking.tour_id) throw new Error('no_tour_id');
+      if (!booking.activity_id) throw new Error('no_slot_selected');
+
+      // pricingCategories[].title → category id lookup. The canoe tour
+      // collapses Senior into Adult and Child into Youth on the tour page,
+      // so we only fan out the three buckets we actually have counts for.
+      var byTitle = {};
+      (product.pricingCategories || []).forEach(function (c) {
+        byTitle[(c.title || '').toLowerCase()] = c;
+      });
+      function catIdFor(title) {
+        var c = byTitle[title.toLowerCase()];
+        return c && c.id;
+      }
+
+      var passengers = [];
+      var additionalQueue = (s1.additional || []).slice();
+      function pushPassengers(catTitle, count) {
+        if (!count) return;
+        var cid = catIdFor(catTitle);
+        if (!cid) return;
+        for (var i = 0; i < count; i++) {
+          var first, last;
+          if (passengers.length === 0) {
+            first = lead.firstName;
+            last  = lead.lastName;
+          } else {
+            var extra = additionalQueue.shift();
+            first = (extra && extra.firstName) || ('Guest ' + (passengers.length + 1));
+            last  = (extra && extra.lastName)  || lead.lastName || 'Guest';
+          }
+          passengers.push({
+            pricingCategoryId: cid,
+            passengerDetails: [
+              { questionId: 'firstName', values: [first] },
+              { questionId: 'lastName',  values: [last] },
+            ],
+          });
+        }
+      }
+      pushPassengers('Adult',  booking.adults  || 0);
+      pushPassengers('Youth',  booking.youth   || 0);
+      pushPassengers('Infant', booking.infants || 0);
+
+      var rateId = booking.rate_id ||
+        (product.rates && product.rates[0] && product.rates[0].id);
+
+      var dropoffId = pickDropoffId(ctx, pickup.id);
+
+      var req = {
+        mainContactDetails: [
+          { questionId: 'firstName',   values: [lead.firstName] },
+          { questionId: 'lastName',    values: [lead.lastName] },
+          { questionId: 'email',       values: [lead.email] },
+          { questionId: 'phoneNumber', values: [normalizePhone(lead.country, lead.phone)] },
+        ],
+        activityBookings: [
+          {
+            activityId:     Number(booking.tour_id),
+            rateId:         rateId,
+            date:           booking.date,
+            startTimeId:    booking.activity_id,
+            pickup:         true,
+            pickupPlaceId:  pickup.id,
+            dropoff:        true,
+            dropoffPlaceId: dropoffId,
+            passengers:     passengers,
+          },
+        ],
+      };
+
+      // ── Partner attribution ────────────────────────────────────────────
+      // The booking-time JSON property that Bokun matches against the
+      // partner's identificationNumber (e.g. FAIRMONT_LL) is not yet
+      // confirmed for this account / channel. We register partners via
+      // sync-partners.mjs but the canonical booking field is one of:
+      //   - req.trackingCode
+      //   - req.activityBookings[i].agent.identificationNumber
+      //   - req.activityBookings[i].vendorAgent / .reseller
+      //   - req.salesAgentReference / req.bookingChannelReference
+      // Bokun support will tell us. Until then we attach trackingCode at
+      // the top level (a conservative guess; if Bokun ignores it, the
+      // booking still completes — just unattributed).
+      // TODO(partner-attribution): replace with the confirmed field name.
+      if (ctx.hotel && ctx.hotel.default_tracking_code) {
+        req.trackingCode = ctx.hotel.default_tracking_code;
+      }
+
+      return req;
+    }
+
+    function pickDropoffId(ctx, pickupId) {
+      var places = (ctx.pickups && (ctx.pickups.dropoffPlaces || ctx.pickups.pickupPlaces)) || [];
+      var match = places.find(function (d) { return d && d.id === pickupId; });
+      if (match) return match.id;
+      return (places[0] && places[0].id) || pickupId;
+    }
+
+    function normalizePhone(country, phone) {
+      var raw = (phone || '').trim();
+      if (!raw) return '';
+      var digits = raw.replace(/\D/g, '');
+      if (raw.charAt(0) === '+' || (country && country.charAt && country.charAt(0) === '+')) {
+        if (raw.charAt(0) === '+') return raw;
+        var prefix = country === '+1-CA' || country === '+1-US' ? '+1' : country.replace(/-.*$/, '');
+        return prefix + digits;
+      }
+      // 'other' or missing — best effort: prepend +.
+      return digits ? '+' + digits : '';
+    }
+
+    function parseJson(r) {
+      return r.json().then(function (body) { return { ok: r.ok, body: body }; });
+    }
+
+    function handleError(err) {
+      console.error('Booking submit failed:', err);
+      var paymentError = document.getElementById('paymentError');
+      var bookNow = document.getElementById('bookNow');
+      var bookNowLabel = document.getElementById('bookNowLabel');
+      if (paymentError) {
+        paymentError.textContent = friendlyMessage(err);
+        paymentError.hidden = false;
+      }
+      if (bookNow) bookNow.disabled = false;
+      if (bookNowLabel) {
+        var label = (window.HORIZON_CHECKOUT && window.HORIZON_CHECKOUT.totalLabel) || '';
+        bookNowLabel.textContent = label ? 'Book now · ' + label : 'Book now';
+      }
+    }
+
+    function friendlyMessage(err) {
+      var msg = (err && err.message) || '';
+      if (/no_pickup_selected/.test(msg))    return 'Please pick a pickup location and try again.';
+      if (/no_slot_selected/.test(msg))      return 'Your slot information is missing. Go back to the tour page and pick a date.';
+      if (/options_/.test(msg))              return 'Bokun couldn’t validate your booking. Please try again.';
+      if (/submit_/.test(msg))               return 'We couldn’t complete your reservation. Your card was not charged. Please try again or contact support.';
+      if (/unexpected_submit_shape/.test(msg)) return 'Something went wrong. Please contact support — we may need to confirm your booking manually.';
+      return 'We couldn’t complete your reservation. Your card was not charged. Please try again or contact support.';
+    }
+  })();
+  </script>
 </body>
 </html>
