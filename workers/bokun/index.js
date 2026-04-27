@@ -203,7 +203,6 @@ async function handleStripeSetupIntent(request, env) {
 async function stripeRequest(method, path, body, env) {
   const headers = {
     Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
-    "Stripe-Version": "2025-10-29",
   };
 
   let bodyStr;

@@ -79,7 +79,6 @@ async function stripeRequest(method, path, body) {
     method,
     headers: {
       Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}`,
-      "Stripe-Version": "2025-10-29",
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body: body ? new URLSearchParams(body).toString() : undefined,
