@@ -1,7 +1,6 @@
-// Horizon Tours — Bokun proxy Worker.
+// Horizon Tours — Bokun proxy + Stripe orchestration Worker.
 //
-// Five routes, all consumed by the booking page on gowithhorizon.com:
-//
+// Bokun proxy (HMAC-SHA1 signed):
 //   GET  /api/product/:id              cache 1h
 //   GET  /api/pickup-places/:id        cache 1h
 //   GET  /api/availability/:id         cache 5min, ?fresh=1 to bypass
@@ -9,9 +8,12 @@
 //   POST /api/checkout/options         no cache, validates BookingRequest
 //   POST /api/checkout/submit          no cache, creates the reservation
 //
-// Auth is HMAC-SHA1 on every Bokun call (see bokun-auth.js). Secrets
-// (BOKUN_ACCESS_KEY, BOKUN_SECRET_KEY) live in Worker secret storage,
-// never on disk in this repo.
+// Stripe orchestration (TOKEN-mode SetupIntent flow — see 0B_VALIDATION.md):
+//   POST /api/stripe/setup-intent      create Customer + off_session SetupIntent
+//
+// Secrets (Worker secret storage, never on disk):
+//   BOKUN_ACCESS_KEY, BOKUN_SECRET_KEY  — HMAC signing for Bokun
+//   STRIPE_SECRET_KEY                   — sk_test_... or sk_live_...
 
 import { bokunFetch } from "./bokun-auth.js";
 
@@ -56,6 +58,14 @@ export default {
         segs[2] === "submit"
       ) {
         return await handleCheckoutSubmit(request, env);
+      }
+      if (
+        request.method === "POST" &&
+        segs[0] === "api" &&
+        segs[1] === "stripe" &&
+        segs[2] === "setup-intent"
+      ) {
+        return await handleStripeSetupIntent(request, env);
       }
       return jsonResponse({ error: "Not found" }, 404, request);
     } catch (err) {
@@ -134,6 +144,91 @@ async function handleCheckoutSubmit(request, env) {
   const r = await bokunFetch("POST", `/checkout.json/submit?currency=${CURRENCY}`, body, env);
   if (!r.ok) return passThroughError(r, request);
   return jsonResponse(r.data, 200, request);
+}
+
+// ── Stripe ──────────────────────────────────────────────────────────────────
+// Creates a per-booking Customer + off_session SetupIntent. The SetupIntent's
+// off_session usage flag is what later lets Bokun charge the card server-side
+// as a merchant-initiated transaction without a second SCA challenge.
+//
+// Returns { clientSecret, customerId, setupIntentId } — the page uses
+// clientSecret to mount Stripe Elements, then submits the resulting pm_xxx
+// to /api/checkout/submit as paymentToken.token.
+async function handleStripeSetupIntent(request, env) {
+  if (!env.STRIPE_SECRET_KEY) {
+    return jsonResponse({ error: "STRIPE_SECRET_KEY not configured" }, 500, request);
+  }
+
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+
+  const email = typeof body.email === "string" ? body.email.trim() : "";
+  const name = typeof body.name === "string" ? body.name.trim() : "";
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return jsonResponse({ error: "Valid email is required" }, 400, request);
+  }
+
+  try {
+    const customer = await stripeRequest("POST", "/v1/customers", { email, name }, env);
+    const setupIntent = await stripeRequest(
+      "POST",
+      "/v1/setup_intents",
+      {
+        customer: customer.id,
+        "payment_method_types[]": "card",
+        usage: "off_session", // Critical: registers MIT agreement so Bokun's later charge skips re-auth.
+      },
+      env,
+    );
+
+    return jsonResponse(
+      {
+        clientSecret: setupIntent.client_secret,
+        customerId: customer.id,
+        setupIntentId: setupIntent.id,
+      },
+      200,
+      request,
+    );
+  } catch (err) {
+    console.error("Stripe SetupIntent error:", err.stack || err);
+    return jsonResponse(
+      { error: "stripe", message: err.message || "Could not create SetupIntent" },
+      502,
+      request,
+    );
+  }
+}
+
+async function stripeRequest(method, path, body, env) {
+  const headers = {
+    Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
+    "Stripe-Version": "2025-10-29",
+  };
+
+  let bodyStr;
+  if (body) {
+    bodyStr = new URLSearchParams(body).toString();
+    headers["Content-Type"] = "application/x-www-form-urlencoded";
+  }
+
+  const res = await fetch(`https://api.stripe.com${path}`, { method, headers, body: bodyStr });
+  const text = await res.text();
+  let data = null;
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = text;
+    }
+  }
+  if (!res.ok) {
+    const msg =
+      (data && data.error && (data.error.message || data.error.code)) ||
+      `Stripe ${method} ${path} -> ${res.status}`;
+    throw new Error(msg);
+  }
+  return data;
 }
 
 async function readJson(request) {

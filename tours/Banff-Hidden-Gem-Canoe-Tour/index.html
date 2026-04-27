@@ -11,6 +11,8 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <!-- Stripe.js — must be loaded from js.stripe.com (not bundled) for PCI SAQ-A scope. -->
+  <script src="https://js.stripe.com/v3/"></script>
 
   <style>
     .tours-grid { grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)) !important; }
@@ -1068,6 +1070,19 @@
       font-size: 0.85rem;
       line-height: 1.4;
     }
+    .bk-modal__payment-mount {
+      padding: 12px;
+      border: 1px solid #D1D5DB;
+      border-radius: 8px;
+      background: #fff;
+      min-height: 48px;
+    }
+    .bk-modal__consent {
+      margin: 10px 0 0;
+      font-size: 0.78rem;
+      color: #6B7280;
+      line-height: 1.45;
+    }
     .bk-modal__footer {
       margin-top: 16px;
       display: flex; align-items: center; gap: 12px;
@@ -2105,6 +2120,10 @@
   <script>
     var BOKUN_API_BASE  = 'https://horizon-bokun.ivan-mueller02.workers.dev';
     var BOKUN_PRODUCT_ID = 1162721;
+    // Stripe publishable key — public, safe to inline. Swap for the live key
+    // (pk_live_…) when going to production. The matching secret key lives in
+    // Worker secret storage; see workers/bokun/wrangler.toml.
+    var STRIPE_PUBLISHABLE_KEY = 'pk_test_REPLACE_ME';
     window.BOKUN = {
       product: null, pickupPlaces: null, dropoffPlaces: null, availability: null,
       pricePerCategory: null, lowestAdultPrice: null, currency: 'CAD',
@@ -3227,6 +3246,15 @@
           </label>
         </section>
 
+        <section class="bk-modal__section">
+          <h3>Payment</h3>
+          <div class="bk-modal__payment-mount" id="bk-stripe-payment-element"></div>
+          <p class="bk-modal__consent">
+            By clicking Pay you authorize Horizon Tours to charge your card for
+            the amount shown and you agree to our cancellation policy.
+          </p>
+        </section>
+
         <div class="bk-modal__error" id="bookingModalError" hidden></div>
 
         <div class="bk-modal__footer">
@@ -3254,6 +3282,64 @@
     var lnEl        = document.getElementById('contactLastName');
     var emEl        = document.getElementById('contactEmail');
     var phEl        = document.getElementById('contactPhone');
+    var stripePaymentMount = document.getElementById('bk-stripe-payment-element');
+
+    // Stripe Elements — initialized lazily on first modal open so we don't
+    // pay the network cost on every page load. mode='setup' is the deferred
+    // SetupIntent flow: the SetupIntent itself is created at Pay-time on the
+    // worker, the PaymentElement just collects card details locally.
+    var stripe = null;
+    var elements = null;
+    var paymentElement = null;
+    function initStripeElements() {
+      if (elements) return;
+      if (typeof Stripe !== 'function') {
+        console.warn('[booking] Stripe.js not loaded; payment will be unavailable.');
+        return;
+      }
+      stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+      elements = stripe.elements({
+        mode: 'setup',
+        currency: ((window.BOKUN && window.BOKUN.currency) || 'CAD').toLowerCase(),
+        setupFutureUsage: 'off_session',
+        paymentMethodCreation: 'manual',
+      });
+      paymentElement = elements.create('payment', {
+        layout: 'tabs',
+        // We collect name / email / phone in the modal already; tell Stripe
+        // not to ask for them again. We pass them into confirmSetup as
+        // billing_details on submit.
+        fields: {
+          billingDetails: {
+            name: 'never',
+            email: 'never',
+            phone: 'never',
+          },
+        },
+      });
+      paymentElement.mount(stripePaymentMount);
+    }
+
+    // Map Stripe error codes → user-facing copy. Falls back to the raw
+    // Stripe message if we don't have a translation. See docs:
+    //   https://stripe.com/docs/error-codes
+    function getUserFriendlyError(err) {
+      if (!err) return 'An unexpected error occurred.';
+      var code = err.code || err.decline_code;
+      var map = {
+        'card_declined':           'Your card was declined. Please try a different card.',
+        'expired_card':            'This card has expired. Please use a different card.',
+        'incorrect_cvc':           'The CVC code is incorrect. Please check and try again.',
+        'incorrect_number':        'The card number is incorrect. Please check and try again.',
+        'invalid_number':          'The card number is invalid. Please check and try again.',
+        'invalid_expiry_month':    'The expiry month is invalid.',
+        'invalid_expiry_year':     'The expiry year is invalid.',
+        'processing_error':        'We couldn’t process your card. Please try again.',
+        'authentication_required': 'Authentication failed. Please try again or use a different card.',
+        'insufficient_funds':      'Your card has insufficient funds. Please try a different card.',
+      };
+      return map[code] || err.message || 'An unexpected error occurred.';
+    }
 
     function escapeHtml(s) {
       return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) {
@@ -3296,6 +3382,7 @@
     }
     function openModal() {
       populateModal();
+      initStripeElements();
       modal.hidden = false;
       lockBody(true);
       setTimeout(function () { fnEl.focus(); }, 50);
@@ -3481,11 +3568,36 @@
       return resp && resp.body && resp.body.body && resp.body.body.message;
     }
 
-    payBtn.addEventListener('click', function () {
+    // Pay handler — Stripe SetupIntent + Bokun TOKEN-mode checkout.
+    //
+    //   1. elements.submit()                 — validate the card form locally
+    //   2. POST /api/stripe/setup-intent     — Customer + off_session SetupIntent
+    //   3. stripe.confirmSetup()             — collects card, runs SCA inline if needed,
+    //                                          returns an authenticated PaymentMethod (pm_xxx)
+    //   4. POST /api/checkout/options        — validate booking with Bokun, get the uti
+    //   5. POST /api/checkout/submit         — submit booking with paymentToken.token=pm_xxx;
+    //                                          Bokun charges Stripe server-side as MIT
+    //   6. redirect to /booking-confirmed/   — Bokun-confirmed code in the query string
+    //
+    // The off_session usage flag set in step 2 is what lets step 5 charge the
+    // card without a second SCA challenge — without it, every booking would
+    // pop a 3DS prompt at the worst possible moment (after the user thinks
+    // they paid). See 0B_VALIDATION.md for the validation matrix.
+    payBtn.addEventListener('click', async function () {
       errorEl.hidden = true;
       payBtn.disabled = true;
       var originalLabel = payBtn.textContent;
       payBtn.textContent = 'Processing…';
+      function resetButton() {
+        payBtn.disabled = false;
+        payBtn.textContent = originalLabel;
+      }
+
+      if (!stripe || !elements) {
+        showError('Payment form is still loading — please try again in a moment.');
+        resetButton();
+        return;
+      }
 
       var bookingRequest;
       try {
@@ -3493,73 +3605,131 @@
       } catch (e) {
         console.error('build error', e);
         showError('Something went wrong building your booking. Please refresh and try again.');
-        payBtn.disabled = false;
-        payBtn.textContent = originalLabel;
+        resetButton();
         return;
       }
 
-      // /options — validate + get amount + uti.
-      postJson('/api/checkout/options', bookingRequest)
-        .then(function (resp) {
-          if (resp.status >= 400) {
-            throw new Error('options: ' + (bokunMessage(resp) || resp.status));
-          }
-          var options = (resp.body && resp.body.options) || (Array.isArray(resp.body) ? resp.body : []);
-          var opt = options.find(function (o) { return o.type === 'CUSTOMER_FULL_PAYMENT'; }) ||
-                    options.find(function (o) { return o.type === 'CUSTOMER_NO_PAYMENT'; }) ||
-                    options[0];
-          if (!opt) throw new Error('options: no checkout option returned');
+      var fullName = (fnEl.value.trim() + ' ' + lnEl.value.trim()).trim();
 
-          var checkoutRequest = {
-            source:                        'DIRECT_REQUEST',
-            checkoutOption:                opt.type,
-            directBooking:                 bookingRequest,
-            amount:                        opt.amount,
-            currency:                      opt.currency,
-            sendNotificationToMainContact: true,
-            showPricesInNotification:      true,
-            successUrl: window.location.origin + '/booking-confirmed/',
-            errorUrl:   window.location.origin + '/tours/Banff-Hidden-Gem-Canoe-Tour/?booking=failed',
-            cancelUrl:  window.location.origin + '/tours/Banff-Hidden-Gem-Canoe-Tour/',
-          };
-          if (opt.type === 'CUSTOMER_FULL_PAYMENT') {
-            checkoutRequest.paymentMethod = 'CARD';
-            var uti = opt.paymentMethods && opt.paymentMethods.cardProvider && opt.paymentMethods.cardProvider.uti;
-            if (uti) checkoutRequest.uti = uti;
-          }
-          return postJson('/api/checkout/submit', checkoutRequest);
-        })
-        .then(function (resp) {
-          if (resp.status >= 400) {
-            var msg = bokunMessage(resp) || '';
-            // Known channel-config error until Bokun support flips us to
-            // REDIRECT. Show user-friendly copy instead of the raw message.
-            if (/When paying with token, you must supply token/i.test(msg)) {
-              throw new Error('Card payments are being configured. Please contact us to book by phone, or try again later.');
-            }
-            // Same for the coupon-at-submit issue we documented.
-            if (/Invalid checkout option/i.test(msg)) {
-              throw new Error('We can\'t complete this booking right now. Please try again, or contact us for help.');
-            }
-            throw new Error('submit: ' + (msg || resp.status));
-          }
-          if (resp.body && resp.body.redirectRequest) {
-            followRedirect(resp.body.redirectRequest);
-            return;
-          }
-          if (resp.body && resp.body.booking && resp.body.booking.confirmationCode) {
-            window.location.href = window.location.origin +
-              '/booking-confirmed/?code=' + encodeURIComponent(resp.body.booking.confirmationCode);
-            return;
-          }
-          throw new Error('submit: unexpected response shape');
-        })
-        .catch(function (err) {
-          console.error('[booking] submit failed', err);
-          showError(err.message || 'Something went wrong. Please try again.');
-          payBtn.disabled = false;
-          payBtn.textContent = originalLabel;
+      try {
+        // 1. Validate Stripe Elements before making any network calls.
+        var submitResult = await elements.submit();
+        if (submitResult && submitResult.error) {
+          showError(getUserFriendlyError(submitResult.error));
+          resetButton();
+          return;
+        }
+
+        // 2. Create SetupIntent on the worker (also creates a Customer).
+        var siResp = await postJson('/api/stripe/setup-intent', {
+          email: emEl.value.trim(),
+          name:  fullName,
         });
+        if (siResp.status >= 400 || !siResp.body || !siResp.body.clientSecret) {
+          var siMsg = (siResp.body && (siResp.body.message || siResp.body.error)) || ('status ' + siResp.status);
+          throw new Error('Could not initialize payment (' + siMsg + ').');
+        }
+        var clientSecret = siResp.body.clientSecret;
+        var customerId   = siResp.body.customerId;
+
+        // 3. Confirm SetupIntent. Stripe handles SCA inline if the card / bank
+        //    requires it — the user sees a popup, completes the challenge, and
+        //    control returns here with an authenticated PaymentMethod.
+        var confirmResult = await stripe.confirmSetup({
+          elements: elements,
+          clientSecret: clientSecret,
+          confirmParams: {
+            return_url: window.location.origin + '/booking-confirmed/',
+            payment_method_data: {
+              billing_details: {
+                name:  fullName,
+                email: emEl.value.trim(),
+                phone: phEl.value.trim(),
+              },
+            },
+          },
+          redirect: 'if_required',
+        });
+        if (confirmResult.error) {
+          showError(getUserFriendlyError(confirmResult.error));
+          resetButton();
+          return;
+        }
+        var setupIntent = confirmResult.setupIntent;
+        if (!setupIntent || !setupIntent.payment_method) {
+          throw new Error('Card setup did not return a payment method. Please try again.');
+        }
+        var paymentMethodId = setupIntent.payment_method;
+
+        // 4. Validate the booking with Bokun and retrieve the uti.
+        var optsResp = await postJson('/api/checkout/options', bookingRequest);
+        if (optsResp.status >= 400) {
+          throw new Error('We couldn’t hold your seat: ' + (bokunMessage(optsResp) || optsResp.status) +
+            '. Your card has not been charged.');
+        }
+        var options = (optsResp.body && optsResp.body.options) ||
+                      (Array.isArray(optsResp.body) ? optsResp.body : []);
+        var opt = options.find(function (o) { return o.type === 'CUSTOMER_FULL_PAYMENT'; });
+        if (!opt) {
+          throw new Error('No payable checkout option returned. Your card has not been charged.');
+        }
+        var uti = opt.paymentMethods && opt.paymentMethods.cardProvider && opt.paymentMethods.cardProvider.uti;
+
+        // 5. Submit the booking with the authenticated PaymentMethod ID.
+        //    Bokun will charge the card server-side as a merchant-initiated
+        //    transaction — the off-session flag set on the SetupIntent in
+        //    step 2 exempts this charge from re-authentication.
+        var checkoutRequest = {
+          source:                        'DIRECT_REQUEST',
+          checkoutOption:                'CUSTOMER_FULL_PAYMENT',
+          directBooking:                 bookingRequest,
+          amount:                        opt.amount,
+          currency:                      opt.currency,
+          paymentMethod:                 'CARD',
+          paymentToken:                  { token: paymentMethodId },
+          sendNotificationToMainContact: true,
+          showPricesInNotification:      true,
+          successUrl: window.location.origin + '/booking-confirmed/',
+          errorUrl:   window.location.origin + '/tours/Banff-Hidden-Gem-Canoe-Tour/?booking=failed',
+          cancelUrl:  window.location.origin + '/tours/Banff-Hidden-Gem-Canoe-Tour/',
+        };
+        if (uti) checkoutRequest.uti = uti;
+        if (customerId) checkoutRequest.externalBookingReference = customerId;
+
+        var submitResp = await postJson('/api/checkout/submit', checkoutRequest);
+        if (submitResp.status >= 400) {
+          var msg = bokunMessage(submitResp) || '';
+          // Specific case: the card authenticated fine on Stripe but Bokun's
+          // server-side charge failed (insufficient funds, 3DS chargeback,
+          // etc.). The Stripe error code surfaces in Bokun's message here.
+          if (/insufficient[_ ]?funds/i.test(msg)) {
+            throw new Error('Your card was declined for insufficient funds. Please try a different card.');
+          }
+          if (/card[_ ]?declined|do_not_honor|generic_decline/i.test(msg)) {
+            throw new Error('Your card was declined by your bank. Please try a different card.');
+          }
+          throw new Error(msg
+            ? 'Booking failed: ' + msg
+            : 'Booking failed (status ' + submitResp.status + '). If your card was charged, please contact us — your card may not have been charged.');
+        }
+        var body = submitResp.body || {};
+        if (body.booking && body.booking.confirmationCode) {
+          window.location.href = window.location.origin +
+            '/booking-confirmed/?code=' + encodeURIComponent(body.booking.confirmationCode);
+          return;
+        }
+        // Defensive fallback: if Bokun ever reverts the channel to REDIRECT,
+        // honor the redirect rather than dropping the customer.
+        if (body.redirectRequest) {
+          followRedirect(body.redirectRequest);
+          return;
+        }
+        throw new Error('Booking submitted but no confirmation was returned. Please contact us before re-trying.');
+      } catch (err) {
+        console.error('[booking] submit failed', err);
+        showError(err.message || 'Something went wrong. Please try again.');
+        resetButton();
+      }
     });
 
     window.__horizonOpenBookingModal = openModal;

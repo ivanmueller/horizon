@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booking confirmed — Horizon Tours</title>
+  <meta name="description" content="Your Horizon Tours booking is confirmed. A confirmation email with your voucher and full details is on its way.">
+  <meta name="robots" content="noindex">
+  <link rel="canonical" href="https://gowithhorizon.com/booking-confirmed/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%23FF6B4A'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
+  <style>
+    .confirm-hero {
+      background: var(--near-black);
+      padding: calc(var(--space-10) + 80px) 0 var(--space-10);
+      text-align: center;
+      color: white;
+    }
+    .confirm-hero__check {
+      width: 64px; height: 64px;
+      margin: 0 auto var(--space-4);
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: center;
+      color: #4ADE80;
+    }
+    .confirm-hero__title {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 4.5vw, 2.6rem);
+      font-weight: 700;
+      margin-bottom: var(--space-3);
+    }
+    .confirm-hero__subtitle {
+      color: rgba(255,255,255,0.7);
+      font-size: clamp(1rem, 2vw, 1.1rem);
+      max-width: 540px;
+      margin: 0 auto var(--space-3);
+      line-height: 1.6;
+    }
+    .confirm-code {
+      display: inline-block;
+      margin-top: var(--space-3);
+      padding: 10px 18px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+      font-size: 1.05rem;
+      color: white;
+      letter-spacing: 0.05em;
+    }
+    .confirm-code__label {
+      display: block;
+      font-family: var(--font-body);
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.55);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .confirm-body {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: var(--space-8) var(--space-4);
+    }
+    .confirm-card {
+      background: white;
+      border: 1px solid rgba(0,0,0,0.06);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+      box-shadow: var(--shadow-md);
+    }
+    .confirm-card h2 {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      margin: 0 0 var(--space-3);
+    }
+    .confirm-card p {
+      color: var(--mid-gray);
+      line-height: 1.65;
+      margin: 0 0 var(--space-3);
+    }
+    .confirm-list {
+      margin: var(--space-3) 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    .confirm-list li {
+      display: flex;
+      gap: 12px;
+      padding: 10px 0;
+      border-top: 1px solid rgba(0,0,0,0.06);
+      color: var(--mid-gray);
+      line-height: 1.55;
+    }
+    .confirm-list li:first-child { border-top: none; }
+    .confirm-list__num {
+      flex-shrink: 0;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: rgba(255,107,74,0.1);
+      color: var(--sunset-coral);
+      font-weight: 700;
+      font-size: 0.85rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .confirm-actions {
+      margin-top: var(--space-5);
+      display: flex;
+      gap: var(--space-3);
+      flex-wrap: wrap;
+    }
+    .confirm-actions .btn { flex: 1; min-width: 200px; }
+  </style>
+</head>
+<body>
+
+  <nav class="nav" role="navigation" aria-label="Main navigation">
+    <div class="nav__inner">
+      <a href="/" class="nav__logo"><span class="nav__logo-icon"><svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true"><rect width="36" height="36" rx="8" fill="#FF6B4A"/><path d="M13 7v22M13 18c0-6 12-6 12 0v11" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/></svg></span> <span class="nav__logo-text" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.5rem;color:#FF6B4A;font-weight:700;">horizon</span></a>
+      <div class="nav__links">
+        <a href="/" class="nav__link">Home</a>
+        <a href="/tours/" class="nav__link">Tours</a>
+        <a href="/about/" class="nav__link">About</a>
+        <a href="/contact/" class="nav__link">Contact</a>
+      </div>
+      <button class="nav__mobile-toggle" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+
+  <div class="confirm-hero">
+    <div class="container">
+      <div class="confirm-hero__check" aria-hidden="true">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h1 class="confirm-hero__title">Booking confirmed</h1>
+      <p class="confirm-hero__subtitle">Your seat is held. A confirmation email with your voucher and full trip details is on its way.</p>
+      <div class="confirm-code" id="confirmCodeBlock" hidden>
+        <span class="confirm-code__label">Confirmation code</span>
+        <span id="confirmCode">—</span>
+      </div>
+    </div>
+  </div>
+
+  <main class="confirm-body">
+    <div class="confirm-card">
+      <h2>What happens next</h2>
+      <ul class="confirm-list">
+        <li><span class="confirm-list__num">1</span><span>Check your inbox for the confirmation email — it has your voucher, the meeting point, and the operator's contact info. If you don't see it within 10 minutes, check spam or <a href="/contact/">get in touch</a>.</span></li>
+        <li><span class="confirm-list__num">2</span><span>The day before your tour, we'll send a reminder with weather and pickup timing. Pickup windows are usually a 10-minute block from your hotel or chosen meeting point.</span></li>
+        <li><span class="confirm-list__num">3</span><span>Free cancellation up to 24 hours before your tour starts — just reply to the confirmation email and we'll refund your card.</span></li>
+      </ul>
+
+      <div class="confirm-actions">
+        <a href="/tours/" class="btn btn--secondary">Browse more tours</a>
+        <a href="/contact/" class="btn btn--primary">Contact us</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer" role="contentinfo">
+    <div class="container">
+      <div class="footer__grid">
+        <div>
+          <a href="/" class="nav__logo" style="color:white; margin-bottom: var(--space-2); display: inline-flex;">
+            <span class="nav__logo-icon"><svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true"><rect width="36" height="36" rx="8" fill="#FF6B4A"/><path d="M13 7v22M13 18c0-6 12-6 12 0v11" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/></svg></span>
+            <span class="nav__logo-text" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.5rem;color:#FF6B4A;font-weight:700;">horizon</span> tours
+          </a>
+          <p class="footer__brand-desc">Premium guided experiences in Banff National Park and the Canadian Rockies. Locally owned, small-group focused.</p>
+        </div>
+        <div>
+          <h4 class="footer__heading">Experiences</h4>
+          <a href="/tours/lake-louise-sunrise-canoe/" class="footer__link">Guided Canoe</a>
+          <a href="/tours/banff-town-highlights-gondola/" class="footer__link">Banff Highlights &amp; Gondola</a>
+          <a href="/tours/Banff-Hidden-Gem-Canoe-Tour/" class="footer__link">Hidden Gem Canoe Tour</a>
+          <a href="/tours/" class="footer__link">All Tours</a>
+        </div>
+        <div>
+          <h4 class="footer__heading">Company</h4>
+          <a href="/about/" class="footer__link">About Us</a>
+          <a href="/contact/" class="footer__link">Contact</a>
+          <a href="/blog/" class="footer__link">Blog</a>
+          <a href="/#faq" class="footer__link">FAQ</a>
+        </div>
+        <div>
+          <h4 class="footer__heading">Get In Touch</h4>
+          <a href="mailto:hello@gowithhorizon.com" class="footer__link">hello@gowithhorizon.com</a>
+          <a href="tel:+14035551234" class="footer__link">+1 (403) 555-1234</a>
+          <p class="footer__link" style="cursor:default;">Banff, Alberta, Canada</p>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        <p>&copy; 2025 Horizon Tours. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      var code = params.get('code');
+      if (code && /^[A-Za-z0-9-]{4,40}$/.test(code)) {
+        var block = document.getElementById('confirmCodeBlock');
+        var label = document.getElementById('confirmCode');
+        if (block && label) {
+          label.textContent = code;
+          block.hidden = false;
+        }
+      }
+    })();
+  </script>
+  <script src="/js/main.js"></script>
+</body>
+</html>
