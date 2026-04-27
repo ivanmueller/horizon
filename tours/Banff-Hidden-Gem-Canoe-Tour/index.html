@@ -3573,6 +3573,15 @@
       // Worker wraps Bokun's body as { error: 'upstream', body: { message, fields } }
       return resp && resp.body && resp.body.body && resp.body.body.message;
     }
+    function bokunFields(resp) {
+      // Per-field validation errors from Bokun, e.g.
+      //   { mainContact.country: 'MISSING', passenger[0].dateOfBirth: 'INVALID' }
+      var fields = resp && resp.body && resp.body.body && resp.body.body.fields;
+      if (!fields || typeof fields !== 'object') return null;
+      var entries = Object.keys(fields);
+      if (entries.length === 0) return null;
+      return entries.map(function (k) { return k + ': ' + fields[k]; }).join('; ');
+    }
 
     // Pay handler — Stripe SetupIntent + Bokun TOKEN-mode checkout.
     //
@@ -3705,6 +3714,7 @@
         var submitResp = await postJson('/api/checkout/submit', checkoutRequest);
         if (submitResp.status >= 400) {
           var msg = bokunMessage(submitResp) || '';
+          var fields = bokunFields(submitResp);
           // Specific case: the card authenticated fine on Stripe but Bokun's
           // server-side charge failed (insufficient funds, 3DS chargeback,
           // etc.). The Stripe error code surfaces in Bokun's message here.
@@ -3713,6 +3723,12 @@
           }
           if (/card[_ ]?declined|do_not_honor|generic_decline/i.test(msg)) {
             throw new Error('Your card was declined by your bank. Please try a different card.');
+          }
+          // Bokun validation errors (missing required answers, etc.) — show
+          // the field list so we can debug what's expected. Card NOT charged.
+          if (/InvalidAnswersException|MISSING|INVALID/i.test(msg) || fields) {
+            throw new Error('Booking validation failed. Your card has not been charged. ' +
+              (fields ? 'Missing or invalid: ' + fields : (msg || 'No detail returned.')));
           }
           throw new Error(msg
             ? 'Booking failed: ' + msg
