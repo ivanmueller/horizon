@@ -3485,6 +3485,29 @@
       if (e.key === 'Escape' && !modal.hidden) closeModal();
     });
 
+    // Normalize a user-entered phone number into E.164 — the format Bokun's
+    // PHONE_NUMBER validator wants. Without this, "6043604693" gets bounced
+    // with InvalidAnswersException; "+16043604693" passes. Defaults the
+    // country code to +1 for bare 10-digit numbers (Canadian / US — the
+    // common case for this product). Anything that already starts with +
+    // or has a different country prefix passes through untouched.
+    function normalizePhoneE164(raw) {
+      if (!raw) return '';
+      var trimmed = String(raw).trim();
+      // Already in international format — strip non-digits except the leading +.
+      if (trimmed.charAt(0) === '+') {
+        return '+' + trimmed.slice(1).replace(/\D/g, '');
+      }
+      var digits = trimmed.replace(/\D/g, '');
+      if (digits.length === 10) return '+1' + digits;            // 6043604693 → +16043604693
+      if (digits.length === 11 && digits.charAt(0) === '1') {    // 16043604693 → +16043604693
+        return '+' + digits;
+      }
+      // Anything else: assume the user meant to include a country code,
+      // just prepend + and let Bokun validate.
+      return '+' + digits;
+    }
+
     function buildBookingRequest() {
       var product = window.BOKUN.product;
       var slot    = window.bokunBooking.slot;
@@ -3520,7 +3543,7 @@
           { questionId: 'firstName',   values: [fnEl.value.trim()] },
           { questionId: 'lastName',    values: [lnEl.value.trim()] },
           { questionId: 'email',       values: [emEl.value.trim()] },
-          { questionId: 'phoneNumber', values: [phEl.value.trim()] },
+          { questionId: 'phoneNumber', values: [normalizePhoneE164(phEl.value)] },
         ],
         activityBookings: [{
           activityId:    BOKUN_PRODUCT_ID,
@@ -3659,7 +3682,7 @@
               billing_details: {
                 name:  fullName,
                 email: emEl.value.trim(),
-                phone: phEl.value.trim(),
+                phone: normalizePhoneE164(phEl.value),
               },
             },
           },
