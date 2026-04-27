@@ -121,27 +121,63 @@ async function main() {
   console.log("Product   ", product.title);
   console.log("Date/slot ", dateToYmd(slot.date), slot.startTime, "rateId=" + slot.defaultRateId);
 
-  const resp = await bokunFetch(
+  const optsResp = await bokunFetch(
     "POST",
     `/checkout.json/options/booking-request?currency=${CURRENCY}`,
     bookingRequest,
   );
 
-  const questions = resp?.questions || resp?.bookingQuestions;
-  if (!questions) {
-    rule("RAW response (no `questions` field found)");
-    console.log(JSON.stringify(resp, null, 2));
-    return;
+  rule("RAW /options response — `questions` field");
+  console.log(JSON.stringify(optsResp?.questions ?? null, null, 2));
+
+  rule("RAW /options response — top-level keys");
+  console.log(Object.keys(optsResp || {}).join(", ") || "(empty)");
+
+  // Now actually try /submit with a placeholder token. Bokun runs the
+  // BookingRequest validation before charging, so we can read the per-field
+  // errors out of the response without any real payment happening.
+  rule("trial /submit (placeholder token, validation only)");
+  const opts = Array.isArray(optsResp) ? optsResp : optsResp?.options || [];
+  const opt = opts.find((o) => o.type === "CUSTOMER_FULL_PAYMENT") || opts[0];
+  const uti = opt?.paymentMethods?.cardProvider?.uti;
+
+  const submitRequest = {
+    source: "DIRECT_REQUEST",
+    checkoutOption: "CUSTOMER_FULL_PAYMENT",
+    directBooking: bookingRequest,
+    amount: opt?.amount,
+    currency: opt?.currency,
+    paymentMethod: "CARD",
+    ...(uti ? { uti } : {}),
+    paymentToken: { token: "pm_validation_only_placeholder" },
+    sendNotificationToMainContact: false,
+    showPricesInNotification: false,
+    successUrl: "https://gowithhorizon.com/booking-confirmed/",
+    errorUrl: "https://gowithhorizon.com/tours/Banff-Hidden-Gem-Canoe-Tour/",
+    cancelUrl: "https://gowithhorizon.com/tours/Banff-Hidden-Gem-Canoe-Tour/",
+  };
+
+  let submitResp;
+  let submitErr;
+  try {
+    submitResp = await bokunFetch(
+      "POST",
+      `/checkout.json/submit?currency=${CURRENCY}`,
+      submitRequest,
+    );
+  } catch (e) {
+    submitErr = e;
   }
 
-  printQuestionGroup("MAIN CONTACT QUESTIONS", questions.mainContactQuestions || questions.mainContact);
-  printQuestionGroup("PASSENGER QUESTIONS (per passenger)", questions.passengerQuestions || questions.passenger);
-  printQuestionGroup("ACTIVITY BOOKING QUESTIONS", questions.activityBookingQuestions || questions.activity);
-  printQuestionGroup("BOOKING-LEVEL QUESTIONS", questions.bookingQuestions || questions.booking);
-
-  rule("anything else in the response");
-  const otherKeys = Object.keys(resp).filter((k) => k !== "options" && k !== "questions");
-  console.log(otherKeys.length ? otherKeys.join(", ") : "(nothing)");
+  if (submitErr) {
+    console.log("status :", submitErr.status);
+    console.log("message:", (submitErr.message || "").split("\n")[0]);
+    console.log("body   :");
+    console.log(JSON.stringify(submitErr.body ?? null, null, 2));
+  } else {
+    console.log("(no error — got a response)");
+    console.log(JSON.stringify(submitResp, null, 2).slice(0, 2000));
+  }
 }
 
 main().catch((e) => {
