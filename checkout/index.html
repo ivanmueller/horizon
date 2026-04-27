@@ -440,6 +440,54 @@
       margin: 0 0 4px;
     }
 
+    /* ── Pay-now / Reserve toggle ────────────────────────────────────── */
+    .co-pay-toggle {
+      border: 0; padding: 0; margin: 0 0 var(--space-4);
+      display: flex; flex-direction: column; gap: var(--space-2);
+    }
+    .co-pay-toggle__opt {
+      display: flex; align-items: center; gap: var(--space-3);
+      padding: var(--space-3) var(--space-4);
+      border: 2px solid var(--light-gray);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      background: #fff;
+      transition: border-color var(--duration-fast) var(--ease-out);
+    }
+    .co-pay-toggle__opt:hover { border-color: var(--coral); }
+    .co-pay-toggle__opt--selected { border-color: var(--coral); background: var(--coral-light); }
+    .co-pay-toggle__opt--disabled { cursor: not-allowed; opacity: 0.7; }
+    .co-pay-toggle__opt--disabled:hover { border-color: var(--light-gray); }
+    .co-pay-toggle__inner { flex: 1; display: flex; flex-direction: column; gap: 2px; line-height: 1.3; }
+    .co-pay-toggle__inner strong {
+      color: var(--near-black); font-weight: 600; font-size: var(--text-base);
+    }
+    .co-pay-toggle__sub { color: var(--mid-gray); font-size: var(--text-sm); }
+    .co-pay-toggle__pill {
+      display: inline-block;
+      padding: 4px 10px;
+      background: var(--light-gray);
+      color: var(--mid-gray);
+      border-radius: var(--radius-full);
+      font-size: var(--text-xs);
+      font-weight: 600;
+    }
+
+    /* ── Stripe Payment Element mount ────────────────────────────────── */
+    .co-payment { margin-bottom: var(--space-4); }
+    .co-payment__mount {
+      min-height: 56px;
+      padding: var(--space-3);
+      background: var(--warm-white-alt);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      transition: padding var(--duration-fast) var(--ease-out);
+    }
+    /* Stripe Elements injects its own padded container; remove our shell
+       padding once Stripe takes over so the inner appearance theme is the
+       only padding contributor. */
+    .co-payment__mount--mounted { padding: 0; background: transparent; border: 0; }
+
     /* ── CTA ────────────────────────────────────────────────────────── */
     .co-section__cta {
       margin-top: var(--space-4);
@@ -450,8 +498,13 @@
     .co-cta {
       width: 100%;
       min-height: 52px;        /* spec: ≥44px touch target — bumped to match button proportions */
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
     }
     .co-cta:disabled { opacity: 0.55; cursor: not-allowed; }
+    .co-cta__lock { flex-shrink: 0; }
     .co-cta-hint {
       font-size: var(--text-xs);
       color: var(--mid-gray);
@@ -619,7 +672,54 @@
           <span class="co-section__chip" id="paymentChip">Complete step 1 first</span>
         </header>
         <div class="co-section__body" id="sectionPaymentBody">
-          <p class="co-placeholder">Pay now / Reserve toggle, wallets, card form, and Book now CTA go here (step 8).</p>
+          <!-- Pay-now / Reserve toggle. Pay-now is the only working option for
+               v1; Reserve carries a 'Coming soon' pill and is non-interactive
+               so the optionality is visible (loss-aversion neutralizer at the
+               payment moment) without committing to scheduling infra yet. -->
+          <h4 class="co-form__heading">Choose when to pay</h4>
+          <div class="co-pay-toggle" role="radiogroup" aria-label="Payment timing">
+            <label class="co-pay-toggle__opt co-pay-toggle__opt--selected" id="payTimingNowLabel">
+              <input class="sr-only" type="radio" name="payTiming" value="now" checked>
+              <span class="co-pay-toggle__inner">
+                <strong>Pay now</strong>
+                <span id="payNowAmount" class="co-pay-toggle__sub">— today</span>
+              </span>
+            </label>
+            <label class="co-pay-toggle__opt co-pay-toggle__opt--disabled" aria-disabled="true">
+              <input class="sr-only" type="radio" name="payTiming" value="later" disabled>
+              <span class="co-pay-toggle__inner">
+                <strong>Reserve &amp; pay later</strong>
+                <span class="co-pay-toggle__sub">CA$0.00 today — charged closer to the tour</span>
+              </span>
+              <span class="co-pay-toggle__pill">Coming soon</span>
+            </label>
+          </div>
+
+          <!-- Stripe Payment Element mount. Wallet buttons (Apple Pay /
+               Google Pay) surface automatically on supported devices; Stripe
+               handles detection. We mount on first Section-2 open so we
+               don't pay the network cost for users who never reach payment. -->
+          <div class="co-payment">
+            <div class="co-payment__mount" id="paymentMount">
+              <p class="co-placeholder" id="paymentLoading">Loading secure payment…</p>
+            </div>
+            <div class="co-form__error" id="paymentError" hidden></div>
+          </div>
+
+          <div class="co-section__cta">
+            <button type="button" class="btn btn--primary btn--lg co-cta" id="bookNow" disabled>
+              <svg class="co-cta__lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="11" width="18" height="11" rx="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <span id="bookNowLabel">Book now</span>
+            </button>
+            <p class="co-cta-hint">
+              Payments are secure and encrypted. By booking, you agree to
+              <a href="/contact/" target="_blank" rel="noopener">Horizon's terms</a>
+              and the operator's listing.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -846,6 +946,10 @@
       var total = lines.reduce(function (sum, l) { return sum + (l.value || 0); }, 0);
       els.summaryTotal.innerHTML = '';
       els.summaryTotal.textContent = prefix + total.toFixed(2);
+      // Snapshot for Section 2 (Pay-now amount + Book now CTA label) so the
+      // payment IIFE doesn't have to re-derive it from product + booking.
+      window.HORIZON_CHECKOUT.totalAmount = total;
+      window.HORIZON_CHECKOUT.totalLabel  = prefix + total.toFixed(2);
     }
 
     function buildLineItems(booking, product, prefix) {
@@ -1405,6 +1509,208 @@
       // Leave room above so the timer banner stays visible.
       var offset = 70;
       window.scrollTo({ top: Math.max(0, docTop - offset), behavior: 'smooth' });
+    }
+  })();
+  </script>
+
+  <!--
+    Section 2 — Pay-now toggle, Stripe Payment Element mount, Book-now confirm.
+
+    Keeps the existing SetupIntent flow on the worker (off_session, Bokun
+    is the merchant of record). On Book-now click we run stripe.confirmSetup
+    to capture the payment method (with in-page 3DS if required); the
+    resulting pm_xxx is handed off to step 9 via horizon:section2-complete.
+  -->
+  <script>
+  (function () {
+    // Same publishable key as the (now-removed) tour-page modal used. Public
+    // by design — the matching secret key lives in the worker.
+    var STRIPE_PUBLISHABLE_KEY = 'pk_live_51T9CLyH6E6PAtcrweBwc1ubizlC2hwsdkmeLKGsccwd4J15s6QXTfbUHaef2e92aSXsuINXxvd5igvmt3l141JLH00ulBjkXGK';
+    var BOKUN_API_BASE = 'https://horizon-bokun.ivan-mueller02.workers.dev';
+
+    var els = {
+      payNowAmount:   document.getElementById('payNowAmount'),
+      paymentMount:   document.getElementById('paymentMount'),
+      paymentLoading: document.getElementById('paymentLoading'),
+      paymentError:   document.getElementById('paymentError'),
+      bookNow:        document.getElementById('bookNow'),
+      bookNowLabel:   document.getElementById('bookNowLabel'),
+    };
+
+    var stripeInstance = null;
+    var elementsInstance = null;
+    var paymentElement = null;
+    var mountStarted = false;
+    var mountReady = false;
+
+    document.addEventListener('horizon:section1-complete', function () {
+      refreshLabels();
+      if (!mountStarted) mount();
+    });
+
+    function refreshLabels() {
+      var label = (window.HORIZON_CHECKOUT && window.HORIZON_CHECKOUT.totalLabel) || '';
+      if (label) {
+        els.payNowAmount.textContent = label + ' today';
+        els.bookNowLabel.textContent = 'Book now · ' + label;
+      } else {
+        els.payNowAmount.textContent = '— today';
+        els.bookNowLabel.textContent = 'Book now';
+      }
+    }
+
+    function mount() {
+      mountStarted = true;
+      var lead = window.HORIZON_CHECKOUT.section1 && window.HORIZON_CHECKOUT.section1.lead;
+      if (!lead || !lead.email) {
+        showError('Missing lead traveler details. Go back to step 1 and fill them in.');
+        mountStarted = false;
+        return;
+      }
+      if (typeof Stripe !== 'function') {
+        // Stripe.js is loaded with `defer` — usually ready by now. If not,
+        // wait one tick and retry once.
+        setTimeout(function () {
+          mountStarted = false;
+          if (typeof Stripe === 'function') mount();
+          else showError('Secure payment is still loading. Please try again in a moment.');
+        }, 250);
+        return;
+      }
+
+      fetch(BOKUN_API_BASE + '/api/stripe/setup-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: lead.email,
+          name:  (lead.firstName + ' ' + lead.lastName).trim(),
+        }),
+      })
+        .then(function (r) {
+          return r.json().then(function (body) { return { ok: r.ok, body: body }; });
+        })
+        .then(function (res) {
+          if (!res.ok || !res.body || !res.body.clientSecret) {
+            throw new Error((res.body && (res.body.message || res.body.error)) || 'setup_intent_failed');
+          }
+          window.HORIZON_CHECKOUT.payment = {
+            customerId:     res.body.customerId,
+            setupIntentId:  res.body.setupIntentId,
+          };
+          stripeInstance = Stripe(STRIPE_PUBLISHABLE_KEY);
+          elementsInstance = stripeInstance.elements({
+            clientSecret: res.body.clientSecret,
+            appearance: {
+              theme: 'stripe',
+              variables: {
+                colorPrimary:    '#FF6B4A',
+                colorText:       '#1A1A2E',
+                colorBackground: '#FFFFFF',
+                colorDanger:     '#DC2626',
+                fontFamily:      '"DM Sans", -apple-system, BlinkMacSystemFont, sans-serif',
+                borderRadius:    '8px',
+                spacingUnit:     '4px',
+              },
+            },
+          });
+          paymentElement = elementsInstance.create('payment', {
+            layout: 'tabs',
+            // Apple Pay / Google Pay surface here automatically on supported
+            // devices. PayPal is intentionally excluded — Bokun is the
+            // merchant of record on the SetupIntent path and PayPal needs
+            // a PaymentIntent flow that would change who the merchant is.
+            wallets: { applePay: 'auto', googlePay: 'auto' },
+          });
+          if (els.paymentLoading && els.paymentLoading.parentNode) els.paymentLoading.parentNode.removeChild(els.paymentLoading);
+          els.paymentMount.classList.add('co-payment__mount--mounted');
+          paymentElement.mount(els.paymentMount);
+          paymentElement.on('ready', function () {
+            mountReady = true;
+            els.bookNow.disabled = false;
+          });
+          paymentElement.on('change', function (ev) {
+            if (ev.error) showError(ev.error.message); else hideError();
+          });
+        })
+        .catch(function (err) {
+          console.error('Stripe SetupIntent fetch failed:', err);
+          showError('We couldn’t set up secure payment. Please try again.');
+          mountStarted = false;
+        });
+    }
+
+    els.bookNow.addEventListener('click', function () {
+      if (els.bookNow.disabled) return;
+      if (!mountReady || !stripeInstance || !elementsInstance) return;
+
+      var prevLabel = els.bookNowLabel.textContent;
+      els.bookNow.disabled = true;
+      els.bookNowLabel.textContent = 'Confirming…';
+      hideError();
+
+      // The tour starts more than 7 days from now (Bokun's spot-hold
+      // expiry rule), so 3DS challenges are rare on cards that already
+      // support MIT. redirect:'if_required' keeps any challenge in-page.
+      stripeInstance.confirmSetup({
+        elements: elementsInstance,
+        confirmParams: {
+          return_url: window.location.origin + '/checkout/?id=' +
+            encodeURIComponent(window.HORIZON_CHECKOUT.bookingId) +
+            '#payment-confirm',
+        },
+        redirect: 'if_required',
+      })
+        .then(function (result) {
+          if (result.error) {
+            showError(stripeErrorMessage(result.error));
+            els.bookNow.disabled = false;
+            els.bookNowLabel.textContent = prevLabel;
+            return;
+          }
+          var setupIntent = result.setupIntent;
+          if (!setupIntent || !setupIntent.payment_method) {
+            showError('Payment could not be confirmed. Please try again.');
+            els.bookNow.disabled = false;
+            els.bookNowLabel.textContent = prevLabel;
+            return;
+          }
+          // Hand off to step 9 — Bokun /options + /submit. The button
+          // stays disabled with the "Submitting reservation…" label so a
+          // mid-flight state isn't reclickable.
+          window.HORIZON_CHECKOUT.section2 = {
+            paymentMethodId: setupIntent.payment_method,
+            setupIntentId:   setupIntent.id,
+          };
+          els.bookNowLabel.textContent = 'Submitting reservation…';
+          document.dispatchEvent(new CustomEvent('horizon:section2-complete', {
+            detail: window.HORIZON_CHECKOUT.section2,
+          }));
+        })
+        .catch(function (err) {
+          console.error('Stripe confirmSetup failed:', err);
+          showError('Something went wrong. Please try again.');
+          els.bookNow.disabled = false;
+          els.bookNowLabel.textContent = prevLabel;
+        });
+    });
+
+    function showError(msg) {
+      els.paymentError.textContent = msg;
+      els.paymentError.hidden = false;
+    }
+    function hideError() {
+      els.paymentError.hidden = true;
+      els.paymentError.textContent = '';
+    }
+
+    function stripeErrorMessage(err) {
+      if (!err) return 'Something went wrong.';
+      if (err.code === 'card_declined')     return 'Your card was declined — try a different card or use Apple Pay.';
+      if (err.code === 'expired_card')      return 'That card is expired.';
+      if (err.code === 'incorrect_cvc')     return 'The security code is incorrect.';
+      if (err.code === 'processing_error')  return 'Something went wrong while processing the card. Please try again.';
+      if (err.type === 'validation_error')  return err.message || 'Please review the card details.';
+      return err.message || 'Something went wrong.';
     }
   })();
   </script>
