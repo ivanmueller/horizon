@@ -44,3 +44,17 @@ BOKUN_API_BASE = "https://api.bokun.io"
 [[kv_namespaces]]
 binding = "BOOKINGS"
 id      = "09014fdc2f54492993b27401f576c9a3"
+
+# KV namespace for the per-hotel bookings ledger (writes once a Bokun
+# booking is confirmed; powers the hotel-manager dashboard at
+# /dashboard/hotel/?hotel=<slug>). Records are persistent — no TTL.
+#
+# One-time setup, from inside workers/bokun/:
+#   1. wrangler kv namespace create BOOKINGS_LEDGER
+#   2. Copy the printed `id` (32-char hex)
+#   3. Paste it below in place of PASTE_ID_HERE
+#   4. wrangler deploy
+#
+# [[kv_namespaces]]
+# binding = "BOOKINGS_LEDGER"
+# id      = "PASTE_ID_HERE"

@@ -15,6 +15,14 @@
 //   POST /api/booking/initiate         mint booking_id, persist cart + hotel
 //   GET  /api/booking/state/:id        read cart back on the checkout page
 //
+// Hotel-manager dashboard ledger (writes once on confirmed booking, no TTL):
+//   POST /api/dashboard/record         page calls this AFTER /checkout/submit
+//                                      succeeds; persists the booking under
+//                                      the hotel slug for /dashboard/hotel/.
+//   GET  /api/dashboard/bookings       ?hotel=<slug>&from=YYYY-MM-DD
+//                                      &to=YYYY-MM-DD — list a hotel's
+//                                      bookings in a date window.
+//
 // Secrets (Worker secret storage, never on disk):
 //   BOKUN_ACCESS_KEY, BOKUN_SECRET_KEY  — HMAC signing for Bokun
 //   STRIPE_SECRET_KEY                   — sk_test_... or sk_live_...
@@ -89,6 +97,22 @@ export default {
         segs[3]
       ) {
         return await handleBookingState(segs[3], env, request);
+      }
+      if (
+        request.method === "POST" &&
+        segs[0] === "api" &&
+        segs[1] === "dashboard" &&
+        segs[2] === "record"
+      ) {
+        return await handleDashboardRecord(request, env);
+      }
+      if (
+        request.method === "GET" &&
+        segs[0] === "api" &&
+        segs[1] === "dashboard" &&
+        segs[2] === "bookings"
+      ) {
+        return await handleDashboardBookings(url, env, request);
       }
       return jsonResponse({ error: "Not found" }, 404, request);
     } catch (err) {
@@ -229,6 +253,110 @@ async function handleBookingInitiate(request, env) {
   });
 
   return jsonResponse({ booking_id: bookingId, expires_at: expiresAt }, 200, request);
+}
+
+// ── Hotel-manager dashboard ledger ─────────────────────────────────────────
+// Records persist forever (no TTL) because a hotel manager will want
+// historical data. Keyed by `ledger:<hotel>:<created_at>:<booking_id>` so
+// `kv.list({ prefix: 'ledger:fairmont-ll:' })` returns that hotel's
+// bookings in chronological order. Date filtering happens in-memory after
+// the list — KV doesn't support range queries on values.
+async function handleDashboardRecord(request, env) {
+  if (!env.BOOKINGS_LEDGER) {
+    return jsonResponse(
+      { error: "BOOKINGS_LEDGER KV namespace not configured on worker" },
+      500,
+      request,
+    );
+  }
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+
+  const hotel = typeof body.hotel === "string" ? body.hotel.trim().toLowerCase() : "";
+  const code = typeof body.confirmation_code === "string" ? body.confirmation_code.trim() : "";
+  const bookingId = typeof body.booking_id === "string" ? body.booking_id.trim() : "";
+  if (!hotel || !/^[a-z0-9-]{2,40}$/.test(hotel)) {
+    return jsonResponse({ error: "hotel slug required" }, 400, request);
+  }
+  if (!code) {
+    return jsonResponse({ error: "confirmation_code required" }, 400, request);
+  }
+
+  const now = Date.now();
+  const record = {
+    booking_id:        bookingId || null,
+    hotel:             hotel,
+    confirmation_code: code,
+    tour_id:           body.tour_id ?? null,
+    tour_title:        typeof body.tour_title === "string" ? body.tour_title : null,
+    date:              typeof body.date === "string" ? body.date : null,
+    time:              typeof body.time === "string" ? body.time : null,
+    adults:            Number.parseInt(body.adults, 10) || 0,
+    youth:             Number.parseInt(body.youth, 10) || 0,
+    infants:           Number.parseInt(body.infants, 10) || 0,
+    amount:            typeof body.amount === "number" ? body.amount : null,
+    currency:          typeof body.currency === "string" ? body.currency : CURRENCY,
+    lead_name:         typeof body.lead_name === "string" ? body.lead_name : null,
+    lead_email:        typeof body.lead_email === "string" ? body.lead_email : null,
+    bokun_tracking_code: typeof body.bokun_tracking_code === "string" ? body.bokun_tracking_code : null,
+    created_at:        now,
+  };
+
+  // Pad created_at so lexicographic sort matches chronological sort.
+  const sortKey = String(now).padStart(15, "0");
+  const key = `ledger:${hotel}:${sortKey}:${bookingId || code}`;
+  await env.BOOKINGS_LEDGER.put(key, JSON.stringify(record));
+
+  return jsonResponse({ ok: true, key }, 200, request);
+}
+
+async function handleDashboardBookings(url, env, request) {
+  if (!env.BOOKINGS_LEDGER) {
+    return jsonResponse(
+      { error: "BOOKINGS_LEDGER KV namespace not configured on worker" },
+      500,
+      request,
+    );
+  }
+  const hotel = (url.searchParams.get("hotel") || "").trim().toLowerCase();
+  if (!hotel || !/^[a-z0-9-]{2,40}$/.test(hotel)) {
+    return jsonResponse({ error: "hotel slug required" }, 400, request);
+  }
+  const from = url.searchParams.get("from"); // YYYY-MM-DD inclusive
+  const to = url.searchParams.get("to"); // YYYY-MM-DD inclusive
+  const fromMs = from && /^\d{4}-\d{2}-\d{2}$/.test(from) ? Date.parse(from + "T00:00:00Z") : null;
+  const toMs = to && /^\d{4}-\d{2}-\d{2}$/.test(to) ? Date.parse(to + "T23:59:59Z") : null;
+
+  // KV list pagination — for v1 we cap at 1000 records (covers months of
+  // bookings per hotel). If a partner outgrows this, paginate via cursor.
+  const list = await env.BOOKINGS_LEDGER.list({ prefix: `ledger:${hotel}:`, limit: 1000 });
+  const records = [];
+  for (const k of list.keys) {
+    const r = await env.BOOKINGS_LEDGER.get(k.name, "json");
+    if (!r) continue;
+    if (fromMs != null && r.created_at < fromMs) continue;
+    if (toMs != null && r.created_at > toMs) continue;
+    records.push(r);
+  }
+  // Most-recent first for the table view.
+  records.sort((a, b) => b.created_at - a.created_at);
+
+  // Aggregate KPIs server-side so the dashboard page stays dumb.
+  const kpis = records.reduce(
+    (acc, r) => {
+      acc.bookings += 1;
+      acc.travelers += (r.adults || 0) + (r.youth || 0) + (r.infants || 0);
+      acc.revenue += r.amount || 0;
+      return acc;
+    },
+    { bookings: 0, travelers: 0, revenue: 0 },
+  );
+
+  return jsonResponse(
+    { hotel, from: from || null, to: to || null, kpis, records },
+    200,
+    request,
+  );
 }
 
 async function handleBookingState(id, env, request) {
