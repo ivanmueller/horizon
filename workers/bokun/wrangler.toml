@@ -30,3 +30,17 @@ BOKUN_API_BASE = "https://api.bokun.io"
 # [[kv_namespaces]]
 # binding = "CACHE"
 # id      = "PASTE_ID_HERE"
+
+# KV namespace for the checkout booking_id state pouch (cart + hotel held
+# during the surface handoff between the tour page and /checkout/?id=...).
+# 45-min TTL is enforced per-record at write time; do not set a namespace TTL.
+#
+# One-time setup, from inside workers/bokun/:
+#   1. wrangler kv namespace create BOOKINGS
+#   2. Copy the printed `id` (32-char hex)
+#   3. Uncomment the [[kv_namespaces]] block below and paste the id
+#   4. wrangler deploy
+#
+# [[kv_namespaces]]
+# binding = "BOOKINGS"
+# id      = "PASTE_ID_HERE"
