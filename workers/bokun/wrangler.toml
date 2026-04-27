@@ -41,6 +41,6 @@ BOKUN_API_BASE = "https://api.bokun.io"
 #   3. Uncomment the [[kv_namespaces]] block below and paste the id
 #   4. wrangler deploy
 #
-# [[kv_namespaces]]
-# binding = "BOOKINGS"
-# id      = "PASTE_ID_HERE"
+[[kv_namespaces]]
+binding = "BOOKINGS"
+id      = "09014fdc2f54492993b27401f576c9a3"
