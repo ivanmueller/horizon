@@ -55,6 +55,6 @@ id      = "09014fdc2f54492993b27401f576c9a3"
 #   3. Paste it below in place of PASTE_ID_HERE
 #   4. wrangler deploy
 #
-# [[kv_namespaces]]
-# binding = "BOOKINGS_LEDGER"
-# id      = "PASTE_ID_HERE"
+[[kv_namespaces]]
+binding = "BOOKINGS_LEDGER"
+id      = "0b7f4dfd9bf247e9abcdb36480bb5fb0"
