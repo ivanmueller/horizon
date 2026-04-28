@@ -49,14 +49,101 @@
       display: block; font-family: var(--font-display);
       font-size: var(--text-lg); font-weight: 600; color: var(--near-black);
     }
+    .hd-header__actions {
+      display: inline-flex; gap: 6px; margin-top: 4px;
+    }
     .hd-signout {
-      display: inline-block; margin-top: 4px;
       background: none; border: 1px solid var(--border-color);
       padding: 4px 12px; border-radius: var(--radius-full);
       font: inherit; font-size: var(--text-xs); color: var(--mid-gray);
       cursor: pointer;
     }
     .hd-signout:hover { background: var(--warm-white-alt); color: var(--near-black); }
+    .hd-signout:disabled { opacity: 0.6; cursor: progress; }
+
+    /* ── Account modal ──────────────────────────────────────────────── */
+    .hd-modal {
+      position: fixed; inset: 0;
+      background: rgba(26, 26, 46, 0.4);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100; padding: var(--space-4);
+    }
+    .hd-modal[hidden] { display: none; }
+    .hd-modal__card {
+      background: #fff; border-radius: var(--radius-lg);
+      padding: var(--space-6); width: 100%; max-width: 420px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+    .hd-modal__head {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: var(--space-2);
+    }
+    .hd-modal__title {
+      font-family: var(--font-display);
+      font-size: var(--text-lg); font-weight: 600; color: var(--near-black);
+      margin: 0;
+    }
+    .hd-modal__close {
+      background: none; border: 0; cursor: pointer;
+      font-size: 22px; line-height: 1; color: var(--mid-gray);
+      padding: 0 6px;
+    }
+    .hd-modal__close:hover { color: var(--near-black); }
+    .hd-modal__sub {
+      font-size: var(--text-sm); color: var(--mid-gray);
+      margin: 0 0 var(--space-4);
+    }
+    .hd-modal__label {
+      display: block;
+      font-size: var(--text-sm); font-weight: 600; color: var(--near-black);
+      margin-bottom: 4px;
+    }
+    .hd-modal__input {
+      width: 100%; padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      font: inherit; font-size: var(--text-base);
+      box-sizing: border-box;
+      margin-bottom: var(--space-3);
+      background: #fff;
+    }
+    .hd-modal__input:focus {
+      outline: 2px solid var(--coral); outline-offset: -1px;
+    }
+    .hd-modal__input:disabled {
+      background: var(--warm-white-alt); color: var(--mid-gray);
+    }
+    .hd-modal__error {
+      background: #FEF2F2; border: 1px solid #FCA5A5; color: #991B1B;
+      padding: var(--space-2) var(--space-3); border-radius: var(--radius-md);
+      font-size: var(--text-sm); margin: 0 0 var(--space-3);
+    }
+    .hd-modal__error[hidden] { display: none; }
+    .hd-modal__success {
+      background: #ECFDF5; border: 1px solid #A7F3D0; color: #065F46;
+      padding: var(--space-2) var(--space-3); border-radius: var(--radius-md);
+      font-size: var(--text-sm); margin: 0 0 var(--space-3);
+    }
+    .hd-modal__success[hidden] { display: none; }
+    .hd-modal__actions {
+      display: flex; gap: var(--space-3); justify-content: flex-end;
+      margin-top: var(--space-2);
+    }
+    .hd-modal__btn {
+      padding: 8px 16px; border-radius: var(--radius-full); border: 0;
+      font: inherit; font-size: var(--text-sm); font-weight: 600;
+      cursor: pointer;
+      background: var(--coral); color: #fff;
+    }
+    .hd-modal__btn:hover { background: var(--coral-hover); }
+    .hd-modal__btn:disabled { opacity: 0.6; cursor: progress; }
+    .hd-modal__btn--secondary {
+      background: transparent; color: var(--mid-gray);
+      border: 1px solid var(--border-color);
+    }
+    .hd-modal__btn--secondary:hover {
+      background: var(--warm-white-alt); color: var(--near-black);
+    }
 
     /* ── Page layout ────────────────────────────────────────────────── */
     .hd-page {
@@ -232,10 +319,42 @@
       <div class="hd-header__hotel">
         <span class="hd-header__hotel-eyebrow">Viewing</span>
         <span class="hd-header__hotel-name" id="hdHotelName">—</span>
-        <button type="button" class="hd-signout" id="hdSignout" hidden>Sign out</button>
+        <div class="hd-header__actions" hidden id="hdHeaderActions">
+          <button type="button" class="hd-signout" id="hdAccount">Account</button>
+          <button type="button" class="hd-signout" id="hdSignout">Sign out</button>
+        </div>
       </div>
     </div>
   </header>
+
+  <!-- ── Account modal (set / change password) ─────────────────────── -->
+  <div class="hd-modal" id="hdAccountModal" hidden>
+    <form class="hd-modal__card" id="hdAccountForm">
+      <div class="hd-modal__head">
+        <h2 class="hd-modal__title">Account</h2>
+        <button type="button" class="hd-modal__close" id="hdAccountClose" aria-label="Close">×</button>
+      </div>
+
+      <p class="hd-modal__sub" id="hdAccountSub">Set a password to sign in faster next time.</p>
+
+      <p class="hd-modal__error" id="hdAccountError" hidden></p>
+      <p class="hd-modal__success" id="hdAccountSuccess" hidden></p>
+
+      <label class="hd-modal__label" for="hdAccountEmail">Email</label>
+      <input type="email" class="hd-modal__input" id="hdAccountEmail" disabled>
+
+      <label class="hd-modal__label" for="hdAccountPassword">New password</label>
+      <input type="password" class="hd-modal__input" id="hdAccountPassword" autocomplete="new-password" minlength="8" required>
+
+      <label class="hd-modal__label" for="hdAccountPasswordConfirm">Confirm new password</label>
+      <input type="password" class="hd-modal__input" id="hdAccountPasswordConfirm" autocomplete="new-password" minlength="8" required>
+
+      <div class="hd-modal__actions">
+        <button type="button" class="hd-modal__btn hd-modal__btn--secondary" id="hdAccountCancel">Cancel</button>
+        <button type="submit" class="hd-modal__btn" id="hdAccountSave">Save password</button>
+      </div>
+    </form>
+  </div>
 
   <main class="hd-page">
     <div class="hd-error" id="hdError" hidden></div>
@@ -313,6 +432,19 @@
       error:         document.getElementById('hdError'),
       refresh:       document.getElementById('hdRefresh'),
       signout:       document.getElementById('hdSignout'),
+      account:       document.getElementById('hdAccount'),
+      headerActions: document.getElementById('hdHeaderActions'),
+      acctModal:        document.getElementById('hdAccountModal'),
+      acctForm:         document.getElementById('hdAccountForm'),
+      acctClose:        document.getElementById('hdAccountClose'),
+      acctCancel:       document.getElementById('hdAccountCancel'),
+      acctSub:          document.getElementById('hdAccountSub'),
+      acctEmail:        document.getElementById('hdAccountEmail'),
+      acctPassword:     document.getElementById('hdAccountPassword'),
+      acctConfirm:      document.getElementById('hdAccountPasswordConfirm'),
+      acctSave:         document.getElementById('hdAccountSave'),
+      acctError:        document.getElementById('hdAccountError'),
+      acctSuccess:      document.getElementById('hdAccountSuccess'),
       rangeBtns:     document.querySelectorAll('.hd-range__btn'),
     };
 
@@ -345,10 +477,15 @@
       throw new Error('redirecting to /dashboard/login/');
     }
 
-    // Wipe any access-token hash the magic-link redirect left in the
-    // URL bar — nicer history entries, no token sitting in browser
-    // history. The SDK has already parsed it into localStorage.
+    // Wipe any access-token hash the magic-link / OAuth / recovery
+    // redirect left in the URL bar — nicer history entries, no token
+    // sitting in browser history. The SDK has already parsed it into
+    // localStorage. Detect type=recovery first so we know to prompt
+    // the user to set a new password after the dashboard finishes
+    // loading.
+    var isRecovery = false;
     if (window.location.hash && window.location.hash.indexOf('access_token=') !== -1) {
+      isRecovery = window.location.hash.indexOf('type=recovery') !== -1;
       history.replaceState(null, '', window.location.pathname + window.location.search);
     }
 
@@ -367,7 +504,7 @@
 
     if (!hotelSlug) {
       showError('Your account isn’t linked to any active hotel yet. Contact Horizon to get set up.');
-      els.signout.hidden = false;
+      els.headerActions.hidden = false;
     } else {
       // Render the partner directory bits (hotel name in header) from
       // partners.json, then fetch the bookings via the worker.
@@ -385,7 +522,7 @@
           } else {
             els.hotelName.textContent = hotelRecord.name;
             document.title = hotelRecord.name + ' — Partner dashboard';
-            els.signout.hidden = false;
+            els.headerActions.hidden = false;
             loadBookings();
           }
         }
@@ -399,6 +536,72 @@
       els.signout.disabled = true;
       await supabase.auth.signOut();
       window.location.replace('/dashboard/login/');
+    });
+
+    // ── Account modal (set / change password) ───────────────────────
+    function openAccount(opts) {
+      els.acctEmail.value = (session.user && session.user.email) || '';
+      els.acctPassword.value = '';
+      els.acctConfirm.value  = '';
+      els.acctError.hidden   = true;
+      els.acctSuccess.hidden = true;
+      els.acctSub.textContent = (opts && opts.recovery)
+        ? 'Set a new password for your account.'
+        : 'Set a password to sign in faster next time.';
+      els.acctModal.hidden = false;
+      setTimeout(function () { els.acctPassword.focus(); }, 0);
+    }
+    function closeAccount() {
+      els.acctModal.hidden = true;
+    }
+    els.account.addEventListener('click', function () { openAccount(); });
+    els.acctClose.addEventListener('click', closeAccount);
+    els.acctCancel.addEventListener('click', closeAccount);
+    els.acctModal.addEventListener('click', function (e) {
+      if (e.target === els.acctModal) closeAccount();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !els.acctModal.hidden) closeAccount();
+    });
+    // Auto-open in "set new password" mode when the user just clicked
+    // a Forgot-password recovery link. Their session is now active
+    // (Supabase signs them in for the recovery flow); they just need
+    // to pick a new password.
+    if (isRecovery) {
+      openAccount({ recovery: true });
+    }
+
+    els.acctForm.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      els.acctError.hidden   = true;
+      els.acctSuccess.hidden = true;
+      var pw  = els.acctPassword.value;
+      var pw2 = els.acctConfirm.value;
+      if (pw.length < 8) {
+        els.acctError.textContent = 'Password must be at least 8 characters.';
+        els.acctError.hidden = false; return;
+      }
+      if (pw !== pw2) {
+        els.acctError.textContent = 'Passwords don’t match.';
+        els.acctError.hidden = false; return;
+      }
+      els.acctSave.disabled = true;
+      els.acctSave.textContent = 'Saving…';
+      try {
+        var res = await supabase.auth.updateUser({ password: pw });
+        if (res.error) throw res.error;
+        els.acctSuccess.textContent = 'Password saved. You can sign in with it next time.';
+        els.acctSuccess.hidden = false;
+        els.acctPassword.value = '';
+        els.acctConfirm.value  = '';
+      } catch (err) {
+        console.error('updateUser failed', err);
+        els.acctError.textContent = err.message || 'Could not save password.';
+        els.acctError.hidden = false;
+      } finally {
+        els.acctSave.disabled = false;
+        els.acctSave.textContent = 'Save password';
+      }
     });
 
       // ── Range buttons ──────────────────────────────────────────────
