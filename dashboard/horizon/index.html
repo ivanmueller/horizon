@@ -428,13 +428,63 @@
     </section>
   </main>
 
-  <!-- pdfkit + blob-stream for the in-dashboard "Invoice" button. The
-       in-page generator and the Node CLI both call into the same
+  <!-- pdfkit for the in-dashboard "Invoice" button. The in-page
+       generator and the Node CLI both call into the same
        /scripts/horizon/invoice-pdf.mjs module, so PDFs from the two
        paths are visually identical. ~600KB on this internal page is
        fine; this URL is unguessable and not loaded by guests. -->
   <script src="https://unpkg.com/pdfkit@0.15.0/js/pdfkit.standalone.js"></script>
-  <script src="https://unpkg.com/blob-stream@0.1.3"></script>
+
+  <!-- Minimal blob-stream replacement. The npm `blob-stream` package
+       is published as Node CommonJS (uses require('stream') etc.) and
+       won't load as a plain <script> from a CDN. We only need enough
+       of the Writable contract for pdfkit's pipe() loop:
+       .write(chunk), .end(), 'finish'/'error' events, .toBlob(type). -->
+  <script>
+    window.blobStream = function () {
+      var chunks = [];
+      var listeners = Object.create(null);
+      function emit(ev) {
+        var cbs = listeners[ev];
+        if (!cbs) return;
+        var args = [].slice.call(arguments, 1);
+        cbs.slice().forEach(function (cb) {
+          try { cb.apply(null, args); } catch (err) { console.error(err); }
+        });
+      }
+      return {
+        writable: true,
+        write: function (chunk) {
+          if (chunk != null) chunks.push(chunk);
+          return true;
+        },
+        end: function (chunk) {
+          if (chunk != null) chunks.push(chunk);
+          // Defer so 'finish' fires asynchronously, matching a real stream.
+          setTimeout(function () { emit('finish'); }, 0);
+        },
+        on: function (ev, cb) {
+          (listeners[ev] = listeners[ev] || []).push(cb);
+          return this;
+        },
+        once: function (ev, cb) {
+          var self = this;
+          var wrap = function () { self.off(ev, wrap); cb.apply(null, arguments); };
+          return this.on(ev, wrap);
+        },
+        off: function (ev, cb) {
+          if (!listeners[ev]) return this;
+          listeners[ev] = listeners[ev].filter(function (x) { return x !== cb; });
+          return this;
+        },
+        removeListener: function (ev, cb) { return this.off(ev, cb); },
+        emit: emit,
+        toBlob: function (type) {
+          return new Blob(chunks, { type: type || 'application/octet-stream' });
+        },
+      };
+    };
+  </script>
 
   <script type="module">
     import { renderInvoice, computeAggregates }
