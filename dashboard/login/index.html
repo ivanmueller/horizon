@@ -304,11 +304,17 @@
     // Past the redirect gate — safe to reveal the page.
     document.body.style.visibility = 'visible';
 
-    // Default to magic-link for first-time visitors, but if the user
-    // has previously signed in with a password, default to password
-    // mode on subsequent visits. Localstorage-only — survives reloads,
-    // not browser restarts on a private profile.
-    let mode = localStorage.getItem(LAST_MODE_KEY) === 'password' ? 'password' : 'magic';
+    // First-time visitor (no password ever saved on this browser):
+    //   show only the magic-link entry point + Google. The password
+    //   toggle stays hidden — there's nothing to sign in with yet.
+    // Returning visitor (localStorage carries the 'password' flag,
+    //   set when they save a password in /dashboard/setup/ or via
+    //   the dashboard Account modal): default to password mode and
+    //   reveal the "Use a magic link instead" toggle so they can
+    //   flip back if they want.
+    const hasPassword = localStorage.getItem(LAST_MODE_KEY) === 'password';
+    let mode = hasPassword ? 'password' : 'magic';
+    els.toggle.parentElement.hidden = !hasPassword;
     applyMode();
 
     function applyMode() {
