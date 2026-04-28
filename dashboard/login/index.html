@@ -12,6 +12,12 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%23FF6B4A'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
+
+  <!-- Hide the page until the session check decides whether to show
+       the sign-in form or redirect a logged-in visitor straight to
+       the dashboard. Avoids flashing the form for one frame. -->
+  <style>body { visibility: hidden; }</style>
+
   <style>
     body {
       background: var(--warm-white);
@@ -292,13 +298,23 @@
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
       window.location.replace('/dashboard/hotel/');
+      throw new Error('redirecting to /dashboard/hotel/');
     }
 
-    // Default to magic-link for first-time visitors, but if the user
-    // has previously signed in with a password, default to password
-    // mode on subsequent visits. Localstorage-only — survives reloads,
-    // not browser restarts on a private profile.
-    let mode = localStorage.getItem(LAST_MODE_KEY) === 'password' ? 'password' : 'magic';
+    // Past the redirect gate — safe to reveal the page.
+    document.body.style.visibility = 'visible';
+
+    // First-time visitor (no password ever saved on this browser):
+    //   show only the magic-link entry point + Google. The password
+    //   toggle stays hidden — there's nothing to sign in with yet.
+    // Returning visitor (localStorage carries the 'password' flag,
+    //   set when they save a password in /dashboard/setup/ or via
+    //   the dashboard Account modal): default to password mode and
+    //   reveal the "Use a magic link instead" toggle so they can
+    //   flip back if they want.
+    const hasPassword = localStorage.getItem(LAST_MODE_KEY) === 'password';
+    let mode = hasPassword ? 'password' : 'magic';
+    els.toggle.parentElement.hidden = !hasPassword;
     applyMode();
 
     function applyMode() {

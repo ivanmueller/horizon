@@ -12,6 +12,15 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%23FF6B4A'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
+
+  <!-- Hide the body until the auth gate decides whether to render or
+       redirect. Without this, an unauthenticated visitor sees the
+       dashboard skeleton flash for a beat while supabase-js loads
+       and the session check runs — looks broken even though it's
+       just the network. JS reveals the body once the gate has made
+       its call (render the dashboard OR navigate away). -->
+  <style>body { visibility: hidden; }</style>
+
   <style>
     body { background: var(--warm-white); }
 
@@ -476,6 +485,9 @@
       window.location.replace('/dashboard/login/');
       throw new Error('redirecting to /dashboard/login/');
     }
+
+    // Past the redirect gate — safe to reveal the page.
+    document.body.style.visibility = 'visible';
 
     // Strip any leftover access-token hash from the URL bar. Magic-
     // link and password-recovery flows now land on /dashboard/setup/
