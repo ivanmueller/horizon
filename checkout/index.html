@@ -1891,7 +1891,16 @@
         currency:            ctx.booking.currency || 'CAD',
         lead_name:           ((lead.firstName || '') + ' ' + (lead.lastName || '')).trim() || null,
         lead_email:          lead.email || null,
-        bokun_tracking_code: (ctx.hotel && ctx.hotel.bokun_tracking_code) || null,
+        // Partner-controlled slug (e.g. FAIRMONT_LL or FAIRMONT_LL_JS).
+        // When the URL only carries ?hotel=<slug> we forward the hotel's
+        // default; once the per-employee ?ref=<slug> flow lands the
+        // resolved code goes here instead. The worker matches this
+        // against hotel_staff.tracking_code to populate staff_id; a
+        // hotel-default code falls through to staff_id=null which is
+        // the correct "hotel pool" attribution.
+        tracking_code:       (ctx.staff && ctx.staff.tracking_code)
+                             || (ctx.hotel && ctx.hotel.default_tracking_code)
+                             || null,
       };
       return fetch(BOKUN_API_BASE + '/api/dashboard/record', {
         method: 'POST',
@@ -1982,23 +1991,10 @@
         ],
       };
 
-      // ── Partner attribution ────────────────────────────────────────────
-      // partners.json carries each hotel's bokun_tracking_code (the long
-      // hex string Bokun auto-generates per referral; visible in the
-      // extranet → Settings → Referral tracking → Tracking code column).
-      // We pass it at the top level as `trackingCode` since that matches
-      // the URL-mode parameter Bokun documents for widget tracking
-      // (?trackingCode=<hex>). If their API actually wants a different
-      // property name, swap this single line — partners.json + the URL
-      // contract stays the same.
-      // TODO(partner-attribution): once Bokun support confirms the field
-      // name, update this assignment. Confirmed by booking via
-      // ?hotel=fairmont-ll and verifying the booking shows up in the
-      // matching Referral tracking report.
-      var hex = ctx.hotel && ctx.hotel.bokun_tracking_code;
-      if (hex && hex !== 'PASTE_HEX_FROM_BOKUN') {
-        req.trackingCode = hex;
-      }
+      // Partner attribution is now Horizon-side only: recordToLedger
+      // POSTs the partner-controlled slug to /api/dashboard/record, the
+      // worker resolves staff_id, and Supabase is the source of truth.
+      // We no longer forward a trackingCode to Bokun's submit.
 
       return req;
     }
