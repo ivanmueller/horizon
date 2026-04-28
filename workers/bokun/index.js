@@ -24,11 +24,16 @@
 //                                      bookings in a date window.
 //
 // Horizon admin (internal, shared-password gated via HORIZON_ADMIN_PASSWORD):
-//   GET  /api/admin/summary            ?from=YYYY-MM-DD&to=YYYY-MM-DD —
+//   GET   /api/admin/summary           ?from=YYYY-MM-DD&to=YYYY-MM-DD —
 //                                      cross-hotel totals + per-hotel
 //                                      commission + per-staff kickback rollup
 //                                      for the period. Excludes cancelled
 //                                      and refunded bookings.
+//   PATCH /api/admin/bookings/:id      body { status } — manual status
+//                                      change (cancelled / refunded /
+//                                      pending_refund / confirmed). Replaces
+//                                      the Bokun webhook on tiers that don't
+//                                      expose them.
 //
 // Secrets (Worker secret storage, never on disk):
 //   BOKUN_ACCESS_KEY, BOKUN_SECRET_KEY  — HMAC signing for Bokun
@@ -37,7 +42,7 @@
 //   HORIZON_ADMIN_PASSWORD              — gates /api/admin/* + /dashboard/horizon/
 
 import { bokunFetch } from "./bokun-auth.js";
-import { supabaseRequest, supabaseSelect } from "./supabase.js";
+import { supabaseRequest, supabaseSelect, supabaseUpdate } from "./supabase.js";
 
 const ALLOWED_ORIGIN = "https://gowithhorizon.com";
 const CURRENCY = "CAD";
@@ -131,6 +136,15 @@ export default {
         segs[2] === "summary"
       ) {
         return await handleAdminSummary(url, env, request);
+      }
+      if (
+        request.method === "PATCH" &&
+        segs[0] === "api" &&
+        segs[1] === "admin" &&
+        segs[2] === "bookings" &&
+        segs[3]
+      ) {
+        return await handleAdminBookingPatch(segs[3], request, env);
       }
       return jsonResponse({ error: "Not found" }, 404, request);
     } catch (err) {
@@ -554,6 +568,50 @@ async function handleAdminSummary(url, env, request) {
   );
 }
 
+// Manual cancellation/refund tracking — replaces the Bokun webhook we
+// can't have on this account tier. PATCH /api/admin/bookings/<uuid>
+// with body { status }. Status must be one of the four enum values
+// the schema accepts.
+const ALLOWED_STATUSES = new Set(["confirmed", "cancelled", "refunded", "pending_refund"]);
+
+async function handleAdminBookingPatch(id, request, env) {
+  const authError = requireAdmin(request, env);
+  if (authError) return authError;
+
+  if (!UUID_RE.test(id)) {
+    return jsonResponse({ error: "invalid booking id" }, 400, request);
+  }
+
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+
+  const status = typeof body.status === "string" ? body.status.trim() : "";
+  if (!ALLOWED_STATUSES.has(status)) {
+    return jsonResponse(
+      {
+        error: "status must be one of: " + Array.from(ALLOWED_STATUSES).join(", "),
+      },
+      400,
+      request,
+    );
+  }
+
+  // return=representation so we can confirm the row actually existed —
+  // PostgREST returns [] for a no-match update, which we surface as 404.
+  const updated = await supabaseUpdate(
+    env,
+    `bookings?id=eq.${encodeURIComponent(id)}`,
+    { status },
+    { returnRow: true },
+  );
+
+  if (!Array.isArray(updated) || updated.length === 0) {
+    return jsonResponse({ error: "booking not found" }, 404, request);
+  }
+
+  return jsonResponse({ ok: true, booking: updated[0] }, 200, request);
+}
+
 // Bearer-token auth for the internal admin surface. Single shared password
 // stored in HORIZON_ADMIN_PASSWORD (worker secret). Constant-time compare
 // avoids leaking length info via timing on a typo'd password.
@@ -726,8 +784,8 @@ function corsHeaders(request) {
     origin.endsWith(".pages.dev");
   return {
     "Access-Control-Allow-Origin": allowed ? origin : ALLOWED_ORIGIN,
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
     Vary: "Origin",
   };
 }
