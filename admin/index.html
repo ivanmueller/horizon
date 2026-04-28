@@ -11,6 +11,12 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%23FF6B4A'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
+
+  <!-- Hide until the auth gate decides — same flash-prevention as
+       /dashboard/hotel/. JS reveals once the session check passes
+       (or navigates away if it doesn't). -->
+  <style>body { visibility: hidden; }</style>
+
   <style>
     body { background: var(--warm-white); }
 
@@ -271,52 +277,6 @@
       background: var(--warm-white-alt); color: var(--near-black);
     }
 
-    /* ── Login overlay ──────────────────────────────────────────────── */
-    .ha-login {
-      position: fixed; inset: 0;
-      background: rgba(26, 26, 46, 0.4);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 100;
-    }
-    /* The browser's UA stylesheet sets [hidden] { display: none }, but
-       our `display: flex` above overrides it. Re-assert the hidden
-       behaviour explicitly. */
-    .ha-login[hidden] { display: none; }
-    .ha-login__card {
-      background: #fff; border-radius: var(--radius-lg);
-      padding: var(--space-6); width: 100%; max-width: 380px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-    }
-    .ha-login__title {
-      font-family: var(--font-display);
-      font-size: var(--text-lg); font-weight: 600;
-      margin: 0 0 var(--space-2); color: var(--near-black);
-    }
-    .ha-login__sub {
-      font-size: var(--text-sm); color: var(--mid-gray);
-      margin: 0 0 var(--space-4);
-    }
-    .ha-login__input {
-      width: 100%; padding: 10px 12px;
-      border: 1px solid var(--border-color); border-radius: var(--radius-md);
-      font: inherit; font-size: var(--text-base);
-      margin-bottom: var(--space-3);
-    }
-    .ha-login__input:focus { outline: 2px solid var(--coral); outline-offset: -1px; }
-    .ha-login__btn {
-      width: 100%; padding: 10px 16px;
-      background: var(--coral); color: #fff; border: 0;
-      border-radius: var(--radius-md);
-      font: inherit; font-size: var(--text-base); font-weight: 600;
-      cursor: pointer;
-    }
-    .ha-login__btn:hover { background: var(--coral-hover); }
-    .ha-login__error {
-      color: #991B1B; font-size: var(--text-sm);
-      margin: 0 0 var(--space-3); display: none;
-    }
-    .ha-login__error--show { display: block; }
-
     @media (max-width: 600px) {
       .ha-controls { flex-direction: column; align-items: stretch; }
       .ha-period { justify-content: center; }
@@ -344,16 +304,6 @@
     </div>
   </div>
 
-  <!-- ── Login overlay (shown until password is set in sessionStorage) ── -->
-  <div class="ha-login" id="haLogin" hidden>
-    <form class="ha-login__card" id="haLoginForm">
-      <h2 class="ha-login__title">Horizon admin</h2>
-      <p class="ha-login__sub">Internal dashboard — enter the shared password to continue.</p>
-      <p class="ha-login__error" id="haLoginError">Wrong password.</p>
-      <input type="password" class="ha-login__input" id="haLoginInput" autocomplete="current-password" required>
-      <button type="submit" class="ha-login__btn">Sign in</button>
-    </form>
-  </div>
 
   <header class="ha-header">
     <div class="ha-header__inner">
@@ -497,71 +447,73 @@
     document.dispatchEvent(new Event('horizon-invoice-ready'));
   </script>
 
-  <script>
-    (function () {
-      var BOKUN_API_BASE = 'https://horizon-bokun.ivan-mueller02.workers.dev';
-      var STORAGE_KEY = 'horizon-admin-password';
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 
-      var els = {
-        login:        document.getElementById('haLogin'),
-        loginForm:    document.getElementById('haLoginForm'),
-        loginInput:   document.getElementById('haLoginInput'),
-        loginError:   document.getElementById('haLoginError'),
-        signout:      document.getElementById('haSignout'),
-        headerPeriod: document.getElementById('haHeaderPeriod'),
-        error:        document.getElementById('haError'),
-        periodBtns:   document.querySelectorAll('.ha-period__btn'),
-        customWrap:   document.getElementById('haCustom'),
-        from:         document.getElementById('haFrom'),
-        to:           document.getElementById('haTo'),
-        customApply:  document.getElementById('haCustomApply'),
-        refresh:      document.getElementById('haRefresh'),
-        totalBookings:    document.getElementById('haTotalBookings'),
-        totalTravelers:   document.getElementById('haTotalTravelers'),
-        totalRevenue:     document.getElementById('haTotalRevenue'),
-        totalCommission:  document.getElementById('haTotalCommission'),
-        totalKickbacks:   document.getElementById('haTotalKickbacks'),
-        totalNet:         document.getElementById('haTotalNet'),
-        hotelsBody:       document.getElementById('haHotelsBody'),
-        empty:            document.getElementById('haEmpty'),
-      };
+    var BOKUN_API_BASE = 'https://horizon-bokun.ivan-mueller02.workers.dev';
 
-      // ── State ──────────────────────────────────────────────────────
-      var token = sessionStorage.getItem(STORAGE_KEY) || '';
-      var currentPeriod = 'this-month';
-      var customRange = null; // {from, to} when period === 'custom' and applied
+    // Public Supabase config — anon key is gated by the RLS policies
+    // in migrations 0003 + 0004. Same pair lives on the partner pages.
+    var SUPABASE_URL  = 'https://lxdltzrntphnkhsniwin.supabase.co';
+    var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4ZGx0enJudHBobmtoc25pd2luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNjA0OTAsImV4cCI6MjA5MjYzNjQ5MH0.toebJTpWH-_tRLOmwPCeTprGfQfH_JU_ZKgbqkGuz3M';
 
-      // ── Boot ───────────────────────────────────────────────────────
-      if (!token) {
-        showLogin();
-      } else {
-        loadSummary();
-      }
+    var supabase = createClient(SUPABASE_URL, SUPABASE_ANON, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+    });
 
-      // ── Login ──────────────────────────────────────────────────────
-      function showLogin() {
-        els.login.hidden = false;
-        setTimeout(function () { els.loginInput.focus(); }, 0);
-      }
-      function hideLogin() {
-        els.login.hidden = true;
-        els.loginError.classList.remove('ha-login__error--show');
-        els.loginInput.value = '';
-      }
-      els.loginForm.addEventListener('submit', function (e) {
-        e.preventDefault();
-        var pw = els.loginInput.value;
-        if (!pw) return;
-        token = pw;
-        sessionStorage.setItem(STORAGE_KEY, token);
-        hideLogin();
-        loadSummary();
-      });
-      els.signout.addEventListener('click', function () {
-        sessionStorage.removeItem(STORAGE_KEY);
-        token = '';
-        showLogin();
-      });
+    var els = {
+      signout:      document.getElementById('haSignout'),
+      headerPeriod: document.getElementById('haHeaderPeriod'),
+      error:        document.getElementById('haError'),
+      periodBtns:   document.querySelectorAll('.ha-period__btn'),
+      customWrap:   document.getElementById('haCustom'),
+      from:         document.getElementById('haFrom'),
+      to:           document.getElementById('haTo'),
+      customApply:  document.getElementById('haCustomApply'),
+      refresh:      document.getElementById('haRefresh'),
+      totalBookings:    document.getElementById('haTotalBookings'),
+      totalTravelers:   document.getElementById('haTotalTravelers'),
+      totalRevenue:     document.getElementById('haTotalRevenue'),
+      totalCommission:  document.getElementById('haTotalCommission'),
+      totalKickbacks:   document.getElementById('haTotalKickbacks'),
+      totalNet:         document.getElementById('haTotalNet'),
+      hotelsBody:       document.getElementById('haHotelsBody'),
+      empty:            document.getElementById('haEmpty'),
+    };
+
+    // ── State ────────────────────────────────────────────────────────
+    var currentPeriod = 'this-month';
+    var customRange = null; // {from, to} when period === 'custom' and applied
+    var session = null;
+
+    // ── Boot: gate on a Supabase session ─────────────────────────────
+    // No session                → bounce to /dashboard/login/.
+    // Session, not an admin     → worker returns 403 from /admin/summary,
+    //                             which we surface inline rather than
+    //                             pre-checking horizon_admins page-side.
+    //                             (The check is server-authoritative;
+    //                             a page-side guard would just duplicate it.)
+    // Session + admin           → render.
+    var sessionResp = await supabase.auth.getSession();
+    session = sessionResp.data && sessionResp.data.session;
+    if (!session) {
+      window.location.replace('/dashboard/login/');
+      throw new Error('redirecting to /dashboard/login/');
+    }
+
+    // Strip OAuth hash for clean history.
+    if (window.location.hash && window.location.hash.indexOf('access_token=') !== -1) {
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+
+    document.body.style.visibility = 'visible';
+    loadSummary();
+
+    els.signout.addEventListener('click', async function () {
+      els.signout.disabled = true;
+      await supabase.auth.signOut();
+      window.location.replace('/dashboard/login/');
+    });
 
       // ── Period controls ────────────────────────────────────────────
       els.periodBtns.forEach(function (btn) {
@@ -664,15 +616,17 @@
         fetch(BOKUN_API_BASE + '/api/admin/summary' +
               '?from=' + encodeURIComponent(r.from) +
               '&to='   + encodeURIComponent(r.to), {
-          headers: { Authorization: 'Bearer ' + token },
+          headers: { Authorization: 'Bearer ' + session.access_token },
           cache: 'no-store',
         })
           .then(function (res) {
             if (res.status === 401) {
-              sessionStorage.removeItem(STORAGE_KEY);
-              token = '';
-              showLogin();
+              window.location.replace('/dashboard/login/');
               throw new Error('unauthorized');
+            }
+            if (res.status === 403) {
+              showError('Your account isn’t authorised for the Horizon admin dashboard.');
+              throw new Error('forbidden');
             }
             return res.json().then(function (b) { return { ok: res.ok, body: b }; });
           })
@@ -1034,15 +988,13 @@
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: 'Bearer ' + token,
+            Authorization: 'Bearer ' + session.access_token,
           },
           body: JSON.stringify({ status: next }),
         })
           .then(function (r) {
             if (r.status === 401) {
-              sessionStorage.removeItem(STORAGE_KEY);
-              token = '';
-              showLogin();
+              window.location.replace('/dashboard/login/');
               throw new Error('unauthorized');
             }
             return r.json().then(function (b) { return { ok: r.ok, body: b }; });
@@ -1099,7 +1051,6 @@
           return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m];
         });
       }
-    })();
   </script>
 </body>
 </html>
