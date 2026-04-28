@@ -366,10 +366,12 @@ async function handleDashboardBookings(url, env, request) {
   if (!hotel || !/^[a-z0-9-]{2,40}$/.test(hotel)) {
     return jsonResponse({ error: "hotel slug required" }, 400, request);
   }
-  const from = url.searchParams.get("from"); // YYYY-MM-DD inclusive, optional
+  const from = url.searchParams.get("from"); // YYYY-MM-DD or ISO datetime, optional
   const to = url.searchParams.get("to");
-  const fromOk = from && /^\d{4}-\d{2}-\d{2}$/.test(from);
-  const toOk = to && /^\d{4}-\d{2}-\d{2}$/.test(to);
+  const fromTs = parseTimeBound(from, "start");
+  const toTs = parseTimeBound(to, "end");
+  const fromOk = !!fromTs;
+  const toOk = !!toTs;
 
   // 1) Resolve the hotel — also gives us the partner block for the
   //    response so the dashboard doesn't need a separate lookup.
@@ -395,8 +397,8 @@ async function handleDashboardBookings(url, env, request) {
     `bookings?hotel_id=eq.${h.id}` +
     `&select=${fields}` +
     `&order=created_at.desc&limit=1000`;
-  if (fromOk) q += `&created_at=gte.${from}T00:00:00.000Z`;
-  if (toOk) q += `&created_at=lte.${to}T23:59:59.999Z`;
+  if (fromOk) q += `&created_at=gte.${encodeURIComponent(fromTs)}`;
+  if (toOk) q += `&created_at=lte.${encodeURIComponent(toTs)}`;
 
   const rows = await supabaseSelect(env, q);
 
@@ -451,8 +453,14 @@ async function handleAdminSummary(url, env, request) {
 
   const from = url.searchParams.get("from");
   const to = url.searchParams.get("to");
-  if (!from || !/^\d{4}-\d{2}-\d{2}$/.test(from) || !to || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
-    return jsonResponse({ error: "from and to (YYYY-MM-DD) required" }, 400, request);
+  const fromTs = parseTimeBound(from, "start");
+  const toTs = parseTimeBound(to, "end");
+  if (!fromTs || !toTs) {
+    return jsonResponse(
+      { error: "from and to (YYYY-MM-DD or ISO 8601) required" },
+      400,
+      request,
+    );
   }
 
   const fields =
@@ -462,8 +470,8 @@ async function handleAdminSummary(url, env, request) {
     "staff:hotel_staff(id,code,name,kickback_pct)";
   const q =
     `bookings?status=eq.confirmed` +
-    `&created_at=gte.${from}T00:00:00.000Z` +
-    `&created_at=lte.${to}T23:59:59.999Z` +
+    `&created_at=gte.${encodeURIComponent(fromTs)}` +
+    `&created_at=lte.${encodeURIComponent(toTs)}` +
     `&select=${fields}` +
     `&order=created_at.desc&limit=10000`;
   const rows = await supabaseSelect(env, q);
@@ -643,6 +651,21 @@ function constantTimeEqual(a, b) {
 
 function round2(n) {
   return Math.round(n * 100) / 100;
+}
+
+// Accepts either an ISO 8601 datetime (used as-is) or a YYYY-MM-DD date
+// (interpreted as start/end of day in UTC). Pages send ISO datetimes
+// computed from local-time period bounds so a booking made at 11pm
+// local properly falls in "this month" / "last 30 days" instead of
+// being stranded on the next-day UTC boundary. The YYYY-MM-DD form
+// stays supported for the admin custom-range picker and curl tests.
+function parseTimeBound(s, mode) {
+  if (typeof s !== "string" || !s) return null;
+  if (/^\d{4}-\d{2}-\d{2}T/.test(s) && !Number.isNaN(Date.parse(s))) return s;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    return mode === "start" ? `${s}T00:00:00.000Z` : `${s}T23:59:59.999Z`;
+  }
+  return null;
 }
 
 async function handleBookingState(id, env, request) {

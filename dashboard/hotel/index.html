@@ -347,9 +347,17 @@
       function loadBookings() {
         var qs = '?hotel=' + encodeURIComponent(hotelSlug);
         if (currentRangeDays !== 'all') {
+          // Compute bounds as instants (ISO timestamps) rather than
+          // YYYY-MM-DD dates. The worker's filter compares against
+          // `created_at` (timestamptz, UTC) — sending a date-only `to`
+          // would clip bookings made late evening in local time which
+          // land on the next-day UTC boundary.
           var to = new Date();
-          var from = new Date(); from.setDate(from.getDate() - currentRangeDays + 1);
-          qs += '&from=' + ymd(from) + '&to=' + ymd(to);
+          var from = new Date();
+          from.setDate(from.getDate() - currentRangeDays + 1);
+          from.setHours(0, 0, 0, 0);
+          qs += '&from=' + encodeURIComponent(from.toISOString()) +
+                '&to='   + encodeURIComponent(to.toISOString());
         }
         hideError();
         els.kpiGrid.classList.add('hd-skeleton');
