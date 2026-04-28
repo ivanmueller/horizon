@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Horizon admin</title>
+  <meta name="description" content="Internal commission dashboard — Horizon team only.">
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%23FF6B4A'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
+  <style>
+    body { background: var(--warm-white); }
+
+    /* ── Header ─────────────────────────────────────────────────────── */
+    .ha-header {
+      background: #fff;
+      border-bottom: 1px solid var(--border-color);
+      padding: var(--space-4) 0;
+    }
+    .ha-header__inner {
+      max-width: 1280px; margin: 0 auto; padding: 0 var(--space-4);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: var(--space-4); flex-wrap: wrap;
+    }
+    .ha-header__logo {
+      display: inline-flex; align-items: center; gap: var(--space-2);
+      text-decoration: none; color: var(--near-black);
+    }
+    .ha-header__logo-text {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.3rem; font-weight: 700; color: var(--coral);
+    }
+    .ha-header__sub { font-size: var(--text-sm); color: var(--mid-gray); margin-left: 6px; }
+    .ha-header__period {
+      font-family: var(--font-display);
+      font-size: var(--text-lg); font-weight: 600; color: var(--near-black);
+    }
+    .ha-header__signout {
+      background: none; border: 1px solid var(--border-color);
+      padding: 6px 14px; border-radius: var(--radius-full);
+      font: inherit; font-size: var(--text-sm); color: var(--mid-gray);
+      cursor: pointer; margin-left: var(--space-3);
+    }
+    .ha-header__signout:hover { background: var(--warm-white-alt); color: var(--near-black); }
+
+    /* ── Page layout ────────────────────────────────────────────────── */
+    .ha-page {
+      max-width: 1280px; margin: 0 auto;
+      padding: var(--space-6) var(--space-4) var(--space-12);
+    }
+
+    /* ── Period controls ────────────────────────────────────────────── */
+    .ha-controls {
+      display: flex; flex-wrap: wrap; gap: var(--space-3);
+      align-items: center; justify-content: space-between;
+      margin-bottom: var(--space-5);
+    }
+    .ha-period {
+      display: inline-flex;
+      background: #fff; border: 1px solid var(--border-color);
+      border-radius: var(--radius-full); padding: 4px; gap: 2px;
+    }
+    .ha-period__btn {
+      background: none; border: 0; padding: 6px 14px;
+      border-radius: var(--radius-full);
+      font: inherit; font-size: var(--text-sm); font-weight: 500;
+      color: var(--mid-gray); cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-out);
+    }
+    .ha-period__btn:hover { color: var(--near-black); }
+    .ha-period__btn--active { background: var(--coral); color: #fff; }
+    .ha-period__btn--active:hover { color: #fff; }
+
+    .ha-custom { display: none; align-items: center; gap: var(--space-2); }
+    .ha-custom--show { display: inline-flex; }
+    .ha-custom input[type="date"] {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 6px 10px; font: inherit; font-size: var(--text-sm);
+      background: #fff; color: var(--near-black);
+    }
+    .ha-refresh {
+      background: none; border: 1px solid var(--border-color);
+      padding: 6px 14px; border-radius: var(--radius-full);
+      font: inherit; font-size: var(--text-sm); color: var(--mid-gray);
+      cursor: pointer;
+    }
+    .ha-refresh:hover { background: var(--warm-white-alt); color: var(--near-black); }
+
+    /* ── Totals tiles ───────────────────────────────────────────────── */
+    .ha-totals {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: var(--space-3); margin-bottom: var(--space-6);
+    }
+    .ha-tile {
+      background: #fff; border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: var(--space-4) var(--space-5);
+    }
+    .ha-tile__label {
+      display: block; font-size: var(--text-xs); color: var(--mid-gray);
+      text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;
+    }
+    .ha-tile__value {
+      font-family: var(--font-display);
+      font-size: var(--text-2xl); font-weight: 700; color: var(--near-black);
+      line-height: 1.1;
+    }
+    .ha-tile__value--accent { color: var(--coral); }
+
+    /* ── Hotels table ───────────────────────────────────────────────── */
+    .ha-table-wrap {
+      background: #fff; border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg); overflow: hidden;
+    }
+    .ha-table-wrap h2 {
+      font-family: var(--font-display);
+      font-size: var(--text-xl); font-weight: 600; color: var(--near-black);
+      margin: 0; padding: var(--space-4) var(--space-5);
+      border-bottom: 1px solid var(--border-color);
+    }
+    .ha-table-scroll { overflow-x: auto; }
+    .ha-table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+    .ha-table th, .ha-table td {
+      padding: var(--space-3) var(--space-5);
+      text-align: left; white-space: nowrap;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .ha-table tbody tr:last-child > td { border-bottom: 0; }
+    .ha-table th {
+      font-weight: 600; color: var(--mid-gray);
+      font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.05em;
+      background: var(--warm-white-alt);
+    }
+    .ha-table td { color: var(--near-black); }
+    .ha-table td.ha-num { text-align: right; font-variant-numeric: tabular-nums; }
+    .ha-table th.ha-num { text-align: right; }
+    .ha-row--hotel { cursor: pointer; }
+    .ha-row--hotel:hover > td { background: rgba(255, 107, 74, 0.04); }
+    .ha-row--hotel.ha-row--open > td { background: var(--warm-white-alt); }
+    .ha-row__caret {
+      display: inline-block; width: 0; height: 0;
+      border-left: 5px solid transparent; border-right: 5px solid transparent;
+      border-top: 6px solid var(--mid-gray);
+      margin-right: 8px; transition: transform var(--duration-fast) var(--ease-out);
+    }
+    .ha-row--open .ha-row__caret { transform: rotate(-180deg); }
+    .ha-row--detail > td {
+      padding: 0; background: var(--warm-white);
+    }
+    .ha-detail-inner { padding: var(--space-4) var(--space-5); }
+    .ha-detail-inner h3 {
+      font-size: var(--text-sm); text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--mid-gray);
+      margin: 0 0 var(--space-2); font-weight: 600;
+    }
+    .ha-detail-inner h3 + table { margin-bottom: var(--space-5); }
+    .ha-detail-inner table {
+      width: 100%; border-collapse: collapse; font-size: var(--text-sm);
+      background: #fff; border: 1px solid var(--border-color); border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+    .ha-detail-inner th, .ha-detail-inner td {
+      padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border-color);
+      text-align: left; white-space: nowrap;
+    }
+    .ha-detail-inner th {
+      font-size: var(--text-xs); color: var(--mid-gray);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      background: var(--warm-white-alt); font-weight: 600;
+    }
+    .ha-detail-inner tbody tr:last-child > td { border-bottom: 0; }
+    .ha-detail-inner td.ha-num { text-align: right; font-variant-numeric: tabular-nums; }
+    .ha-detail-inner th.ha-num { text-align: right; }
+
+    .ha-pill {
+      display: inline-block; padding: 2px 8px;
+      border-radius: var(--radius-full); font-size: 0.72rem;
+      text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;
+    }
+    .ha-pill--kickback { background: rgba(255, 107, 74, 0.12); color: var(--coral); }
+    .ha-pill--pool     { background: rgba(26, 26, 46, 0.06);   color: var(--near-black); }
+
+    .ha-empty { padding: var(--space-8) var(--space-5); text-align: center; color: var(--mid-gray); }
+    .ha-empty strong { display: block; color: var(--near-black); margin-bottom: 4px; font-size: var(--text-base); }
+
+    .ha-error {
+      background: #FEF2F2; border: 1px solid #FCA5A5; color: #991B1B;
+      padding: var(--space-3) var(--space-4); border-radius: var(--radius-md);
+      font-size: var(--text-sm); margin-bottom: var(--space-4);
+    }
+
+    /* ── Login overlay ──────────────────────────────────────────────── */
+    .ha-login {
+      position: fixed; inset: 0;
+      background: rgba(26, 26, 46, 0.4);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+    }
+    .ha-login__card {
+      background: #fff; border-radius: var(--radius-lg);
+      padding: var(--space-6); width: 100%; max-width: 380px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+    .ha-login__title {
+      font-family: var(--font-display);
+      font-size: var(--text-lg); font-weight: 600;
+      margin: 0 0 var(--space-2); color: var(--near-black);
+    }
+    .ha-login__sub {
+      font-size: var(--text-sm); color: var(--mid-gray);
+      margin: 0 0 var(--space-4);
+    }
+    .ha-login__input {
+      width: 100%; padding: 10px 12px;
+      border: 1px solid var(--border-color); border-radius: var(--radius-md);
+      font: inherit; font-size: var(--text-base);
+      margin-bottom: var(--space-3);
+    }
+    .ha-login__input:focus { outline: 2px solid var(--coral); outline-offset: -1px; }
+    .ha-login__btn {
+      width: 100%; padding: 10px 16px;
+      background: var(--coral); color: #fff; border: 0;
+      border-radius: var(--radius-md);
+      font: inherit; font-size: var(--text-base); font-weight: 600;
+      cursor: pointer;
+    }
+    .ha-login__btn:hover { background: var(--coral-hover); }
+    .ha-login__error {
+      color: #991B1B; font-size: var(--text-sm);
+      margin: 0 0 var(--space-3); display: none;
+    }
+    .ha-login__error--show { display: block; }
+
+    @media (max-width: 600px) {
+      .ha-controls { flex-direction: column; align-items: stretch; }
+      .ha-period { justify-content: center; }
+      .ha-tile__value { font-size: var(--text-xl); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Login overlay (shown until password is set in sessionStorage) ── -->
+  <div class="ha-login" id="haLogin" hidden>
+    <form class="ha-login__card" id="haLoginForm">
+      <h2 class="ha-login__title">Horizon admin</h2>
+      <p class="ha-login__sub">Internal dashboard — enter the shared password to continue.</p>
+      <p class="ha-login__error" id="haLoginError">Wrong password.</p>
+      <input type="password" class="ha-login__input" id="haLoginInput" autocomplete="current-password" required>
+      <button type="submit" class="ha-login__btn">Sign in</button>
+    </form>
+  </div>
+
+  <header class="ha-header">
+    <div class="ha-header__inner">
+      <a href="/" class="ha-header__logo">
+        <span>
+          <svg width="32" height="32" viewBox="0 0 36 36" aria-hidden="true">
+            <rect width="36" height="36" rx="8" fill="#FF6B4A"/>
+            <path d="M13 7v22M13 18c0-6 12-6 12 0v11" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>
+          </svg>
+        </span>
+        <span class="ha-header__logo-text">horizon</span>
+        <span class="ha-header__sub">admin</span>
+      </a>
+      <div>
+        <span class="ha-header__period" id="haHeaderPeriod">—</span>
+        <button class="ha-header__signout" id="haSignout" type="button">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="ha-page">
+    <div class="ha-error" id="haError" hidden></div>
+
+    <div class="ha-controls">
+      <div class="ha-period" role="group" aria-label="Period">
+        <button type="button" class="ha-period__btn ha-period__btn--active" data-period="this-month">This month</button>
+        <button type="button" class="ha-period__btn" data-period="last-month">Last month</button>
+        <button type="button" class="ha-period__btn" data-period="ytd">YTD</button>
+        <button type="button" class="ha-period__btn" data-period="custom">Custom</button>
+      </div>
+      <div class="ha-custom" id="haCustom">
+        <input type="date" id="haFrom"> →
+        <input type="date" id="haTo">
+        <button type="button" class="ha-refresh" id="haCustomApply">Apply</button>
+      </div>
+      <button type="button" class="ha-refresh" id="haRefresh">Refresh</button>
+    </div>
+
+    <section class="ha-totals">
+      <div class="ha-tile"><span class="ha-tile__label">Bookings</span><strong class="ha-tile__value" id="haTotalBookings">—</strong></div>
+      <div class="ha-tile"><span class="ha-tile__label">Travelers</span><strong class="ha-tile__value" id="haTotalTravelers">—</strong></div>
+      <div class="ha-tile"><span class="ha-tile__label">Revenue</span><strong class="ha-tile__value" id="haTotalRevenue">—</strong></div>
+      <div class="ha-tile"><span class="ha-tile__label">Commission owed</span><strong class="ha-tile__value" id="haTotalCommission">—</strong></div>
+      <div class="ha-tile"><span class="ha-tile__label">Kickbacks owed</span><strong class="ha-tile__value" id="haTotalKickbacks">—</strong></div>
+      <div class="ha-tile"><span class="ha-tile__label">Net to Horizon</span><strong class="ha-tile__value ha-tile__value--accent" id="haTotalNet">—</strong></div>
+    </section>
+
+    <section class="ha-table-wrap">
+      <h2>Hotels</h2>
+      <div class="ha-table-scroll">
+        <table class="ha-table">
+          <thead>
+            <tr>
+              <th>Hotel</th>
+              <th>Location</th>
+              <th>Type</th>
+              <th class="ha-num">Bookings</th>
+              <th class="ha-num">Revenue</th>
+              <th class="ha-num">Commission</th>
+              <th class="ha-num">Kickbacks</th>
+              <th class="ha-num">Net</th>
+            </tr>
+          </thead>
+          <tbody id="haHotelsBody"></tbody>
+        </table>
+      </div>
+      <div class="ha-empty" id="haEmpty" hidden>
+        <strong>No bookings in this period</strong>
+        Try a different range, or check back once partners are sending traffic.
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      var BOKUN_API_BASE = 'https://horizon-bokun.ivan-mueller02.workers.dev';
+      var STORAGE_KEY = 'horizon-admin-password';
+
+      var els = {
+        login:        document.getElementById('haLogin'),
+        loginForm:    document.getElementById('haLoginForm'),
+        loginInput:   document.getElementById('haLoginInput'),
+        loginError:   document.getElementById('haLoginError'),
+        signout:      document.getElementById('haSignout'),
+        headerPeriod: document.getElementById('haHeaderPeriod'),
+        error:        document.getElementById('haError'),
+        periodBtns:   document.querySelectorAll('.ha-period__btn'),
+        customWrap:   document.getElementById('haCustom'),
+        from:         document.getElementById('haFrom'),
+        to:           document.getElementById('haTo'),
+        customApply:  document.getElementById('haCustomApply'),
+        refresh:      document.getElementById('haRefresh'),
+        totalBookings:    document.getElementById('haTotalBookings'),
+        totalTravelers:   document.getElementById('haTotalTravelers'),
+        totalRevenue:     document.getElementById('haTotalRevenue'),
+        totalCommission:  document.getElementById('haTotalCommission'),
+        totalKickbacks:   document.getElementById('haTotalKickbacks'),
+        totalNet:         document.getElementById('haTotalNet'),
+        hotelsBody:       document.getElementById('haHotelsBody'),
+        empty:            document.getElementById('haEmpty'),
+      };
+
+      // ── State ──────────────────────────────────────────────────────
+      var token = sessionStorage.getItem(STORAGE_KEY) || '';
+      var currentPeriod = 'this-month';
+      var customRange = null; // {from, to} when period === 'custom' and applied
+
+      // ── Boot ───────────────────────────────────────────────────────
+      if (!token) {
+        showLogin();
+      } else {
+        loadSummary();
+      }
+
+      // ── Login ──────────────────────────────────────────────────────
+      function showLogin() {
+        els.login.hidden = false;
+        setTimeout(function () { els.loginInput.focus(); }, 0);
+      }
+      function hideLogin() {
+        els.login.hidden = true;
+        els.loginError.classList.remove('ha-login__error--show');
+        els.loginInput.value = '';
+      }
+      els.loginForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var pw = els.loginInput.value;
+        if (!pw) return;
+        token = pw;
+        sessionStorage.setItem(STORAGE_KEY, token);
+        hideLogin();
+        loadSummary();
+      });
+      els.signout.addEventListener('click', function () {
+        sessionStorage.removeItem(STORAGE_KEY);
+        token = '';
+        showLogin();
+      });
+
+      // ── Period controls ────────────────────────────────────────────
+      els.periodBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          els.periodBtns.forEach(function (b) { b.classList.remove('ha-period__btn--active'); });
+          btn.classList.add('ha-period__btn--active');
+          currentPeriod = btn.getAttribute('data-period');
+          if (currentPeriod === 'custom') {
+            els.customWrap.classList.add('ha-custom--show');
+            // Don't reload until they pick + Apply.
+          } else {
+            els.customWrap.classList.remove('ha-custom--show');
+            customRange = null;
+            loadSummary();
+          }
+        });
+      });
+      els.customApply.addEventListener('click', function () {
+        var f = els.from.value, t = els.to.value;
+        if (!f || !t) { showError('Pick both dates first.'); return; }
+        if (f > t) { showError('From date must be before To date.'); return; }
+        customRange = { from: f, to: t };
+        loadSummary();
+      });
+      els.refresh.addEventListener('click', loadSummary);
+
+      // ── Period → date range ────────────────────────────────────────
+      function rangeForPeriod() {
+        var now = new Date();
+        var y = now.getFullYear(), m = now.getMonth();
+        if (currentPeriod === 'this-month') {
+          return { from: ymd(new Date(y, m, 1)), to: ymd(now) };
+        }
+        if (currentPeriod === 'last-month') {
+          var firstThis = new Date(y, m, 1);
+          var lastPrev = new Date(firstThis.getTime() - 1);
+          var firstPrev = new Date(lastPrev.getFullYear(), lastPrev.getMonth(), 1);
+          return { from: ymd(firstPrev), to: ymd(lastPrev) };
+        }
+        if (currentPeriod === 'ytd') {
+          return { from: ymd(new Date(y, 0, 1)), to: ymd(now) };
+        }
+        if (currentPeriod === 'custom' && customRange) {
+          return customRange;
+        }
+        return { from: ymd(new Date(y, m, 1)), to: ymd(now) };
+      }
+
+      // ── Fetch + render ─────────────────────────────────────────────
+      function loadSummary() {
+        var r = rangeForPeriod();
+        if (!r) return;
+        hideError();
+        els.headerPeriod.textContent = formatRange(r.from, r.to);
+
+        fetch(BOKUN_API_BASE + '/api/admin/summary?from=' + r.from + '&to=' + r.to, {
+          headers: { Authorization: 'Bearer ' + token },
+          cache: 'no-store',
+        })
+          .then(function (res) {
+            if (res.status === 401) {
+              sessionStorage.removeItem(STORAGE_KEY);
+              token = '';
+              showLogin();
+              throw new Error('unauthorized');
+            }
+            return res.json().then(function (b) { return { ok: res.ok, body: b }; });
+          })
+          .then(function (res) {
+            if (!res.ok) throw new Error((res.body && res.body.error) || 'fetch_failed');
+            renderTotals(res.body.totals || {});
+            renderHotels(res.body.hotels || []);
+          })
+          .catch(function (err) {
+            if (err && err.message === 'unauthorized') return;
+            console.error('admin summary fetch failed', err);
+            showError('Could not load summary: ' + (err && err.message || 'unknown error'));
+          });
+      }
+
+      function renderTotals(t) {
+        els.totalBookings.textContent     = String(t.bookings || 0);
+        els.totalTravelers.textContent    = String(t.travelers || 0);
+        els.totalRevenue.textContent      = formatMoney(t.revenue || 0);
+        els.totalCommission.textContent   = formatMoney(t.commission_owed || 0);
+        els.totalKickbacks.textContent    = formatMoney(t.kickbacks_owed || 0);
+        els.totalNet.textContent          = formatMoney(t.net_to_horizon || 0);
+      }
+
+      function renderHotels(hotels) {
+        els.hotelsBody.innerHTML = '';
+        if (!hotels.length) { els.empty.hidden = false; return; }
+        els.empty.hidden = true;
+
+        var range = rangeForPeriod();
+        var frag = document.createDocumentFragment();
+        hotels.forEach(function (h) {
+          var net = (h.revenue || 0) - (h.commission_owed || 0) - (h.kickbacks_total || 0);
+          var typePill = h.type === 'kickback'
+            ? '<span class="ha-pill ha-pill--kickback">kickback</span>'
+            : '<span class="ha-pill ha-pill--pool">pool</span>';
+
+          var tr = document.createElement('tr');
+          tr.className = 'ha-row--hotel';
+          tr.innerHTML =
+            '<td><span class="ha-row__caret"></span>' + escapeHtml(h.name) + '</td>' +
+            '<td>' + escapeHtml(h.location || '—') + '</td>' +
+            '<td>' + typePill + '</td>' +
+            '<td class="ha-num">' + (h.bookings || 0) + '</td>' +
+            '<td class="ha-num">' + formatMoney(h.revenue || 0) + '</td>' +
+            '<td class="ha-num">' + formatMoney(h.commission_owed || 0) + '</td>' +
+            '<td class="ha-num">' + formatMoney(h.kickbacks_total || 0) + '</td>' +
+            '<td class="ha-num">' + formatMoney(net) + '</td>';
+
+          var detail = document.createElement('tr');
+          detail.className = 'ha-row--detail';
+          detail.hidden = true;
+          detail.innerHTML = '<td colspan="8">' + buildDetailShell(h) + '</td>';
+
+          var loaded = false;
+          tr.addEventListener('click', function () {
+            var open = tr.classList.toggle('ha-row--open');
+            detail.hidden = !open;
+            if (open && !loaded) {
+              loaded = true;
+              loadHotelBookings(h.code, range, detail);
+            }
+          });
+
+          frag.appendChild(tr);
+          frag.appendChild(detail);
+        });
+        els.hotelsBody.appendChild(frag);
+      }
+
+      function buildDetailShell(h) {
+        var html = '<div class="ha-detail-inner">';
+        if (h.type === 'kickback' && h.kickbacks && h.kickbacks.length) {
+          html += '<h3>Kickback breakdown</h3><table><thead><tr>' +
+            '<th>Staff</th><th class="ha-num">Rate</th><th class="ha-num">Bookings</th>' +
+            '<th class="ha-num">Revenue</th><th class="ha-num">Kickback owed</th></tr></thead><tbody>';
+          h.kickbacks.forEach(function (k) {
+            html +=
+              '<tr><td>' + escapeHtml(k.staff_name) + '</td>' +
+              '<td class="ha-num">' + (k.kickback_pct || 0) + '%</td>' +
+              '<td class="ha-num">' + (k.bookings || 0) + '</td>' +
+              '<td class="ha-num">' + formatMoney(k.revenue || 0) + '</td>' +
+              '<td class="ha-num">' + formatMoney(k.kickback_owed || 0) + '</td></tr>';
+          });
+          html += '</tbody></table>';
+        }
+        html += '<h3>Bookings</h3><div data-bookings-slot></div>';
+        html += '</div>';
+        return html;
+      }
+
+      // Lazy-loads bookings for one hotel on row expand. Uses the existing
+      // /api/dashboard/bookings endpoint so we don't bloat /admin/summary
+      // (which would have to embed every booking otherwise). A "Cancel"
+      // action lands on each row in a follow-up commit.
+      function loadHotelBookings(hotelCode, range, detailRow) {
+        var slot = detailRow.querySelector('[data-bookings-slot]');
+        if (!slot) return;
+        slot.innerHTML = '<p style="font-size:var(--text-sm);color:var(--mid-gray)">Loading…</p>';
+
+        var qs = '?hotel=' + encodeURIComponent(hotelCode) +
+                 '&from=' + range.from + '&to=' + range.to;
+        fetch(BOKUN_API_BASE + '/api/dashboard/bookings' + qs, { cache: 'no-store' })
+          .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
+          .then(function (res) {
+            if (!res.ok) throw new Error((res.body && res.body.error) || 'fetch_failed');
+            slot.innerHTML = renderBookingsTable(res.body.records || []);
+          })
+          .catch(function (err) {
+            slot.innerHTML = '<p style="font-size:var(--text-sm);color:#991B1B">Could not load bookings: ' +
+              escapeHtml(err && err.message || 'unknown error') + '</p>';
+          });
+      }
+
+      function renderBookingsTable(records) {
+        if (!records.length) {
+          return '<p style="font-size:var(--text-sm);color:var(--mid-gray)">No bookings in this period.</p>';
+        }
+        var html = '<table><thead><tr>' +
+          '<th>Booked</th><th>Tour date</th><th>Tour</th><th>Guest</th>' +
+          '<th class="ha-num">Travelers</th><th class="ha-num">Amount</th>' +
+          '<th>Attribution</th><th>Confirmation</th></tr></thead><tbody>';
+        records.forEach(function (r) {
+          var travelers = (r.adults || 0) + (r.youth || 0) + (r.infants || 0);
+          var attribution = r.staff && r.staff.name
+            ? escapeHtml(r.staff.name)
+            : '<span style="color:var(--mid-gray)">hotel pool</span>';
+          html +=
+            '<tr>' +
+              '<td>' + escapeHtml(formatHumanDateTime(r.created_at)) + '</td>' +
+              '<td>' + escapeHtml(formatHumanDate(r.date) || '—') + '</td>' +
+              '<td>' + escapeHtml(r.tour_title || '—') + '</td>' +
+              '<td>' + escapeHtml(r.lead_name || '—') + '</td>' +
+              '<td class="ha-num">' + travelers + '</td>' +
+              '<td class="ha-num">' + escapeHtml(r.amount != null ? formatMoney(r.amount) : '—') + '</td>' +
+              '<td>' + attribution + '</td>' +
+              '<td><code style="font-size:0.78rem;color:var(--mid-gray)">' + escapeHtml(r.confirmation_code || '—') + '</code></td>' +
+            '</tr>';
+        });
+        html += '</tbody></table>';
+        return html;
+      }
+
+      // ── Helpers ────────────────────────────────────────────────────
+      function showError(msg) { els.error.textContent = msg; els.error.hidden = false; }
+      function hideError()    { els.error.hidden = true; els.error.textContent = ''; }
+      function ymd(d) {
+        return d.getFullYear() + '-' +
+          String(d.getMonth() + 1).padStart(2, '0') + '-' +
+          String(d.getDate()).padStart(2, '0');
+      }
+      function formatMoney(n) {
+        return 'CA$' + (Math.round((n || 0) * 100) / 100).toFixed(2);
+      }
+      function formatRange(from, to) {
+        return formatHumanDate(from) + ' – ' + formatHumanDate(to);
+      }
+      function formatHumanDate(s) {
+        if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return s || '';
+        var p = s.split('-').map(Number);
+        var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        return months[p[1] - 1] + ' ' + p[2] + ', ' + p[0];
+      }
+      // ISO timestamp → "Apr 27, 2026 6:42pm" in local time.
+      function formatHumanDateTime(iso) {
+        if (!iso) return '—';
+        var d = new Date(iso);
+        if (isNaN(d.getTime())) return '—';
+        var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        var hr = d.getHours(); var mer = hr >= 12 ? 'pm' : 'am';
+        hr = hr % 12; if (hr === 0) hr = 12;
+        var min = String(d.getMinutes()).padStart(2, '0');
+        return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear() +
+          ' ' + hr + ':' + min + mer;
+      }
+      function escapeHtml(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) {
+          return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m];
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
