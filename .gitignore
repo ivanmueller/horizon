@@ -9,3 +9,6 @@ scripts/supabase/.env
 
 # Inspector raw response dumps (for local debugging only)
 scripts/bokun/.dumps/
+
+# Generated commission invoices — contain guest names + emails
+invoices/

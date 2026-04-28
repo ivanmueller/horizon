@@ -23,12 +23,26 @@
 //                                      &to=YYYY-MM-DD — list a hotel's
 //                                      bookings in a date window.
 //
+// Horizon admin (internal, shared-password gated via HORIZON_ADMIN_PASSWORD):
+//   GET   /api/admin/summary           ?from=YYYY-MM-DD&to=YYYY-MM-DD —
+//                                      cross-hotel totals + per-hotel
+//                                      commission + per-staff kickback rollup
+//                                      for the period. Excludes cancelled
+//                                      and refunded bookings.
+//   PATCH /api/admin/bookings/:id      body { status } — manual status
+//                                      change (cancelled / refunded /
+//                                      pending_refund / confirmed). Replaces
+//                                      the Bokun webhook on tiers that don't
+//                                      expose them.
+//
 // Secrets (Worker secret storage, never on disk):
 //   BOKUN_ACCESS_KEY, BOKUN_SECRET_KEY  — HMAC signing for Bokun
 //   STRIPE_SECRET_KEY                   — sk_test_... or sk_live_...
+//   SUPABASE_SERVICE_KEY                — Supabase service_role; bypasses RLS
+//   HORIZON_ADMIN_PASSWORD              — gates /api/admin/* + /dashboard/horizon/
 
 import { bokunFetch } from "./bokun-auth.js";
-import { supabaseRequest, supabaseSelect } from "./supabase.js";
+import { supabaseRequest, supabaseSelect, supabaseUpdate } from "./supabase.js";
 
 const ALLOWED_ORIGIN = "https://gowithhorizon.com";
 const CURRENCY = "CAD";
@@ -114,6 +128,23 @@ export default {
         segs[2] === "bookings"
       ) {
         return await handleDashboardBookings(url, env, request);
+      }
+      if (
+        request.method === "GET" &&
+        segs[0] === "api" &&
+        segs[1] === "admin" &&
+        segs[2] === "summary"
+      ) {
+        return await handleAdminSummary(url, env, request);
+      }
+      if (
+        request.method === "PATCH" &&
+        segs[0] === "api" &&
+        segs[1] === "admin" &&
+        segs[2] === "bookings" &&
+        segs[3]
+      ) {
+        return await handleAdminBookingPatch(segs[3], request, env);
       }
       return jsonResponse({ error: "Not found" }, 404, request);
     } catch (err) {
@@ -376,8 +407,12 @@ async function handleDashboardBookings(url, env, request) {
     amount: r.amount != null ? Number(r.amount) : null,
   }));
 
+  // KPIs only count confirmed — cancelled and refunded bookings show in
+  // the records list (so the partner sees what was reversed) but are
+  // never owed.
   const kpis = records.reduce(
     (acc, r) => {
+      if (r.status !== "confirmed") return acc;
       acc.bookings += 1;
       acc.travelers += (r.adults || 0) + (r.youth || 0) + (r.infants || 0);
       acc.revenue += r.amount != null ? r.amount : 0;
@@ -404,6 +439,210 @@ async function handleDashboardBookings(url, env, request) {
     200,
     request,
   );
+}
+
+// ── Horizon admin (internal) ───────────────────────────────────────────────
+// Cross-hotel summary for the internal commission dashboard. Shared-password
+// gated via HORIZON_ADMIN_PASSWORD (worker secret). Excludes cancelled and
+// refunded bookings from all totals — those are tracked but never owed.
+async function handleAdminSummary(url, env, request) {
+  const authError = requireAdmin(request, env);
+  if (authError) return authError;
+
+  const from = url.searchParams.get("from");
+  const to = url.searchParams.get("to");
+  if (!from || !/^\d{4}-\d{2}-\d{2}$/.test(from) || !to || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+    return jsonResponse({ error: "from and to (YYYY-MM-DD) required" }, 400, request);
+  }
+
+  const fields =
+    "id,confirmation_code,date,time,adults,youth,infants,amount,currency," +
+    "tour_title,tour_id,lead_name,bokun_tracking_code,created_at,status," +
+    "hotel:hotels(id,code,name,location,type,commission_pct,kickback_pool_pct)," +
+    "staff:hotel_staff(id,code,name,kickback_pct)";
+  const q =
+    `bookings?status=eq.confirmed` +
+    `&created_at=gte.${from}T00:00:00.000Z` +
+    `&created_at=lte.${to}T23:59:59.999Z` +
+    `&select=${fields}` +
+    `&order=created_at.desc&limit=10000`;
+  const rows = await supabaseSelect(env, q);
+
+  const hotelMap = new Map();
+  const totals = { bookings: 0, travelers: 0, revenue: 0, commission_owed: 0 };
+
+  for (const r of rows) {
+    if (!r.hotel) continue; // hotel_id is NOT NULL but defend defensively
+    const amount = r.amount != null ? Number(r.amount) : 0;
+    const travelers = (r.adults || 0) + (r.youth || 0) + (r.infants || 0);
+    const commissionPct =
+      r.hotel.commission_pct != null ? Number(r.hotel.commission_pct) : 0;
+    const commission = (amount * commissionPct) / 100;
+
+    let h = hotelMap.get(r.hotel.code);
+    if (!h) {
+      h = {
+        code:            r.hotel.code,
+        name:            r.hotel.name,
+        location:        r.hotel.location,
+        type:            r.hotel.type,
+        commission_pct:  commissionPct,
+        bookings:        0,
+        travelers:       0,
+        revenue:         0,
+        commission_owed: 0,
+        kickbacks_total: 0,
+        _staffMap:       new Map(),
+      };
+      hotelMap.set(r.hotel.code, h);
+    }
+
+    h.bookings += 1;
+    h.travelers += travelers;
+    h.revenue += amount;
+    h.commission_owed += commission;
+
+    if (r.staff) {
+      const kPct = r.staff.kickback_pct != null ? Number(r.staff.kickback_pct) : 0;
+      const kAmt = (amount * kPct) / 100;
+      let s = h._staffMap.get(r.staff.code);
+      if (!s) {
+        s = {
+          staff_code:    r.staff.code,
+          staff_name:    r.staff.name,
+          kickback_pct:  kPct,
+          bookings:      0,
+          revenue:       0,
+          kickback_owed: 0,
+        };
+        h._staffMap.set(r.staff.code, s);
+      }
+      s.bookings += 1;
+      s.revenue += amount;
+      s.kickback_owed += kAmt;
+      h.kickbacks_total += kAmt;
+    }
+
+    totals.bookings += 1;
+    totals.travelers += travelers;
+    totals.revenue += amount;
+    totals.commission_owed += commission;
+  }
+
+  const hotels = Array.from(hotelMap.values()).map((h) => ({
+    code:            h.code,
+    name:            h.name,
+    location:        h.location,
+    type:            h.type,
+    commission_pct:  h.commission_pct,
+    bookings:        h.bookings,
+    travelers:       h.travelers,
+    revenue:         round2(h.revenue),
+    commission_owed: round2(h.commission_owed),
+    kickbacks: Array.from(h._staffMap.values()).map((s) => ({
+      staff_code:    s.staff_code,
+      staff_name:    s.staff_name,
+      kickback_pct:  s.kickback_pct,
+      bookings:      s.bookings,
+      revenue:       round2(s.revenue),
+      kickback_owed: round2(s.kickback_owed),
+    })),
+    kickbacks_total: round2(h.kickbacks_total),
+  }));
+  hotels.sort((a, b) => b.revenue - a.revenue);
+
+  const kickbacksOwed = hotels.reduce((acc, h) => acc + h.kickbacks_total, 0);
+
+  return jsonResponse(
+    {
+      from,
+      to,
+      totals: {
+        bookings:        totals.bookings,
+        travelers:       totals.travelers,
+        revenue:         round2(totals.revenue),
+        commission_owed: round2(totals.commission_owed),
+        kickbacks_owed:  round2(kickbacksOwed),
+        net_to_horizon:  round2(totals.revenue - totals.commission_owed - kickbacksOwed),
+      },
+      hotels,
+    },
+    200,
+    request,
+  );
+}
+
+// Manual cancellation/refund tracking — replaces the Bokun webhook we
+// can't have on this account tier. PATCH /api/admin/bookings/<uuid>
+// with body { status }. Status must be one of the four enum values
+// the schema accepts.
+const ALLOWED_STATUSES = new Set(["confirmed", "cancelled", "refunded", "pending_refund"]);
+
+async function handleAdminBookingPatch(id, request, env) {
+  const authError = requireAdmin(request, env);
+  if (authError) return authError;
+
+  if (!UUID_RE.test(id)) {
+    return jsonResponse({ error: "invalid booking id" }, 400, request);
+  }
+
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+
+  const status = typeof body.status === "string" ? body.status.trim() : "";
+  if (!ALLOWED_STATUSES.has(status)) {
+    return jsonResponse(
+      {
+        error: "status must be one of: " + Array.from(ALLOWED_STATUSES).join(", "),
+      },
+      400,
+      request,
+    );
+  }
+
+  // return=representation so we can confirm the row actually existed —
+  // PostgREST returns [] for a no-match update, which we surface as 404.
+  const updated = await supabaseUpdate(
+    env,
+    `bookings?id=eq.${encodeURIComponent(id)}`,
+    { status },
+    { returnRow: true },
+  );
+
+  if (!Array.isArray(updated) || updated.length === 0) {
+    return jsonResponse({ error: "booking not found" }, 404, request);
+  }
+
+  return jsonResponse({ ok: true, booking: updated[0] }, 200, request);
+}
+
+// Bearer-token auth for the internal admin surface. Single shared password
+// stored in HORIZON_ADMIN_PASSWORD (worker secret). Constant-time compare
+// avoids leaking length info via timing on a typo'd password.
+function requireAdmin(request, env) {
+  if (!env.HORIZON_ADMIN_PASSWORD) {
+    return jsonResponse({ error: "admin password not configured" }, 500, request);
+  }
+  const auth = request.headers.get("Authorization") || "";
+  const m = auth.match(/^Bearer\s+(.+)$/);
+  if (!m || !constantTimeEqual(m[1], env.HORIZON_ADMIN_PASSWORD)) {
+    return jsonResponse({ error: "unauthorized" }, 401, request);
+  }
+  return null;
+}
+
+function constantTimeEqual(a, b) {
+  if (typeof a !== "string" || typeof b !== "string") return false;
+  if (a.length !== b.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < a.length; i++) {
+    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return mismatch === 0;
+}
+
+function round2(n) {
+  return Math.round(n * 100) / 100;
 }
 
 async function handleBookingState(id, env, request) {
@@ -549,8 +788,8 @@ function corsHeaders(request) {
     origin.endsWith(".pages.dev");
   return {
     "Access-Control-Allow-Origin": allowed ? origin : ALLOWED_ORIGIN,
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
     Vary: "Origin",
   };
 }
