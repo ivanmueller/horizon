@@ -299,8 +299,8 @@ async function handleDashboardRecord(request, env) {
   const hotel = typeof body.hotel === "string" ? body.hotel.trim().toLowerCase() : "";
   const code = typeof body.confirmation_code === "string" ? body.confirmation_code.trim() : "";
   const bookingId = typeof body.booking_id === "string" ? body.booking_id.trim() : "";
-  const bokunTracking =
-    typeof body.bokun_tracking_code === "string" ? body.bokun_tracking_code.trim() : "";
+  const trackingCode =
+    typeof body.tracking_code === "string" ? body.tracking_code.trim() : "";
   if (!hotel || !/^[a-z0-9-]{2,40}$/.test(hotel)) {
     return jsonResponse({ error: "hotel slug required" }, 400, request);
   }
@@ -308,13 +308,16 @@ async function handleDashboardRecord(request, env) {
     return jsonResponse({ error: "confirmation_code required" }, 400, request);
   }
 
-  // Parallel lookups — saves a round trip vs. sequential.
+  // Parallel lookups — saves a round trip vs. sequential. Staff
+  // resolution matches on the partner-controlled slug
+  // (hotel_staff.tracking_code, e.g. FAIRMONT_LL_JS) rather than the
+  // hex tracking codes Bokun used to mint.
   const [hotelRows, staffRows] = await Promise.all([
     supabaseSelect(env, `hotels?code=eq.${encodeURIComponent(hotel)}&select=id`),
-    bokunTracking
+    trackingCode
       ? supabaseSelect(
           env,
-          `hotel_staff?bokun_tracking_code=eq.${encodeURIComponent(bokunTracking)}&select=id,hotel_id`,
+          `hotel_staff?tracking_code=eq.${encodeURIComponent(trackingCode)}&select=id,hotel_id`,
         )
       : Promise.resolve([]),
   ]);
@@ -325,30 +328,30 @@ async function handleDashboardRecord(request, env) {
   const hotelId = hotelRows[0].id;
 
   // Only attribute to staff if their hotel matches — defends against a
-  // tracking-code collision between hotels (the partial unique index
-  // already prevents this, but the check is cheap and explicit).
+  // tracking-code collision between hotels. Hotel-level codes (e.g.
+  // FAIRMONT_LL) won't match any hotel_staff row and so resolve to
+  // staff_id=null, which is the correct "hotel pool" attribution.
   const staffMatch = staffRows[0];
   const staffId = staffMatch && staffMatch.hotel_id === hotelId ? staffMatch.id : null;
 
   const row = {
-    booking_id:          bookingId || null,
-    hotel_id:            hotelId,
-    staff_id:            staffId,
-    confirmation_code:   code,
-    tour_id:             body.tour_id ?? null,
-    tour_title:          typeof body.tour_title === "string" ? body.tour_title : null,
-    date:                typeof body.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.date)
-                         ? body.date
-                         : null,
-    time:                typeof body.time === "string" ? body.time : null,
-    adults:              Number.parseInt(body.adults, 10) || 0,
-    youth:               Number.parseInt(body.youth, 10) || 0,
-    infants:             Number.parseInt(body.infants, 10) || 0,
-    amount:              typeof body.amount === "number" ? body.amount : null,
-    currency:            typeof body.currency === "string" ? body.currency : CURRENCY,
-    lead_name:           typeof body.lead_name === "string" ? body.lead_name : null,
-    lead_email:          typeof body.lead_email === "string" ? body.lead_email : null,
-    bokun_tracking_code: bokunTracking || null,
+    booking_id:        bookingId || null,
+    hotel_id:          hotelId,
+    staff_id:          staffId,
+    confirmation_code: code,
+    tour_id:           body.tour_id ?? null,
+    tour_title:        typeof body.tour_title === "string" ? body.tour_title : null,
+    date:              typeof body.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.date)
+                       ? body.date
+                       : null,
+    time:              typeof body.time === "string" ? body.time : null,
+    adults:            Number.parseInt(body.adults, 10) || 0,
+    youth:             Number.parseInt(body.youth, 10) || 0,
+    infants:           Number.parseInt(body.infants, 10) || 0,
+    amount:            typeof body.amount === "number" ? body.amount : null,
+    currency:          typeof body.currency === "string" ? body.currency : CURRENCY,
+    lead_name:         typeof body.lead_name === "string" ? body.lead_name : null,
+    lead_email:        typeof body.lead_email === "string" ? body.lead_email : null,
   };
 
   // ignore-duplicates → INSERT … ON CONFLICT (confirmation_code) DO NOTHING.
@@ -391,8 +394,8 @@ async function handleDashboardBookings(url, env, request) {
   const fields =
     "id,booking_id,confirmation_code,tour_id,tour_title,date,time," +
     "adults,youth,infants,amount,currency,lead_name,lead_email," +
-    "bokun_tracking_code,status,created_at,updated_at," +
-    "staff:hotel_staff(id,code,name,kickback_pct)";
+    "status,created_at,updated_at," +
+    "staff:hotel_staff(id,code,name,tracking_code,kickback_pct)";
   let q =
     `bookings?hotel_id=eq.${h.id}` +
     `&select=${fields}` +
@@ -465,9 +468,9 @@ async function handleAdminSummary(url, env, request) {
 
   const fields =
     "id,confirmation_code,date,time,adults,youth,infants,amount,currency," +
-    "tour_title,tour_id,lead_name,bokun_tracking_code,created_at,status," +
+    "tour_title,tour_id,lead_name,created_at,status," +
     "hotel:hotels(id,code,name,location,type,commission_pct,kickback_pool_pct)," +
-    "staff:hotel_staff(id,code,name,kickback_pct)";
+    "staff:hotel_staff(id,code,name,tracking_code,kickback_pct)";
   const q =
     `bookings?status=eq.confirmed` +
     `&created_at=gte.${encodeURIComponent(fromTs)}` +
