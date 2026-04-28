@@ -297,6 +297,27 @@
       margin-bottom: var(--space-4);
     }
 
+    /* Empty / locked-out state — when the signed-in user has no
+       hotel_users row, hide the whole dashboard chrome and centre
+       the explanatory message as a stand-alone card. The header +
+       Account/Sign-out actions stay visible so the user can switch
+       accounts. */
+    .hd-page--empty {
+      min-height: calc(100vh - 100px);
+      display: flex; align-items: center; justify-content: center;
+      padding: var(--space-6) var(--space-4);
+    }
+    .hd-page--empty .hd-controls,
+    .hd-page--empty .hd-kpi-grid,
+    .hd-page--empty .hd-table-wrap { display: none; }
+    .hd-page--empty .hd-error {
+      max-width: 480px;
+      margin: 0;
+      padding: var(--space-5) var(--space-6);
+      text-align: center;
+      font-size: var(--text-base);
+    }
+
     .hd-skeleton .hd-kpi__value,
     .hd-skeleton .hd-kpi__sub { color: transparent; background: var(--warm-white-alt); border-radius: 4px; }
 
@@ -529,6 +550,10 @@
     }
 
     if (!hotelSlug) {
+      // Locked-out state: drop the dashboard skeleton entirely and
+      // centre the error so it reads as a stand-alone "you need
+      // permission" page rather than a half-loaded dashboard.
+      document.querySelector('.hd-page').classList.add('hd-page--empty');
       showError('Your account isn’t linked to any active hotel yet. Contact Horizon to get set up.');
       els.headerActions.hidden = false;
     } else {
