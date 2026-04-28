@@ -27,7 +27,7 @@
 //                                      have an active hotel_users row for
 //                                      the requested hotel slug.
 //
-// Horizon admin (internal, shared-password gated via HORIZON_ADMIN_PASSWORD):
+// Horizon admin (internal, Supabase JWT + horizon_admins table):
 //   GET   /api/admin/summary           ?from=YYYY-MM-DD&to=YYYY-MM-DD —
 //                                      cross-hotel totals + per-hotel
 //                                      commission + per-staff kickback rollup
@@ -489,12 +489,13 @@ async function handleDashboardBookings(url, env, request) {
 }
 
 // ── Horizon admin (internal) ───────────────────────────────────────────────
-// Cross-hotel summary for the internal commission dashboard. Shared-password
-// gated via HORIZON_ADMIN_PASSWORD (worker secret). Excludes cancelled and
-// refunded bookings from all totals — those are tracked but never owed.
+// Cross-hotel summary for the internal commission dashboard. Gated by a
+// Supabase Auth JWT plus an active row in the horizon_admins table —
+// signing in by itself isn't enough; the email has to be on the
+// allowlist. Excludes cancelled and refunded bookings from all totals.
 async function handleAdminSummary(url, env, request) {
-  const authError = requireAdmin(request, env);
-  if (authError) return authError;
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
 
   const from = url.searchParams.get("from");
   const to = url.searchParams.get("to");
@@ -632,8 +633,8 @@ async function handleAdminSummary(url, env, request) {
 const ALLOWED_STATUSES = new Set(["confirmed", "cancelled", "refunded", "pending_refund"]);
 
 async function handleAdminBookingPatch(id, request, env) {
-  const authError = requireAdmin(request, env);
-  if (authError) return authError;
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
 
   if (!UUID_RE.test(id)) {
     return jsonResponse({ error: "invalid booking id" }, 400, request);
@@ -669,29 +670,28 @@ async function handleAdminBookingPatch(id, request, env) {
   return jsonResponse({ ok: true, booking: updated[0] }, 200, request);
 }
 
-// Bearer-token auth for the internal admin surface. Single shared password
-// stored in HORIZON_ADMIN_PASSWORD (worker secret). Constant-time compare
-// avoids leaking length info via timing on a typo'd password.
-function requireAdmin(request, env) {
-  if (!env.HORIZON_ADMIN_PASSWORD) {
-    return jsonResponse({ error: "admin password not configured" }, 500, request);
+// Authorization gate for the internal admin surface (/admin/ + the
+// /api/admin/* routes). Wraps requireAuthenticated so the JWT shape +
+// signature checks are reused, then verifies the caller has an active
+// horizon_admins row matching the JWT's email claim. Returns the same
+// { claims } | { error } shape as the other auth helpers so route
+// handlers stay symmetric.
+async function requireHorizonAdmin(request, env) {
+  const auth = await requireAuthenticated(request, env);
+  if (auth.error) return auth;
+  const userEmail = String(auth.claims.email || "").trim();
+  if (!userEmail) {
+    return { error: jsonResponse({ error: "jwt missing email claim" }, 401, request) };
   }
-  const auth = request.headers.get("Authorization") || "";
-  const m = auth.match(/^Bearer\s+(.+)$/);
-  if (!m || !constantTimeEqual(m[1], env.HORIZON_ADMIN_PASSWORD)) {
-    return jsonResponse({ error: "unauthorized" }, 401, request);
+  const adminRows = await supabaseSelect(
+    env,
+    `horizon_admins?email=ilike.${encodeURIComponent(userEmail)}` +
+      `&status=eq.active&select=id`,
+  );
+  if (!adminRows.length) {
+    return { error: jsonResponse({ error: "forbidden" }, 403, request) };
   }
-  return null;
-}
-
-function constantTimeEqual(a, b) {
-  if (typeof a !== "string" || typeof b !== "string") return false;
-  if (a.length !== b.length) return false;
-  let mismatch = 0;
-  for (let i = 0; i < a.length; i++) {
-    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
-  return mismatch === 0;
+  return { claims: auth.claims };
 }
 
 function round2(n) {
@@ -779,7 +779,7 @@ function base64UrlToBytes(s) {
 // Bearer-token auth for partner-dashboard endpoints. Returns
 // `{ claims }` on success (the resolved user object) or `{ error }`
 // (a ready-to-send Response) on failure. Caller pattern matches
-// requireAdmin so route handlers stay symmetric.
+// requireHorizonAdmin so route handlers stay symmetric.
 async function requireAuthenticated(request, env) {
   const auth = request.headers.get("Authorization") || "";
   const m = auth.match(/^Bearer\s+(.+)$/);
