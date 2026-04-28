@@ -26,6 +26,47 @@ booking is attributed to the hotel only.
 `partners.json` at the repo root remains the source of truth for the
 partner directory. Supabase is seeded from it.
 
+## Timestamps — UTC at storage, local at the edge
+
+All timestamp columns (`created_at`, `updated_at`) are Postgres
+`timestamptz`, which Postgres normalizes to **UTC** at write time.
+You won't see UTC on the dashboards or in invoices — display is
+always converted to the viewer's local time.
+
+The pattern, from outside in:
+
+| Layer                      | Format                              |
+|----------------------------|-------------------------------------|
+| Postgres `bookings`        | UTC (timestamptz)                   |
+| Worker API request/response| ISO 8601 instant (`...T...Z`)       |
+| Page display               | Local time via `new Date(iso)`      |
+| Static query strings       | ISO 8601 instants, URL-encoded      |
+
+Why not store local time:
+
+- DST creates a non-existent hour (every March) and a doubled hour
+  (every November) in local time. UTC has neither.
+- Bokun, Stripe, and Cloudflare all hand us UTC; storing local
+  would mean converting on every read and write.
+- Hotels in different timezones (Quebec → EDT, Vancouver → PDT,
+  Saskatchewan → no DST) make a single "local timezone" undefined
+  the moment you sign one outside Mountain time.
+
+Why ISO instants on the API and not bare `YYYY-MM-DD`:
+
+- `2026-04-27` is ambiguous — midnight UTC? Midnight Mountain time?
+  Midnight Tokyo? An ISO instant like `2026-04-27T06:00:00.000Z`
+  is unambiguous globally.
+- A booking made at 11pm local lands in UTC at ~5am the next day.
+  Sending the bare date `2026-04-27` would clip that booking out
+  of "this month" until the next day. The page-side code computes
+  bounds at start-of-local-day, then `.toISOString()` so the
+  instant carries the user's intent unambiguously.
+
+`/api/dashboard/bookings` and `/api/admin/summary` accept either
+ISO instants (preferred) or `YYYY-MM-DD` (interpreted as start/end
+of UTC day, kept for the custom-range picker and curl tests).
+
 ## Setup (one-time, per environment)
 
 ### 1. Apply the schema
