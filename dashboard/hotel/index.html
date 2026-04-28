@@ -477,15 +477,13 @@
       throw new Error('redirecting to /dashboard/login/');
     }
 
-    // Wipe any access-token hash the magic-link / OAuth / recovery
-    // redirect left in the URL bar — nicer history entries, no token
-    // sitting in browser history. The SDK has already parsed it into
-    // localStorage. Detect type=recovery first so we know to prompt
-    // the user to set a new password after the dashboard finishes
-    // loading.
-    var isRecovery = false;
+    // Strip any leftover access-token hash from the URL bar. Magic-
+    // link and password-recovery flows now land on /dashboard/setup/
+    // first (where the user picks a password) and only forward here
+    // afterwards — at that point the hash is already gone — but
+    // Google OAuth still hands us a hash directly, so the strip is
+    // worth keeping.
     if (window.location.hash && window.location.hash.indexOf('access_token=') !== -1) {
-      isRecovery = window.location.hash.indexOf('type=recovery') !== -1;
       history.replaceState(null, '', window.location.pathname + window.location.search);
     }
 
@@ -563,14 +561,6 @@
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && !els.acctModal.hidden) closeAccount();
     });
-    // Auto-open in "set new password" mode when the user just clicked
-    // a Forgot-password recovery link. Their session is now active
-    // (Supabase signs them in for the recovery flow); they just need
-    // to pick a new password.
-    if (isRecovery) {
-      openAccount({ recovery: true });
-    }
-
     els.acctForm.addEventListener('submit', async function (e) {
       e.preventDefault();
       els.acctError.hidden   = true;
@@ -590,6 +580,9 @@
       try {
         var res = await supabase.auth.updateUser({ password: pw });
         if (res.error) throw res.error;
+        // Same as on the setup page — flip the sign-in default so the
+        // login page opens in password mode next visit.
+        try { localStorage.setItem('horizon-last-signin-mode', 'password'); } catch (e) {}
         els.acctSuccess.textContent = 'Password saved. You can sign in with it next time.';
         els.acctSuccess.hidden = false;
         els.acctPassword.value = '';

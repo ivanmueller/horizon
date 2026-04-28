@@ -262,8 +262,13 @@
       auth: { persistSession: true, autoRefreshToken: true },
     });
 
-    const REDIRECT_TO = window.location.origin + '/dashboard/hotel/';
-    const LAST_MODE_KEY = 'horizon-last-signin-mode';
+    // Magic-link / password-recovery emails land on /dashboard/setup/
+    // first, where the user picks a password before reaching their
+    // dashboard. Google sign-in skips that step (the OAuth provider is
+    // already a strong second factor) and goes straight to /hotel/.
+    const SETUP_REDIRECT = window.location.origin + '/dashboard/setup/';
+    const HOME_REDIRECT  = window.location.origin + '/dashboard/hotel/';
+    const LAST_MODE_KEY  = 'horizon-last-signin-mode';
 
     const els = {
       form:           document.getElementById('hlForm'),
@@ -351,7 +356,7 @@
       try {
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
-          options: { redirectTo: REDIRECT_TO },
+          options: { redirectTo: HOME_REDIRECT },
         });
         if (error) throw error;
         // signInWithOAuth navigates the browser to Google; no need to
@@ -384,7 +389,10 @@
         try {
           const { error } = await supabase.auth.signInWithPassword({ email, password });
           if (error) throw error;
-          localStorage.setItem(LAST_MODE_KEY, 'password');
+          // No localStorage write here — the flag flips to 'password'
+          // when the user actually saves a password in /dashboard/setup/
+          // or via the Account modal. Successful password sign-in by
+          // itself doesn't change their preference.
           window.location.replace('/dashboard/hotel/');
         } catch (err) {
           console.error('signInWithPassword failed', err);
@@ -404,12 +412,11 @@
         const { error } = await supabase.auth.signInWithOtp({
           email,
           options: {
-            emailRedirectTo: REDIRECT_TO,
+            emailRedirectTo: SETUP_REDIRECT,
             shouldCreateUser: true,
           },
         });
         if (error) throw error;
-        localStorage.setItem(LAST_MODE_KEY, 'magic');
         showCheckEmail(
           email,
           'We sent a sign-in link to <span class="hl-success__email" id="hlSuccessEmail">' +
@@ -434,7 +441,7 @@
       lockForm('Sending…');
       try {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: REDIRECT_TO,
+          redirectTo: SETUP_REDIRECT,
         });
         if (error) throw error;
         showCheckEmail(

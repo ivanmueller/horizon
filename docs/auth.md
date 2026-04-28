@@ -15,22 +15,33 @@ the schema and worker helpers already support it.
 
 ## Partner dashboard flow
 
-The mechanics, end to end:
+There are three sign-in paths from `/dashboard/login/`:
+
+| Path | First time | Returning |
+|---|---|---|
+| **Magic link** | Default for first visit. Email link → `/dashboard/setup/` (forced password set) → `/dashboard/hotel/`. | Used as a recovery path; same setup-then-hotel flow each time. |
+| **Continue with Google** | Click button → Google consent → straight to `/dashboard/hotel/`. No password setup forced — Google IS the auth. | Same. |
+| **Email + password** | Not available until they've set a password via `/dashboard/setup/` or the in-dashboard Account modal. | Default once `localStorage.horizon-last-signin-mode === 'password'` is set. |
+
+End-to-end, magic-link path:
 
 1. Manager opens `/dashboard/login/`, enters their email, clicks **Send magic link**.
 2. Supabase emails them a one-shot URL like
-   `https://gowithhorizon.com/dashboard/hotel/#access_token=…&refresh_token=…&type=magiclink`.
-3. They click it. The dashboard page loads, `supabase-js` parses the
-   tokens out of the URL hash and stores the session in
-   `localStorage`. The page then re-replaces the URL bar to drop the
-   hash so the access token doesn't sit in browser history.
-4. The page calls `supabase.auth.getSession()` — present, so it
-   proceeds. The session also carries an `access_token` (a JWT).
-5. If the URL has no `?hotel=…` slug, the page queries `hotel_users`
-   via the SDK (RLS scopes the result to the user's own rows) and
-   redirects to `/dashboard/hotel/?hotel=<their-slug>`.
-6. The page fetches `/api/dashboard/bookings?hotel=<slug>&…` with
-   `Authorization: Bearer <access_token>`.
+   `https://gowithhorizon.com/dashboard/setup/#access_token=…&type=magiclink`.
+3. They click it. `/dashboard/setup/` loads, `supabase-js` parses
+   the URL hash and stores the session in `localStorage`. The hash
+   is stripped from the URL bar.
+4. Manager picks a password (twice for confirm) and clicks **Save
+   password & continue**. The page calls
+   `supabase.auth.updateUser({ password })`, flips
+   `localStorage.horizon-last-signin-mode` to `'password'` so future
+   visits to `/login/` open in password mode by default, and
+   redirects to `/dashboard/hotel/`.
+5. `/dashboard/hotel/` loads, finds the active session,
+   `supabase.from('hotel_users').select(...)` to resolve which hotel
+   the manager is assigned to (RLS scopes to their own row), then
+   fetches bookings via the worker.
+6. Booking fetch carries `Authorization: Bearer <access_token>`.
 7. The worker:
    - Verifies the JWT signature against Supabase's JWKS endpoint
      (`$SUPABASE_URL/auth/v1/.well-known/jwks.json`). Supabase
@@ -43,6 +54,15 @@ The mechanics, end to end:
    - 401 if the JWT is bad, 403 if the assignment doesn't exist.
 8. On success, the worker queries Supabase via the service-role key
    (bypassing RLS) and returns the bookings.
+
+The "Forgot password?" path follows the same shape: email link goes
+to `/dashboard/setup/`, manager picks a new password, lands on
+`/dashboard/hotel/`. So password reset and first-time setup share
+one page.
+
+Google sign-in skips `/dashboard/setup/` entirely — `signInWithOAuth`
+configures the redirect to `/dashboard/hotel/` directly. A manager
+who only ever uses Google never sets a password and never has to.
 
 The defense-in-depth picture:
 
