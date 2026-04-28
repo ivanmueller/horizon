@@ -501,6 +501,22 @@
       throw new Error('redirecting to /dashboard/login/');
     }
 
+    // A signed-in non-admin shouldn't land here — bounce them to
+    // /dashboard/hotel/. The worker would still 403 every /api/admin/*
+    // call, but redirecting page-side avoids briefly showing the
+    // admin shell with a "forbidden" toast. RLS on horizon_admins
+    // means a non-admin's select returns no rows.
+    var adminCheck = await supabase
+      .from('horizon_admins')
+      .select('id')
+      .eq('status', 'active')
+      .limit(1)
+      .maybeSingle();
+    if (!adminCheck.data) {
+      window.location.replace('/dashboard/hotel/');
+      throw new Error('redirecting to /dashboard/hotel/');
+    }
+
     // Strip OAuth hash for clean history.
     if (window.location.hash && window.location.hash.indexOf('access_token=') !== -1) {
       history.replaceState(null, '', window.location.pathname + window.location.search);
