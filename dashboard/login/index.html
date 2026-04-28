@@ -37,7 +37,6 @@
     .hl-logo {
       display: flex; flex-direction: column; align-items: center;
       gap: var(--space-2); margin-bottom: var(--space-4);
-      text-decoration: none;
     }
     .hl-logo__icon {
       width: 48px; height: 48px;
@@ -113,10 +112,10 @@
       content: ''; flex: 1; height: 1px; background: var(--border-color);
     }
 
-    /* Password row: label on the left, "Forgot password?" link aligned right. */
-    .hl-password-row {
-      display: flex; justify-content: space-between; align-items: baseline;
-      margin-bottom: -2px;
+    /* Forgot-password link sits under the password field, right-aligned. */
+    .hl-forgot-row {
+      text-align: right;
+      margin-top: -2px;
     }
 
     /* Inline link button (text styled, button semantics). */
@@ -183,7 +182,7 @@
 
     <!-- ── Sign-in form ────────────────────────────────────────────── -->
     <section class="hl-card" id="hlForm">
-      <a href="/" class="hl-logo">
+      <div class="hl-logo">
         <span class="hl-logo__icon">
           <svg width="48" height="48" viewBox="0 0 36 36" aria-hidden="true">
             <rect width="36" height="36" rx="8" fill="#FF6B4A"/>
@@ -191,7 +190,7 @@
           </svg>
         </span>
         <span class="hl-logo__text">horizon</span>
-      </a>
+      </div>
 
       <h1 class="hl-title">Sign in to Horizon</h1>
       <p class="hl-sub">Partner dashboard</p>
@@ -215,11 +214,11 @@
         <input type="email" id="hlEmail" name="email" autocomplete="email" required autofocus>
 
         <div id="hlPasswordSection" hidden>
-          <div class="hl-password-row">
-            <label for="hlPassword">Password</label>
+          <label for="hlPassword">Password</label>
+          <input type="password" id="hlPassword" name="password" autocomplete="current-password">
+          <div class="hl-forgot-row">
             <button type="button" class="hl-link" id="hlForgot">Forgot password?</button>
           </div>
-          <input type="password" id="hlPassword" name="password" autocomplete="current-password">
         </div>
 
         <button type="submit" class="hl-btn" id="hlSubmit">Send magic link</button>
