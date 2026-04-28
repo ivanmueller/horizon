@@ -407,8 +407,12 @@ async function handleDashboardBookings(url, env, request) {
     amount: r.amount != null ? Number(r.amount) : null,
   }));
 
+  // KPIs only count confirmed — cancelled and refunded bookings show in
+  // the records list (so the partner sees what was reversed) but are
+  // never owed.
   const kpis = records.reduce(
     (acc, r) => {
+      if (r.status !== "confirmed") return acc;
       acc.bookings += 1;
       acc.travelers += (r.adults || 0) + (r.youth || 0) + (r.infants || 0);
       acc.revenue += r.amount != null ? r.amount : 0;

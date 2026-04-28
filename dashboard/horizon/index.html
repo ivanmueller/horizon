@@ -185,6 +185,19 @@
     .ha-pill--kickback { background: rgba(255, 107, 74, 0.12); color: var(--coral); }
     .ha-pill--pool     { background: rgba(26, 26, 46, 0.06);   color: var(--near-black); }
 
+    /* ── Status select (per booking row) ────────────────────────────── */
+    .ha-status {
+      font: inherit; font-size: var(--text-xs); font-weight: 600;
+      padding: 4px 8px; border-radius: var(--radius-full);
+      border: 1px solid transparent; cursor: pointer;
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .ha-status:disabled { opacity: 0.6; cursor: progress; }
+    .ha-status--confirmed      { background: #ECFDF5; color: #065F46; border-color: #A7F3D0; }
+    .ha-status--cancelled      { background: #FEF2F2; color: #991B1B; border-color: #FECACA; }
+    .ha-status--refunded       { background: #F3F4F6; color: #374151; border-color: #D1D5DB; }
+    .ha-status--pending_refund { background: #FEF3C7; color: #92400E; border-color: #FDE68A; }
+
     .ha-empty { padding: var(--space-8) var(--space-5); text-align: center; color: var(--mid-gray); }
     .ha-empty strong { display: block; color: var(--near-black); margin-bottom: 4px; font-size: var(--text-base); }
 
@@ -579,14 +592,24 @@
         var html = '<table><thead><tr>' +
           '<th>Booked</th><th>Tour date</th><th>Tour</th><th>Guest</th>' +
           '<th class="ha-num">Travelers</th><th class="ha-num">Amount</th>' +
-          '<th>Attribution</th><th>Confirmation</th></tr></thead><tbody>';
+          '<th>Attribution</th><th>Confirmation</th><th>Status</th></tr></thead><tbody>';
         records.forEach(function (r) {
           var travelers = (r.adults || 0) + (r.youth || 0) + (r.infants || 0);
           var attribution = r.staff && r.staff.name
             ? escapeHtml(r.staff.name)
             : '<span style="color:var(--mid-gray)">hotel pool</span>';
+          var status = r.status || 'confirmed';
+          var statusSelect =
+            '<select class="ha-status ha-status--' + escapeHtml(status) + '" ' +
+                    'data-id="' + escapeHtml(r.id) + '" ' +
+                    'data-prev="' + escapeHtml(status) + '">' +
+              '<option value="confirmed"' + (status === 'confirmed' ? ' selected' : '') + '>Confirmed</option>' +
+              '<option value="cancelled"' + (status === 'cancelled' ? ' selected' : '') + '>Cancelled</option>' +
+              '<option value="refunded"' + (status === 'refunded' ? ' selected' : '') + '>Refunded</option>' +
+              '<option value="pending_refund"' + (status === 'pending_refund' ? ' selected' : '') + '>Pending refund</option>' +
+            '</select>';
           html +=
-            '<tr>' +
+            '<tr data-row="' + escapeHtml(r.id) + '" data-status="' + escapeHtml(status) + '">' +
               '<td>' + escapeHtml(formatHumanDateTime(r.created_at)) + '</td>' +
               '<td>' + escapeHtml(formatHumanDate(r.date) || '—') + '</td>' +
               '<td>' + escapeHtml(r.tour_title || '—') + '</td>' +
@@ -595,10 +618,63 @@
               '<td class="ha-num">' + escapeHtml(r.amount != null ? formatMoney(r.amount) : '—') + '</td>' +
               '<td>' + attribution + '</td>' +
               '<td><code style="font-size:0.78rem;color:var(--mid-gray)">' + escapeHtml(r.confirmation_code || '—') + '</code></td>' +
+              '<td>' + statusSelect + '</td>' +
             '</tr>';
         });
         html += '</tbody></table>';
         return html;
+      }
+
+      // Delegated change handler — one listener for the whole page lifetime,
+      // catches the dynamically-rendered status selects via class match.
+      document.body.addEventListener('change', function (e) {
+        var sel = e.target;
+        if (!sel || !sel.classList || !sel.classList.contains('ha-status')) return;
+        onStatusChange(sel);
+      });
+
+      function onStatusChange(sel) {
+        var id = sel.dataset.id;
+        var prev = sel.dataset.prev;
+        var next = sel.value;
+        if (next === prev) return;
+
+        if (!window.confirm('Change booking status from "' + prev + '" to "' + next + '"? Totals on this page will be stale until you hit Refresh.')) {
+          sel.value = prev;
+          return;
+        }
+
+        sel.disabled = true;
+        fetch(BOKUN_API_BASE + '/api/admin/bookings/' + encodeURIComponent(id), {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + token,
+          },
+          body: JSON.stringify({ status: next }),
+        })
+          .then(function (r) {
+            if (r.status === 401) {
+              sessionStorage.removeItem(STORAGE_KEY);
+              token = '';
+              showLogin();
+              throw new Error('unauthorized');
+            }
+            return r.json().then(function (b) { return { ok: r.ok, body: b }; });
+          })
+          .then(function (res) {
+            if (!res.ok) throw new Error((res.body && res.body.error) || 'update_failed');
+            sel.dataset.prev = next;
+            sel.className = 'ha-status ha-status--' + next;
+            sel.disabled = false;
+          })
+          .catch(function (err) {
+            if (err && err.message === 'unauthorized') return;
+            console.error('status update failed', err);
+            window.alert('Could not update status: ' + (err && err.message || 'unknown error'));
+            sel.value = prev;
+            sel.disabled = false;
+          });
       }
 
       // ── Helpers ────────────────────────────────────────────────────
