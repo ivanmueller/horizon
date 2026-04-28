@@ -43,7 +43,7 @@
 //   BOKUN_ACCESS_KEY, BOKUN_SECRET_KEY  — HMAC signing for Bokun
 //   STRIPE_SECRET_KEY                   — sk_test_... or sk_live_...
 //   SUPABASE_SERVICE_KEY                — Supabase service_role; bypasses RLS
-//   HORIZON_ADMIN_PASSWORD              — gates /api/admin/* + /dashboard/horizon/
+//   HORIZON_ADMIN_PASSWORD              — gates /api/admin/* + /admin/
 //
 // Partner-dashboard JWTs are verified against $SUPABASE_URL/auth/v1/
 // .well-known/jwks.json (public asymmetric keys, ES256/RS256). No

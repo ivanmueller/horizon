@@ -15,10 +15,10 @@ Priority key:
 | Priority | Item | Effort | Why |
 |---|---|---|---|
 | P1 | **Multi-hotel picker UI** on `/dashboard/hotel/` | 1 commit | Schema already supports it; v1 silently picks the first active `hotel_users` row. First chain partner who manages two hotels exposes this. |
-| P1 | **Admin UI for `hotel_users`** (add / revoke from `/dashboard/horizon/`) | 2–3 commits | Replace the manual SQL insert with a form. Reduces the "ops via SQL Editor" load as you onboard. |
-| P2 | **Magic-link auth for `/dashboard/horizon/`** (drop shared password) | 3–4 commits | Same flow as the partner dashboard. Drop the `HORIZON_ADMIN_PASSWORD` secret. Worth doing before you have more than 3 internal users. |
+| P1 | **Admin UI for `hotel_users`** (add / revoke from `/admin/`) | 2–3 commits | Replace the manual SQL insert with a form. Reduces the "ops via SQL Editor" load as you onboard. |
+| P2 | **Magic-link auth for `/admin/`** (drop shared password) | 3–4 commits | Same flow as the partner dashboard. Drop the `HORIZON_ADMIN_PASSWORD` secret. Worth doing before you have more than 3 internal users. |
 | P2 | **Role-based permissions** (`manager` vs `read-only` vs `admin`) | 1–2 commits | Schema's `role` column already exists. Add `where role = 'manager'` checks where mutations land. |
-| P3 | **Self-service signup with approval queue** | 4–5 commits | A "Request access" form on the login page → row in a `pending_users` table → Horizon team approves from `/dashboard/horizon/`. Useful only if you're scaling onboarding past a handful per week. |
+| P3 | **Self-service signup with approval queue** | 4–5 commits | A "Request access" form on the login page → row in a `pending_users` table → Horizon team approves from `/admin/`. Useful only if you're scaling onboarding past a handful per week. |
 | P3 | **PKCE flow + cookie-based sessions** instead of localStorage tokens | 4–6 commits | More secure (HttpOnly cookies aren't readable from JS, so XSS can't exfiltrate). Worth doing if the dashboard ever shows genuinely sensitive data (PII, finances, etc.). For now the data on the partner dashboard is already what they have access to anyway. |
 
 ## Bokun integration
@@ -56,7 +56,7 @@ Priority key:
 |---|---|---|---|
 | P1 | **Monthly invoice automation** | 2 commits | Currently `npm run invoices` runs on demand. Wrap it in a Cloudflare Cron Trigger or a GitHub Action that runs on the 1st of each month, generates all PDFs, emails them to hotel contacts. Add an emails section to `partners.json` (manager_email, accounting_email). |
 | P2 | **Direct hotel onboarding flow** | 4–5 commits | Skip the Bokun referral creation entirely (already partly done — Horizon-side tracking is the source of truth). Build a signup form for hotels that creates the partners.json row, runs the seed, generates QR-ready URLs / printable link package. Cuts onboarding from "edit JSON + Bokun extranet + run seed" to "fill form, click submit". |
-| P2 | **Batch invoice button** on `/dashboard/horizon/` | 1 commit | Generate all hotels' invoices for a period in one zip-style download or sequence of preview modals. The single-hotel button covers the manual case; this covers month-end. |
+| P2 | **Batch invoice button** on `/admin/` | 1 commit | Generate all hotels' invoices for a period in one zip-style download or sequence of preview modals. The single-hotel button covers the manual case; this covers month-end. |
 | P3 | **Booking notes / annotations** | 2 commits | Free-form text on a booking from the admin dashboard ("guest cancelled day-of, refund pending paperwork"). |
 
 ## Infrastructure & hardening

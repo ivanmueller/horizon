@@ -5,7 +5,7 @@ Two surfaces with two auth models:
 | Surface                              | Who                  | Auth                                          |
 |--------------------------------------|----------------------|-----------------------------------------------|
 | `/dashboard/hotel/?hotel=<slug>`     | Hotel managers       | Supabase magic-link → JWT → RLS-scoped reads  |
-| `/dashboard/horizon/`                | Horizon team         | Shared password (`HORIZON_ADMIN_PASSWORD`)    |
+| `/admin/`                | Horizon team         | Shared password (`HORIZON_ADMIN_PASSWORD`)    |
 
 The split is intentional for now — internal admin is one to three
 people, magic-link wouldn't add much. Partner access is N hotels
@@ -147,7 +147,7 @@ the `{{ .ConfirmationURL }}` variable intact.
 |---------------------------|-----------------------------------------------------------|
 | `SUPABASE_URL` (var)      | Project URL — also where the JWKS endpoint lives          |
 | `SUPABASE_SERVICE_KEY`    | service-role key for the worker's data fetches; bypasses RLS |
-| `HORIZON_ADMIN_PASSWORD`  | Shared password for the internal `/dashboard/horizon/`    |
+| `HORIZON_ADMIN_PASSWORD`  | Shared password for the internal `/admin/`    |
 
 Notably absent: a JWT verification secret. Supabase's asymmetric
 signing keys are exposed publicly via the JWKS endpoint, so the

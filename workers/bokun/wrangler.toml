@@ -15,7 +15,7 @@ SUPABASE_URL   = "https://lxdltzrntphnkhsniwin.supabase.co"
 #   wrangler secret put BOKUN_SECRET_KEY        # Bokun HMAC signing
 #   wrangler secret put STRIPE_SECRET_KEY       # sk_test_... (then sk_live_... for prod)
 #   wrangler secret put SUPABASE_SERVICE_KEY    # Supabase service_role; bypasses RLS
-#   wrangler secret put HORIZON_ADMIN_PASSWORD  # gates /api/admin/* + /dashboard/horizon/
+#   wrangler secret put HORIZON_ADMIN_PASSWORD  # gates /api/admin/* + /admin/
 #
 # Partner-dashboard JWTs are verified against the public Supabase JWKS
 # at $SUPABASE_URL/auth/v1/.well-known/jwks.json — no worker secret
