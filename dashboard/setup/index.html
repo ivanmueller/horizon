@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Set your password — Horizon partner dashboard</title>
+  <meta name="description" content="Pick a password for future Horizon partner-dashboard sign-ins.">
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="canonical" href="https://gowithhorizon.com/dashboard/setup/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%23FF6B4A'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
+  <style>
+    body {
+      background: var(--warm-white);
+      min-height: 100vh; margin: 0;
+      display: flex; flex-direction: column;
+    }
+    .hs-page {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      padding: var(--space-6) var(--space-4);
+    }
+    .hs-card {
+      width: 100%; max-width: 420px;
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    }
+    .hs-logo {
+      display: flex; flex-direction: column; align-items: center;
+      gap: var(--space-2); margin-bottom: var(--space-4);
+    }
+    .hs-logo__text {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.5rem; font-weight: 700; color: var(--coral);
+    }
+    .hs-title {
+      text-align: center;
+      font-family: var(--font-display);
+      font-size: var(--text-xl); font-weight: 600; color: var(--near-black);
+      margin: 0 0 var(--space-1);
+    }
+    .hs-sub {
+      text-align: center;
+      font-size: var(--text-sm); color: var(--mid-gray);
+      margin: 0 0 var(--space-5);
+    }
+    .hs-form { display: flex; flex-direction: column; gap: var(--space-3); }
+    .hs-form label {
+      font-size: var(--text-sm); font-weight: 600; color: var(--near-black);
+      margin-bottom: -2px;
+    }
+    .hs-form input[type="email"],
+    .hs-form input[type="password"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      font: inherit; font-size: var(--text-base);
+      box-sizing: border-box;
+      background: #fff;
+    }
+    .hs-form input[type="email"]:disabled {
+      background: var(--warm-white-alt); color: var(--mid-gray);
+    }
+    .hs-form input[type="password"]:focus {
+      outline: 2px solid var(--coral); outline-offset: -1px;
+    }
+    .hs-btn {
+      width: 100%;
+      padding: 10px 16px;
+      background: var(--coral); color: #fff;
+      border: 0; border-radius: var(--radius-md);
+      font: inherit; font-size: var(--text-base); font-weight: 600;
+      cursor: pointer;
+      margin-top: var(--space-2);
+    }
+    .hs-btn:hover { background: var(--coral-hover); }
+    .hs-btn:disabled { opacity: 0.6; cursor: progress; }
+    .hs-error {
+      background: #FEF2F2; border: 1px solid #FCA5A5; color: #991B1B;
+      padding: var(--space-2) var(--space-3); border-radius: var(--radius-md);
+      font-size: var(--text-sm);
+      margin: 0 0 var(--space-3);
+    }
+    .hs-error[hidden] { display: none; }
+    .hs-footer {
+      text-align: center;
+      font-size: var(--text-xs); color: var(--mid-gray);
+      margin: var(--space-5) 0 0;
+    }
+    .hs-footer button {
+      background: none; border: 0; padding: 0;
+      font: inherit; font-size: var(--text-xs); color: var(--mid-gray);
+      cursor: pointer; text-decoration: underline;
+    }
+    .hs-footer button:hover { color: var(--near-black); }
+  </style>
+</head>
+<body>
+
+  <main class="hs-page">
+    <section class="hs-card">
+      <div class="hs-logo">
+        <span>
+          <svg width="48" height="48" viewBox="0 0 36 36" aria-hidden="true">
+            <rect width="36" height="36" rx="8" fill="#FF6B4A"/>
+            <path d="M13 7v22M13 18c0-6 12-6 12 0v11" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>
+          </svg>
+        </span>
+        <span class="hs-logo__text">horizon</span>
+      </div>
+
+      <h1 class="hs-title">Set your password</h1>
+      <p class="hs-sub">
+        You're signed in. Pick a password to use for future sign-ins —
+        it's faster than waiting for a magic-link email.
+      </p>
+
+      <p class="hs-error" id="hsError" hidden></p>
+
+      <form class="hs-form" id="hsSetupForm" autocomplete="on">
+        <label for="hsEmail">Email</label>
+        <input type="email" id="hsEmail" disabled>
+
+        <label for="hsPassword">New password</label>
+        <input type="password" id="hsPassword" autocomplete="new-password" minlength="8" required autofocus>
+
+        <label for="hsConfirm">Confirm password</label>
+        <input type="password" id="hsConfirm" autocomplete="new-password" minlength="8" required>
+
+        <button type="submit" class="hs-btn" id="hsSubmit">Save password &amp; continue</button>
+      </form>
+
+      <p class="hs-footer">
+        Wrong account? <button type="button" id="hsSignout">Sign out</button>
+      </p>
+    </section>
+  </main>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+
+    const SUPABASE_URL  = 'https://lxdltzrntphnkhsniwin.supabase.co';
+    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4ZGx0enJudHBobmtoc25pd2luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNjA0OTAsImV4cCI6MjA5MjYzNjQ5MH0.toebJTpWH-_tRLOmwPCeTprGfQfH_JU_ZKgbqkGuz3M';
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+    });
+
+    const els = {
+      form:     document.getElementById('hsSetupForm'),
+      email:    document.getElementById('hsEmail'),
+      password: document.getElementById('hsPassword'),
+      confirm:  document.getElementById('hsConfirm'),
+      submit:   document.getElementById('hsSubmit'),
+      error:    document.getElementById('hsError'),
+      signout:  document.getElementById('hsSignout'),
+    };
+
+    // Boot — magic-link / recovery redirect drops the access_token
+    // in the URL hash; SDK auto-parses on createClient. Wait for the
+    // session to be ready, then bounce back to login if there's none
+    // (someone hit /setup/ without a valid sign-in).
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      window.location.replace('/dashboard/login/');
+      throw new Error('redirecting to /dashboard/login/');
+    }
+
+    // Strip the access-token hash for cleaner history.
+    if (window.location.hash && window.location.hash.indexOf('access_token=') !== -1) {
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+
+    els.email.value = (session.user && session.user.email) || '';
+
+    function showError(msg) { els.error.textContent = msg; els.error.hidden = false; }
+    function clearError()   { els.error.hidden = true; els.error.textContent = ''; }
+
+    els.form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearError();
+
+      const pw  = els.password.value;
+      const pw2 = els.confirm.value;
+      if (pw.length < 8)   { showError('Password must be at least 8 characters.');  return; }
+      if (pw !== pw2)      { showError('Passwords don’t match.');                    return; }
+
+      els.submit.disabled = true;
+      els.submit.textContent = 'Saving…';
+
+      try {
+        const { error } = await supabase.auth.updateUser({ password: pw });
+        if (error) throw error;
+        // Flip the sign-in default — login page reads this and opens
+        // in password mode next visit since the user clearly opted in.
+        localStorage.setItem('horizon-last-signin-mode', 'password');
+        window.location.replace('/dashboard/hotel/');
+      } catch (err) {
+        console.error('updateUser failed', err);
+        showError(err.message || 'Could not save password.');
+        els.submit.disabled = false;
+        els.submit.textContent = 'Save password & continue';
+      }
+    });
+
+    els.signout.addEventListener('click', async () => {
+      els.signout.disabled = true;
+      await supabase.auth.signOut();
+      window.location.replace('/dashboard/login/');
+    });
+  </script>
+
+</body>
+</html>
