@@ -263,6 +263,15 @@ async function handleBookingInitiate(request, env) {
   const expiresAt = now + TTL_BOOKING * 1000;
   const bookingId = crypto.randomUUID();
 
+  // Optional employee-attribution slug (FAIRMONT_LL_JS form). Same shape
+  // as the URL ?ref=<code> param that originates this; matched against
+  // hotel_staff.tracking_code at insert time on the checkout page side
+  // → /api/dashboard/record. Hotel-default codes (FAIRMONT_LL) ride
+  // through too and harmlessly fail to match any staff row, leaving the
+  // booking attributed to the hotel pool.
+  const refRaw = typeof body.ref === "string" ? body.ref.trim() : "";
+  const ref = /^[A-Z0-9_]{2,40}$/.test(refRaw) ? refRaw : null;
+
   const state = {
     booking_id: bookingId,
     tour_id: tourId,
@@ -274,6 +283,7 @@ async function handleBookingInitiate(request, env) {
     youth,
     infants,
     hotel: typeof body.hotel === "string" ? body.hotel.trim().toLowerCase() : null,
+    ref,
     price_total: typeof body.price_total === "number" ? body.price_total : null,
     currency: typeof body.currency === "string" ? body.currency : CURRENCY,
     created_at: now,
