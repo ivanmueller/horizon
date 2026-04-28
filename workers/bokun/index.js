@@ -21,7 +21,11 @@
 //                                      the hotel slug for /dashboard/hotel/.
 //   GET  /api/dashboard/bookings       ?hotel=<slug>&from=YYYY-MM-DD
 //                                      &to=YYYY-MM-DD — list a hotel's
-//                                      bookings in a date window.
+//                                      bookings in a date window. Requires
+//                                      a Supabase Auth JWT in the
+//                                      Authorization header; caller must
+//                                      have an active hotel_users row for
+//                                      the requested hotel slug.
 //
 // Horizon admin (internal, shared-password gated via HORIZON_ADMIN_PASSWORD):
 //   GET   /api/admin/summary           ?from=YYYY-MM-DD&to=YYYY-MM-DD —
@@ -39,6 +43,7 @@
 //   BOKUN_ACCESS_KEY, BOKUN_SECRET_KEY  — HMAC signing for Bokun
 //   STRIPE_SECRET_KEY                   — sk_test_... or sk_live_...
 //   SUPABASE_SERVICE_KEY                — Supabase service_role; bypasses RLS
+//   SUPABASE_JWT_SECRET                 — HS256 secret for partner-dashboard JWT verification
 //   HORIZON_ADMIN_PASSWORD              — gates /api/admin/* + /dashboard/horizon/
 
 import { bokunFetch } from "./bokun-auth.js";
@@ -375,6 +380,17 @@ async function handleDashboardRecord(request, env) {
 }
 
 async function handleDashboardBookings(url, env, request) {
+  // Auth gate: caller must present a Supabase JWT and be assigned to
+  // the requested hotel via hotel_users. Service-role bypasses RLS on
+  // the actual data fetch, so the authorization decision lives here
+  // rather than relying on PostgREST policies.
+  const auth = await requireAuthenticated(request, env);
+  if (auth.error) return auth.error;
+  const userEmail = String(auth.claims.email || "").trim();
+  if (!userEmail) {
+    return jsonResponse({ error: "jwt missing email claim" }, 401, request);
+  }
+
   const hotel = (url.searchParams.get("hotel") || "").trim().toLowerCase();
   if (!hotel || !/^[a-z0-9-]{2,40}$/.test(hotel)) {
     return jsonResponse({ error: "hotel slug required" }, 400, request);
@@ -398,7 +414,20 @@ async function handleDashboardBookings(url, env, request) {
   }
   const h = hotelRows[0];
 
-  // 2) Pull the bookings, embedding the linked staff row when present.
+  // 2) Authorize: caller must have an active hotel_users row matching
+  //    this hotel. ilike with no wildcards = case-insensitive equals,
+  //    which lines up with how lower(email) is indexed on hotel_users
+  //    and how RLS compares the email claim.
+  const assignmentRows = await supabaseSelect(
+    env,
+    `hotel_users?email=ilike.${encodeURIComponent(userEmail)}` +
+      `&hotel_id=eq.${h.id}&status=eq.active&select=id`,
+  );
+  if (!assignmentRows.length) {
+    return jsonResponse({ error: "forbidden" }, 403, request);
+  }
+
+  // 3) Pull the bookings, embedding the linked staff row when present.
   //    Limit 1000 covers months per hotel; paginate via cursor when a
   //    partner outgrows it.
   const fields =
@@ -664,6 +693,71 @@ function constantTimeEqual(a, b) {
 
 function round2(n) {
   return Math.round(n * 100) / 100;
+}
+
+// Verifies a Supabase-issued JWT (HS256, signed with SUPABASE_JWT_SECRET).
+// Returns the decoded claims on success; throws on any failure (bad
+// shape, bad signature, expired). The Supabase auth server already
+// validates these on the SDK side, but the worker is the security
+// boundary — we re-verify locally so a forged token never reaches the
+// service-role-backed query path.
+async function verifyJwt(token, secret) {
+  const parts = token.split(".");
+  if (parts.length !== 3) throw new Error("malformed jwt");
+  const [headerB64, payloadB64, sigB64] = parts;
+
+  const enc = new TextEncoder();
+  const data = enc.encode(`${headerB64}.${payloadB64}`);
+  const sig = base64UrlToBytes(sigB64);
+
+  const key = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["verify"],
+  );
+  const ok = await crypto.subtle.verify("HMAC", key, sig, data);
+  if (!ok) throw new Error("invalid jwt signature");
+
+  const payload = JSON.parse(new TextDecoder().decode(base64UrlToBytes(payloadB64)));
+  if (payload.exp && Math.floor(Date.now() / 1000) >= payload.exp) {
+    throw new Error("jwt expired");
+  }
+  return payload;
+}
+
+function base64UrlToBytes(s) {
+  const pad = s.length % 4 === 0 ? "" : "=".repeat(4 - (s.length % 4));
+  const std = s.replace(/-/g, "+").replace(/_/g, "/") + pad;
+  const bin = atob(std);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+// Bearer-token auth for partner-dashboard endpoints. Returns
+// `{ claims }` on success (the resolved user object) or `{ error }`
+// (a ready-to-send Response) on failure. Caller pattern matches
+// requireAdmin so route handlers stay symmetric.
+async function requireAuthenticated(request, env) {
+  if (!env.SUPABASE_JWT_SECRET) {
+    return { error: jsonResponse({ error: "auth not configured on worker" }, 500, request) };
+  }
+  const auth = request.headers.get("Authorization") || "";
+  const m = auth.match(/^Bearer\s+(.+)$/);
+  if (!m) {
+    return { error: jsonResponse({ error: "unauthorized" }, 401, request) };
+  }
+  try {
+    const claims = await verifyJwt(m[1], env.SUPABASE_JWT_SECRET);
+    if (claims.aud !== "authenticated") {
+      return { error: jsonResponse({ error: "unauthorized" }, 401, request) };
+    }
+    return { claims };
+  } catch {
+    return { error: jsonResponse({ error: "unauthorized" }, 401, request) };
+  }
 }
 
 // Accepts either an ISO 8601 datetime (used as-is) or a YYYY-MM-DD date
