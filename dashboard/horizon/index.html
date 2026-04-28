@@ -431,31 +431,51 @@
         var f = els.from.value, t = els.to.value;
         if (!f || !t) { showError('Pick both dates first.'); return; }
         if (f > t) { showError('From date must be before To date.'); return; }
-        customRange = { from: f, to: t };
+        customRange = makeRange(
+          new Date(f + 'T00:00:00'),     // start of selected From day, local
+          new Date(t + 'T23:59:59.999'), // end of selected To day, local
+        );
         loadSummary();
       });
       els.refresh.addEventListener('click', loadSummary);
 
       // ── Period → date range ────────────────────────────────────────
+      // Returns { from, to, labelFrom, labelTo }. `from` / `to` are
+      // ISO 8601 instants used in the API call; `labelFrom` / `labelTo`
+      // are YYYY-MM-DD for human display in the header. Bounds are
+      // computed as start/end of day in *local* time, then serialised
+      // to UTC, so a booking made at 11pm local correctly falls in
+      // "this month".
+      function startOfDay(d) { var c = new Date(d); c.setHours(0, 0, 0, 0); return c; }
+      function endOfDay(d)   { var c = new Date(d); c.setHours(23, 59, 59, 999); return c; }
+      function makeRange(fromDate, toDate) {
+        return {
+          from:      fromDate.toISOString(),
+          to:        toDate.toISOString(),
+          labelFrom: ymd(fromDate),
+          labelTo:   ymd(toDate),
+        };
+      }
+
       function rangeForPeriod() {
         var now = new Date();
         var y = now.getFullYear(), m = now.getMonth();
         if (currentPeriod === 'this-month') {
-          return { from: ymd(new Date(y, m, 1)), to: ymd(now) };
+          return makeRange(startOfDay(new Date(y, m, 1)), now);
         }
         if (currentPeriod === 'last-month') {
           var firstThis = new Date(y, m, 1);
-          var lastPrev = new Date(firstThis.getTime() - 1);
-          var firstPrev = new Date(lastPrev.getFullYear(), lastPrev.getMonth(), 1);
-          return { from: ymd(firstPrev), to: ymd(lastPrev) };
+          var lastPrev  = endOfDay(new Date(firstThis.getTime() - 1));
+          var firstPrev = startOfDay(new Date(lastPrev.getFullYear(), lastPrev.getMonth(), 1));
+          return makeRange(firstPrev, lastPrev);
         }
         if (currentPeriod === 'ytd') {
-          return { from: ymd(new Date(y, 0, 1)), to: ymd(now) };
+          return makeRange(startOfDay(new Date(y, 0, 1)), now);
         }
         if (currentPeriod === 'custom' && customRange) {
           return customRange;
         }
-        return { from: ymd(new Date(y, m, 1)), to: ymd(now) };
+        return makeRange(startOfDay(new Date(y, m, 1)), now);
       }
 
       // ── Fetch + render ─────────────────────────────────────────────
@@ -463,9 +483,11 @@
         var r = rangeForPeriod();
         if (!r) return;
         hideError();
-        els.headerPeriod.textContent = formatRange(r.from, r.to);
+        els.headerPeriod.textContent = formatRange(r.labelFrom, r.labelTo);
 
-        fetch(BOKUN_API_BASE + '/api/admin/summary?from=' + r.from + '&to=' + r.to, {
+        fetch(BOKUN_API_BASE + '/api/admin/summary' +
+              '?from=' + encodeURIComponent(r.from) +
+              '&to='   + encodeURIComponent(r.to), {
           headers: { Authorization: 'Bearer ' + token },
           cache: 'no-store',
         })
@@ -576,7 +598,8 @@
         slot.innerHTML = '<p style="font-size:var(--text-sm);color:var(--mid-gray)">Loading…</p>';
 
         var qs = '?hotel=' + encodeURIComponent(hotelCode) +
-                 '&from=' + range.from + '&to=' + range.to;
+                 '&from=' + encodeURIComponent(range.from) +
+                 '&to='   + encodeURIComponent(range.to);
         fetch(BOKUN_API_BASE + '/api/dashboard/bookings' + qs, { cache: 'no-store' })
           .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
           .then(function (res) {
