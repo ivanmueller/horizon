@@ -5,6 +5,7 @@ node_modules/
 .env
 .env.local
 scripts/bokun/.env
+scripts/supabase/.env
 
 # Inspector raw response dumps (for local debugging only)
 scripts/bokun/.dumps/
