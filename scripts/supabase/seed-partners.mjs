@@ -66,7 +66,6 @@ function hotelRow(h) {
     commission_pct:        h.commission_pct ?? 0,
     kickback_pool_pct:     h.kickback_pool_pct ?? null,
     default_tracking_code: h.default_tracking_code ?? null,
-    bokun_tracking_code:   h.bokun_tracking_code ?? null,
     status:                h.status ?? "active",
     effective_date:        h.effective_date ?? null,
     notes:                 h.notes ?? null,
@@ -75,13 +74,12 @@ function hotelRow(h) {
 
 function staffRow(hotelId, e) {
   return {
-    hotel_id:            hotelId,
-    code:                e.code,
-    name:                e.name,
-    tracking_code:       e.tracking_code ?? null,
-    bokun_tracking_code: e.bokun_tracking_code ?? null,
-    kickback_pct:        e.kickback_pct ?? 0,
-    status:              e.status ?? "active",
+    hotel_id:      hotelId,
+    code:          e.code,
+    name:          e.name,
+    tracking_code: e.tracking_code ?? null,
+    kickback_pct:  e.kickback_pct ?? 0,
+    status:        e.status ?? "active",
   };
 }
 
