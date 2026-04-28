@@ -49,6 +49,14 @@
       display: block; font-family: var(--font-display);
       font-size: var(--text-lg); font-weight: 600; color: var(--near-black);
     }
+    .hd-signout {
+      display: inline-block; margin-top: 4px;
+      background: none; border: 1px solid var(--border-color);
+      padding: 4px 12px; border-radius: var(--radius-full);
+      font: inherit; font-size: var(--text-xs); color: var(--mid-gray);
+      cursor: pointer;
+    }
+    .hd-signout:hover { background: var(--warm-white-alt); color: var(--near-black); }
 
     /* ── Page layout ────────────────────────────────────────────────── */
     .hd-page {
@@ -224,6 +232,7 @@
       <div class="hd-header__hotel">
         <span class="hd-header__hotel-eyebrow">Viewing</span>
         <span class="hd-header__hotel-name" id="hdHotelName">—</span>
+        <button type="button" class="hd-signout" id="hdSignout" hidden>Sign out</button>
       </div>
     </div>
   </header>
@@ -274,61 +283,113 @@
     </section>
   </main>
 
-  <script>
-    (function () {
-      var BOKUN_API_BASE = 'https://horizon-bokun.ivan-mueller02.workers.dev';
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 
-      var els = {
-        hotelName:     document.getElementById('hdHotelName'),
-        kpiGrid:       document.getElementById('hdKpiGrid'),
-        bookings:      document.getElementById('hdBookings'),
-        bookingsSub:   document.getElementById('hdBookingsSub'),
-        revenue:       document.getElementById('hdRevenue'),
-        revenueSub:    document.getElementById('hdRevenueSub'),
-        travelers:     document.getElementById('hdTravelers'),
-        travelersSub:  document.getElementById('hdTravelersSub'),
-        commission:    document.getElementById('hdCommission'),
-        commissionSub: document.getElementById('hdCommissionSub'),
-        tableBody:     document.getElementById('hdTableBody'),
-        empty:         document.getElementById('hdEmpty'),
-        error:         document.getElementById('hdError'),
-        refresh:       document.getElementById('hdRefresh'),
-        rangeBtns:     document.querySelectorAll('.hd-range__btn'),
-      };
+    var BOKUN_API_BASE = 'https://horizon-bokun.ivan-mueller02.workers.dev';
 
-      // ── State ──────────────────────────────────────────────────────
-      var hotelSlug = (new URLSearchParams(window.location.search).get('hotel') || '').trim().toLowerCase();
-      var hotelRecord = null;       // Resolved from /partners.json
-      var currentRangeDays = 30;    // 7, 30, 90, or 'all'
+    // Public Supabase config — anon key is gated by RLS policies in
+    // migration 0003. Same pair is hard-coded on the login page.
+    var SUPABASE_URL  = 'https://lxdltzrntphnkhsniwin.supabase.co';
+    var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4ZGx0enJudHBobmtoc25pd2luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNjA0OTAsImV4cCI6MjA5MjYzNjQ5MH0.toebJTpWH-_tRLOmwPCeTprGfQfH_JU_ZKgbqkGuz3M';
 
-      // ── Boot ───────────────────────────────────────────────────────
-      if (!hotelSlug || !/^[a-z0-9-]{2,40}$/.test(hotelSlug)) {
-        showError('Add ?hotel=<slug> to the URL to view a partner dashboard. Example: /dashboard/hotel/?hotel=fairmont-ll');
-        return;
+    var supabase = createClient(SUPABASE_URL, SUPABASE_ANON, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+    });
+
+    var els = {
+      hotelName:     document.getElementById('hdHotelName'),
+      kpiGrid:       document.getElementById('hdKpiGrid'),
+      bookings:      document.getElementById('hdBookings'),
+      bookingsSub:   document.getElementById('hdBookingsSub'),
+      revenue:       document.getElementById('hdRevenue'),
+      revenueSub:    document.getElementById('hdRevenueSub'),
+      travelers:     document.getElementById('hdTravelers'),
+      travelersSub:  document.getElementById('hdTravelersSub'),
+      commission:    document.getElementById('hdCommission'),
+      commissionSub: document.getElementById('hdCommissionSub'),
+      tableBody:     document.getElementById('hdTableBody'),
+      empty:         document.getElementById('hdEmpty'),
+      error:         document.getElementById('hdError'),
+      refresh:       document.getElementById('hdRefresh'),
+      signout:       document.getElementById('hdSignout'),
+      rangeBtns:     document.querySelectorAll('.hd-range__btn'),
+    };
+
+    // ── State ────────────────────────────────────────────────────────
+    var hotelSlug = (new URLSearchParams(window.location.search).get('hotel') || '').trim().toLowerCase();
+    var hotelRecord = null;    // Resolved from /partners.json
+    var currentRangeDays = 30; // 7, 30, 90, or 'all'
+    var session = null;        // Supabase session object after auth gate
+
+    // ── Boot: gate on a Supabase session ─────────────────────────────
+    // 1) No session  → bounce to /dashboard/login/.
+    // 2) Session, no ?hotel= in URL → look up the user's hotel(s) via
+    //    RLS on hotel_users and redirect to a slug they actually own.
+    //    For v1 we pick their first active assignment; multi-hotel
+    //    pickers come later.
+    // 3) Session + slug → continue into the existing render path.
+    var sessionResp = await supabase.auth.getSession();
+    session = sessionResp.data && sessionResp.data.session;
+    if (!session) {
+      window.location.replace('/dashboard/login/');
+      throw new Error('redirecting to /dashboard/login/');
+    }
+
+    // Wipe any access-token hash the magic-link redirect left in the
+    // URL bar — nicer history entries, no token sitting in browser
+    // history. The SDK has already parsed it into localStorage.
+    if (window.location.hash && window.location.hash.indexOf('access_token=') !== -1) {
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+
+    if (!hotelSlug || !/^[a-z0-9-]{2,40}$/.test(hotelSlug)) {
+      // RLS scopes hotel_users to the user's own rows, so this select
+      // returns only hotels they're assigned to.
+      var assignment = await supabase
+        .from('hotel_users')
+        .select('hotel_id, hotels(code)')
+        .eq('status', 'active')
+        .limit(1)
+        .maybeSingle();
+      var slug = assignment.data && assignment.data.hotels && assignment.data.hotels.code;
+      if (slug) {
+        window.location.replace('/dashboard/hotel/?hotel=' + encodeURIComponent(slug));
+        throw new Error('redirecting to assigned hotel');
       }
-
-      Promise.all([
-        fetch('/partners.json', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }),
-      ]).then(function (results) {
-        var partners = results[0];
+      showError('Your account isn’t linked to any active hotel yet. Contact Horizon to get set up.');
+    } else {
+      // Render the partner directory bits (hotel name in header) from
+      // partners.json, then fetch the bookings via the worker.
+      try {
+        var partnersRes = await fetch('/partners.json', { cache: 'no-store' });
+        var partners = partnersRes.ok ? await partnersRes.json() : null;
         if (!partners || !partners.hotels) {
           showError('Could not load partner directory. Try refreshing.');
-          return;
+        } else {
+          hotelRecord = partners.hotels.find(function (h) {
+            return h.code === hotelSlug && h.status === 'active';
+          });
+          if (!hotelRecord) {
+            showError('Hotel slug "' + hotelSlug + '" is not an active partner. Check the URL or contact Horizon.');
+          } else {
+            els.hotelName.textContent = hotelRecord.name;
+            document.title = hotelRecord.name + ' — Partner dashboard';
+            els.signout.hidden = false;
+            loadBookings();
+          }
         }
-        hotelRecord = partners.hotels.find(function (h) {
-          return h.code === hotelSlug && h.status === 'active';
-        });
-        if (!hotelRecord) {
-          showError('Hotel slug "' + hotelSlug + '" is not an active partner. Check the URL or contact Horizon.');
-          return;
-        }
-        els.hotelName.textContent = hotelRecord.name;
-        document.title = hotelRecord.name + ' — Partner dashboard';
-        loadBookings();
-      }).catch(function (err) {
+      } catch (err) {
         console.error('partners.json fetch failed', err);
         showError('Could not load partner directory.');
-      });
+      }
+    }
+
+    els.signout.addEventListener('click', async function () {
+      els.signout.disabled = true;
+      await supabase.auth.signOut();
+      window.location.replace('/dashboard/login/');
+    });
 
       // ── Range buttons ──────────────────────────────────────────────
       els.rangeBtns.forEach(function (btn) {
@@ -361,7 +422,10 @@
         }
         hideError();
         els.kpiGrid.classList.add('hd-skeleton');
-        fetch(BOKUN_API_BASE + '/api/dashboard/bookings' + qs, { cache: 'no-store' })
+        fetch(BOKUN_API_BASE + '/api/dashboard/bookings' + qs, {
+          cache: 'no-store',
+          headers: { Authorization: 'Bearer ' + session.access_token },
+        })
           .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
           .then(function (res) {
             if (!res.ok) throw new Error((res.body && res.body.error) || 'fetch_failed');
@@ -458,7 +522,6 @@
           return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m];
         });
       }
-    })();
   </script>
 </body>
 </html>
