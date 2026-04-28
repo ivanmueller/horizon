@@ -32,7 +32,12 @@ The mechanics, end to end:
 6. The page fetches `/api/dashboard/bookings?hotel=<slug>&…` with
    `Authorization: Bearer <access_token>`.
 7. The worker:
-   - Verifies the JWT signature (HS256, against `SUPABASE_JWT_SECRET`).
+   - Verifies the JWT signature against Supabase's JWKS endpoint
+     (`$SUPABASE_URL/auth/v1/.well-known/jwks.json`). Supabase
+     migrated to asymmetric signing keys (ES256/RS256) in 2025; the
+     verification keys are public, so no shared secret is needed —
+     just the project URL. JWKS is cached at module scope for an
+     hour with auto-refresh on unknown `kid`.
    - Checks `aud === 'authenticated'`.
    - Looks up `hotel_users` for `(email, hotel_id, status='active')`.
    - 401 if the JWT is bad, 403 if the assignment doesn't exist.
@@ -116,18 +121,17 @@ the `{{ .ConfirmationURL }}` variable intact.
 6. Try `?hotel=<other-hotel>` — worker should return 403, the page
    shows the error.
 
-## Worker secrets
+## Worker secrets + vars
 
-| Secret                    | Purpose                                                   |
+| Secret / Var              | Purpose                                                   |
 |---------------------------|-----------------------------------------------------------|
+| `SUPABASE_URL` (var)      | Project URL — also where the JWKS endpoint lives          |
 | `SUPABASE_SERVICE_KEY`    | service-role key for the worker's data fetches; bypasses RLS |
-| `SUPABASE_JWT_SECRET`     | HS256 secret for verifying partner-dashboard JWTs         |
-| `HORIZON_ADMIN_PASSWORD`  | Shared password for the internal `/dashboard/horizon/` |
+| `HORIZON_ADMIN_PASSWORD`  | Shared password for the internal `/dashboard/horizon/`    |
 
-`SUPABASE_JWT_SECRET` lives in the Supabase dashboard under
-**Settings → API → JWT Secret**. Treat it like any other secret —
-its compromise means anyone can mint tokens that pass our worker
-verification.
+Notably absent: a JWT verification secret. Supabase's asymmetric
+signing keys are exposed publicly via the JWKS endpoint, so the
+worker can verify tokens with just the project URL it already has.
 
 ## What's not yet built
 

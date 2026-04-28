@@ -15,8 +15,11 @@ SUPABASE_URL   = "https://lxdltzrntphnkhsniwin.supabase.co"
 #   wrangler secret put BOKUN_SECRET_KEY        # Bokun HMAC signing
 #   wrangler secret put STRIPE_SECRET_KEY       # sk_test_... (then sk_live_... for prod)
 #   wrangler secret put SUPABASE_SERVICE_KEY    # Supabase service_role; bypasses RLS
-#   wrangler secret put SUPABASE_JWT_SECRET     # HS256 secret for partner-dashboard JWT verification
 #   wrangler secret put HORIZON_ADMIN_PASSWORD  # gates /api/admin/* + /dashboard/horizon/
+#
+# Partner-dashboard JWTs are verified against the public Supabase JWKS
+# at $SUPABASE_URL/auth/v1/.well-known/jwks.json — no worker secret
+# needed for that path; SUPABASE_URL above is sufficient.
 #
 # The page also needs the Stripe publishable key (pk_test_... / pk_live_...) —
 # that one is public and lives inline in tours/Banff-Hidden-Gem-Canoe-Tour/index.html

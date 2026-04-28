@@ -43,8 +43,11 @@
 //   BOKUN_ACCESS_KEY, BOKUN_SECRET_KEY  — HMAC signing for Bokun
 //   STRIPE_SECRET_KEY                   — sk_test_... or sk_live_...
 //   SUPABASE_SERVICE_KEY                — Supabase service_role; bypasses RLS
-//   SUPABASE_JWT_SECRET                 — HS256 secret for partner-dashboard JWT verification
 //   HORIZON_ADMIN_PASSWORD              — gates /api/admin/* + /dashboard/horizon/
+//
+// Partner-dashboard JWTs are verified against $SUPABASE_URL/auth/v1/
+// .well-known/jwks.json (public asymmetric keys, ES256/RS256). No
+// shared HS256 secret needed.
 
 import { bokunFetch } from "./bokun-auth.js";
 import { supabaseRequest, supabaseSelect, supabaseUpdate } from "./supabase.js";
@@ -695,29 +698,66 @@ function round2(n) {
   return Math.round(n * 100) / 100;
 }
 
-// Verifies a Supabase-issued JWT (HS256, signed with SUPABASE_JWT_SECRET).
-// Returns the decoded claims on success; throws on any failure (bad
-// shape, bad signature, expired). The Supabase auth server already
-// validates these on the SDK side, but the worker is the security
-// boundary — we re-verify locally so a forged token never reaches the
-// service-role-backed query path.
-async function verifyJwt(token, secret) {
+// Verifies a Supabase-issued user JWT against the project's JWKS
+// endpoint. Supabase migrated from shared-secret HS256 to asymmetric
+// signing keys (ES256 / RS256) in 2025; the public verification keys
+// are exposed at /auth/v1/.well-known/jwks.json. We fetch them on
+// demand, cache for an hour at module scope, and verify with
+// crypto.subtle. No worker secret is needed — the JWKS is public.
+//
+// Throws on any failure (bad shape, unknown kid, bad signature,
+// expired). Re-validating client-side is what the SDK does for UX,
+// but the worker is the security boundary — a forged token must
+// never reach the service-role-backed query path.
+const JWKS_TTL_MS = 60 * 60 * 1000; // 1h
+let jwksCache = null;
+let jwksCacheExpiry = 0;
+
+async function fetchJwks(env) {
+  const now = Date.now();
+  if (jwksCache && now < jwksCacheExpiry) return jwksCache;
+  if (!env.SUPABASE_URL) throw new Error("SUPABASE_URL not configured");
+  const res = await fetch(`${env.SUPABASE_URL}/auth/v1/.well-known/jwks.json`);
+  if (!res.ok) throw new Error(`jwks fetch ${res.status}`);
+  jwksCache = await res.json();
+  jwksCacheExpiry = now + JWKS_TTL_MS;
+  return jwksCache;
+}
+
+async function verifyJwt(token, env) {
   const parts = token.split(".");
   if (parts.length !== 3) throw new Error("malformed jwt");
   const [headerB64, payloadB64, sigB64] = parts;
 
-  const enc = new TextEncoder();
-  const data = enc.encode(`${headerB64}.${payloadB64}`);
-  const sig = base64UrlToBytes(sigB64);
+  const header = JSON.parse(new TextDecoder().decode(base64UrlToBytes(headerB64)));
+  if (!header.kid || !header.alg) throw new Error("jwt header missing kid/alg");
 
-  const key = await crypto.subtle.importKey(
-    "raw",
-    enc.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["verify"],
-  );
-  const ok = await crypto.subtle.verify("HMAC", key, sig, data);
+  const jwks = await fetchJwks(env);
+  let jwk = (jwks.keys || []).find((k) => k.kid === header.kid);
+  if (!jwk) {
+    // Force refresh once — keys can rotate; cached set may be stale.
+    jwksCacheExpiry = 0;
+    const fresh = await fetchJwks(env);
+    jwk = (fresh.keys || []).find((k) => k.kid === header.kid);
+    if (!jwk) throw new Error("jwt kid not in jwks");
+  }
+
+  let importParams, verifyParams;
+  if (header.alg === "ES256") {
+    importParams = { name: "ECDSA", namedCurve: "P-256" };
+    verifyParams = { name: "ECDSA", hash: "SHA-256" };
+  } else if (header.alg === "RS256") {
+    importParams = { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" };
+    verifyParams = { name: "RSASSA-PKCS1-v1_5" };
+  } else {
+    throw new Error(`unsupported jwt alg: ${header.alg}`);
+  }
+
+  const key = await crypto.subtle.importKey("jwk", jwk, importParams, false, ["verify"]);
+  const sig = base64UrlToBytes(sigB64);
+  const data = new TextEncoder().encode(`${headerB64}.${payloadB64}`);
+
+  const ok = await crypto.subtle.verify(verifyParams, key, sig, data);
   if (!ok) throw new Error("invalid jwt signature");
 
   const payload = JSON.parse(new TextDecoder().decode(base64UrlToBytes(payloadB64)));
@@ -741,21 +781,19 @@ function base64UrlToBytes(s) {
 // (a ready-to-send Response) on failure. Caller pattern matches
 // requireAdmin so route handlers stay symmetric.
 async function requireAuthenticated(request, env) {
-  if (!env.SUPABASE_JWT_SECRET) {
-    return { error: jsonResponse({ error: "auth not configured on worker" }, 500, request) };
-  }
   const auth = request.headers.get("Authorization") || "";
   const m = auth.match(/^Bearer\s+(.+)$/);
   if (!m) {
     return { error: jsonResponse({ error: "unauthorized" }, 401, request) };
   }
   try {
-    const claims = await verifyJwt(m[1], env.SUPABASE_JWT_SECRET);
+    const claims = await verifyJwt(m[1], env);
     if (claims.aud !== "authenticated") {
       return { error: jsonResponse({ error: "unauthorized" }, 401, request) };
     }
     return { claims };
-  } catch {
+  } catch (err) {
+    console.error("jwt verify failed:", err.message || err);
     return { error: jsonResponse({ error: "unauthorized" }, 401, request) };
   }
 }
