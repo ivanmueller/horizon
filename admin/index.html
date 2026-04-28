@@ -6,624 +6,113 @@
   <title>Horizon admin</title>
   <meta name="description" content="Internal commission dashboard — Horizon team only.">
   <meta name="robots" content="noindex,nofollow">
+  <link rel="canonical" href="https://gowithhorizon.com/admin/">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css">
+
+  <!-- Admin design system. Isolated from /css/style.css on purpose
+       so neither stylesheet's churn affects the other until the
+       site-wide refresh. -->
+  <link rel="stylesheet" href="/css/admin.css">
+
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%23FF6B4A'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
 
-  <!-- Hide until the auth gate decides — same flash-prevention as
-       /dashboard/hotel/. JS reveals once the session check passes
-       (or navigates away if it doesn't). -->
+  <!-- Hide until the auth gate decides where to send the user. -->
   <style>body { visibility: hidden; }</style>
-
-  <style>
-    body { background: var(--warm-white); }
-
-    /* ── Header ─────────────────────────────────────────────────────── */
-    .ha-header {
-      background: #fff;
-      border-bottom: 1px solid var(--border-color);
-      padding: var(--space-4) 0;
-    }
-    .ha-header__inner {
-      max-width: 1280px; margin: 0 auto; padding: 0 var(--space-4);
-      display: flex; align-items: center; justify-content: space-between;
-      gap: var(--space-4); flex-wrap: wrap;
-    }
-    .ha-header__logo {
-      display: inline-flex; align-items: center; gap: var(--space-2);
-      text-decoration: none; color: var(--near-black);
-    }
-    .ha-header__logo-text {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 1.3rem; font-weight: 700; color: var(--coral);
-    }
-    .ha-header__sub { font-size: var(--text-sm); color: var(--mid-gray); margin-left: 6px; }
-    .ha-header__period {
-      font-family: var(--font-display);
-      font-size: var(--text-lg); font-weight: 600; color: var(--near-black);
-    }
-    .ha-header__signout {
-      background: none; border: 1px solid var(--border-color);
-      padding: 6px 14px; border-radius: var(--radius-full);
-      font: inherit; font-size: var(--text-sm); color: var(--mid-gray);
-      cursor: pointer; margin-left: var(--space-3);
-    }
-    .ha-header__signout:hover { background: var(--warm-white-alt); color: var(--near-black); }
-
-    /* ── Page layout ────────────────────────────────────────────────── */
-    .ha-page {
-      max-width: 1280px; margin: 0 auto;
-      padding: var(--space-6) var(--space-4) var(--space-12);
-    }
-
-    /* ── Period controls ────────────────────────────────────────────── */
-    .ha-controls {
-      display: flex; flex-wrap: wrap; gap: var(--space-3);
-      align-items: center; justify-content: space-between;
-      margin-bottom: var(--space-5);
-    }
-    .ha-period {
-      display: inline-flex;
-      background: #fff; border: 1px solid var(--border-color);
-      border-radius: var(--radius-full); padding: 4px; gap: 2px;
-    }
-    .ha-period__btn {
-      background: none; border: 0; padding: 6px 14px;
-      border-radius: var(--radius-full);
-      font: inherit; font-size: var(--text-sm); font-weight: 500;
-      color: var(--mid-gray); cursor: pointer;
-      transition: all var(--duration-fast) var(--ease-out);
-    }
-    .ha-period__btn:hover { color: var(--near-black); }
-    .ha-period__btn--active { background: var(--coral); color: #fff; }
-    .ha-period__btn--active:hover { color: #fff; }
-
-    .ha-custom { display: none; align-items: center; gap: var(--space-2); }
-    .ha-custom--show { display: inline-flex; }
-    .ha-custom input[type="date"] {
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      padding: 6px 10px; font: inherit; font-size: var(--text-sm);
-      background: #fff; color: var(--near-black);
-    }
-    .ha-refresh {
-      background: none; border: 1px solid var(--border-color);
-      padding: 6px 14px; border-radius: var(--radius-full);
-      font: inherit; font-size: var(--text-sm); color: var(--mid-gray);
-      cursor: pointer;
-    }
-    .ha-refresh:hover { background: var(--warm-white-alt); color: var(--near-black); }
-
-    /* ── Totals tiles ───────────────────────────────────────────────── */
-    .ha-totals {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: var(--space-3); margin-bottom: var(--space-6);
-    }
-    .ha-tile {
-      background: #fff; border: 1px solid var(--border-color);
-      border-radius: var(--radius-lg);
-      padding: var(--space-4) var(--space-5);
-    }
-    .ha-tile__label {
-      display: block; font-size: var(--text-xs); color: var(--mid-gray);
-      text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;
-    }
-    .ha-tile__value {
-      font-family: var(--font-display);
-      font-size: var(--text-2xl); font-weight: 700; color: var(--near-black);
-      line-height: 1.1;
-    }
-    .ha-tile__value--accent { color: var(--coral); }
-
-    /* ── Hotels table ───────────────────────────────────────────────── */
-    .ha-table-wrap {
-      background: #fff; border: 1px solid var(--border-color);
-      border-radius: var(--radius-lg); overflow: hidden;
-    }
-    .ha-table-wrap h2 {
-      font-family: var(--font-display);
-      font-size: var(--text-xl); font-weight: 600; color: var(--near-black);
-      margin: 0; padding: var(--space-4) var(--space-5);
-      border-bottom: 1px solid var(--border-color);
-    }
-    .ha-table-scroll { overflow-x: auto; }
-    .ha-table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
-    .ha-table th, .ha-table td {
-      padding: var(--space-3) var(--space-5);
-      text-align: left; white-space: nowrap;
-      border-bottom: 1px solid var(--border-color);
-    }
-    .ha-table tbody tr:last-child > td { border-bottom: 0; }
-    .ha-table th {
-      font-weight: 600; color: var(--mid-gray);
-      font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.05em;
-      background: var(--warm-white-alt);
-    }
-    .ha-table td { color: var(--near-black); }
-    .ha-table td.ha-num { text-align: right; font-variant-numeric: tabular-nums; }
-    .ha-table th.ha-num { text-align: right; }
-    .ha-row--hotel { cursor: pointer; }
-    .ha-row--hotel:hover > td { background: rgba(255, 107, 74, 0.04); }
-    .ha-row--hotel.ha-row--open > td { background: var(--warm-white-alt); }
-    .ha-row__caret {
-      display: inline-block; width: 0; height: 0;
-      border-left: 5px solid transparent; border-right: 5px solid transparent;
-      border-top: 6px solid var(--mid-gray);
-      margin-right: 8px; transition: transform var(--duration-fast) var(--ease-out);
-    }
-    .ha-row--open .ha-row__caret { transform: rotate(-180deg); }
-    .ha-row--detail > td {
-      padding: 0; background: var(--warm-white);
-    }
-    .ha-detail-inner { padding: var(--space-4) var(--space-5); }
-    .ha-detail-inner h3 {
-      font-size: var(--text-sm); text-transform: uppercase;
-      letter-spacing: 0.06em; color: var(--mid-gray);
-      margin: 0 0 var(--space-2); font-weight: 600;
-    }
-    .ha-detail-inner h3 + table { margin-bottom: var(--space-5); }
-    .ha-detail-inner table {
-      width: 100%; border-collapse: collapse; font-size: var(--text-sm);
-      background: #fff; border: 1px solid var(--border-color); border-radius: var(--radius-md);
-      overflow: hidden;
-    }
-    .ha-detail-inner th, .ha-detail-inner td {
-      padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border-color);
-      text-align: left; white-space: nowrap;
-    }
-    .ha-detail-inner th {
-      font-size: var(--text-xs); color: var(--mid-gray);
-      text-transform: uppercase; letter-spacing: 0.05em;
-      background: var(--warm-white-alt); font-weight: 600;
-    }
-    .ha-detail-inner tbody tr:last-child > td { border-bottom: 0; }
-    .ha-detail-inner td.ha-num { text-align: right; font-variant-numeric: tabular-nums; }
-    .ha-detail-inner th.ha-num { text-align: right; }
-
-    .ha-pill {
-      display: inline-block; padding: 2px 8px;
-      border-radius: var(--radius-full); font-size: 0.72rem;
-      text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;
-    }
-    .ha-pill--kickback { background: rgba(255, 107, 74, 0.12); color: var(--coral); }
-    .ha-pill--pool     { background: rgba(26, 26, 46, 0.06);   color: var(--near-black); }
-
-    /* ── Per-hotel invoice button ───────────────────────────────────── */
-    .ha-invoice-btn {
-      background: var(--coral); color: #fff; border: 0;
-      padding: 4px 12px; border-radius: var(--radius-full);
-      font: inherit; font-size: var(--text-xs); font-weight: 600;
-      cursor: pointer; white-space: nowrap;
-    }
-    .ha-invoice-btn:hover { background: var(--coral-hover); }
-    .ha-invoice-btn:disabled { opacity: 0.6; cursor: progress; }
-
-    /* ── Status select (per booking row) ────────────────────────────── */
-    .ha-status {
-      font: inherit; font-size: var(--text-xs); font-weight: 600;
-      padding: 4px 8px; border-radius: var(--radius-full);
-      border: 1px solid transparent; cursor: pointer;
-      text-transform: uppercase; letter-spacing: 0.04em;
-    }
-    .ha-status:disabled { opacity: 0.6; cursor: progress; }
-    .ha-status--confirmed      { background: #ECFDF5; color: #065F46; border-color: #A7F3D0; }
-    .ha-status--cancelled      { background: #FEF2F2; color: #991B1B; border-color: #FECACA; }
-    .ha-status--refunded       { background: #F3F4F6; color: #374151; border-color: #D1D5DB; }
-    .ha-status--pending_refund { background: #FEF3C7; color: #92400E; border-color: #FDE68A; }
-
-    .ha-empty { padding: var(--space-8) var(--space-5); text-align: center; color: var(--mid-gray); }
-    .ha-empty strong { display: block; color: var(--near-black); margin-bottom: 4px; font-size: var(--text-base); }
-
-    .ha-error {
-      background: #FEF2F2; border: 1px solid #FCA5A5; color: #991B1B;
-      padding: var(--space-3) var(--space-4); border-radius: var(--radius-md);
-      font-size: var(--text-sm); margin-bottom: var(--space-4);
-    }
-
-    /* ── PDF preview modal ──────────────────────────────────────────── */
-    .ha-pdf-modal {
-      position: fixed; inset: 0;
-      background: rgba(26, 26, 46, 0.5);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 200; padding: var(--space-4);
-    }
-    .ha-pdf-modal[hidden] { display: none; }
-    .ha-pdf-card {
-      background: #fff; border-radius: var(--radius-lg);
-      width: 100%; max-width: 1000px; height: 90vh;
-      display: flex; flex-direction: column;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-      overflow: hidden;
-    }
-    .ha-pdf-header {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: var(--space-4) var(--space-5);
-      border-bottom: 1px solid var(--border-color); gap: var(--space-3);
-    }
-    .ha-pdf-title {
-      font-family: var(--font-display);
-      font-size: var(--text-lg); font-weight: 600; color: var(--near-black);
-      line-height: 1.2;
-    }
-    .ha-pdf-sub { font-size: var(--text-sm); color: var(--mid-gray); }
-    .ha-pdf-close {
-      background: none; border: 0; cursor: pointer;
-      font-size: 24px; line-height: 1; color: var(--mid-gray);
-      padding: 0 6px;
-    }
-    .ha-pdf-close:hover { color: var(--near-black); }
-    .ha-pdf-frame { flex: 1; width: 100%; border: 0; background: #525659; }
-    .ha-pdf-actions {
-      display: flex; gap: var(--space-3); justify-content: flex-end;
-      padding: var(--space-3) var(--space-5);
-      border-top: 1px solid var(--border-color);
-      background: var(--warm-white);
-    }
-    .ha-pdf-btn {
-      padding: 8px 18px; border-radius: var(--radius-full); border: 0;
-      font: inherit; font-size: var(--text-sm); font-weight: 600;
-      cursor: pointer;
-      background: var(--coral); color: #fff;
-    }
-    .ha-pdf-btn:hover { background: var(--coral-hover); }
-    .ha-pdf-btn--secondary {
-      background: transparent; color: var(--mid-gray);
-      border: 1px solid var(--border-color);
-    }
-    .ha-pdf-btn--secondary:hover {
-      background: var(--warm-white-alt); color: var(--near-black);
-    }
-
-    /* ── Account modal (set / change password) ──────────────────────── */
-    .ha-acct-modal {
-      position: fixed; inset: 0;
-      background: rgba(26, 26, 46, 0.4);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 100; padding: var(--space-4);
-    }
-    .ha-acct-modal[hidden] { display: none; }
-    .ha-acct-card {
-      background: #fff; border-radius: var(--radius-lg);
-      padding: var(--space-6); width: 100%; max-width: 420px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-    }
-    .ha-acct-head {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: var(--space-2);
-    }
-    .ha-acct-title {
-      font-family: var(--font-display);
-      font-size: var(--text-lg); font-weight: 600; color: var(--near-black);
-      margin: 0;
-    }
-    .ha-acct-close {
-      background: none; border: 0; cursor: pointer;
-      font-size: 22px; line-height: 1; color: var(--mid-gray);
-      padding: 0 6px;
-    }
-    .ha-acct-close:hover { color: var(--near-black); }
-    .ha-acct-sub {
-      font-size: var(--text-sm); color: var(--mid-gray);
-      margin: 0 0 var(--space-4);
-    }
-    .ha-acct-label {
-      display: block;
-      font-size: var(--text-sm); font-weight: 600; color: var(--near-black);
-      margin-bottom: 4px;
-    }
-    .ha-acct-input {
-      width: 100%; padding: 8px 12px;
-      border: 1px solid var(--border-color); border-radius: var(--radius-md);
-      font: inherit; font-size: var(--text-base);
-      box-sizing: border-box; margin-bottom: var(--space-3);
-      background: #fff;
-    }
-    .ha-acct-input:focus { outline: 2px solid var(--coral); outline-offset: -1px; }
-    .ha-acct-input:disabled { background: var(--warm-white-alt); color: var(--mid-gray); }
-    .ha-acct-error {
-      background: #FEF2F2; border: 1px solid #FCA5A5; color: #991B1B;
-      padding: var(--space-2) var(--space-3); border-radius: var(--radius-md);
-      font-size: var(--text-sm); margin: 0 0 var(--space-3);
-    }
-    .ha-acct-error[hidden] { display: none; }
-    .ha-acct-success {
-      background: #ECFDF5; border: 1px solid #A7F3D0; color: #065F46;
-      padding: var(--space-2) var(--space-3); border-radius: var(--radius-md);
-      font-size: var(--text-sm); margin: 0 0 var(--space-3);
-    }
-    .ha-acct-success[hidden] { display: none; }
-    .ha-acct-actions {
-      display: flex; gap: var(--space-3); justify-content: flex-end;
-      margin-top: var(--space-2);
-    }
-    .ha-acct-btn {
-      padding: 8px 16px; border-radius: var(--radius-full); border: 0;
-      font: inherit; font-size: var(--text-sm); font-weight: 600;
-      cursor: pointer;
-      background: var(--coral); color: #fff;
-    }
-    .ha-acct-btn:hover { background: var(--coral-hover); }
-    .ha-acct-btn:disabled { opacity: 0.6; cursor: progress; }
-    .ha-acct-btn--secondary {
-      background: transparent; color: var(--mid-gray);
-      border: 1px solid var(--border-color);
-    }
-    .ha-acct-btn--secondary:hover {
-      background: var(--warm-white-alt); color: var(--near-black);
-    }
-
-    @media (max-width: 600px) {
-      .ha-controls { flex-direction: column; align-items: stretch; }
-      .ha-period { justify-content: center; }
-      .ha-tile__value { font-size: var(--text-xl); }
-    }
-  </style>
 </head>
 <body>
 
-  <!-- ── Invoice preview modal (shown after PDF is generated) ────────── -->
-  <div class="ha-pdf-modal" id="haPdfModal" hidden>
-    <div class="ha-pdf-card">
-      <div class="ha-pdf-header">
-        <div>
-          <div class="ha-pdf-title" id="haPdfTitle">Invoice</div>
-          <div class="ha-pdf-sub" id="haPdfSub">—</div>
-        </div>
-        <button type="button" class="ha-pdf-close" id="haPdfClose" aria-label="Close preview">×</button>
-      </div>
-      <iframe class="ha-pdf-frame" id="haPdfFrame" title="Invoice preview"></iframe>
-      <div class="ha-pdf-actions">
-        <button type="button" class="ha-pdf-btn ha-pdf-btn--secondary" id="haPdfCancel">Close</button>
-        <button type="button" class="ha-pdf-btn" id="haPdfDownload">Download PDF</button>
-      </div>
-    </div>
-  </div>
+  <div class="app">
 
+    <!-- ── Sidebar ──────────────────────────────────────────── -->
+    <aside class="app__sidebar">
 
-  <header class="ha-header">
-    <div class="ha-header__inner">
-      <a href="/" class="ha-header__logo">
-        <span>
-          <svg width="32" height="32" viewBox="0 0 36 36" aria-hidden="true">
-            <rect width="36" height="36" rx="8" fill="#FF6B4A"/>
+      <div class="app-brand">
+        <span class="app-brand__icon" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 36 36" fill="none">
             <path d="M13 7v22M13 18c0-6 12-6 12 0v11" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>
           </svg>
         </span>
-        <span class="ha-header__logo-text">horizon</span>
-        <span class="ha-header__sub">admin</span>
-      </a>
-      <div>
-        <span class="ha-header__period" id="haHeaderPeriod">—</span>
-        <button class="ha-header__signout" id="haAccount" type="button">Account</button>
-        <button class="ha-header__signout" id="haSignout" type="button">Sign out</button>
+        <span class="app-brand__name">Horizon</span>
       </div>
-    </div>
-  </header>
 
-  <!-- ── Account modal (set / change password) ─────────────────────── -->
-  <div class="ha-acct-modal" id="haAcctModal" hidden>
-    <form class="ha-acct-card" id="haAcctForm">
-      <div class="ha-acct-head">
-        <h2 class="ha-acct-title">Account</h2>
-        <button type="button" class="ha-acct-close" id="haAcctClose" aria-label="Close">×</button>
+      <nav class="app-nav" aria-label="Admin navigation">
+
+        <div class="app-nav__group" id="navMain"></div>
+
+        <div>
+          <div class="app-nav__heading">Finance</div>
+          <div class="app-nav__group" id="navFinance"></div>
+        </div>
+
+      </nav>
+
+      <div class="app-userchip">
+        <div class="app-userchip__email" id="appEmail">—</div>
+        <div class="app-userchip__actions">
+          <button type="button" class="app-userchip__btn" id="appAccount">Account</button>
+          <button type="button" class="app-userchip__btn" id="appSignout">Sign out</button>
+        </div>
       </div>
-      <p class="ha-acct-sub">Set a password to sign in faster next time.</p>
-      <p class="ha-acct-error" id="haAcctError" hidden></p>
-      <p class="ha-acct-success" id="haAcctSuccess" hidden></p>
 
-      <label class="ha-acct-label" for="haAcctEmail">Email</label>
-      <input type="email" class="ha-acct-input" id="haAcctEmail" disabled>
+    </aside>
 
-      <label class="ha-acct-label" for="haAcctPassword">New password</label>
-      <input type="password" class="ha-acct-input" id="haAcctPassword" autocomplete="new-password" minlength="8" required>
+    <!-- ── Main content ─────────────────────────────────────── -->
+    <main class="app__main">
+      <div class="app__content" id="appContent">
+        <!-- Route content swapped in by JS. -->
+      </div>
+    </main>
 
-      <label class="ha-acct-label" for="haAcctConfirm">Confirm new password</label>
-      <input type="password" class="ha-acct-input" id="haAcctConfirm" autocomplete="new-password" minlength="8" required>
+  </div>
 
-      <div class="ha-acct-actions">
-        <button type="button" class="ha-acct-btn ha-acct-btn--secondary" id="haAcctCancel">Cancel</button>
-        <button type="submit" class="ha-acct-btn" id="haAcctSave">Save password</button>
+  <!-- ── Account modal (set / change password) ────────────── -->
+  <div class="modal" id="acctModal" hidden>
+    <form class="modal__card" id="acctForm">
+      <div class="modal__head">
+        <h2 class="modal__title">Account</h2>
+        <button type="button" class="modal__close" id="acctClose" aria-label="Close">×</button>
+      </div>
+      <p class="modal__sub" id="acctSub">Set a password to sign in faster next time.</p>
+      <div class="alert alert--bad" id="acctError" hidden></div>
+      <div class="alert alert--ok"  id="acctSuccess" hidden></div>
+
+      <label class="muted" style="display:block;margin-bottom:6px;font-size:var(--t-sm);font-weight:600;color:var(--text)">Email</label>
+      <input class="input" type="email" id="acctEmail" disabled style="margin-bottom:var(--s4)">
+
+      <label class="muted" style="display:block;margin-bottom:6px;font-size:var(--t-sm);font-weight:600;color:var(--text)">New password</label>
+      <input class="input" type="password" id="acctPassword" autocomplete="new-password" minlength="8" required style="margin-bottom:var(--s4)">
+
+      <label class="muted" style="display:block;margin-bottom:6px;font-size:var(--t-sm);font-weight:600;color:var(--text)">Confirm new password</label>
+      <input class="input" type="password" id="acctConfirm" autocomplete="new-password" minlength="8" required style="margin-bottom:var(--s5)">
+
+      <div class="modal__actions">
+        <button type="button" class="btn" id="acctCancel">Cancel</button>
+        <button type="submit" class="btn btn--primary" id="acctSave">Save password</button>
       </div>
     </form>
   </div>
 
-  <main class="ha-page">
-    <div class="ha-error" id="haError" hidden></div>
-
-    <div class="ha-controls">
-      <div class="ha-period" role="group" aria-label="Period">
-        <button type="button" class="ha-period__btn ha-period__btn--active" data-period="this-month">This month</button>
-        <button type="button" class="ha-period__btn" data-period="last-month">Last month</button>
-        <button type="button" class="ha-period__btn" data-period="ytd">YTD</button>
-        <button type="button" class="ha-period__btn" data-period="custom">Custom</button>
-      </div>
-      <div class="ha-custom" id="haCustom">
-        <input type="date" id="haFrom"> →
-        <input type="date" id="haTo">
-        <button type="button" class="ha-refresh" id="haCustomApply">Apply</button>
-      </div>
-      <button type="button" class="ha-refresh" id="haRefresh">Refresh</button>
-    </div>
-
-    <section class="ha-totals">
-      <div class="ha-tile"><span class="ha-tile__label">Bookings</span><strong class="ha-tile__value" id="haTotalBookings">—</strong></div>
-      <div class="ha-tile"><span class="ha-tile__label">Travelers</span><strong class="ha-tile__value" id="haTotalTravelers">—</strong></div>
-      <div class="ha-tile"><span class="ha-tile__label">Revenue</span><strong class="ha-tile__value" id="haTotalRevenue">—</strong></div>
-      <div class="ha-tile"><span class="ha-tile__label">Commission owed</span><strong class="ha-tile__value" id="haTotalCommission">—</strong></div>
-      <div class="ha-tile"><span class="ha-tile__label">Kickbacks owed</span><strong class="ha-tile__value" id="haTotalKickbacks">—</strong></div>
-      <div class="ha-tile"><span class="ha-tile__label">Net to Horizon</span><strong class="ha-tile__value ha-tile__value--accent" id="haTotalNet">—</strong></div>
-    </section>
-
-    <section class="ha-table-wrap">
-      <h2>Hotels</h2>
-      <div class="ha-table-scroll">
-        <table class="ha-table">
-          <thead>
-            <tr>
-              <th>Hotel</th>
-              <th>Location</th>
-              <th>Type</th>
-              <th class="ha-num">Bookings</th>
-              <th class="ha-num">Revenue</th>
-              <th class="ha-num">Commission</th>
-              <th class="ha-num">Kickbacks</th>
-              <th class="ha-num">Net</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="haHotelsBody"></tbody>
-        </table>
-      </div>
-      <div class="ha-empty" id="haEmpty" hidden>
-        <strong>No bookings in this period</strong>
-        Try a different range, or check back once partners are sending traffic.
-      </div>
-    </section>
-  </main>
-
-  <!-- pdfkit for the in-dashboard "Invoice" button. The in-page
-       generator and the Node CLI both call into the same
-       /scripts/horizon/invoice-pdf.mjs module, so PDFs from the two
-       paths are visually identical. ~600KB on this internal page is
-       fine; this URL is unguessable and not loaded by guests. -->
-  <script src="https://unpkg.com/pdfkit@0.15.0/js/pdfkit.standalone.js"></script>
-
-  <!-- Minimal blob-stream replacement. The npm `blob-stream` package
-       is published as Node CommonJS (uses require('stream') etc.) and
-       won't load as a plain <script> from a CDN. We only need enough
-       of the Writable contract for pdfkit's pipe() loop:
-       .write(chunk), .end(), 'finish'/'error' events, .toBlob(type). -->
-  <script>
-    window.blobStream = function () {
-      var chunks = [];
-      var listeners = Object.create(null);
-      function emit(ev) {
-        var cbs = listeners[ev];
-        if (!cbs) return;
-        var args = [].slice.call(arguments, 1);
-        cbs.slice().forEach(function (cb) {
-          try { cb.apply(null, args); } catch (err) { console.error(err); }
-        });
-      }
-      return {
-        writable: true,
-        write: function (chunk) {
-          if (chunk != null) chunks.push(chunk);
-          return true;
-        },
-        end: function (chunk) {
-          if (chunk != null) chunks.push(chunk);
-          // Defer so 'finish' fires asynchronously, matching a real stream.
-          setTimeout(function () { emit('finish'); }, 0);
-        },
-        on: function (ev, cb) {
-          (listeners[ev] = listeners[ev] || []).push(cb);
-          return this;
-        },
-        once: function (ev, cb) {
-          var self = this;
-          var wrap = function () { self.off(ev, wrap); cb.apply(null, arguments); };
-          return this.on(ev, wrap);
-        },
-        off: function (ev, cb) {
-          if (!listeners[ev]) return this;
-          listeners[ev] = listeners[ev].filter(function (x) { return x !== cb; });
-          return this;
-        },
-        removeListener: function (ev, cb) { return this.off(ev, cb); },
-        emit: emit,
-        toBlob: function (type) {
-          return new Blob(chunks, { type: type || 'application/octet-stream' });
-        },
-      };
-    };
-  </script>
-
-  <script type="module">
-    import { renderInvoice, computeAggregates }
-      from '/scripts/horizon/invoice-pdf.mjs';
-
-    // Expose to the legacy IIFE script below + signal readiness so
-    // the click handler can wait if the user is faster than the
-    // deferred module load.
-    window.__horizonInvoice = { renderInvoice, computeAggregates };
-    document.dispatchEvent(new Event('horizon-invoice-ready'));
-  </script>
-
   <script type="module">
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 
-    var BOKUN_API_BASE = 'https://horizon-bokun.ivan-mueller02.workers.dev';
-
-    // Public Supabase config — anon key is gated by the RLS policies
-    // in migrations 0003 + 0004. Same pair lives on the partner pages.
-    var SUPABASE_URL  = 'https://lxdltzrntphnkhsniwin.supabase.co';
-    var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4ZGx0enJudHBobmtoc25pd2luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNjA0OTAsImV4cCI6MjA5MjYzNjQ5MH0.toebJTpWH-_tRLOmwPCeTprGfQfH_JU_ZKgbqkGuz3M';
-
-    var supabase = createClient(SUPABASE_URL, SUPABASE_ANON, {
+    /* ── Supabase client ─────────────────────────────────── */
+    const SUPABASE_URL  = 'https://lxdltzrntphnkhsniwin.supabase.co';
+    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4ZGx0enJudHBobmtoc25pd2luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNjA0OTAsImV4cCI6MjA5MjYzNjQ5MH0.toebJTpWH-_tRLOmwPCeTprGfQfH_JU_ZKgbqkGuz3M';
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
     });
 
-    var els = {
-      signout:      document.getElementById('haSignout'),
-      account:      document.getElementById('haAccount'),
-      acctModal:    document.getElementById('haAcctModal'),
-      acctForm:     document.getElementById('haAcctForm'),
-      acctClose:    document.getElementById('haAcctClose'),
-      acctCancel:   document.getElementById('haAcctCancel'),
-      acctEmail:    document.getElementById('haAcctEmail'),
-      acctPassword: document.getElementById('haAcctPassword'),
-      acctConfirm:  document.getElementById('haAcctConfirm'),
-      acctSave:     document.getElementById('haAcctSave'),
-      acctError:    document.getElementById('haAcctError'),
-      acctSuccess:  document.getElementById('haAcctSuccess'),
-      headerPeriod: document.getElementById('haHeaderPeriod'),
-      error:        document.getElementById('haError'),
-      periodBtns:   document.querySelectorAll('.ha-period__btn'),
-      customWrap:   document.getElementById('haCustom'),
-      from:         document.getElementById('haFrom'),
-      to:           document.getElementById('haTo'),
-      customApply:  document.getElementById('haCustomApply'),
-      refresh:      document.getElementById('haRefresh'),
-      totalBookings:    document.getElementById('haTotalBookings'),
-      totalTravelers:   document.getElementById('haTotalTravelers'),
-      totalRevenue:     document.getElementById('haTotalRevenue'),
-      totalCommission:  document.getElementById('haTotalCommission'),
-      totalKickbacks:   document.getElementById('haTotalKickbacks'),
-      totalNet:         document.getElementById('haTotalNet'),
-      hotelsBody:       document.getElementById('haHotelsBody'),
-      empty:            document.getElementById('haEmpty'),
-    };
-
-    // ── State ────────────────────────────────────────────────────────
-    var currentPeriod = 'this-month';
-    var customRange = null; // {from, to} when period === 'custom' and applied
-    var session = null;
-
-    // ── Boot: gate on a Supabase session ─────────────────────────────
-    // No session                → bounce to /dashboard/login/.
-    // Session, not an admin     → worker returns 403 from /admin/summary,
-    //                             which we surface inline rather than
-    //                             pre-checking horizon_admins page-side.
-    //                             (The check is server-authoritative;
-    //                             a page-side guard would just duplicate it.)
-    // Session + admin           → render.
-    var sessionResp = await supabase.auth.getSession();
-    session = sessionResp.data && sessionResp.data.session;
+    /* ── Auth gate ───────────────────────────────────────── */
+    const sessionResp = await supabase.auth.getSession();
+    const session = sessionResp.data && sessionResp.data.session;
     if (!session) {
       window.location.replace('/dashboard/login/');
       throw new Error('redirecting to /dashboard/login/');
     }
 
-    // A signed-in non-admin shouldn't land here — bounce them to
-    // /dashboard/hotel/. The worker would still 403 every /api/admin/*
-    // call, but redirecting page-side avoids briefly showing the
-    // admin shell with a "forbidden" toast. RLS on horizon_admins
-    // means a non-admin's select returns no rows.
-    var adminCheck = await supabase
+    const adminCheck = await supabase
       .from('horizon_admins')
       .select('id')
       .eq('status', 'active')
@@ -634,612 +123,229 @@
       throw new Error('redirecting to /dashboard/hotel/');
     }
 
-    // Strip OAuth hash for clean history.
     if (window.location.hash && window.location.hash.indexOf('access_token=') !== -1) {
       history.replaceState(null, '', window.location.pathname + window.location.search);
     }
 
     document.body.style.visibility = 'visible';
-    loadSummary();
 
-    els.signout.addEventListener('click', async function () {
-      els.signout.disabled = true;
+    /* ── Sidebar nav ─────────────────────────────────────── */
+    const ROUTES = [
+      { id: 'home',     label: 'Home',         group: 'main',    icon: iconHome },
+      { id: 'bookings', label: 'Bookings',     group: 'main',    icon: iconBookings },
+      { id: 'hotels',   label: 'Hotels',       group: 'main',    icon: iconHotels },
+      { id: 'tours',    label: 'Tour catalog', group: 'main',    icon: iconCompass },
+      { id: 'payments', label: 'Payments',     group: 'finance', icon: iconCard },
+      { id: 'billing',  label: 'Billing',      group: 'finance', icon: iconReceipt },
+      { id: 'invoices', label: 'Invoices',     group: 'finance', icon: iconFile },
+    ];
+
+    const navMain    = document.getElementById('navMain');
+    const navFinance = document.getElementById('navFinance');
+    const navItems   = {};
+
+    for (const route of ROUTES) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'app-nav__item';
+      btn.dataset.route = route.id;
+      btn.innerHTML =
+        '<span class="app-nav__icon">' + route.icon() + '</span>' +
+        '<span>' + route.label + '</span>';
+      btn.addEventListener('click', () => navigate(route.id));
+      navItems[route.id] = btn;
+      (route.group === 'finance' ? navFinance : navMain).appendChild(btn);
+    }
+
+    function navigate(routeId) {
+      window.location.hash = '#/' + routeId;
+    }
+
+    function currentRoute() {
+      const m = window.location.hash.match(/^#\/([a-z]+)/);
+      const id = m && m[1];
+      return ROUTES.find(r => r.id === id) ? id : 'home';
+    }
+
+    function render() {
+      const id = currentRoute();
+      for (const r of ROUTES) {
+        navItems[r.id].classList.toggle('app-nav__item--active', r.id === id);
+      }
+      const renderer = renderers[id] || renderers.home;
+      document.getElementById('appContent').innerHTML = renderer();
+      document.title = 'Horizon admin — ' + (ROUTES.find(r => r.id === id) || ROUTES[0]).label;
+    }
+
+    window.addEventListener('hashchange', render);
+    render();
+
+    /* ── Route renderers (stubs for now; commits 2+ fill them in) ── */
+    const renderers = {
+      home() {
+        return `
+          <header class="page-head">
+            <div>
+              <h1 class="page-head__title">Home</h1>
+              <p class="page-head__sub">Snapshot of activity across all partners.</p>
+            </div>
+          </header>
+          <div class="empty">
+            <div class="empty__title">Coming next</div>
+            <p class="empty__body">Today's bookings, this month's revenue, and a recent-activity feed land here in the next commit.</p>
+          </div>
+        `;
+      },
+      bookings() {
+        return `
+          <header class="page-head">
+            <div>
+              <h1 class="page-head__title">Bookings</h1>
+              <p class="page-head__sub">Cross-hotel commission rollup with per-partner detail.</p>
+            </div>
+          </header>
+          <div class="empty">
+            <div class="empty__title">Re-skinning in progress</div>
+            <p class="empty__body">The existing summary, kickback breakdown, status mutation, and invoice button move into this view in the next commit. Behaviour stays identical; just the chrome changes.</p>
+          </div>
+        `;
+      },
+      hotels() {
+        return placeholderPage(
+          'Hotels',
+          'Active partner directory.',
+          'List of partner hotels with their commission %, employees, and status. Coming in a follow-up sprint.',
+        );
+      },
+      tours() {
+        return placeholderPage(
+          'Tour catalog',
+          'Tours we currently sell.',
+          'Catalog of every tour Horizon runs — Bokun product id, base price, durations. Currently just the Banff Hidden Gem Canoe Tour. Detail view + add-tour flow lands here.',
+        );
+      },
+      payments() {
+        return placeholderPage(
+          'Payments',
+          'Stripe transactions and authorisation status.',
+          'Per-booking payment status, refund history, capture state. Will pull from a Stripe webhook + match against bookings.',
+        );
+      },
+      billing() {
+        return placeholderPage(
+          'Billing',
+          'Horizon\'s own billing — Stripe + Bokun fees, etc.',
+          'Operating-cost view: what Stripe and Bokun deduct, monthly run-rate, etc. Read-only summary fed by Stripe + Bokun statements.',
+        );
+      },
+      invoices() {
+        return placeholderPage(
+          'Invoices',
+          'Per-hotel monthly commission statements.',
+          'Generate invoices for any hotel and any period. Today this lives on the Bookings view; it gets its own surface here in a follow-up sprint.',
+        );
+      },
+    };
+
+    function placeholderPage(title, sub, body) {
+      return `
+        <header class="page-head">
+          <div>
+            <h1 class="page-head__title">${escapeHtml(title)}</h1>
+            <p class="page-head__sub">${escapeHtml(sub)}</p>
+          </div>
+        </header>
+        <div class="empty">
+          <div class="empty__title">Coming soon</div>
+          <p class="empty__body">${escapeHtml(body)}</p>
+        </div>
+      `;
+    }
+
+    /* ── Sidebar footer (email + Account + Sign out) ─────── */
+    document.getElementById('appEmail').textContent =
+      (session.user && session.user.email) || '—';
+
+    const signoutBtn = document.getElementById('appSignout');
+    signoutBtn.addEventListener('click', async () => {
+      signoutBtn.disabled = true;
       await supabase.auth.signOut();
       window.location.replace('/dashboard/login/');
     });
 
-    // ── Account modal (set / change password) ───────────────────────
-    function openAccount() {
-      els.acctEmail.value = (session.user && session.user.email) || '';
-      els.acctPassword.value = '';
-      els.acctConfirm.value = '';
-      els.acctError.hidden = true;
-      els.acctSuccess.hidden = true;
-      els.acctModal.hidden = false;
-      setTimeout(function () { els.acctPassword.focus(); }, 0);
+    /* ── Account modal ───────────────────────────────────── */
+    const acctModal   = document.getElementById('acctModal');
+    const acctForm    = document.getElementById('acctForm');
+    const acctEmail   = document.getElementById('acctEmail');
+    const acctPwd     = document.getElementById('acctPassword');
+    const acctConfirm = document.getElementById('acctConfirm');
+    const acctSave    = document.getElementById('acctSave');
+    const acctError   = document.getElementById('acctError');
+    const acctSuccess = document.getElementById('acctSuccess');
+
+    function openAcct() {
+      acctEmail.value = (session.user && session.user.email) || '';
+      acctPwd.value = ''; acctConfirm.value = '';
+      acctError.hidden = true; acctSuccess.hidden = true;
+      acctModal.hidden = false;
+      setTimeout(() => acctPwd.focus(), 0);
     }
-    function closeAccount() { els.acctModal.hidden = true; }
-    els.account.addEventListener('click', openAccount);
-    els.acctClose.addEventListener('click', closeAccount);
-    els.acctCancel.addEventListener('click', closeAccount);
-    els.acctModal.addEventListener('click', function (e) {
-      if (e.target === els.acctModal) closeAccount();
+    function closeAcct() { acctModal.hidden = true; }
+
+    document.getElementById('appAccount').addEventListener('click', openAcct);
+    document.getElementById('acctClose').addEventListener('click', closeAcct);
+    document.getElementById('acctCancel').addEventListener('click', closeAcct);
+    acctModal.addEventListener('click', (e) => { if (e.target === acctModal) closeAcct(); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !acctModal.hidden) closeAcct();
     });
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && !els.acctModal.hidden) closeAccount();
-    });
-    els.acctForm.addEventListener('submit', async function (e) {
+
+    acctForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      els.acctError.hidden = true;
-      els.acctSuccess.hidden = true;
-      var pw  = els.acctPassword.value;
-      var pw2 = els.acctConfirm.value;
+      acctError.hidden = true; acctSuccess.hidden = true;
+      const pw = acctPwd.value, pw2 = acctConfirm.value;
       if (pw.length < 8) {
-        els.acctError.textContent = 'Password must be at least 8 characters.';
-        els.acctError.hidden = false; return;
+        acctError.textContent = 'Password must be at least 8 characters.';
+        acctError.hidden = false; return;
       }
       if (pw !== pw2) {
-        els.acctError.textContent = 'Passwords don’t match.';
-        els.acctError.hidden = false; return;
+        acctError.textContent = 'Passwords don’t match.';
+        acctError.hidden = false; return;
       }
-      els.acctSave.disabled = true;
-      els.acctSave.textContent = 'Saving…';
+      acctSave.disabled = true; acctSave.textContent = 'Saving…';
       try {
-        var res = await supabase.auth.updateUser({ password: pw });
+        const res = await supabase.auth.updateUser({ password: pw });
         if (res.error) throw res.error;
-        // Same flag the partner Account modal uses — flips the login
-        // page default to password mode on next visit.
         try { localStorage.setItem('horizon-last-signin-mode', 'password'); } catch (e) {}
-        els.acctSuccess.textContent = 'Password saved. You can sign in with it next time.';
-        els.acctSuccess.hidden = false;
-        els.acctPassword.value = '';
-        els.acctConfirm.value  = '';
+        acctSuccess.textContent = 'Password saved. You can sign in with it next time.';
+        acctSuccess.hidden = false;
+        acctPwd.value = ''; acctConfirm.value = '';
       } catch (err) {
         console.error('updateUser failed', err);
-        els.acctError.textContent = err.message || 'Could not save password.';
-        els.acctError.hidden = false;
+        acctError.textContent = err.message || 'Could not save password.';
+        acctError.hidden = false;
       } finally {
-        els.acctSave.disabled = false;
-        els.acctSave.textContent = 'Save password';
+        acctSave.disabled = false; acctSave.textContent = 'Save password';
       }
     });
 
-      // ── Period controls ────────────────────────────────────────────
-      els.periodBtns.forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          els.periodBtns.forEach(function (b) { b.classList.remove('ha-period__btn--active'); });
-          btn.classList.add('ha-period__btn--active');
-          currentPeriod = btn.getAttribute('data-period');
-          if (currentPeriod === 'custom') {
-            els.customWrap.classList.add('ha-custom--show');
-            // Don't reload until they pick + Apply.
-          } else {
-            els.customWrap.classList.remove('ha-custom--show');
-            customRange = null;
-            loadSummary();
-          }
-        });
-      });
-      els.customApply.addEventListener('click', function () {
-        var f = els.from.value, t = els.to.value;
-        if (!f || !t) { showError('Pick both dates first.'); return; }
-        if (f > t) { showError('From date must be before To date.'); return; }
-        customRange = makeRange(
-          new Date(f + 'T00:00:00'),     // start of selected From day, local
-          new Date(t + 'T23:59:59.999'), // end of selected To day, local
-        );
-        loadSummary();
-      });
-      els.refresh.addEventListener('click', loadSummary);
+    /* ── Icons (Lucide-style line, 18px viewBox=24) ──────── */
+    function svg(d) {
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
+    }
+    function iconHome()     { return svg('<path d="M3 12l9-9 9 9"/><path d="M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/>'); }
+    function iconBookings() { return svg('<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'); }
+    function iconHotels()   { return svg('<path d="M5 22V4a1 1 0 011-1h12a1 1 0 011 1v18"/><path d="M3 22h18"/><circle cx="9"  cy="8"  r="0.5" fill="currentColor"/><circle cx="15" cy="8"  r="0.5" fill="currentColor"/><circle cx="9"  cy="13" r="0.5" fill="currentColor"/><circle cx="15" cy="13" r="0.5" fill="currentColor"/><path d="M10 22v-4h4v4"/>'); }
+    function iconCompass()  { return svg('<circle cx="12" cy="12" r="9"/><polygon points="15.5 8.5 13.5 13.5 8.5 15.5 10.5 10.5"/>'); }
+    function iconCard()     { return svg('<rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>'); }
+    function iconReceipt()  { return svg('<path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 1 2V2H4z"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/>'); }
+    function iconFile()     { return svg('<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/>'); }
 
-      // ── Period → date range ────────────────────────────────────────
-      // Returns { from, to, labelFrom, labelTo }. `from` / `to` are
-      // ISO 8601 instants used in the API call; `labelFrom` / `labelTo`
-      // are YYYY-MM-DD for human display in the header. Bounds are
-      // computed as start/end of day in *local* time, then serialised
-      // to UTC, so a booking made at 11pm local correctly falls in
-      // "this month".
-      function startOfDay(d) { var c = new Date(d); c.setHours(0, 0, 0, 0); return c; }
-      function endOfDay(d)   { var c = new Date(d); c.setHours(23, 59, 59, 999); return c; }
-      function makeRange(fromDate, toDate, opts) {
-        var labelFrom = ymd(fromDate);
-        var labelTo   = ymd(toDate);
-        return {
-          from:      fromDate.toISOString(),
-          to:        toDate.toISOString(),
-          labelFrom: labelFrom,
-          labelTo:   labelTo,
-          // slug + label drive the invoice filename + invoice number +
-          // PDF header. Custom ranges fall back to a date-range form.
-          slug:  (opts && opts.slug)  || (labelFrom + '_' + labelTo),
-          label: (opts && opts.label) || (formatHumanDate(labelFrom) + ' – ' + formatHumanDate(labelTo)),
-        };
-      }
-
-      function rangeForPeriod() {
-        var now = new Date();
-        var y = now.getFullYear(), m = now.getMonth();
-        if (currentPeriod === 'this-month') {
-          return makeRange(
-            startOfDay(new Date(y, m, 1)), now,
-            { slug: y + '-' + pad2(m + 1), label: monthLong(m) + ' ' + y },
-          );
-        }
-        if (currentPeriod === 'last-month') {
-          var firstThis = new Date(y, m, 1);
-          var lastPrev  = endOfDay(new Date(firstThis.getTime() - 1));
-          var firstPrev = startOfDay(new Date(lastPrev.getFullYear(), lastPrev.getMonth(), 1));
-          return makeRange(firstPrev, lastPrev, {
-            slug:  lastPrev.getFullYear() + '-' + pad2(lastPrev.getMonth() + 1),
-            label: monthLong(lastPrev.getMonth()) + ' ' + lastPrev.getFullYear(),
-          });
-        }
-        if (currentPeriod === 'ytd') {
-          return makeRange(
-            startOfDay(new Date(y, 0, 1)), now,
-            { slug: y + '-ytd', label: y + ' year-to-date' },
-          );
-        }
-        if (currentPeriod === 'custom' && customRange) {
-          return customRange;
-        }
-        return makeRange(
-          startOfDay(new Date(y, m, 1)), now,
-          { slug: y + '-' + pad2(m + 1), label: monthLong(m) + ' ' + y },
-        );
-      }
-
-      function pad2(n) { return String(n).padStart(2, '0'); }
-      function monthLong(m) {
-        return ['January','February','March','April','May','June',
-                'July','August','September','October','November','December'][m] || '';
-      }
-
-      // ── Fetch + render ─────────────────────────────────────────────
-      function loadSummary() {
-        var r = rangeForPeriod();
-        if (!r) return;
-        hideError();
-        els.headerPeriod.textContent = formatRange(r.labelFrom, r.labelTo);
-
-        fetch(BOKUN_API_BASE + '/api/admin/summary' +
-              '?from=' + encodeURIComponent(r.from) +
-              '&to='   + encodeURIComponent(r.to), {
-          headers: { Authorization: 'Bearer ' + session.access_token },
-          cache: 'no-store',
-        })
-          .then(function (res) {
-            if (res.status === 401) {
-              window.location.replace('/dashboard/login/');
-              throw new Error('unauthorized');
-            }
-            if (res.status === 403) {
-              showError('Your account isn’t authorised for the Horizon admin dashboard.');
-              throw new Error('forbidden');
-            }
-            return res.json().then(function (b) { return { ok: res.ok, body: b }; });
-          })
-          .then(function (res) {
-            if (!res.ok) throw new Error((res.body && res.body.error) || 'fetch_failed');
-            renderTotals(res.body.totals || {});
-            renderHotels(res.body.hotels || []);
-          })
-          .catch(function (err) {
-            if (err && err.message === 'unauthorized') return;
-            console.error('admin summary fetch failed', err);
-            showError('Could not load summary: ' + (err && err.message || 'unknown error'));
-          });
-      }
-
-      function renderTotals(t) {
-        els.totalBookings.textContent     = String(t.bookings || 0);
-        els.totalTravelers.textContent    = String(t.travelers || 0);
-        els.totalRevenue.textContent      = formatMoney(t.revenue || 0);
-        els.totalCommission.textContent   = formatMoney(t.commission_owed || 0);
-        els.totalKickbacks.textContent    = formatMoney(t.kickbacks_owed || 0);
-        els.totalNet.textContent          = formatMoney(t.net_to_horizon || 0);
-      }
-
-      // The latest summary's per-hotel rollups, indexed by code. Read by
-      // the invoice button click handler so it doesn't have to refetch
-      // the summary just to look up a name + commission_pct.
-      var hotelByCode = {};
-
-      function renderHotels(hotels) {
-        els.hotelsBody.innerHTML = '';
-        hotelByCode = {};
-        hotels.forEach(function (h) { hotelByCode[h.code] = h; });
-        if (!hotels.length) { els.empty.hidden = false; return; }
-        els.empty.hidden = true;
-
-        var range = rangeForPeriod();
-        var frag = document.createDocumentFragment();
-        hotels.forEach(function (h) {
-          var net = (h.revenue || 0) - (h.commission_owed || 0) - (h.kickbacks_total || 0);
-          var typePill = h.type === 'kickback'
-            ? '<span class="ha-pill ha-pill--kickback">kickback</span>'
-            : '<span class="ha-pill ha-pill--pool">pool</span>';
-
-          var tr = document.createElement('tr');
-          tr.className = 'ha-row--hotel';
-          tr.innerHTML =
-            '<td><span class="ha-row__caret"></span>' + escapeHtml(h.name) + '</td>' +
-            '<td>' + escapeHtml(h.location || '—') + '</td>' +
-            '<td>' + typePill + '</td>' +
-            '<td class="ha-num">' + (h.bookings || 0) + '</td>' +
-            '<td class="ha-num">' + formatMoney(h.revenue || 0) + '</td>' +
-            '<td class="ha-num">' + formatMoney(h.commission_owed || 0) + '</td>' +
-            '<td class="ha-num">' + formatMoney(h.kickbacks_total || 0) + '</td>' +
-            '<td class="ha-num">' + formatMoney(net) + '</td>' +
-            '<td><button class="ha-invoice-btn" data-hotel="' + escapeHtml(h.code) + '" type="button">Invoice</button></td>';
-
-          var detail = document.createElement('tr');
-          detail.className = 'ha-row--detail';
-          detail.hidden = true;
-          detail.innerHTML = '<td colspan="9">' + buildDetailShell(h) + '</td>';
-
-          var loaded = false;
-          tr.addEventListener('click', function () {
-            var open = tr.classList.toggle('ha-row--open');
-            detail.hidden = !open;
-            if (open && !loaded) {
-              loaded = true;
-              loadHotelBookings(h.code, range, detail);
-            }
-          });
-
-          frag.appendChild(tr);
-          frag.appendChild(detail);
-        });
-        els.hotelsBody.appendChild(frag);
-      }
-
-      function buildDetailShell(h) {
-        var html = '<div class="ha-detail-inner">';
-        if (h.type === 'kickback' && h.kickbacks && h.kickbacks.length) {
-          html += '<h3>Kickback breakdown</h3><table><thead><tr>' +
-            '<th>Staff</th><th class="ha-num">Rate</th><th class="ha-num">Bookings</th>' +
-            '<th class="ha-num">Revenue</th><th class="ha-num">Kickback owed</th></tr></thead><tbody>';
-          h.kickbacks.forEach(function (k) {
-            html +=
-              '<tr><td>' + escapeHtml(k.staff_name) + '</td>' +
-              '<td class="ha-num">' + (k.kickback_pct || 0) + '%</td>' +
-              '<td class="ha-num">' + (k.bookings || 0) + '</td>' +
-              '<td class="ha-num">' + formatMoney(k.revenue || 0) + '</td>' +
-              '<td class="ha-num">' + formatMoney(k.kickback_owed || 0) + '</td></tr>';
-          });
-          html += '</tbody></table>';
-        }
-        html += '<h3>Bookings</h3><div data-bookings-slot></div>';
-        html += '</div>';
-        return html;
-      }
-
-      // Lazy-loads bookings for one hotel on row expand. Uses the existing
-      // /api/dashboard/bookings endpoint so we don't bloat /admin/summary
-      // (which would have to embed every booking otherwise). A "Cancel"
-      // action lands on each row in a follow-up commit.
-      function loadHotelBookings(hotelCode, range, detailRow) {
-        var slot = detailRow.querySelector('[data-bookings-slot]');
-        if (!slot) return;
-        slot.innerHTML = '<p style="font-size:var(--text-sm);color:var(--mid-gray)">Loading…</p>';
-
-        var qs = '?hotel=' + encodeURIComponent(hotelCode) +
-                 '&from=' + encodeURIComponent(range.from) +
-                 '&to='   + encodeURIComponent(range.to);
-        fetch(BOKUN_API_BASE + '/api/dashboard/bookings' + qs, { cache: 'no-store' })
-          .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
-          .then(function (res) {
-            if (!res.ok) throw new Error((res.body && res.body.error) || 'fetch_failed');
-            slot.innerHTML = renderBookingsTable(res.body.records || []);
-          })
-          .catch(function (err) {
-            slot.innerHTML = '<p style="font-size:var(--text-sm);color:#991B1B">Could not load bookings: ' +
-              escapeHtml(err && err.message || 'unknown error') + '</p>';
-          });
-      }
-
-      function renderBookingsTable(records) {
-        if (!records.length) {
-          return '<p style="font-size:var(--text-sm);color:var(--mid-gray)">No bookings in this period.</p>';
-        }
-        var html = '<table><thead><tr>' +
-          '<th>Booked</th><th>Tour date</th><th>Tour</th><th>Guest</th>' +
-          '<th class="ha-num">Travelers</th><th class="ha-num">Amount</th>' +
-          '<th>Attribution</th><th>Confirmation</th><th>Status</th></tr></thead><tbody>';
-        records.forEach(function (r) {
-          var travelers = (r.adults || 0) + (r.youth || 0) + (r.infants || 0);
-          var attribution = r.staff && r.staff.name
-            ? escapeHtml(r.staff.name)
-            : '<span style="color:var(--mid-gray)">hotel pool</span>';
-          var status = r.status || 'confirmed';
-          var statusSelect =
-            '<select class="ha-status ha-status--' + escapeHtml(status) + '" ' +
-                    'data-id="' + escapeHtml(r.id) + '" ' +
-                    'data-prev="' + escapeHtml(status) + '">' +
-              '<option value="confirmed"' + (status === 'confirmed' ? ' selected' : '') + '>Confirmed</option>' +
-              '<option value="cancelled"' + (status === 'cancelled' ? ' selected' : '') + '>Cancelled</option>' +
-              '<option value="refunded"' + (status === 'refunded' ? ' selected' : '') + '>Refunded</option>' +
-              '<option value="pending_refund"' + (status === 'pending_refund' ? ' selected' : '') + '>Pending refund</option>' +
-            '</select>';
-          html +=
-            '<tr data-row="' + escapeHtml(r.id) + '" data-status="' + escapeHtml(status) + '">' +
-              '<td>' + escapeHtml(formatHumanDateTime(r.created_at)) + '</td>' +
-              '<td>' + escapeHtml(formatHumanDate(r.date) || '—') + '</td>' +
-              '<td>' + escapeHtml(r.tour_title || '—') + '</td>' +
-              '<td>' + escapeHtml(r.lead_name || '—') + '</td>' +
-              '<td class="ha-num">' + travelers + '</td>' +
-              '<td class="ha-num">' + escapeHtml(r.amount != null ? formatMoney(r.amount) : '—') + '</td>' +
-              '<td>' + attribution + '</td>' +
-              '<td><code style="font-size:0.78rem;color:var(--mid-gray)">' + escapeHtml(r.confirmation_code || '—') + '</code></td>' +
-              '<td>' + statusSelect + '</td>' +
-            '</tr>';
-        });
-        html += '</tbody></table>';
-        return html;
-      }
-
-      // Delegated change handler — one listener for the whole page lifetime,
-      // catches the dynamically-rendered status selects via class match.
-      document.body.addEventListener('change', function (e) {
-        var sel = e.target;
-        if (!sel || !sel.classList || !sel.classList.contains('ha-status')) return;
-        onStatusChange(sel);
-      });
-
-      // Same delegation pattern for the per-hotel "Invoice" button. Click
-      // bubbles up from the button → row, so we stopPropagation to keep
-      // the row from also expanding.
-      document.body.addEventListener('click', function (e) {
-        var btn = e.target && e.target.closest && e.target.closest('.ha-invoice-btn');
-        if (!btn) return;
-        e.stopPropagation();
-        e.preventDefault();
-        onInvoiceClick(btn);
-      });
-
-      function onInvoiceClick(btn) {
-        var code = btn.dataset.hotel;
-        var hotel = hotelByCode[code];
-        if (!hotel) { window.alert('Hotel not loaded — refresh and try again.'); return; }
-        var range = rangeForPeriod();
-        if (!range || !range.slug) { window.alert('Pick a period first.'); return; }
-
-        var orig = btn.textContent;
-        btn.disabled = true;
-        btn.textContent = 'Generating…';
-
-        generateInvoice(hotel, range)
-          .catch(function (err) {
-            console.error('invoice generation failed', err);
-            window.alert('Could not generate invoice: ' + (err && err.message || 'unknown error'));
-          })
-          .then(function () {
-            btn.disabled = false;
-            btn.textContent = orig;
-          });
-      }
-
-      // Resolves when the deferred ES module import has populated
-      // window.__horizonInvoice. The classic IIFE here registers click
-      // handlers immediately, but the module dispatches its own ready
-      // event when import resolves; this wait closes the race so users
-      // who click fast just see a brief "Generating…" rather than an
-      // unhelpful "still loading" alert.
-      function whenInvoiceReady() {
-        if (window.__horizonInvoice) return Promise.resolve();
-        return new Promise(function (resolve) {
-          document.addEventListener('horizon-invoice-ready', function onReady() {
-            document.removeEventListener('horizon-invoice-ready', onReady);
-            resolve();
-          });
-          // Hard cap so a stuck CDN doesn't hang the button forever.
-          setTimeout(resolve, 8000);
-        });
-      }
-
-      // Pulls confirmed bookings for one hotel + range, runs them through
-      // the shared computeAggregates + renderInvoice path, then opens
-      // the PDF in the in-page preview modal. Download is opt-in from
-      // the modal, not automatic — easier to discard a wrong-period
-      // invoice without polluting the local downloads folder.
-      function generateInvoice(hotel, range) {
-        return whenInvoiceReady().then(function () {
-          if (!window.__horizonInvoice) {
-            throw new Error('Invoice module did not load — check the console for a 404 on /scripts/horizon/invoice-pdf.mjs');
-          }
-          if (!window.PDFDocument) {
-            throw new Error('pdfkit did not load — unpkg may be blocked. Check console for unpkg.com errors.');
-          }
-          if (!window.blobStream) {
-            throw new Error('blob-stream did not load — unpkg may be blocked. Check console for unpkg.com errors.');
-          }
-
-          var qs = '?hotel=' + encodeURIComponent(hotel.code) +
-                   '&from=' + encodeURIComponent(range.from) +
-                   '&to='   + encodeURIComponent(range.to);
-
-          return fetch(BOKUN_API_BASE + '/api/dashboard/bookings' + qs, { cache: 'no-store' })
-            .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
-            .then(function (res) {
-              if (!res.ok) throw new Error((res.body && res.body.error) || 'fetch_failed');
-              var records = (res.body.records || []).filter(function (r) {
-                return r.status === 'confirmed';
-              });
-              if (!records.length) throw new Error('No confirmed bookings in this period');
-
-              var commissionPct = (res.body.hotel && Number(res.body.hotel.commission_pct)) || 0;
-              var name = (res.body.hotel && res.body.hotel.name) || hotel.name;
-              var aggregates = window.__horizonInvoice.computeAggregates(records, commissionPct);
-
-              var doc = new window.PDFDocument({
-                size: 'A4', margin: 50, bufferPages: true,
-                info: {
-                  Title:   'Horizon commission ' + range.label + ' — ' + name,
-                  Author:  'Horizon Tours',
-                  Subject: 'Commission statement',
-                },
-              });
-              var stream = doc.pipe(window.blobStream());
-
-              window.__horizonInvoice.renderInvoice(doc, {
-                hotel:     { code: hotel.code, name: name, commission_pct: commissionPct },
-                range:     range,
-                totals:    aggregates.totals,
-                kickbacks: aggregates.kickbacks,
-                records:   records,
-              });
-              doc.end();
-
-              return new Promise(function (resolve, reject) {
-                stream.on('finish', function () {
-                  try {
-                    var blob = stream.toBlob('application/pdf');
-                    showPdfPreview(
-                      blob,
-                      hotel.code + '_' + range.slug + '.pdf',
-                      name,
-                      range.label,
-                    );
-                    resolve();
-                  } catch (err) { reject(err); }
-                });
-                stream.on('error', reject);
-              });
-            });
-        });
-      }
-
-      // ── PDF preview modal ──────────────────────────────────────────
-      // The IIFE keeps a single "current" blob URL alive while the
-      // modal is open and revokes it on close to avoid leaking memory
-      // on repeated previews.
-      var currentPreview = null;
-      var pdfModal    = document.getElementById('haPdfModal');
-      var pdfFrame    = document.getElementById('haPdfFrame');
-      var pdfTitle    = document.getElementById('haPdfTitle');
-      var pdfSub      = document.getElementById('haPdfSub');
-      var pdfClose    = document.getElementById('haPdfClose');
-      var pdfCancel   = document.getElementById('haPdfCancel');
-      var pdfDownload = document.getElementById('haPdfDownload');
-
-      function showPdfPreview(blob, filename, hotelName, periodLabel) {
-        if (currentPreview && currentPreview.blobUrl) {
-          URL.revokeObjectURL(currentPreview.blobUrl);
-        }
-        var blobUrl = URL.createObjectURL(blob);
-        currentPreview = { blobUrl: blobUrl, filename: filename };
-        pdfTitle.textContent = hotelName;
-        pdfSub.textContent   = periodLabel;
-        pdfFrame.src         = blobUrl;
-        pdfModal.hidden      = false;
-      }
-      function hidePdfPreview() {
-        pdfModal.hidden = true;
-        pdfFrame.src    = 'about:blank';
-        if (currentPreview && currentPreview.blobUrl) {
-          URL.revokeObjectURL(currentPreview.blobUrl);
-        }
-        currentPreview = null;
-      }
-      function downloadCurrentPdf() {
-        if (!currentPreview) return;
-        var a = document.createElement('a');
-        a.href     = currentPreview.blobUrl;
-        a.download = currentPreview.filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-      }
-      pdfClose.addEventListener('click',    hidePdfPreview);
-      pdfCancel.addEventListener('click',   hidePdfPreview);
-      pdfDownload.addEventListener('click', downloadCurrentPdf);
-      pdfModal.addEventListener('click', function (e) {
-        if (e.target === pdfModal) hidePdfPreview();
-      });
-      document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && !pdfModal.hidden) hidePdfPreview();
-      });
-
-      function onStatusChange(sel) {
-        var id = sel.dataset.id;
-        var prev = sel.dataset.prev;
-        var next = sel.value;
-        if (next === prev) return;
-
-        if (!window.confirm('Change booking status from "' + prev + '" to "' + next + '"? Totals on this page will be stale until you hit Refresh.')) {
-          sel.value = prev;
-          return;
-        }
-
-        sel.disabled = true;
-        fetch(BOKUN_API_BASE + '/api/admin/bookings/' + encodeURIComponent(id), {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer ' + session.access_token,
-          },
-          body: JSON.stringify({ status: next }),
-        })
-          .then(function (r) {
-            if (r.status === 401) {
-              window.location.replace('/dashboard/login/');
-              throw new Error('unauthorized');
-            }
-            return r.json().then(function (b) { return { ok: r.ok, body: b }; });
-          })
-          .then(function (res) {
-            if (!res.ok) throw new Error((res.body && res.body.error) || 'update_failed');
-            sel.dataset.prev = next;
-            sel.className = 'ha-status ha-status--' + next;
-            sel.disabled = false;
-          })
-          .catch(function (err) {
-            if (err && err.message === 'unauthorized') return;
-            console.error('status update failed', err);
-            window.alert('Could not update status: ' + (err && err.message || 'unknown error'));
-            sel.value = prev;
-            sel.disabled = false;
-          });
-      }
-
-      // ── Helpers ────────────────────────────────────────────────────
-      function showError(msg) { els.error.textContent = msg; els.error.hidden = false; }
-      function hideError()    { els.error.hidden = true; els.error.textContent = ''; }
-      function ymd(d) {
-        return d.getFullYear() + '-' +
-          String(d.getMonth() + 1).padStart(2, '0') + '-' +
-          String(d.getDate()).padStart(2, '0');
-      }
-      function formatMoney(n) {
-        return 'CA$' + (Math.round((n || 0) * 100) / 100).toFixed(2);
-      }
-      function formatRange(from, to) {
-        return formatHumanDate(from) + ' – ' + formatHumanDate(to);
-      }
-      function formatHumanDate(s) {
-        if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return s || '';
-        var p = s.split('-').map(Number);
-        var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-        return months[p[1] - 1] + ' ' + p[2] + ', ' + p[0];
-      }
-      // ISO timestamp → "Apr 27, 2026 6:42pm" in local time.
-      function formatHumanDateTime(iso) {
-        if (!iso) return '—';
-        var d = new Date(iso);
-        if (isNaN(d.getTime())) return '—';
-        var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-        var hr = d.getHours(); var mer = hr >= 12 ? 'pm' : 'am';
-        hr = hr % 12; if (hr === 0) hr = 12;
-        var min = String(d.getMinutes()).padStart(2, '0');
-        return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear() +
-          ' ' + hr + ':' + min + mer;
-      }
-      function escapeHtml(s) {
-        return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) {
-          return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m];
-        });
-      }
+    function escapeHtml(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, (m) =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+    }
   </script>
+
 </body>
 </html>
