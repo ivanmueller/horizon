@@ -1,11 +1,10 @@
 {
-  "_notes": "bokun_tracking_code is the long hex string Bokun auto-generates for each referral entry. Find it in Bokun extranet → Settings → Referral tracking → Tracking code column. The slug ('code' field) is what we put in URLs (?hotel=fairmont-ll); the worker looks up bokun_tracking_code from this file at submit time and forwards it to Bokun for attribution. Edit this file and redeploy when adding a new partner — no QR-code reprint required.",
+  "_notes": "tracking_code is the slug we control (e.g. FAIRMONT_LL, FAIRMONT_LL_JS). It's the canonical attribution key — the worker resolves staff_id by matching against hotel_staff.tracking_code at insert time. Edit this file and re-run the Supabase seed script when adding a new partner; no Bokun extranet step required.",
   "hotels": [
     {
       "code": "fairmont-ll",
       "name": "Fairmont Chateau Lake Louise",
       "location": "Banff",
-      "bokun_tracking_code": "7bca8ebffacf4d91aa5ced96c4475769",
       "type": "kickback",
       "status": "active",
       "effective_date": "2026-05-01",
@@ -17,7 +16,6 @@
           "code": "fairmont-ll-js",
           "name": "Jane Smith",
           "tracking_code": "FAIRMONT_LL_JS",
-          "bokun_tracking_code": "132fcbf72c934946b0bc08d52c9ac671",
           "kickback_pct": 5,
           "status": "active"
         }
@@ -28,7 +26,6 @@
       "code": "post-hotel",
       "name": "The Post Hotel",
       "location": "Banff",
-      "bokun_tracking_code": "a029936868d74e70b3e182f28bcf9895",
       "type": "pool",
       "status": "active",
       "effective_date": "2026-05-15",
