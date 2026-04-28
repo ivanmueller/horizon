@@ -12,6 +12,12 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%23FF6B4A'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
+
+  <!-- Hide the page until the session check decides whether to show
+       the sign-in form or redirect a logged-in visitor straight to
+       the dashboard. Avoids flashing the form for one frame. -->
+  <style>body { visibility: hidden; }</style>
+
   <style>
     body {
       background: var(--warm-white);
@@ -292,7 +298,11 @@
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
       window.location.replace('/dashboard/hotel/');
+      throw new Error('redirecting to /dashboard/hotel/');
     }
+
+    // Past the redirect gate — safe to reveal the page.
+    document.body.style.visibility = 'visible';
 
     // Default to magic-link for first-time visitors, but if the user
     // has previously signed in with a password, default to password

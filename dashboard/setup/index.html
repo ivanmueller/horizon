@@ -12,6 +12,11 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%23FF6B4A'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
+
+  <!-- Hide until the session check passes — see comments on
+       /dashboard/hotel/ for rationale. -->
+  <style>body { visibility: hidden; }</style>
+
   <style>
     body {
       background: var(--warm-white);
@@ -171,6 +176,8 @@
       window.location.replace('/dashboard/login/');
       throw new Error('redirecting to /dashboard/login/');
     }
+
+    document.body.style.visibility = 'visible';
 
     // Strip the access-token hash for cleaner history.
     if (window.location.hash && window.location.hash.indexOf('access_token=') !== -1) {
