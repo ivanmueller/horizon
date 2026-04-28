@@ -5,11 +5,16 @@ compatibility_date = "2024-09-23"
 # Vars (committed):
 [vars]
 BOKUN_API_BASE = "https://api.bokun.io"
+# Supabase project URL — non-secret. Service-role key goes in `wrangler
+# secret put SUPABASE_SERVICE_KEY` (see below). Replace this with your
+# project URL from Supabase → Settings → API → Project URL.
+SUPABASE_URL   = "https://lxdltzrntphnkhsniwin.supabase.co"
 
 # Secrets (NOT committed; set via CLI from inside workers/bokun/):
-#   wrangler secret put BOKUN_ACCESS_KEY    # Bokun HMAC signing
-#   wrangler secret put BOKUN_SECRET_KEY    # Bokun HMAC signing
-#   wrangler secret put STRIPE_SECRET_KEY   # sk_test_... (then sk_live_... for prod)
+#   wrangler secret put BOKUN_ACCESS_KEY     # Bokun HMAC signing
+#   wrangler secret put BOKUN_SECRET_KEY     # Bokun HMAC signing
+#   wrangler secret put STRIPE_SECRET_KEY    # sk_test_... (then sk_live_... for prod)
+#   wrangler secret put SUPABASE_SERVICE_KEY # Supabase service_role; bypasses RLS
 #
 # The page also needs the Stripe publishable key (pk_test_... / pk_live_...) —
 # that one is public and lives inline in tours/Banff-Hidden-Gem-Canoe-Tour/index.html
@@ -45,16 +50,10 @@ BOKUN_API_BASE = "https://api.bokun.io"
 binding = "BOOKINGS"
 id      = "09014fdc2f54492993b27401f576c9a3"
 
-# KV namespace for the per-hotel bookings ledger (writes once a Bokun
-# booking is confirmed; powers the hotel-manager dashboard at
-# /dashboard/hotel/?hotel=<slug>). Records are persistent — no TTL.
-#
-# One-time setup, from inside workers/bokun/:
-#   1. wrangler kv namespace create BOOKINGS_LEDGER
-#   2. Copy the printed `id` (32-char hex)
-#   3. Paste it below in place of PASTE_ID_HERE
-#   4. wrangler deploy
-#
-[[kv_namespaces]]
-binding = "BOOKINGS_LEDGER"
-id      = "0b7f4dfd9bf247e9abcdb36480bb5fb0"
+# Note: the BOOKINGS_LEDGER KV namespace was retired in favour of the
+# Supabase `bookings` table (see supabase/migrations/0001_init.sql and
+# docs/database.md). Drop the namespace from your account once the
+# Supabase migration is verified end-to-end:
+#   wrangler kv namespace delete --namespace-id 0b7f4dfd9bf247e9abcdb36480bb5fb0
+# (Run from inside workers/bokun/. There are no records to migrate —
+#  the cutover happened before any real bookings were captured.)
