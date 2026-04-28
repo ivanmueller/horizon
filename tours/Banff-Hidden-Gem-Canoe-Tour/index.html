@@ -2015,12 +2015,22 @@
     // /tours/Banff-Hidden-Gem-Canoe-Tour/?hotel=<slug>. The slug persists
     // through the booking_id state pouch into the dedicated checkout page
     // so trust signals + concierge contact stay co-branded end-to-end.
+    //
+    // Optional ?ref=<TRACKING_CODE> identifies a specific employee (e.g.
+    // FAIRMONT_LL_JS) so kickback attribution lands on them rather than
+    // the hotel pool. Stored uppercase to match partners.json's canonical
+    // form; the worker resolves it against hotel_staff.tracking_code.
     window.HORIZON = window.HORIZON || {};
-    (function readHotelParam() {
+    (function readPartnerParams() {
       try {
-        var raw = new URLSearchParams(window.location.search).get('hotel');
-        if (raw && /^[a-z0-9-]{2,40}$/i.test(raw)) {
-          window.HORIZON.hotel = raw.trim().toLowerCase();
+        var params = new URLSearchParams(window.location.search);
+        var hotel = params.get('hotel');
+        if (hotel && /^[a-z0-9-]{2,40}$/i.test(hotel)) {
+          window.HORIZON.hotel = hotel.trim().toLowerCase();
+        }
+        var ref = params.get('ref');
+        if (ref && /^[a-z0-9_]{2,40}$/i.test(ref)) {
+          window.HORIZON.ref = ref.trim().toUpperCase();
         }
       } catch (e) { /* no URL API or malformed query — silently skip */ }
     })();
@@ -2876,6 +2886,7 @@
         youth:       data.youth,
         infants:     data.infants,
         hotel:       window.HORIZON && window.HORIZON.hotel || null,
+        ref:         window.HORIZON && window.HORIZON.ref   || null,
         currency:    (window.BOKUN && window.BOKUN.currency) || 'CAD',
       };
 
