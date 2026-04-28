@@ -19,9 +19,10 @@ Three tables, defined in `supabase/migrations/0001_init.sql`:
 
 Each booking links to a hotel (required) and optionally to a staff
 member (the person who'll get the kickback). The link to staff is
-resolved at insert time by matching the inbound `bokun_tracking_code`
-against `hotel_staff.bokun_tracking_code` — if there's no match, the
-booking is attributed to the hotel only.
+resolved at insert time by matching the inbound `tracking_code`
+slug (e.g. `FAIRMONT_LL_JS`) against `hotel_staff.tracking_code` —
+if there's no match (a hotel-level slug like `FAIRMONT_LL`, or no
+slug at all) the booking is attributed to the hotel pool only.
 
 `partners.json` at the repo root remains the source of truth for the
 partner directory. Supabase is seeded from it.
