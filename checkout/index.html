@@ -813,6 +813,7 @@
       product:   null,   // Bokun product config
       pickups:   null,   // Bokun pickup-places
       hotel:     null,   // partners.json record matching booking.hotel slug
+      staff:     null,   // partners.json employee matching booking.ref tracking_code, when present
       currency:  'CAD',
     };
 
@@ -837,6 +838,14 @@
         if (booking.hotel) {
           window.HORIZON_CHECKOUT.hotel = findHotel(partners, booking.hotel);
           renderCobrand(window.HORIZON_CHECKOUT.hotel);
+        }
+
+        // Resolve the staff record (if a ?ref=<TRACKING_CODE> rode the
+        // KV state). recordToLedger reads ctx.staff first → ctx.hotel
+        // fallback, so this is what flips kickback attribution from
+        // hotel pool onto a specific employee.
+        if (booking.ref) {
+          window.HORIZON_CHECKOUT.staff = findStaff(partners, booking.ref);
         }
         if (booking.hotel) {
           els.expiredBackLink.href = TOUR_PATH + '?hotel=' + encodeURIComponent(booking.hotel);
@@ -918,6 +927,26 @@
       var hotels = (partners && partners.hotels) || [];
       for (var i = 0; i < hotels.length; i++) {
         if (hotels[i].code === slug && hotels[i].status === 'active') return hotels[i];
+      }
+      return null;
+    }
+    // Walks every active hotel's employees array and returns the first
+    // staff entry whose tracking_code matches `refSlug`. The slug came
+    // through the URL → tour page → worker → KV → here uppercased, and
+    // partners.json codes are canonically uppercase, so the comparison
+    // is exact. Returns null when nothing matches (booking ends up
+    // attributed to the hotel pool, which is correct fallback).
+    function findStaff(partners, refSlug) {
+      if (!refSlug) return null;
+      var hotels = (partners && partners.hotels) || [];
+      for (var i = 0; i < hotels.length; i++) {
+        if (hotels[i].status !== 'active') continue;
+        var employees = hotels[i].employees || [];
+        for (var j = 0; j < employees.length; j++) {
+          if (employees[j].status === 'active' && employees[j].tracking_code === refSlug) {
+            return employees[j];
+          }
+        }
       }
       return null;
     }
