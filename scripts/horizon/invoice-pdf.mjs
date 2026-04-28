@@ -1,6 +1,6 @@
 // Shared invoice PDF rendering — used by both the local Node script
 // (scripts/horizon/generate-invoices.mjs) and the in-dashboard
-// generator on /dashboard/horizon/.
+// generator on /admin/.
 //
 // This module is environment-agnostic: it never imports `pdfkit`,
 // never touches `fs` or `process`. The caller hands it an already-

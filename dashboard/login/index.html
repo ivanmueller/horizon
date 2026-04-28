@@ -293,12 +293,29 @@
       forgot:         document.getElementById('hlForgot'),
     };
 
-    // If they're already signed in, skip straight to the dashboard.
-    // The dashboard page will route them to their hotel.
+    // Resolves the right post-sign-in landing page for the current
+    // user. Admins (active row in horizon_admins) → /admin/, everyone
+    // else → /dashboard/hotel/ (which itself shows the no-hotel-yet
+    // error for users with no hotel_users assignment). RLS scopes
+    // both selects to the user's own rows so the result lookup is
+    // safe with just the anon key + their session.
+    async function destAfterAuth() {
+      const { data: adminRow } = await supabase
+        .from('horizon_admins')
+        .select('id')
+        .eq('status', 'active')
+        .limit(1)
+        .maybeSingle();
+      return adminRow ? '/admin/' : '/dashboard/hotel/';
+    }
+
+    // If they're already signed in, skip straight to whichever
+    // dashboard their account belongs to.
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
-      window.location.replace('/dashboard/hotel/');
-      throw new Error('redirecting to /dashboard/hotel/');
+      const dest = await destAfterAuth();
+      window.location.replace(dest);
+      throw new Error('redirecting to ' + dest);
     }
 
     // Past the redirect gate — safe to reveal the page.
@@ -409,7 +426,8 @@
           // when the user actually saves a password in /dashboard/setup/
           // or via the Account modal. Successful password sign-in by
           // itself doesn't change their preference.
-          window.location.replace('/dashboard/hotel/');
+          const dest = await destAfterAuth();
+          window.location.replace(dest);
         } catch (err) {
           console.error('signInWithPassword failed', err);
           showError(

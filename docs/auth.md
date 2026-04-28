@@ -1,17 +1,24 @@
 # Authentication
 
-Two surfaces with two auth models:
+Two surfaces, one sign-in flow, two allowlists:
 
-| Surface                              | Who                  | Auth                                          |
-|--------------------------------------|----------------------|-----------------------------------------------|
-| `/dashboard/hotel/?hotel=<slug>`     | Hotel managers       | Supabase magic-link → JWT → RLS-scoped reads  |
-| `/dashboard/horizon/`                | Horizon team         | Shared password (`HORIZON_ADMIN_PASSWORD`)    |
+| Surface              | Who              | Allowlist table   |
+|----------------------|------------------|-------------------|
+| `/dashboard/hotel/`  | Hotel managers   | `hotel_users`     |
+| `/admin/`            | Horizon team     | `horizon_admins`  |
 
-The split is intentional for now — internal admin is one to three
-people, magic-link wouldn't add much. Partner access is N hotels
-growing toward 30+, so it has to be properly identified per user.
-A future sprint can migrate the admin surface onto magic-link too;
-the schema and worker helpers already support it.
+Both surfaces sit behind the same `/dashboard/login/` page (magic
+link, Google, or email + password). After sign-in, the page checks
+`horizon_admins` first — if the user has an active row there, they
+go to `/admin/`; otherwise they go to `/dashboard/hotel/`. Each
+dashboard re-checks on its own boot too, so a direct visit to the
+"wrong" page redirects cleanly.
+
+Sign-in itself doesn't grant any access — the SQL row in the
+appropriate allowlist table does. A user with neither a
+`hotel_users` nor a `horizon_admins` row can authenticate just fine
+but sees a "your account isn't linked yet" message on every
+surface.
 
 ## Partner dashboard flow
 
@@ -96,8 +103,9 @@ Notes:
   `ilike` (case-insensitive). Consistency only matters for human
   readability of the table.
 - `role` is `'manager'` for v1. The schema also accepts `'admin'`
-  for future Horizon-wide access via this table instead of a
-  shared password.
+  for sub-roles within a hotel later (e.g. read-only viewer for an
+  external auditor). Cross-hotel Horizon-team admins live in the
+  separate `horizon_admins` table, not here.
 - A manager who handles multiple hotels gets multiple rows.
 - To revoke access, **don't delete the row** — set `status = 'revoked'`
   so the audit trail survives:
@@ -107,6 +115,33 @@ Notes:
    where email = 'jane@fairmont.com'
      and hotel_id = (select id from hotels where code = 'fairmont-ll');
   ```
+
+## Granting a Horizon admin
+
+Same SQL pattern, different table — `horizon_admins` is keyed on
+email only (no `hotel_id`; admins are cross-hotel by definition).
+
+```sql
+-- Grant admin access to a Horizon team member
+insert into horizon_admins (email, role)
+values ('teammate@gowithhorizon.com', 'admin');
+```
+
+To revoke without deleting:
+
+```sql
+update horizon_admins
+   set status = 'revoked'
+ where lower(email) = lower('teammate@gowithhorizon.com');
+```
+
+A user with rows in **both** tables (e.g. a Horizon staffer who
+also manages their own hotel for testing) gets routed to `/admin/`
+by default — admin status takes precedence on the routing decision.
+They can still view a partner dashboard by manually visiting
+`/dashboard/hotel/`, but it would route them right back to
+`/admin/`. To test the partner view, sign out and use a different
+account, or temporarily revoke their `horizon_admins` row.
 
 ## Supabase project setup (one-time)
 
@@ -147,11 +182,16 @@ the `{{ .ConfirmationURL }}` variable intact.
 |---------------------------|-----------------------------------------------------------|
 | `SUPABASE_URL` (var)      | Project URL — also where the JWKS endpoint lives          |
 | `SUPABASE_SERVICE_KEY`    | service-role key for the worker's data fetches; bypasses RLS |
-| `HORIZON_ADMIN_PASSWORD`  | Shared password for the internal `/dashboard/horizon/`    |
 
-Notably absent: a JWT verification secret. Supabase's asymmetric
-signing keys are exposed publicly via the JWKS endpoint, so the
-worker can verify tokens with just the project URL it already has.
+Notably absent: a JWT verification secret AND a shared admin
+password. Both auth gates verify Supabase user JWTs against the
+project's public JWKS endpoint, so no shared secret is needed.
+The retired `HORIZON_ADMIN_PASSWORD` can be deleted from the worker
+once the migration is verified end-to-end:
+
+```bash
+wrangler secret delete HORIZON_ADMIN_PASSWORD
+```
 
 ## What's not yet built
 

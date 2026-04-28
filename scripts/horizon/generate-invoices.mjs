@@ -4,7 +4,7 @@
 // PDF per hotel to invoices/<period>/<hotel-code>.pdf.
 //
 // PDF layout lives in scripts/horizon/invoice-pdf.mjs — same module
-// is loaded in the browser by /dashboard/horizon/, so the in-page
+// is loaded in the browser by /admin/, so the in-page
 // "Invoice" button produces visually identical PDFs.
 //
 // Setup (one-time):

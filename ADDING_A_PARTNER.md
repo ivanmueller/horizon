@@ -94,7 +94,7 @@ hotel appears in `hotels` with the right `default_tracking_code`.
 That's it. The hotel is live: walk-in bookings via
 `?hotel=moraine-lodge` will record under the hotel pool, and the
 `/dashboard/hotel/?hotel=moraine-lodge` partner dashboard plus the
-internal `/dashboard/horizon/` admin will show their bookings as they
+internal `/admin/` dashboard will show their bookings as they
 come in.
 
 ## Workflow — kickback hotel (with per-employee commissions)

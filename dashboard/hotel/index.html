@@ -486,6 +486,22 @@
       throw new Error('redirecting to /dashboard/login/');
     }
 
+    // Horizon admins go to /admin/ — they end up here from
+    // /dashboard/setup/'s post-password-save redirect or from a
+    // direct visit. RLS on horizon_admins scopes the select to the
+    // caller's own row, so this returns one row for admins and
+    // none for everyone else.
+    var adminCheck = await supabase
+      .from('horizon_admins')
+      .select('id')
+      .eq('status', 'active')
+      .limit(1)
+      .maybeSingle();
+    if (adminCheck.data) {
+      window.location.replace('/admin/');
+      throw new Error('redirecting to /admin/');
+    }
+
     // Past the redirect gate — safe to reveal the page.
     document.body.style.visibility = 'visible';
 
