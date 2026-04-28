@@ -16,7 +16,7 @@ Priority key:
 |---|---|---|---|
 | P1 | **Multi-hotel picker UI** on `/dashboard/hotel/` | 1 commit | Schema already supports it; v1 silently picks the first active `hotel_users` row. First chain partner who manages two hotels exposes this. |
 | P1 | **Admin UI for `hotel_users`** (add / revoke from `/admin/`) | 2–3 commits | Replace the manual SQL insert with a form. Reduces the "ops via SQL Editor" load as you onboard. |
-| P2 | **Magic-link auth for `/admin/`** (drop shared password) | 3–4 commits | Same flow as the partner dashboard. Drop the `HORIZON_ADMIN_PASSWORD` secret. Worth doing before you have more than 3 internal users. |
+| ~~P2~~ | ~~Magic-link auth for `/admin/`~~ | done | Shipped in the auth-parity sprint — admin surface now uses the same Supabase Auth flow as partners, gated by the `horizon_admins` table. Shared password retired. |
 | P2 | **Role-based permissions** (`manager` vs `read-only` vs `admin`) | 1–2 commits | Schema's `role` column already exists. Add `where role = 'manager'` checks where mutations land. |
 | P3 | **Self-service signup with approval queue** | 4–5 commits | A "Request access" form on the login page → row in a `pending_users` table → Horizon team approves from `/admin/`. Useful only if you're scaling onboarding past a handful per week. |
 | P3 | **PKCE flow + cookie-based sessions** instead of localStorage tokens | 4–6 commits | More secure (HttpOnly cookies aren't readable from JS, so XSS can't exfiltrate). Worth doing if the dashboard ever shows genuinely sensitive data (PII, finances, etc.). For now the data on the partner dashboard is already what they have access to anyway. |

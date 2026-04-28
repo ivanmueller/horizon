@@ -9,17 +9,18 @@ namespace). That one stays — it's the right tool for ephemeral state.
 
 ## Schema
 
-Four tables. The first three are the booking ledger (added in
-`0001_init.sql` and refined in `0002_drop_bokun_tracking_code.sql`);
-the fourth backs the partner-dashboard auth flow (added in
-`0003_auth_setup.sql`).
+Five tables. The first three are the booking ledger (`0001_init.sql`,
+refined in `0002_drop_bokun_tracking_code.sql`); the last two back
+the partner-dashboard and admin auth flows (`0003_auth_setup.sql` +
+`0004_horizon_admins.sql`).
 
-| Table         | What it is                                                      |
-|---------------|-----------------------------------------------------------------|
-| `hotels`      | Partner hotels. One row per `code` slug (e.g. `fairmont-ll`).   |
-| `hotel_staff` | Concierge / employees with optional per-employee kickback.      |
-| `bookings`    | Confirmed Bokun bookings. One row per successful checkout.      |
-| `hotel_users` | Email → hotel mapping for partner-dashboard sign-in (see `docs/auth.md`). |
+| Table             | What it is                                                          |
+|-------------------|---------------------------------------------------------------------|
+| `hotels`          | Partner hotels. One row per `code` slug (e.g. `fairmont-ll`).       |
+| `hotel_staff`     | Concierge / employees with optional per-employee kickback.          |
+| `bookings`        | Confirmed Bokun bookings. One row per successful checkout.          |
+| `hotel_users`     | Email → hotel mapping for partner-dashboard sign-in.                |
+| `horizon_admins`  | Email allowlist for the internal Horizon admin dashboard at `/admin/`. |
 
 Each booking links to a hotel (required) and optionally to a staff
 member (the person who'll get the kickback). The link to staff is

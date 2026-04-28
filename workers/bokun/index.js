@@ -43,11 +43,12 @@
 //   BOKUN_ACCESS_KEY, BOKUN_SECRET_KEY  — HMAC signing for Bokun
 //   STRIPE_SECRET_KEY                   — sk_test_... or sk_live_...
 //   SUPABASE_SERVICE_KEY                — Supabase service_role; bypasses RLS
-//   HORIZON_ADMIN_PASSWORD              — gates /api/admin/* + /admin/
 //
-// Partner-dashboard JWTs are verified against $SUPABASE_URL/auth/v1/
-// .well-known/jwks.json (public asymmetric keys, ES256/RS256). No
-// shared HS256 secret needed.
+// Both auth gates (partner + admin) verify Supabase user JWTs against
+// $SUPABASE_URL/auth/v1/.well-known/jwks.json (public asymmetric keys,
+// ES256/RS256). The admin surface additionally checks for an active
+// horizon_admins row matching the JWT email. No shared HS256 secret
+// needed for either path.
 
 import { bokunFetch } from "./bokun-auth.js";
 import { supabaseRequest, supabaseSelect, supabaseUpdate } from "./supabase.js";
