@@ -64,3 +64,14 @@ export function supabaseInsert(env, table, rows, { onConflict, returnRow = false
     prefer: preferParts.join(","),
   });
 }
+
+// UPDATE helper. Caller passes the table + filter as a single string
+// (`bookings?id=eq.<uuid>`) so the call site stays explicit about which
+// rows are being mutated. Pass returnRow=true to get the updated row(s)
+// back; default is return=minimal.
+export function supabaseUpdate(env, tableAndQuery, patch, { returnRow = false } = {}) {
+  return supabaseRequest(env, "PATCH", `/${tableAndQuery}`, {
+    body: patch,
+    prefer: returnRow ? "return=representation" : "return=minimal",
+  });
+}
