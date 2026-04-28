@@ -317,18 +317,27 @@
     };
 
     // ── State ────────────────────────────────────────────────────────
-    var hotelSlug = (new URLSearchParams(window.location.search).get('hotel') || '').trim().toLowerCase();
+    // Optional ?hotel=<slug> on the URL is honoured for backward-compat
+    // (old bookmarks, shared links). When present and valid, it scopes
+    // the dashboard to that hotel; otherwise the boot sequence below
+    // resolves the slug from the user's hotel_users row(s).
+    var urlHotelSlug = (new URLSearchParams(window.location.search).get('hotel') || '').trim().toLowerCase();
+    if (urlHotelSlug && !/^[a-z0-9-]{2,40}$/.test(urlHotelSlug)) urlHotelSlug = '';
+    var hotelSlug = urlHotelSlug;
     var hotelRecord = null;    // Resolved from /partners.json
     var currentRangeDays = 30; // 7, 30, 90, or 'all'
     var session = null;        // Supabase session object after auth gate
 
     // ── Boot: gate on a Supabase session ─────────────────────────────
-    // 1) No session  → bounce to /dashboard/login/.
-    // 2) Session, no ?hotel= in URL → look up the user's hotel(s) via
-    //    RLS on hotel_users and redirect to a slug they actually own.
-    //    For v1 we pick their first active assignment; multi-hotel
-    //    pickers come later.
-    // 3) Session + slug → continue into the existing render path.
+    // 1) No session                          → bounce to /dashboard/login/.
+    // 2) Session, no slug from URL           → resolve from hotel_users.
+    //                                          v1 picks first active assignment;
+    //                                          multi-hotel picker is v2.
+    // 3) Session, slug from URL OR resolved  → render. The worker enforces
+    //                                          that the JWT actually has
+    //                                          access to the slug, so a
+    //                                          stale/invalid URL slug just
+    //                                          surfaces as a 403.
     var sessionResp = await supabase.auth.getSession();
     session = sessionResp.data && sessionResp.data.session;
     if (!session) {
@@ -343,21 +352,22 @@
       history.replaceState(null, '', window.location.pathname + window.location.search);
     }
 
-    if (!hotelSlug || !/^[a-z0-9-]{2,40}$/.test(hotelSlug)) {
-      // RLS scopes hotel_users to the user's own rows, so this select
-      // returns only hotels they're assigned to.
+    if (!hotelSlug) {
+      // RLS scopes hotel_users to the user's own rows. v1 takes the
+      // first active assignment; v2 will show a picker when there's
+      // more than one row.
       var assignment = await supabase
         .from('hotel_users')
         .select('hotel_id, hotels(code)')
         .eq('status', 'active')
         .limit(1)
         .maybeSingle();
-      var slug = assignment.data && assignment.data.hotels && assignment.data.hotels.code;
-      if (slug) {
-        window.location.replace('/dashboard/hotel/?hotel=' + encodeURIComponent(slug));
-        throw new Error('redirecting to assigned hotel');
-      }
+      hotelSlug = assignment.data && assignment.data.hotels && assignment.data.hotels.code;
+    }
+
+    if (!hotelSlug) {
       showError('Your account isn’t linked to any active hotel yet. Contact Horizon to get set up.');
+      els.signout.hidden = false;
     } else {
       // Render the partner directory bits (hotel name in header) from
       // partners.json, then fetch the bookings via the worker.
@@ -371,7 +381,7 @@
             return h.code === hotelSlug && h.status === 'active';
           });
           if (!hotelRecord) {
-            showError('Hotel slug "' + hotelSlug + '" is not an active partner. Check the URL or contact Horizon.');
+            showError('Hotel slug "' + hotelSlug + '" is not an active partner. Contact Horizon.');
           } else {
             els.hotelName.textContent = hotelRecord.name;
             document.title = hotelRecord.name + ' — Partner dashboard';
