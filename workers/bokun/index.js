@@ -28,6 +28,7 @@
 //   STRIPE_SECRET_KEY                   — sk_test_... or sk_live_...
 
 import { bokunFetch } from "./bokun-auth.js";
+import { supabaseRequest, supabaseSelect } from "./supabase.js";
 
 const ALLOWED_ORIGIN = "https://gowithhorizon.com";
 const CURRENCY = "CAD";
@@ -256,25 +257,19 @@ async function handleBookingInitiate(request, env) {
 }
 
 // ── Hotel-manager dashboard ledger ─────────────────────────────────────────
-// Records persist forever (no TTL) because a hotel manager will want
-// historical data. Keyed by `ledger:<hotel>:<created_at>:<booking_id>` so
-// `kv.list({ prefix: 'ledger:fairmont-ll:' })` returns that hotel's
-// bookings in chronological order. Date filtering happens in-memory after
-// the list — KV doesn't support range queries on values.
+// Inserts a row into Supabase `bookings` after a confirmed Bokun booking.
+// Resolves hotel_id from the slug and (if a tracking code matches) staff_id
+// from hotel_staff in parallel, then INSERT … ON CONFLICT DO NOTHING on
+// confirmation_code so the page's fire-and-forget retries are idempotent.
 async function handleDashboardRecord(request, env) {
-  if (!env.BOOKINGS_LEDGER) {
-    return jsonResponse(
-      { error: "BOOKINGS_LEDGER KV namespace not configured on worker" },
-      500,
-      request,
-    );
-  }
   const body = await readJson(request);
   if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
 
   const hotel = typeof body.hotel === "string" ? body.hotel.trim().toLowerCase() : "";
   const code = typeof body.confirmation_code === "string" ? body.confirmation_code.trim() : "";
   const bookingId = typeof body.booking_id === "string" ? body.booking_id.trim() : "";
+  const bokunTracking =
+    typeof body.bokun_tracking_code === "string" ? body.bokun_tracking_code.trim() : "";
   if (!hotel || !/^[a-z0-9-]{2,40}$/.test(hotel)) {
     return jsonResponse({ error: "hotel slug required" }, 400, request);
   }
@@ -282,32 +277,57 @@ async function handleDashboardRecord(request, env) {
     return jsonResponse({ error: "confirmation_code required" }, 400, request);
   }
 
-  const now = Date.now();
-  const record = {
-    booking_id:        bookingId || null,
-    hotel:             hotel,
-    confirmation_code: code,
-    tour_id:           body.tour_id ?? null,
-    tour_title:        typeof body.tour_title === "string" ? body.tour_title : null,
-    date:              typeof body.date === "string" ? body.date : null,
-    time:              typeof body.time === "string" ? body.time : null,
-    adults:            Number.parseInt(body.adults, 10) || 0,
-    youth:             Number.parseInt(body.youth, 10) || 0,
-    infants:           Number.parseInt(body.infants, 10) || 0,
-    amount:            typeof body.amount === "number" ? body.amount : null,
-    currency:          typeof body.currency === "string" ? body.currency : CURRENCY,
-    lead_name:         typeof body.lead_name === "string" ? body.lead_name : null,
-    lead_email:        typeof body.lead_email === "string" ? body.lead_email : null,
-    bokun_tracking_code: typeof body.bokun_tracking_code === "string" ? body.bokun_tracking_code : null,
-    created_at:        now,
+  // Parallel lookups — saves a round trip vs. sequential.
+  const [hotelRows, staffRows] = await Promise.all([
+    supabaseSelect(env, `hotels?code=eq.${encodeURIComponent(hotel)}&select=id`),
+    bokunTracking
+      ? supabaseSelect(
+          env,
+          `hotel_staff?bokun_tracking_code=eq.${encodeURIComponent(bokunTracking)}&select=id,hotel_id`,
+        )
+      : Promise.resolve([]),
+  ]);
+
+  if (!hotelRows.length) {
+    return jsonResponse({ error: `unknown hotel slug: ${hotel}` }, 400, request);
+  }
+  const hotelId = hotelRows[0].id;
+
+  // Only attribute to staff if their hotel matches — defends against a
+  // tracking-code collision between hotels (the partial unique index
+  // already prevents this, but the check is cheap and explicit).
+  const staffMatch = staffRows[0];
+  const staffId = staffMatch && staffMatch.hotel_id === hotelId ? staffMatch.id : null;
+
+  const row = {
+    booking_id:          bookingId || null,
+    hotel_id:            hotelId,
+    staff_id:            staffId,
+    confirmation_code:   code,
+    tour_id:             body.tour_id ?? null,
+    tour_title:          typeof body.tour_title === "string" ? body.tour_title : null,
+    date:                typeof body.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.date)
+                         ? body.date
+                         : null,
+    time:                typeof body.time === "string" ? body.time : null,
+    adults:              Number.parseInt(body.adults, 10) || 0,
+    youth:               Number.parseInt(body.youth, 10) || 0,
+    infants:             Number.parseInt(body.infants, 10) || 0,
+    amount:              typeof body.amount === "number" ? body.amount : null,
+    currency:            typeof body.currency === "string" ? body.currency : CURRENCY,
+    lead_name:           typeof body.lead_name === "string" ? body.lead_name : null,
+    lead_email:          typeof body.lead_email === "string" ? body.lead_email : null,
+    bokun_tracking_code: bokunTracking || null,
   };
 
-  // Pad created_at so lexicographic sort matches chronological sort.
-  const sortKey = String(now).padStart(15, "0");
-  const key = `ledger:${hotel}:${sortKey}:${bookingId || code}`;
-  await env.BOOKINGS_LEDGER.put(key, JSON.stringify(record));
+  // ignore-duplicates → INSERT … ON CONFLICT (confirmation_code) DO NOTHING.
+  // Keeps the first record if the page retries with the same code.
+  await supabaseRequest(env, "POST", "/bookings?on_conflict=confirmation_code", {
+    body: [row],
+    prefer: "resolution=ignore-duplicates,return=minimal",
+  });
 
-  return jsonResponse({ ok: true, key }, 200, request);
+  return jsonResponse({ ok: true }, 200, request);
 }
 
 async function handleDashboardBookings(url, env, request) {
