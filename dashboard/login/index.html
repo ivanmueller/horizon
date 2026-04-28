@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in — Horizon partner dashboard</title>
+  <meta name="description" content="Sign in to your hotel's Horizon partner dashboard.">
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="canonical" href="https://gowithhorizon.com/dashboard/login/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%23FF6B4A'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
+  <style>
+    body {
+      background: var(--warm-white);
+      min-height: 100vh;
+      margin: 0;
+      display: flex; flex-direction: column;
+    }
+
+    .hl-page {
+      flex: 1;
+      display: flex; align-items: center; justify-content: center;
+      padding: var(--space-6) var(--space-4);
+    }
+    .hl-card {
+      width: 100%;
+      max-width: 380px;
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    }
+    .hl-logo {
+      display: flex; flex-direction: column; align-items: center;
+      gap: var(--space-2); margin-bottom: var(--space-4);
+      text-decoration: none;
+    }
+    .hl-logo__icon {
+      width: 48px; height: 48px;
+    }
+    .hl-logo__text {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.5rem; font-weight: 700; color: var(--coral);
+    }
+    .hl-title {
+      text-align: center;
+      font-family: var(--font-display);
+      font-size: var(--text-xl); font-weight: 600;
+      color: var(--near-black);
+      margin: 0 0 var(--space-1);
+    }
+    .hl-sub {
+      text-align: center;
+      font-size: var(--text-sm); color: var(--mid-gray);
+      margin: 0 0 var(--space-5);
+    }
+
+    .hl-form { display: flex; flex-direction: column; gap: var(--space-3); }
+    .hl-form label {
+      font-size: var(--text-sm); font-weight: 600; color: var(--near-black);
+      margin-bottom: -2px;
+    }
+    .hl-form input[type="email"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      font: inherit; font-size: var(--text-base);
+      box-sizing: border-box;
+      background: #fff;
+    }
+    .hl-form input[type="email"]:focus {
+      outline: 2px solid var(--coral);
+      outline-offset: -1px;
+    }
+    .hl-btn {
+      width: 100%;
+      padding: 10px 16px;
+      background: var(--coral); color: #fff;
+      border: 0; border-radius: var(--radius-md);
+      font: inherit; font-size: var(--text-base); font-weight: 600;
+      cursor: pointer;
+      margin-top: var(--space-2);
+    }
+    .hl-btn:hover { background: var(--coral-hover); }
+    .hl-btn:disabled { opacity: 0.6; cursor: progress; }
+
+    .hl-error {
+      background: #FEF2F2; border: 1px solid #FCA5A5; color: #991B1B;
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-md);
+      font-size: var(--text-sm);
+      margin: 0 0 var(--space-3);
+    }
+    .hl-error[hidden] { display: none; }
+
+    .hl-footer {
+      text-align: center;
+      font-size: var(--text-xs); color: var(--mid-gray);
+      margin: var(--space-5) 0 0;
+    }
+    .hl-footer a { color: var(--mid-gray); text-decoration: underline; }
+    .hl-footer a:hover { color: var(--near-black); }
+
+    /* Success state — replaces the form once the email is sent. */
+    .hl-success { text-align: center; }
+    .hl-success__icon {
+      width: 56px; height: 56px;
+      background: rgba(255, 107, 74, 0.12);
+      border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      margin-bottom: var(--space-4);
+    }
+    .hl-success__icon svg { stroke: var(--coral); }
+    .hl-success__email {
+      font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+      font-size: var(--text-sm); color: var(--near-black);
+      background: var(--warm-white-alt);
+      padding: 2px 8px; border-radius: 4px;
+    }
+    .hl-success__back {
+      display: inline-block; margin-top: var(--space-4);
+      background: none; border: 0; padding: 0;
+      font: inherit; font-size: var(--text-sm); color: var(--coral);
+      cursor: pointer; text-decoration: underline;
+    }
+    .hl-success__back:hover { color: var(--coral-hover); }
+  </style>
+</head>
+<body>
+
+  <main class="hl-page">
+
+    <!-- ── Sign-in form ────────────────────────────────────────────── -->
+    <section class="hl-card" id="hlForm">
+      <a href="/" class="hl-logo">
+        <span class="hl-logo__icon">
+          <svg width="48" height="48" viewBox="0 0 36 36" aria-hidden="true">
+            <rect width="36" height="36" rx="8" fill="#FF6B4A"/>
+            <path d="M13 7v22M13 18c0-6 12-6 12 0v11" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>
+          </svg>
+        </span>
+        <span class="hl-logo__text">horizon</span>
+      </a>
+
+      <h1 class="hl-title">Sign in to Horizon</h1>
+      <p class="hl-sub">Partner dashboard</p>
+
+      <p class="hl-error" id="hlError" hidden></p>
+
+      <form class="hl-form" id="hlSignInForm" autocomplete="on">
+        <label for="hlEmail">Email</label>
+        <input type="email" id="hlEmail" name="email" autocomplete="email" required autofocus>
+        <button type="submit" class="hl-btn" id="hlSubmit">Send magic link</button>
+      </form>
+
+      <p class="hl-footer">
+        Need help? <a href="mailto:hello@gowithhorizon.com">hello@gowithhorizon.com</a>
+      </p>
+    </section>
+
+    <!-- ── Success card (toggled visible once the email is sent) ───── -->
+    <section class="hl-card hl-success" id="hlSuccess" hidden>
+      <div class="hl-success__icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+      <h1 class="hl-title">Check your email</h1>
+      <p class="hl-sub">
+        We sent a sign-in link to <span class="hl-success__email" id="hlSuccessEmail">—</span>.
+        Click it to land on your dashboard.
+      </p>
+      <button type="button" class="hl-success__back" id="hlBack">Use a different email</button>
+    </section>
+
+  </main>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+
+    // Public Supabase config. anon key is designed to be exposed in
+    // browser bundles — it's gated by the RLS policies in 0003.
+    const SUPABASE_URL  = 'https://lxdltzrntphnkhsniwin.supabase.co';
+    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4ZGx0enJudHBobmtoc25pd2luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNjA0OTAsImV4cCI6MjA5MjYzNjQ5MH0.toebJTpWH-_tRLOmwPCeTprGfQfH_JU_ZKgbqkGuz3M';
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON, {
+      auth: { persistSession: true, autoRefreshToken: true },
+    });
+
+    const els = {
+      form:         document.getElementById('hlForm'),
+      success:      document.getElementById('hlSuccess'),
+      signInForm:   document.getElementById('hlSignInForm'),
+      email:        document.getElementById('hlEmail'),
+      submit:       document.getElementById('hlSubmit'),
+      error:        document.getElementById('hlError'),
+      successEmail: document.getElementById('hlSuccessEmail'),
+      back:         document.getElementById('hlBack'),
+    };
+
+    // If they're already signed in, skip straight to the dashboard.
+    // The dashboard page will route them to their hotel.
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      window.location.replace('/dashboard/hotel/');
+    }
+
+    function showError(msg) {
+      els.error.textContent = msg;
+      els.error.hidden = false;
+    }
+    function clearError() {
+      els.error.hidden = true;
+      els.error.textContent = '';
+    }
+
+    els.signInForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearError();
+
+      const email = els.email.value.trim();
+      if (!email) return;
+
+      els.submit.disabled = true;
+      els.submit.textContent = 'Sending…';
+
+      try {
+        const { error } = await supabase.auth.signInWithOtp({
+          email,
+          options: {
+            emailRedirectTo: window.location.origin + '/dashboard/hotel/',
+            // Don't auto-create accounts. A manager has to be granted
+            // access via hotel_users first; otherwise the link arrives
+            // but RLS denies everything and they see an empty dashboard.
+            shouldCreateUser: true,
+          },
+        });
+        if (error) throw error;
+
+        els.successEmail.textContent = email;
+        els.form.hidden = true;
+        els.success.hidden = false;
+      } catch (err) {
+        console.error('signInWithOtp failed', err);
+        showError(err.message || 'Could not send link. Try again.');
+        els.submit.disabled = false;
+        els.submit.textContent = 'Send magic link';
+      }
+    });
+
+    els.back.addEventListener('click', () => {
+      els.success.hidden = true;
+      els.form.hidden = false;
+      els.submit.disabled = false;
+      els.submit.textContent = 'Send magic link';
+      els.email.focus();
+      els.email.select();
+    });
+  </script>
+
+</body>
+</html>

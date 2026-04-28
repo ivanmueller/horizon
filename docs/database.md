@@ -7,15 +7,19 @@ The booking ledger lives in a Supabase Postgres database
 KV is still used for the 45-minute checkout cart pouch (`BOOKINGS`
 namespace). That one stays — it's the right tool for ephemeral state.
 
-## Schema (v1)
+## Schema
 
-Three tables, defined in `supabase/migrations/0001_init.sql`:
+Four tables. The first three are the booking ledger (added in
+`0001_init.sql` and refined in `0002_drop_bokun_tracking_code.sql`);
+the fourth backs the partner-dashboard auth flow (added in
+`0003_auth_setup.sql`).
 
 | Table         | What it is                                                      |
 |---------------|-----------------------------------------------------------------|
 | `hotels`      | Partner hotels. One row per `code` slug (e.g. `fairmont-ll`).   |
 | `hotel_staff` | Concierge / employees with optional per-employee kickback.      |
 | `bookings`    | Confirmed Bokun bookings. One row per successful checkout.      |
+| `hotel_users` | Email → hotel mapping for partner-dashboard sign-in (see `docs/auth.md`). |
 
 Each booking links to a hotel (required) and optionally to a staff
 member (the person who'll get the kickback). The link to staff is
@@ -23,6 +27,14 @@ resolved at insert time by matching the inbound `tracking_code`
 slug (e.g. `FAIRMONT_LL_JS`) against `hotel_staff.tracking_code` —
 if there's no match (a hotel-level slug like `FAIRMONT_LL`, or no
 slug at all) the booking is attributed to the hotel pool only.
+
+`hotel_users` exists separately from `auth.users` (which Supabase
+manages internally). It maps a manager's email to the hotel(s)
+they're allowed to view; RLS policies on `hotels` / `hotel_staff` /
+`bookings` join through it so an authenticated user only sees data
+for hotels they're explicitly assigned to. The worker's service-role
+key bypasses RLS, so admin endpoints + the checkout-time INSERT
+path are unaffected.
 
 `partners.json` at the repo root remains the source of truth for the
 partner directory. Supabase is seeded from it.
