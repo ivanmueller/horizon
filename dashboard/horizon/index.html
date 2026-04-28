@@ -217,6 +217,60 @@
       font-size: var(--text-sm); margin-bottom: var(--space-4);
     }
 
+    /* ── PDF preview modal ──────────────────────────────────────────── */
+    .ha-pdf-modal {
+      position: fixed; inset: 0;
+      background: rgba(26, 26, 46, 0.5);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 200; padding: var(--space-4);
+    }
+    .ha-pdf-modal[hidden] { display: none; }
+    .ha-pdf-card {
+      background: #fff; border-radius: var(--radius-lg);
+      width: 100%; max-width: 1000px; height: 90vh;
+      display: flex; flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+    .ha-pdf-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: var(--space-4) var(--space-5);
+      border-bottom: 1px solid var(--border-color); gap: var(--space-3);
+    }
+    .ha-pdf-title {
+      font-family: var(--font-display);
+      font-size: var(--text-lg); font-weight: 600; color: var(--near-black);
+      line-height: 1.2;
+    }
+    .ha-pdf-sub { font-size: var(--text-sm); color: var(--mid-gray); }
+    .ha-pdf-close {
+      background: none; border: 0; cursor: pointer;
+      font-size: 24px; line-height: 1; color: var(--mid-gray);
+      padding: 0 6px;
+    }
+    .ha-pdf-close:hover { color: var(--near-black); }
+    .ha-pdf-frame { flex: 1; width: 100%; border: 0; background: #525659; }
+    .ha-pdf-actions {
+      display: flex; gap: var(--space-3); justify-content: flex-end;
+      padding: var(--space-3) var(--space-5);
+      border-top: 1px solid var(--border-color);
+      background: var(--warm-white);
+    }
+    .ha-pdf-btn {
+      padding: 8px 18px; border-radius: var(--radius-full); border: 0;
+      font: inherit; font-size: var(--text-sm); font-weight: 600;
+      cursor: pointer;
+      background: var(--coral); color: #fff;
+    }
+    .ha-pdf-btn:hover { background: var(--coral-hover); }
+    .ha-pdf-btn--secondary {
+      background: transparent; color: var(--mid-gray);
+      border: 1px solid var(--border-color);
+    }
+    .ha-pdf-btn--secondary:hover {
+      background: var(--warm-white-alt); color: var(--near-black);
+    }
+
     /* ── Login overlay ──────────────────────────────────────────────── */
     .ha-login {
       position: fixed; inset: 0;
@@ -271,6 +325,24 @@
   </style>
 </head>
 <body>
+
+  <!-- ── Invoice preview modal (shown after PDF is generated) ────────── -->
+  <div class="ha-pdf-modal" id="haPdfModal" hidden>
+    <div class="ha-pdf-card">
+      <div class="ha-pdf-header">
+        <div>
+          <div class="ha-pdf-title" id="haPdfTitle">Invoice</div>
+          <div class="ha-pdf-sub" id="haPdfSub">—</div>
+        </div>
+        <button type="button" class="ha-pdf-close" id="haPdfClose" aria-label="Close preview">×</button>
+      </div>
+      <iframe class="ha-pdf-frame" id="haPdfFrame" title="Invoice preview"></iframe>
+      <div class="ha-pdf-actions">
+        <button type="button" class="ha-pdf-btn ha-pdf-btn--secondary" id="haPdfCancel">Close</button>
+        <button type="button" class="ha-pdf-btn" id="haPdfDownload">Download PDF</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ── Login overlay (shown until password is set in sessionStorage) ── -->
   <div class="ha-login" id="haLogin" hidden>
@@ -368,9 +440,11 @@
     import { renderInvoice, computeAggregates }
       from '/scripts/horizon/invoice-pdf.mjs';
 
-    // Expose to the legacy IIFE script below. Once the IIFE migrates
-    // to module scope this re-export goes away.
+    // Expose to the legacy IIFE script below + signal readiness so
+    // the click handler can wait if the user is faster than the
+    // deferred module load.
     window.__horizonInvoice = { renderInvoice, computeAggregates };
+    document.dispatchEvent(new Event('horizon-invoice-ready'));
   </script>
 
   <script>
@@ -753,71 +827,146 @@
           });
       }
 
-      // Pulls confirmed bookings for one hotel + range, runs them through
-      // the shared computeAggregates + renderInvoice path, and triggers a
-      // browser download. Same module the Node CLI uses → byte-equivalent
-      // output once you account for embedded timestamps.
-      function generateInvoice(hotel, range) {
-        if (!window.PDFDocument || !window.blobStream || !window.__horizonInvoice) {
-          return Promise.reject(new Error('PDF generator still loading — wait a sec and retry.'));
-        }
-        var qs = '?hotel=' + encodeURIComponent(hotel.code) +
-                 '&from=' + encodeURIComponent(range.from) +
-                 '&to='   + encodeURIComponent(range.to);
-
-        return fetch(BOKUN_API_BASE + '/api/dashboard/bookings' + qs, { cache: 'no-store' })
-          .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
-          .then(function (res) {
-            if (!res.ok) throw new Error((res.body && res.body.error) || 'fetch_failed');
-            var records = (res.body.records || []).filter(function (r) {
-              return r.status === 'confirmed';
-            });
-            if (!records.length) throw new Error('No confirmed bookings in this period');
-
-            var commissionPct = (res.body.hotel && Number(res.body.hotel.commission_pct)) || 0;
-            var name = (res.body.hotel && res.body.hotel.name) || hotel.name;
-            var aggregates = window.__horizonInvoice.computeAggregates(records, commissionPct);
-
-            var doc = new window.PDFDocument({
-              size: 'A4', margin: 50, bufferPages: true,
-              info: {
-                Title:   'Horizon commission ' + range.label + ' — ' + name,
-                Author:  'Horizon Tours',
-                Subject: 'Commission statement',
-              },
-            });
-            var stream = doc.pipe(window.blobStream());
-
-            window.__horizonInvoice.renderInvoice(doc, {
-              hotel:     { code: hotel.code, name: name, commission_pct: commissionPct },
-              range:     range,
-              totals:    aggregates.totals,
-              kickbacks: aggregates.kickbacks,
-              records:   records,
-            });
-            doc.end();
-
-            return new Promise(function (resolve, reject) {
-              stream.on('finish', function () {
-                try {
-                  var blob = stream.toBlob('application/pdf');
-                  var url = URL.createObjectURL(blob);
-                  var a = document.createElement('a');
-                  a.href = url;
-                  a.download = hotel.code + '_' + range.slug + '.pdf';
-                  document.body.appendChild(a);
-                  a.click();
-                  a.remove();
-                  // Revoke after the download starts; immediate revoke
-                  // can break Safari.
-                  setTimeout(function () { URL.revokeObjectURL(url); }, 250);
-                  resolve();
-                } catch (err) { reject(err); }
-              });
-              stream.on('error', reject);
-            });
+      // Resolves when the deferred ES module import has populated
+      // window.__horizonInvoice. The classic IIFE here registers click
+      // handlers immediately, but the module dispatches its own ready
+      // event when import resolves; this wait closes the race so users
+      // who click fast just see a brief "Generating…" rather than an
+      // unhelpful "still loading" alert.
+      function whenInvoiceReady() {
+        if (window.__horizonInvoice) return Promise.resolve();
+        return new Promise(function (resolve) {
+          document.addEventListener('horizon-invoice-ready', function onReady() {
+            document.removeEventListener('horizon-invoice-ready', onReady);
+            resolve();
           });
+          // Hard cap so a stuck CDN doesn't hang the button forever.
+          setTimeout(resolve, 8000);
+        });
       }
+
+      // Pulls confirmed bookings for one hotel + range, runs them through
+      // the shared computeAggregates + renderInvoice path, then opens
+      // the PDF in the in-page preview modal. Download is opt-in from
+      // the modal, not automatic — easier to discard a wrong-period
+      // invoice without polluting the local downloads folder.
+      function generateInvoice(hotel, range) {
+        return whenInvoiceReady().then(function () {
+          if (!window.__horizonInvoice) {
+            throw new Error('Invoice module did not load — check the console for a 404 on /scripts/horizon/invoice-pdf.mjs');
+          }
+          if (!window.PDFDocument) {
+            throw new Error('pdfkit did not load — unpkg may be blocked. Check console for unpkg.com errors.');
+          }
+          if (!window.blobStream) {
+            throw new Error('blob-stream did not load — unpkg may be blocked. Check console for unpkg.com errors.');
+          }
+
+          var qs = '?hotel=' + encodeURIComponent(hotel.code) +
+                   '&from=' + encodeURIComponent(range.from) +
+                   '&to='   + encodeURIComponent(range.to);
+
+          return fetch(BOKUN_API_BASE + '/api/dashboard/bookings' + qs, { cache: 'no-store' })
+            .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
+            .then(function (res) {
+              if (!res.ok) throw new Error((res.body && res.body.error) || 'fetch_failed');
+              var records = (res.body.records || []).filter(function (r) {
+                return r.status === 'confirmed';
+              });
+              if (!records.length) throw new Error('No confirmed bookings in this period');
+
+              var commissionPct = (res.body.hotel && Number(res.body.hotel.commission_pct)) || 0;
+              var name = (res.body.hotel && res.body.hotel.name) || hotel.name;
+              var aggregates = window.__horizonInvoice.computeAggregates(records, commissionPct);
+
+              var doc = new window.PDFDocument({
+                size: 'A4', margin: 50, bufferPages: true,
+                info: {
+                  Title:   'Horizon commission ' + range.label + ' — ' + name,
+                  Author:  'Horizon Tours',
+                  Subject: 'Commission statement',
+                },
+              });
+              var stream = doc.pipe(window.blobStream());
+
+              window.__horizonInvoice.renderInvoice(doc, {
+                hotel:     { code: hotel.code, name: name, commission_pct: commissionPct },
+                range:     range,
+                totals:    aggregates.totals,
+                kickbacks: aggregates.kickbacks,
+                records:   records,
+              });
+              doc.end();
+
+              return new Promise(function (resolve, reject) {
+                stream.on('finish', function () {
+                  try {
+                    var blob = stream.toBlob('application/pdf');
+                    showPdfPreview(
+                      blob,
+                      hotel.code + '_' + range.slug + '.pdf',
+                      name,
+                      range.label,
+                    );
+                    resolve();
+                  } catch (err) { reject(err); }
+                });
+                stream.on('error', reject);
+              });
+            });
+        });
+      }
+
+      // ── PDF preview modal ──────────────────────────────────────────
+      // The IIFE keeps a single "current" blob URL alive while the
+      // modal is open and revokes it on close to avoid leaking memory
+      // on repeated previews.
+      var currentPreview = null;
+      var pdfModal    = document.getElementById('haPdfModal');
+      var pdfFrame    = document.getElementById('haPdfFrame');
+      var pdfTitle    = document.getElementById('haPdfTitle');
+      var pdfSub      = document.getElementById('haPdfSub');
+      var pdfClose    = document.getElementById('haPdfClose');
+      var pdfCancel   = document.getElementById('haPdfCancel');
+      var pdfDownload = document.getElementById('haPdfDownload');
+
+      function showPdfPreview(blob, filename, hotelName, periodLabel) {
+        if (currentPreview && currentPreview.blobUrl) {
+          URL.revokeObjectURL(currentPreview.blobUrl);
+        }
+        var blobUrl = URL.createObjectURL(blob);
+        currentPreview = { blobUrl: blobUrl, filename: filename };
+        pdfTitle.textContent = hotelName;
+        pdfSub.textContent   = periodLabel;
+        pdfFrame.src         = blobUrl;
+        pdfModal.hidden      = false;
+      }
+      function hidePdfPreview() {
+        pdfModal.hidden = true;
+        pdfFrame.src    = 'about:blank';
+        if (currentPreview && currentPreview.blobUrl) {
+          URL.revokeObjectURL(currentPreview.blobUrl);
+        }
+        currentPreview = null;
+      }
+      function downloadCurrentPdf() {
+        if (!currentPreview) return;
+        var a = document.createElement('a');
+        a.href     = currentPreview.blobUrl;
+        a.download = currentPreview.filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      }
+      pdfClose.addEventListener('click',    hidePdfPreview);
+      pdfCancel.addEventListener('click',   hidePdfPreview);
+      pdfDownload.addEventListener('click', downloadCurrentPdf);
+      pdfModal.addEventListener('click', function (e) {
+        if (e.target === pdfModal) hidePdfPreview();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !pdfModal.hidden) hidePdfPreview();
+      });
 
       function onStatusChange(sel) {
         var id = sel.dataset.id;
