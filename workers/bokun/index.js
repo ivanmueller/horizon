@@ -331,49 +331,76 @@ async function handleDashboardRecord(request, env) {
 }
 
 async function handleDashboardBookings(url, env, request) {
-  if (!env.BOOKINGS_LEDGER) {
-    return jsonResponse(
-      { error: "BOOKINGS_LEDGER KV namespace not configured on worker" },
-      500,
-      request,
-    );
-  }
   const hotel = (url.searchParams.get("hotel") || "").trim().toLowerCase();
   if (!hotel || !/^[a-z0-9-]{2,40}$/.test(hotel)) {
     return jsonResponse({ error: "hotel slug required" }, 400, request);
   }
-  const from = url.searchParams.get("from"); // YYYY-MM-DD inclusive
-  const to = url.searchParams.get("to"); // YYYY-MM-DD inclusive
-  const fromMs = from && /^\d{4}-\d{2}-\d{2}$/.test(from) ? Date.parse(from + "T00:00:00Z") : null;
-  const toMs = to && /^\d{4}-\d{2}-\d{2}$/.test(to) ? Date.parse(to + "T23:59:59Z") : null;
+  const from = url.searchParams.get("from"); // YYYY-MM-DD inclusive, optional
+  const to = url.searchParams.get("to");
+  const fromOk = from && /^\d{4}-\d{2}-\d{2}$/.test(from);
+  const toOk = to && /^\d{4}-\d{2}-\d{2}$/.test(to);
 
-  // KV list pagination — for v1 we cap at 1000 records (covers months of
-  // bookings per hotel). If a partner outgrows this, paginate via cursor.
-  const list = await env.BOOKINGS_LEDGER.list({ prefix: `ledger:${hotel}:`, limit: 1000 });
-  const records = [];
-  for (const k of list.keys) {
-    const r = await env.BOOKINGS_LEDGER.get(k.name, "json");
-    if (!r) continue;
-    if (fromMs != null && r.created_at < fromMs) continue;
-    if (toMs != null && r.created_at > toMs) continue;
-    records.push(r);
+  // 1) Resolve the hotel — also gives us the partner block for the
+  //    response so the dashboard doesn't need a separate lookup.
+  const hotelRows = await supabaseSelect(
+    env,
+    `hotels?code=eq.${encodeURIComponent(hotel)}` +
+      `&select=id,code,name,location,type,commission_pct,kickback_pool_pct`,
+  );
+  if (!hotelRows.length) {
+    return jsonResponse({ error: `unknown hotel slug: ${hotel}` }, 404, request);
   }
-  // Most-recent first for the table view.
-  records.sort((a, b) => b.created_at - a.created_at);
+  const h = hotelRows[0];
 
-  // Aggregate KPIs server-side so the dashboard page stays dumb.
+  // 2) Pull the bookings, embedding the linked staff row when present.
+  //    Limit 1000 covers months per hotel; paginate via cursor when a
+  //    partner outgrows it.
+  const fields =
+    "id,booking_id,confirmation_code,tour_id,tour_title,date,time," +
+    "adults,youth,infants,amount,currency,lead_name,lead_email," +
+    "bokun_tracking_code,status,created_at,updated_at," +
+    "staff:hotel_staff(id,code,name,kickback_pct)";
+  let q =
+    `bookings?hotel_id=eq.${h.id}` +
+    `&select=${fields}` +
+    `&order=created_at.desc&limit=1000`;
+  if (fromOk) q += `&created_at=gte.${from}T00:00:00.000Z`;
+  if (toOk) q += `&created_at=lte.${to}T23:59:59.999Z`;
+
+  const rows = await supabaseSelect(env, q);
+
+  // PostgREST returns `numeric` columns as JSON strings to preserve
+  // precision; coerce to Number for clean arithmetic on the page.
+  const records = rows.map((r) => ({
+    ...r,
+    amount: r.amount != null ? Number(r.amount) : null,
+  }));
+
   const kpis = records.reduce(
     (acc, r) => {
       acc.bookings += 1;
       acc.travelers += (r.adults || 0) + (r.youth || 0) + (r.infants || 0);
-      acc.revenue += r.amount || 0;
+      acc.revenue += r.amount != null ? r.amount : 0;
       return acc;
     },
     { bookings: 0, travelers: 0, revenue: 0 },
   );
 
   return jsonResponse(
-    { hotel, from: from || null, to: to || null, kpis, records },
+    {
+      hotel: {
+        code:              h.code,
+        name:              h.name,
+        location:          h.location,
+        type:              h.type,
+        commission_pct:    h.commission_pct != null ? Number(h.commission_pct) : 0,
+        kickback_pool_pct: h.kickback_pool_pct != null ? Number(h.kickback_pool_pct) : null,
+      },
+      from: fromOk ? from : null,
+      to: toOk ? to : null,
+      kpis,
+      records,
+    },
     200,
     request,
   );
