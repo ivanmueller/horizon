@@ -1080,6 +1080,29 @@
       hotelDrawerSub.textContent = hotel.code;
       hotelDrawerBody.innerHTML = renderHotelDrawerBody(hotel);
       hotelDrawer.hidden = false;
+
+      // Wire the edit form. The drawer body is fresh markup each open,
+      // so we attach listeners every time — no need to detach.
+      const form = hotelDrawerBody.querySelector('#heForm');
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        submitHotelEdit(form, hotel);
+      });
+      hotelDrawerBody.querySelector('#heCancel').addEventListener('click', closeHotelDrawer);
+
+      const terminateBtn = hotelDrawerBody.querySelector('#heTerminate');
+      if (terminateBtn) {
+        terminateBtn.addEventListener('click', () => {
+          if (!confirm(`Terminate "${hotel.name}"?\n\nNew bookings will stop earning commission. Existing bookings + invoices are preserved. You can reinstate later.`)) return;
+          setHotelStatus(hotel, 'terminate');
+        });
+      }
+      const reinstateBtn = hotelDrawerBody.querySelector('#heReinstate');
+      if (reinstateBtn) {
+        reinstateBtn.addEventListener('click', () => {
+          setHotelStatus(hotel, 'active');
+        });
+      }
     }
     function openHotelCreateDrawer() {
       hotelDrawerTitle.textContent = 'New hotel';
@@ -1122,23 +1145,96 @@
     });
 
     function renderHotelDrawerBody(h) {
+      const isActive = h.status === 'active';
+
+      // Edit form for the Overview section. Slug is rendered disabled —
+      // the worker rejects code changes anyway (see handleAdminHotelUpdate
+      // in workers/bokun/index.js) because slug is the URL identity.
       const overview = `
-        <section class="drawer-section">
-          <div class="drawer-section__head">
-            <h3 class="drawer-section__title">Overview</h3>
+        <form id="heForm" novalidate>
+          <div class="alert alert--bad" id="heError" hidden></div>
+          <div class="alert alert--ok"  id="heSuccess" hidden></div>
+
+          <section class="drawer-section">
+            <div class="drawer-section__head">
+              <h3 class="drawer-section__title">Overview</h3>
+              <span>${statusBadge(h.status)}</span>
+            </div>
+            <div class="drawer-form">
+              <label class="drawer-form__row">
+                <span class="drawer-form__label">Name <span class="drawer-form__req">required</span></span>
+                <input class="input" id="heName" type="text" required maxlength="120"
+                       value="${escapeHtml(h.name || '')}">
+              </label>
+
+              <label class="drawer-form__row">
+                <span class="drawer-form__label">Slug <span class="drawer-form__req">permanent</span></span>
+                <input class="input" id="heCode" type="text" disabled
+                       value="${escapeHtml(h.code || '')}"
+                       style="font-family: var(--font-mono); font-size: 0.9em;">
+                <span class="drawer-form__hint">Locked after creation — used in /partners/&lt;slug&gt;/.</span>
+              </label>
+
+              <div class="drawer-form__pair">
+                <label class="drawer-form__row">
+                  <span class="drawer-form__label">Location <span class="drawer-form__req">required</span></span>
+                  <select class="input" id="heLocation" required>
+                    <option value="Banff"   ${h.location === 'Banff'   ? 'selected' : ''}>Banff</option>
+                    <option value="Canmore" ${h.location === 'Canmore' ? 'selected' : ''}>Canmore</option>
+                  </select>
+                </label>
+                <label class="drawer-form__row">
+                  <span class="drawer-form__label">Type <span class="drawer-form__req">required</span></span>
+                  <select class="input" id="heType" required>
+                    <option value="kickback" ${h.type === 'kickback' ? 'selected' : ''}>kickback (per-staff)</option>
+                    <option value="pool"     ${h.type === 'pool'     ? 'selected' : ''}>pool (hotel-wide)</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="drawer-form__pair">
+                <label class="drawer-form__row">
+                  <span class="drawer-form__label">Commission %</span>
+                  <input class="input" id="heCommission" type="number" min="0" max="100" step="0.1"
+                         value="${h.commission_pct != null ? h.commission_pct : ''}">
+                </label>
+                <label class="drawer-form__row">
+                  <span class="drawer-form__label">Kickback pool %</span>
+                  <input class="input" id="hePool" type="number" min="0" max="100" step="0.1"
+                         value="${h.kickback_pool_pct != null ? h.kickback_pool_pct : ''}"
+                         placeholder="(optional)">
+                </label>
+              </div>
+
+              <label class="drawer-form__row">
+                <span class="drawer-form__label">Tracking code</span>
+                <input class="input" id="heTracking" type="text"
+                       autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false"
+                       pattern="[A-Z0-9_]{2,40}" maxlength="40"
+                       value="${escapeHtml(h.default_tracking_code || '')}"
+                       style="font-family: var(--font-mono); font-size: 0.9em;">
+                <span class="drawer-form__hint">UPPERCASE_WITH_UNDERSCORES.</span>
+              </label>
+
+              <label class="drawer-form__row">
+                <span class="drawer-form__label">Effective date</span>
+                <input class="input" id="heEffective" type="date"
+                       value="${escapeHtml(h.effective_date || '')}">
+              </label>
+
+              <label class="drawer-form__row">
+                <span class="drawer-form__label">Notes</span>
+                <textarea class="input" id="heNotes" rows="3"
+                          placeholder="Internal notes — not shown to partners.">${escapeHtml(h.notes || '')}</textarea>
+              </label>
+            </div>
+          </section>
+
+          <div class="drawer-actions">
+            <button type="button" class="btn" id="heCancel">Close</button>
+            <button type="submit" class="btn btn--primary" id="heSave">Save changes</button>
           </div>
-          <dl class="drawer-fields">
-            <dt>Status</dt>          <dd>${statusBadge(h.status)}</dd>
-            <dt>Slug</dt>            <dd class="mono">${escapeHtml(h.code)}</dd>
-            <dt>Location</dt>        <dd>${escapeHtml(h.location || '—')}</dd>
-            <dt>Type</dt>            <dd>${typePill(h.type)}</dd>
-            <dt>Commission</dt>      <dd>${h.commission_pct != null ? h.commission_pct + '%' : '—'}</dd>
-            <dt>Kickback pool</dt>   <dd>${h.kickback_pool_pct != null ? h.kickback_pool_pct + '%' : '<span class="faint">not set</span>'}</dd>
-            <dt>Tracking code</dt>   <dd class="mono">${escapeHtml(h.default_tracking_code || '—')}</dd>
-            <dt>Effective date</dt>  <dd>${escapeHtml(h.effective_date || '—')}</dd>
-            <dt>Notes</dt>           <dd>${h.notes ? escapeHtml(h.notes) : '<span class="faint">—</span>'}</dd>
-          </dl>
-        </section>
+        </form>
       `;
 
       const staff = (h.staff || []).filter((s) => s.status === 'active');
@@ -1186,7 +1282,33 @@
         </section>
       `;
 
-      return overview + staffSection + managersSection;
+      // Danger zone — soft-delete (status='terminated') or restore.
+      // Soft-delete preserves bookings + invoice history; only future
+      // attribution stops. Reinstating just flips the status back.
+      const dangerZone = `
+        <section class="drawer-section drawer-danger">
+          <div class="drawer-section__head">
+            <h3 class="drawer-section__title">Danger zone</h3>
+          </div>
+          ${isActive
+            ? `<div class="drawer-danger__row">
+                 <div>
+                   <div class="drawer-danger__label">Terminate hotel</div>
+                   <div class="drawer-danger__hint">Marks the partner inactive. New bookings stop earning commission. Existing bookings + invoices are preserved.</div>
+                 </div>
+                 <button type="button" class="btn btn--danger" id="heTerminate">Terminate</button>
+               </div>`
+            : `<div class="drawer-danger__row">
+                 <div>
+                   <div class="drawer-danger__label">Reinstate hotel</div>
+                   <div class="drawer-danger__hint">Flips status back to active so new bookings start attributing again.</div>
+                 </div>
+                 <button type="button" class="btn" id="heReinstate">Reinstate</button>
+               </div>`}
+        </section>
+      `;
+
+      return overview + staffSection + managersSection + dangerZone;
     }
 
     function renderHotelCreateForm() {
@@ -1296,11 +1418,11 @@
       const notes = form.querySelector('#hcNotes').value.trim();
 
       if (!/^[a-z0-9-]{2,40}$/.test(code)) {
-        return showHcError(errEl, 'Slug must be 2–40 lowercase letters, digits, or hyphens.');
+        return showInline(errEl, 'Slug must be 2–40 lowercase letters, digits, or hyphens.');
       }
-      if (!name) return showHcError(errEl, 'Name is required.');
-      if (!location) return showHcError(errEl, 'Pick a location.');
-      if (!type) return showHcError(errEl, 'Pick a type.');
+      if (!name) return showInline(errEl, 'Name is required.');
+      if (!location) return showInline(errEl, 'Pick a location.');
+      if (!type) return showInline(errEl, 'Pick a type.');
 
       const body = { code, name, location, type };
       if (commission !== '') body.commission_pct = Number(commission);
@@ -1338,14 +1460,14 @@
           if (hotelsEls) loadHotels(hotelsEls);
         })
         .catch((err) => {
-          showHcError(errEl, err.message || 'Unknown error');
+          showInline(errEl, err.message || 'Unknown error');
         })
         .finally(() => {
           saveBtn.disabled = false;
           saveBtn.textContent = 'Create hotel';
         });
     }
-    function showHcError(errEl, msg) {
+    function showInline(errEl, msg) {
       errEl.textContent = msg;
       errEl.hidden = false;
       errEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
@@ -1358,6 +1480,113 @@
       }).catch((err) => {
         console.warn('republish trigger failed', err);
       });
+    }
+
+    function submitHotelEdit(form, hotel) {
+      const errEl     = form.querySelector('#heError');
+      const successEl = form.querySelector('#heSuccess');
+      const saveBtn   = form.querySelector('#heSave');
+      errEl.hidden = true;
+      successEl.hidden = true;
+
+      const name      = form.querySelector('#heName').value.trim();
+      const location  = form.querySelector('#heLocation').value;
+      const type      = form.querySelector('#heType').value;
+      const commission = form.querySelector('#heCommission').value.trim();
+      const pool      = form.querySelector('#hePool').value.trim();
+      const tracking  = form.querySelector('#heTracking').value.trim().toUpperCase();
+      const effective = form.querySelector('#heEffective').value.trim();
+      const notes     = form.querySelector('#heNotes').value;
+
+      if (!name) return showInline(errEl, 'Name is required.');
+      if (!location) return showInline(errEl, 'Pick a location.');
+      if (!type) return showInline(errEl, 'Pick a type.');
+
+      // Build a patch body. Send fields that changed OR that the
+      // worker requires for non-null values; null clears the field.
+      const body = { name, location, type };
+      body.commission_pct    = commission !== '' ? Number(commission) : 0;
+      body.kickback_pool_pct = pool !== '' ? Number(pool) : null;
+      body.default_tracking_code = tracking || null;
+      body.effective_date    = effective || null;
+      body.notes             = notes ? notes : null;
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving…';
+
+      fetch(BOKUN_API_BASE + '/api/admin/hotels/' + encodeURIComponent(hotel.id), {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + session.access_token,
+        },
+        body: JSON.stringify(body),
+      })
+        .then((r) => r.json().then((b) => ({ ok: r.ok, status: r.status, body: b })))
+        .then((res) => {
+          if (!res.ok) {
+            const msg = (res.body && res.body.error) ||
+              (res.status === 401 ? 'Session expired — please sign in again.' :
+               res.status === 404 ? 'Hotel not found — refresh the list.' :
+                                    'Save failed (HTTP ' + res.status + ').');
+            throw new Error(msg);
+          }
+          triggerRepublish();
+          successEl.textContent = 'Saved. Republishing partners.json (~30s)…';
+          successEl.hidden = false;
+          if (hotelsEls) loadHotels(hotelsEls);
+        })
+        .catch((err) => {
+          showInline(errEl, err.message || 'Unknown error');
+        })
+        .finally(() => {
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save changes';
+        });
+    }
+
+    function setHotelStatus(hotel, action) {
+      // action: 'terminate' → DELETE (worker flips status to 'terminated')
+      //         'active'    → PATCH { status: 'active' } (reinstate)
+      const isTerminate = action === 'terminate';
+      const opts = isTerminate
+        ? { method: 'DELETE' }
+        : {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'active' }),
+          };
+      opts.headers = Object.assign(
+        { Authorization: 'Bearer ' + session.access_token },
+        opts.headers || {},
+      );
+
+      fetch(BOKUN_API_BASE + '/api/admin/hotels/' + encodeURIComponent(hotel.id), opts)
+        .then((r) => r.json().then((b) => ({ ok: r.ok, status: r.status, body: b })))
+        .then((res) => {
+          if (!res.ok) {
+            const msg = (res.body && res.body.error) || ('Action failed (HTTP ' + res.status + ').');
+            flashHotelsError(msg);
+            return;
+          }
+          triggerRepublish();
+          flashHotelsNotice(
+            isTerminate
+              ? `"${hotel.name}" terminated. Republishing partners.json (~30s)…`
+              : `"${hotel.name}" reinstated. Republishing partners.json (~30s)…`,
+          );
+          closeHotelDrawer();
+          if (hotelsEls) loadHotels(hotelsEls);
+        })
+        .catch((err) => {
+          flashHotelsError(err && err.message || 'Unknown error');
+        });
+    }
+    function flashHotelsError(msg) {
+      if (!hotelsEls || !hotelsEls.error) return;
+      hotelsEls.error.textContent = msg;
+      hotelsEls.error.hidden = false;
+      setTimeout(() => { if (hotelsEls && hotelsEls.error) hotelsEls.error.hidden = true; }, 6000);
     }
 
     /* ── Period / range / formatting helpers ─────────────── */

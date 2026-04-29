@@ -308,6 +308,15 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   color: var(--text-muted);
 }
 .btn--ghost:hover { background: var(--bg-subtle); color: var(--text); }
+.btn--danger {
+  background: var(--bg);
+  border-color: var(--bad-border);
+  color: var(--bad-fg);
+}
+.btn--danger:hover {
+  background: var(--bad-bg);
+  border-color: var(--bad-fg);
+}
 .btn--sm { padding: 5px 10px; font-size: var(--t-xs); }
 
 /* ── Cards ────────────────────────────────────────────────────── */
@@ -804,6 +813,28 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   margin-top: var(--s8);
   padding-top: var(--s5);
   border-top: 1px solid var(--border);
+}
+
+/* Danger zone — terminate / reinstate inside the hotel drawer. */
+.drawer-danger { margin-top: var(--s8); }
+.drawer-danger .drawer-section__title { color: var(--bad-fg); }
+.drawer-danger__row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--s4);
+  padding: var(--s4);
+  border: 1px solid var(--bad-border);
+  border-radius: var(--r-md);
+  background: var(--bad-bg);
+}
+.drawer-danger__label {
+  font-size: var(--t-sm); font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.drawer-danger__hint {
+  font-size: var(--t-xs); color: var(--text-muted);
+  line-height: 1.4;
+  max-width: 38ch;
 }
 
 /* ── Utilities ────────────────────────────────────────────────── */
