@@ -7,10 +7,10 @@
    apart means the partner-facing site can't accidentally break when
    we iterate on admin styling, and vice versa.
 
-   Visual language: neutral white + gentle greys, Stripe-style. Coral
-   is reserved for primary CTAs, the active sidebar row, and a small
-   number of high-priority badges. Headings, links, hover states
-   default to neutrals.
+   Visual language: neutral white + gentle greys, Stripe-style. The
+   accent teal (--accent) is reserved for primary CTAs, the active
+   sidebar row, and a small number of high-priority badges. Headings,
+   links, hover states default to neutrals.
    ───────────────────────────────────────────────────────────────── */
 
 /* ── Tokens ───────────────────────────────────────────────────── */
@@ -29,10 +29,10 @@
   --text-muted:   #6B7280;
   --text-faint:   #9CA3AF;
 
-  /* Coral — used sparingly (primary CTA, active nav, key badges) */
-  --accent:       #FF6B4A;
-  --accent-hover: #E85A3A;
-  --accent-soft:  rgba(255, 107, 74, 0.08);
+  /* Accent teal — used sparingly (primary CTA, active nav, key badges) */
+  --accent:       #0B5F63;
+  --accent-hover: #094E51;
+  --accent-soft:  rgba(11, 95, 99, 0.08);
 
   /* Status palette for badges + alerts */
   --ok-bg:        #ECFDF5;
@@ -51,7 +51,7 @@
   --nav-text:           #30313d;   /* unselected nav label */
   --nav-icon:           #667691;   /* unselected nav icon */
   --nav-hover:          #f4f7fa;   /* unselected hover bg */
-  --nav-hover-active:   #FFF5F2;   /* hover bg when item is already active (faint coral wash) */
+  --nav-hover-active:   #EEF4F4;   /* hover bg when item is already active (faint accent-teal wash, mathematically equivalent to the previous coral wash) */
 
   /* Type */
   --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -211,8 +211,8 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .app-nav__item:hover {
   background: var(--nav-hover);   /* #f4f7fa cool wash on hover */
 }
-/* Active state: only text + icon turn coral. No background at rest;
-   hover paints the faint coral wash for click affordance. */
+/* Active state: only text + icon turn the accent colour. No background
+   at rest; hover paints the faint accent wash for click affordance. */
 .app-nav__item--active {
   background: transparent;
   color: var(--accent);

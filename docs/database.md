@@ -107,14 +107,16 @@ in any frontend bundle or commit.
 
 ### 3. Seed partners
 
-```bash
-cp scripts/supabase/.env.example scripts/supabase/.env
-# paste SUPABASE_URL + SUPABASE_SERVICE_KEY into the .env
-node --env-file=scripts/supabase/.env scripts/supabase/seed-partners.mjs
-```
+For a fresh project with no partners yet, just sign in at
+`/admin/` (after adding your email to `horizon_admins`) and click
+**+ Add hotel**. See [`ADDING_A_PARTNER.md`](../ADDING_A_PARTNER.md)
+for the full UI walkthrough.
 
-The script is idempotent — re-running it is safe and is also how you
-push partner edits.
+For local development you may want a copy of the live partners
+data: `cp scripts/supabase/.env.example scripts/supabase/.env`,
+paste `SUPABASE_URL` + `SUPABASE_SERVICE_KEY` into it, then
+`node --env-file=scripts/supabase/.env scripts/build/generate-partners-json.mjs`
+to write a fresh `partners.json` at the repo root.
 
 ### 4. Configure the worker
 
