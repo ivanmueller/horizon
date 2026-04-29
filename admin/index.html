@@ -276,9 +276,10 @@
     }
 
     // Browser back/forward buttons walk pushState entries; popstate
-    // fires for those navigations and we re-render.
+    // fires for those navigations and we re-render. The first render
+    // call moves to the bottom of the script so everything it needs
+    // (renderers, BOKUN_API_BASE, helpers) is initialised first.
     window.addEventListener('popstate', render);
-    render();
 
     /* ── Route renderers (stubs for now; commits 2+ fill them in) ── */
     const renderers = {
@@ -1003,6 +1004,11 @@
       return String(s == null ? '' : s).replace(/[&<>"']/g, (m) =>
         ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
     }
+
+    /* ── Initial render — last thing in the script so every const
+         it consumes (renderers, BOKUN_API_BASE, helpers) is past
+         its TDZ by now. ─────────────────────────────────────── */
+    render();
   </script>
 
 </body>
