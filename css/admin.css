@@ -140,8 +140,8 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   padding: var(--s5) var(--s5) var(--s4);
 }
 .app-brand__icon {
-  width: 28px; height: 28px;
-  border-radius: var(--r-md);
+  width: 24px; height: 24px;
+  border-radius: var(--r-sm);
   background: var(--accent);
   display: inline-flex; align-items: center; justify-content: center;
   color: #fff;
@@ -149,50 +149,52 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 .app-brand__name {
   font-family: 'Plus Jakarta Sans', var(--font-display), sans-serif;
-  font-weight: 700; font-size: var(--t-md);
+  font-weight: 600; font-size: 0.9375rem;
   color: var(--text);
+  letter-spacing: -0.005em;
 }
 
 .app-nav {
   flex: 1;
-  padding: 0 var(--s3);
+  padding: 0 var(--s2);
   overflow-y: auto;
   display: flex; flex-direction: column; gap: var(--s4);
 }
 .app-nav__heading {
-  font-size: 0.7rem;
+  font-size: 0.6875rem;          /* 11px — Stripe-tight */
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.03em;
   color: var(--text-faint);
-  font-weight: 600;
+  font-weight: 500;
   padding: 0 var(--s3) var(--s1);
+  margin-top: var(--s2);
 }
-.app-nav__group { display: flex; flex-direction: column; gap: 2px; }
+.app-nav__group { display: flex; flex-direction: column; gap: 1px; }
 
 .app-nav__item {
-  display: flex; align-items: center; gap: var(--s3);
-  padding: 7px var(--s3);
-  border-radius: var(--r-md);
-  color: var(--text-muted);
-  font-size: var(--t-sm);
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 10px;
+  border-radius: var(--r-sm);
+  color: #4B5563;                /* darker than --text-muted; Stripe tone */
+  font-size: 0.875rem;           /* 14px */
   font-weight: 500;
   cursor: pointer;
   border: 0; background: none; width: 100%; text-align: left;
   transition: background var(--t-fast), color var(--t-fast);
 }
 .app-nav__item:hover {
-  background: var(--bg-subtle);
+  background: var(--bg-sunken);
   color: var(--text);
 }
 .app-nav__item--active {
-  background: var(--accent-soft);
+  background: rgba(255, 107, 74, 0.06);   /* more washed-out tint */
   color: var(--accent);
 }
 .app-nav__item--active .app-nav__icon { color: var(--accent); }
 .app-nav__icon {
-  width: 18px; height: 18px;
+  width: 16px; height: 16px;
   display: inline-flex; align-items: center; justify-content: center;
-  color: var(--text-faint);
+  color: #6B7280;
   flex-shrink: 0;
 }
 .app-nav__icon svg { width: 100%; height: 100%; }
