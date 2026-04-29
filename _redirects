@@ -1,16 +1,31 @@
 # Cloudflare Pages — URL rewrites.
 #
-# /admin/ is a single-page app: one HTML file, JS routes between
-# views by reading window.location.pathname. Without this rule,
-# navigating directly to /admin/bookings/ would 404 because there's
-# no /admin/bookings/index.html on disk. The 200 status code rewrites
-# the request to serve /admin/index.html while keeping the visible
-# URL in the address bar — the JS then reads pathname and renders
-# the right route.
+# /admin/ is a single-page app: one HTML file at /admin/index.html,
+# JS routes between views by reading window.location.pathname. Without
+# rewrites, navigating directly to /admin/bookings/ would 404 because
+# there's no /admin/bookings/index.html on disk.
 #
-# Doesn't affect any other path: Cloudflare Pages tries to find a
-# static file first and only falls back to these rules on miss.
-# /dashboard/hotel/, /dashboard/login/, /tours/.../, and the rest of
-# the static site are unaffected.
+# The obvious rule — `/admin/*  /admin/index.html  200` — gets dropped
+# by Cloudflare's loop detector ("destination /admin/index.html
+# canonicalises to /admin/, which matches the source /admin/*"). To
+# avoid that we enumerate the routes explicitly: each source is a
+# specific path that can't canonicalise back into another rule.
+#
+# The bare /admin/ path doesn't need a rule — Cloudflare Pages serves
+# /admin/index.html automatically as the directory index.
+#
+# When you add a new sidebar route in admin/index.html, add the
+# corresponding rule pair (with and without trailing slash) below.
 
-/admin/*  /admin/index.html  200
+/admin/bookings   /admin/index.html  200
+/admin/bookings/  /admin/index.html  200
+/admin/hotels     /admin/index.html  200
+/admin/hotels/    /admin/index.html  200
+/admin/tours      /admin/index.html  200
+/admin/tours/     /admin/index.html  200
+/admin/payments   /admin/index.html  200
+/admin/payments/  /admin/index.html  200
+/admin/billing    /admin/index.html  200
+/admin/billing/   /admin/index.html  200
+/admin/invoices   /admin/index.html  200
+/admin/invoices/  /admin/index.html  200

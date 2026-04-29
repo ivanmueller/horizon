@@ -15,6 +15,7 @@ SUPABASE_URL   = "https://lxdltzrntphnkhsniwin.supabase.co"
 #   wrangler secret put BOKUN_SECRET_KEY      # Bokun HMAC signing
 #   wrangler secret put STRIPE_SECRET_KEY     # sk_test_... (then sk_live_... for prod)
 #   wrangler secret put SUPABASE_SERVICE_KEY  # Supabase service_role; bypasses RLS
+#   wrangler secret put CF_PAGES_DEPLOY_HOOK  # CF Pages webhook URL for /api/admin/republish
 #
 # Auth gates (both partner + admin) verify Supabase Auth JWTs against
 # the public JWKS at $SUPABASE_URL/auth/v1/.well-known/jwks.json — no
