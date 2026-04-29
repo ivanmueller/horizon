@@ -71,7 +71,7 @@
 // needed for either path.
 
 import { bokunFetch } from "./bokun-auth.js";
-import { supabaseRequest, supabaseSelect, supabaseUpdate } from "./supabase.js";
+import { supabaseRequest, supabaseSelect, supabaseInsert, supabaseUpdate } from "./supabase.js";
 
 const ALLOWED_ORIGIN = "https://gowithhorizon.com";
 const CURRENCY = "CAD";
