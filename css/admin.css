@@ -167,7 +167,10 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 
 .app-nav {
   flex: 1;
-  padding: 0;                   /* nav-item border-left provides the gutter */
+  /* 8px horizontal padding so items don't touch the sidebar edges —
+     active + hover tints become rounded rectangles inset from both
+     sides, matching Stripe's containment. */
+  padding: 0 var(--s2);
   overflow-y: auto;
   display: flex; flex-direction: column; gap: var(--s5);
 }
@@ -176,39 +179,36 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   letter-spacing: 0;
   color: var(--text-faint);
   font-weight: 500;
-  padding: 0 var(--s5) var(--s2);
+  padding: 0 var(--s3) var(--s2);
   margin-top: var(--s3);
 }
 .app-nav__group { display: flex; flex-direction: column; gap: 2px; }
 
 .app-nav__item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 9px var(--s5);
-  /* The 2px transparent left border holds the active-state coral
-     bar's place so the row layout doesn't shift between states. */
-  border-left: 2px solid transparent;
-  padding-left: calc(var(--s5) - 2px);     /* 20 - 2 = 18 → icon edge at 20px */
-  color: var(--nav-text);                  /* #30313d */
-  font-size: 0.875rem;                     /* 14px */
-  font-weight: 400;                        /* thinner / Stripe-y */
-  letter-spacing: -0.005em;
+  display: flex; align-items: center;
+  gap: 8px;                       /* tighter icon ↔ label gap */
+  padding: 7px var(--s3);         /* internal padding; rounded item */
+  border-radius: var(--r-sm);
+  color: var(--nav-text);         /* #30313d */
+  font-size: 0.875rem;            /* 14px */
+  font-weight: 300;               /* Inter Light — closer to Stripe's Sohne */
+  letter-spacing: -0.003em;
   cursor: pointer;
   background: none;
   text-decoration: none;
+  border: 0;
   transition: background var(--t-fast), color var(--t-fast);
-  border-top: 0; border-right: 0; border-bottom: 0;
 }
 .app-nav__item:hover {
-  background: var(--nav-hover);            /* #f4f7fa cool wash */
+  background: var(--nav-hover);   /* #f4f7fa cool wash, contained rect */
 }
 .app-nav__item--active {
-  background: var(--bg);                   /* white — active doesn't tint */
+  background: var(--accent-soft); /* faint coral wash, contained rect */
   color: var(--accent);
   font-weight: 500;
-  border-left-color: var(--accent);        /* the coral accent bar */
 }
 .app-nav__item--active:hover {
-  background: var(--nav-hover-active);     /* faint coral wash */
+  background: rgba(255, 107, 74, 0.12);   /* slightly more saturated on hover */
   color: var(--accent);
 }
 .app-nav__item--active .app-nav__icon { color: var(--accent); }
