@@ -196,7 +196,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .app-nav__item {
   display: flex; align-items: center;
   gap: 10px;                   /* slightly more breathing between icon and label */
-  padding: 7px var(--s3);
+  padding: 6px var(--s3);      /* trimmed 1px vertically — slightly tighter rows */
   border-radius: var(--r-sm);
   color: var(--nav-text);
   font-size: 0.8125rem;        /* 13px */
