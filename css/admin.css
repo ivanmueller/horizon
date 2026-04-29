@@ -839,20 +839,20 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 
 /* Add/edit form rendered below the staff (and managers) tables. */
-.staff-form {
+.drawer-subform {
   margin-top: var(--s4);
   padding: var(--s5);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   background: var(--bg-subtle);
 }
-.staff-form__title {
+.drawer-subform__title {
   font-family: var(--font-display);
   font-size: var(--t-sm); font-weight: 600;
   color: var(--text);
   margin: 0 0 var(--s4);
 }
-.staff-form__actions {
+.drawer-subform__actions {
   display: flex; justify-content: flex-end; gap: var(--s2);
   margin-top: var(--s4);
 }

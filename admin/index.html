@@ -1080,10 +1080,12 @@
     // CRUD op without refetching from the user's POV.
     let drawerCurrentHotelId = null;
     let drawerStaffForm      = null;  // null | 'add' | { editId: <staff.id> }
+    let drawerManagerForm    = null;  // null | 'add' | { editId: <manager.id> }
 
     function openHotelDrawer(hotel) {
       drawerCurrentHotelId = hotel.id;
       drawerStaffForm = null;
+      drawerManagerForm = null;
       hotelDrawerTitle.textContent = hotel.name;
       hotelDrawerSub.textContent = hotel.code;
       renderAndWireDrawer(hotel);
@@ -1156,6 +1158,45 @@
           revokeStaff(hotel, staffId);
         });
       });
+      // ── Managers section
+      const addManagerBtn = hotelDrawerBody.querySelector('#heAddManager');
+      if (addManagerBtn) {
+        addManagerBtn.addEventListener('click', () => {
+          drawerManagerForm = 'add';
+          renderAndWireDrawer(hotel);
+        });
+      }
+      hotelDrawerBody.querySelectorAll('[data-manager-edit]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          drawerManagerForm = { editId: btn.dataset.managerEdit };
+          renderAndWireDrawer(hotel);
+        });
+      });
+      hotelDrawerBody.querySelectorAll('[data-manager-revoke]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const managerId = btn.dataset.managerRevoke;
+          const email = btn.dataset.managerEmail || 'this manager';
+          if (!confirm(`Revoke access for ${email}?\n\nThey lose access to /dashboard/hotel/ immediately. You can re-invite later if needed.`)) return;
+          revokeManager(hotel, managerId);
+        });
+      });
+      const managerForm = hotelDrawerBody.querySelector('#hmForm');
+      if (managerForm) {
+        managerForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          if (drawerManagerForm === 'add') submitManagerInvite(managerForm, hotel);
+          else if (drawerManagerForm && drawerManagerForm.editId)
+            submitManagerEdit(managerForm, hotel, drawerManagerForm.editId);
+        });
+        const cancelBtn = hotelDrawerBody.querySelector('#hmCancel');
+        if (cancelBtn) cancelBtn.addEventListener('click', () => {
+          drawerManagerForm = null;
+          renderAndWireDrawer(hotel);
+        });
+      }
+
       const staffForm = hotelDrawerBody.querySelector('#hsForm');
       if (staffForm) {
         staffForm.addEventListener('submit', (e) => {
@@ -1213,6 +1254,7 @@
       hotelDrawer.hidden = true;
       drawerCurrentHotelId = null;
       drawerStaffForm = null;
+      drawerManagerForm = null;
       // Drop selected-row highlight.
       document.querySelectorAll('.row--selected').forEach((r) => r.classList.remove('row--selected'));
     }
@@ -1361,23 +1403,43 @@
       `;
 
       const managers = (h.managers || []).filter((m) => m.status === 'active');
+      const editingManager = drawerManagerForm && drawerManagerForm.editId
+        ? managers.find((m) => m.id === drawerManagerForm.editId) || null
+        : null;
       const managersSection = `
         <section class="drawer-section">
           <div class="drawer-section__head">
             <h3 class="drawer-section__title">Managers (${managers.length})</h3>
+            <button type="button" class="btn btn--sm" id="heAddManager"
+                    ${drawerManagerForm ? 'disabled' : ''}>+ Invite</button>
           </div>
           ${managers.length
             ? `<table class="table">
-                 <thead><tr><th>Email</th><th>Role</th><th>Added</th></tr></thead>
+                 <thead><tr>
+                   <th>Email</th><th>Role</th><th>Added</th>
+                   <th class="row-actions__col"></th>
+                 </tr></thead>
                  <tbody>${managers.map((m) => `
-                   <tr>
+                   <tr ${drawerManagerForm && drawerManagerForm.editId === m.id ? 'class="row--selected"' : ''}>
                      <td>${escapeHtml(m.email)}</td>
                      <td class="muted">${escapeHtml(m.role || 'manager')}</td>
                      <td class="muted">${escapeHtml(formatHumanDate((m.created_at || '').slice(0, 10)) || '—')}</td>
+                     <td class="row-actions">
+                       <button type="button" class="row-actions__btn"
+                               data-manager-edit="${escapeHtml(m.id)}"
+                               aria-label="Edit ${escapeHtml(m.email)}">Edit</button>
+                       <button type="button" class="row-actions__btn row-actions__btn--danger"
+                               data-manager-revoke="${escapeHtml(m.id)}"
+                               data-manager-email="${escapeHtml(m.email)}"
+                               aria-label="Revoke ${escapeHtml(m.email)}">Revoke</button>
+                     </td>
                    </tr>`).join('')}
                  </tbody>
                </table>`
-            : '<p class="muted" style="font-size: var(--t-sm)">No managers assigned yet.</p>'}
+            : '<p class="muted" style="font-size: var(--t-sm)">No managers assigned yet — click + Invite to add one.</p>'}
+          ${drawerManagerForm
+            ? renderManagerForm(drawerManagerForm === 'add' ? null : editingManager)
+            : ''}
         </section>
       `;
 
@@ -1692,8 +1754,8 @@
     function renderStaffForm(staff /* null = add mode */) {
       const isAdd = !staff;
       return `
-        <form id="hsForm" class="staff-form" novalidate>
-          <h4 class="staff-form__title">${isAdd ? 'Add staff member' : 'Edit ' + escapeHtml(staff.name)}</h4>
+        <form id="hsForm" class="drawer-subform" novalidate>
+          <h4 class="drawer-subform__title">${isAdd ? 'Add staff member' : 'Edit ' + escapeHtml(staff.name)}</h4>
           <div class="alert alert--bad" id="hsError" hidden></div>
           <div class="drawer-form">
             <label class="drawer-form__row">
@@ -1733,7 +1795,7 @@
               </label>
             </div>
           </div>
-          <div class="staff-form__actions">
+          <div class="drawer-subform__actions">
             <button type="button" class="btn btn--sm" id="hsCancel">Cancel</button>
             <button type="submit" class="btn btn--primary btn--sm" id="hsSave">${isAdd ? 'Add staff' : 'Save changes'}</button>
           </div>
@@ -1850,6 +1912,151 @@
           }
           triggerRepublish();
           flashHotelsNotice('Staff revoked. Republishing partners.json (~30s)…');
+          if (hotelsEls) loadHotels(hotelsEls).then(refreshDrawerFromCache);
+        })
+        .catch((err) => flashHotelsError(err.message || 'Unknown error'));
+    }
+
+    // ── Manager (hotel_users) sub-form (invite or edit role)
+    // The manager API lives at /api/admin/hotel-users — note the dash.
+    // Revoke is a PATCH { status: 'revoked' } since the worker has no
+    // DELETE handler; the partial unique index lets us re-invite the
+    // same email later.
+    function renderManagerForm(manager /* null = invite mode */) {
+      const isInvite = !manager;
+      const role = isInvite ? 'manager' : (manager.role || 'manager');
+      return `
+        <form id="hmForm" class="drawer-subform" novalidate>
+          <h4 class="drawer-subform__title">${isInvite ? 'Invite manager' : 'Edit ' + escapeHtml(manager.email)}</h4>
+          <div class="alert alert--bad" id="hmError" hidden></div>
+          <div class="drawer-form">
+            <label class="drawer-form__row">
+              <span class="drawer-form__label">Email <span class="drawer-form__req">${isInvite ? 'required · permanent' : 'permanent'}</span></span>
+              <input class="input" id="hmEmail" type="email"
+                     ${isInvite ? 'required' : 'disabled'}
+                     autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+                     value="${isInvite ? '' : escapeHtml(manager.email)}"
+                     placeholder="manager@hotel.com">
+              ${isInvite ? '<span class="drawer-form__hint">They sign in at /dashboard/login/ — magic link or Google OAuth.</span>' : ''}
+            </label>
+            <label class="drawer-form__row">
+              <span class="drawer-form__label">Role</span>
+              <select class="input" id="hmRole">
+                <option value="manager" ${role === 'manager' ? 'selected' : ''}>manager (can view bookings + invoices)</option>
+                <option value="admin"   ${role === 'admin'   ? 'selected' : ''}>admin (can also manage staff at this hotel)</option>
+              </select>
+            </label>
+          </div>
+          <div class="drawer-subform__actions">
+            <button type="button" class="btn btn--sm" id="hmCancel">Cancel</button>
+            <button type="submit" class="btn btn--primary btn--sm" id="hmSave">${isInvite ? 'Send invite' : 'Save changes'}</button>
+          </div>
+        </form>
+      `;
+    }
+
+    function submitManagerInvite(form, hotel) {
+      const errEl   = form.querySelector('#hmError');
+      const saveBtn = form.querySelector('#hmSave');
+      errEl.hidden = true;
+
+      const email = form.querySelector('#hmEmail').value.trim();
+      const role  = form.querySelector('#hmRole').value;
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return showInline(errEl, 'Enter a valid email address.');
+      }
+
+      const body = { hotel_id: hotel.id, email, role };
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Inviting…';
+
+      fetch(BOKUN_API_BASE + '/api/admin/hotel-users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + session.access_token,
+        },
+        body: JSON.stringify(body),
+      })
+        .then((r) => r.json().then((b) => ({ ok: r.ok, status: r.status, body: b })))
+        .then((res) => {
+          if (!res.ok) {
+            const msg = (res.body && res.body.error) ||
+              (res.status === 409 ? `${email} is already an active manager for this hotel.` :
+                                    'Invite failed (HTTP ' + res.status + ').');
+            throw new Error(msg);
+          }
+          drawerManagerForm = null;
+          flashHotelsNotice(`${email} can now sign in at /dashboard/login/.`);
+          // No republish needed — managers are an auth concern, not
+          // partners.json content.
+          if (hotelsEls) loadHotels(hotelsEls).then(refreshDrawerFromCache);
+        })
+        .catch((err) => {
+          showInline(errEl, err.message || 'Unknown error');
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Send invite';
+        });
+    }
+
+    function submitManagerEdit(form, hotel, managerId) {
+      const errEl   = form.querySelector('#hmError');
+      const saveBtn = form.querySelector('#hmSave');
+      errEl.hidden = true;
+
+      const role = form.querySelector('#hmRole').value;
+      if (!['manager', 'admin'].includes(role)) {
+        return showInline(errEl, 'Pick a valid role.');
+      }
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving…';
+
+      fetch(BOKUN_API_BASE + '/api/admin/hotel-users/' + encodeURIComponent(managerId), {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + session.access_token,
+        },
+        body: JSON.stringify({ role }),
+      })
+        .then((r) => r.json().then((b) => ({ ok: r.ok, status: r.status, body: b })))
+        .then((res) => {
+          if (!res.ok) {
+            const msg = (res.body && res.body.error) ||
+              (res.status === 404 ? 'Manager not found — refresh and retry.' :
+                                    'Save failed (HTTP ' + res.status + ').');
+            throw new Error(msg);
+          }
+          drawerManagerForm = null;
+          flashHotelsNotice('Manager role updated.');
+          if (hotelsEls) loadHotels(hotelsEls).then(refreshDrawerFromCache);
+        })
+        .catch((err) => {
+          showInline(errEl, err.message || 'Unknown error');
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save changes';
+        });
+    }
+
+    function revokeManager(hotel, managerId) {
+      fetch(BOKUN_API_BASE + '/api/admin/hotel-users/' + encodeURIComponent(managerId), {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + session.access_token,
+        },
+        body: JSON.stringify({ status: 'revoked' }),
+      })
+        .then((r) => r.json().then((b) => ({ ok: r.ok, status: r.status, body: b })))
+        .then((res) => {
+          if (!res.ok) {
+            flashHotelsError((res.body && res.body.error) || 'Revoke failed (HTTP ' + res.status + ').');
+            return;
+          }
+          flashHotelsNotice('Manager access revoked.');
           if (hotelsEls) loadHotels(hotelsEls).then(refreshDrawerFromCache);
         })
         .catch((err) => flashHotelsError(err.message || 'Unknown error'));
