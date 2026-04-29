@@ -38,11 +38,31 @@
 //                                      pending_refund / confirmed). Replaces
 //                                      the Bokun webhook on tiers that don't
 //                                      expose them.
+//   GET    /api/admin/hotels           list of hotels with embedded staff +
+//                                      managers, for the Hotels admin UI.
+//   POST   /api/admin/hotels           create a new hotel (body: code, name,
+//                                      location, type, …).
+//   PATCH  /api/admin/hotels/:id       update hotel fields (slug is immutable).
+//   DELETE /api/admin/hotels/:id       soft-delete: status flips to
+//                                      'terminated'; bookings stay attached.
+//   POST   /api/admin/hotel-staff      create a staff row (body: hotel_id,
+//                                      code, name, …).
+//   PATCH  /api/admin/hotel-staff/:id  update staff (slug + hotel_id immutable).
+//   DELETE /api/admin/hotel-staff/:id  status flips to 'terminated'.
+//   POST   /api/admin/hotel-users      invite a manager (body: email, hotel_id).
+//   PATCH  /api/admin/hotel-users/:id  status flip (active ↔ revoked) or role.
+//   POST   /api/admin/republish        triggers a Cloudflare Pages rebuild
+//                                      via CF_PAGES_DEPLOY_HOOK so the
+//                                      static partners.json regenerates.
 //
 // Secrets (Worker secret storage, never on disk):
 //   BOKUN_ACCESS_KEY, BOKUN_SECRET_KEY  — HMAC signing for Bokun
 //   STRIPE_SECRET_KEY                   — sk_test_... or sk_live_...
 //   SUPABASE_SERVICE_KEY                — Supabase service_role; bypasses RLS
+//   CF_PAGES_DEPLOY_HOOK                — webhook URL that triggers a
+//                                          Cloudflare Pages rebuild (used by
+//                                          /api/admin/republish after
+//                                          partners.json-affecting edits).
 //
 // Both auth gates (partner + admin) verify Supabase user JWTs against
 // $SUPABASE_URL/auth/v1/.well-known/jwks.json (public asymmetric keys,
@@ -155,6 +175,38 @@ export default {
       ) {
         return await handleAdminBookingPatch(segs[3], request, env);
       }
+
+      // ── Hotels CRUD ─────────────────────────────────────────────
+      if (segs[0] === "api" && segs[1] === "admin" && segs[2] === "hotels") {
+        if (request.method === "GET" && !segs[3])  return await handleAdminHotelsList(env, request);
+        if (request.method === "POST" && !segs[3]) return await handleAdminHotelCreate(request, env);
+        if (request.method === "PATCH" && segs[3]) return await handleAdminHotelUpdate(segs[3], request, env);
+        if (request.method === "DELETE" && segs[3]) return await handleAdminHotelTerminate(segs[3], request, env);
+      }
+
+      // ── Hotel staff CRUD ────────────────────────────────────────
+      if (segs[0] === "api" && segs[1] === "admin" && segs[2] === "hotel-staff") {
+        if (request.method === "POST" && !segs[3]) return await handleAdminStaffCreate(request, env);
+        if (request.method === "PATCH" && segs[3]) return await handleAdminStaffUpdate(segs[3], request, env);
+        if (request.method === "DELETE" && segs[3]) return await handleAdminStaffTerminate(segs[3], request, env);
+      }
+
+      // ── Hotel managers (hotel_users) — invite + revoke ──────────
+      if (segs[0] === "api" && segs[1] === "admin" && segs[2] === "hotel-users") {
+        if (request.method === "POST" && !segs[3]) return await handleAdminHotelUserCreate(request, env);
+        if (request.method === "PATCH" && segs[3]) return await handleAdminHotelUserUpdate(segs[3], request, env);
+      }
+
+      // ── Republish hook (triggers a CF Pages rebuild) ────────────
+      if (
+        request.method === "POST" &&
+        segs[0] === "api" &&
+        segs[1] === "admin" &&
+        segs[2] === "republish"
+      ) {
+        return await handleAdminRepublish(request, env);
+      }
+
       return jsonResponse({ error: "Not found" }, 404, request);
     } catch (err) {
       console.error("Worker error:", err.stack || err);
@@ -669,6 +721,349 @@ async function handleAdminBookingPatch(id, request, env) {
   }
 
   return jsonResponse({ ok: true, booking: updated[0] }, 200, request);
+}
+
+// ── Hotels / staff / managers CRUD (/admin/hotels/) ────────────────────────
+// All admin-gated. Writes go to Supabase; partners.json (the static
+// file the rest of the site reads) is regenerated on the next CF Pages
+// build, which the upcoming /api/admin/republish endpoint triggers.
+
+const HOTEL_FIELDS =
+  "id,code,name,location,type,status,effective_date,default_tracking_code," +
+  "commission_pct,kickback_pool_pct,notes,created_at,updated_at";
+const STAFF_FIELDS =
+  "id,hotel_id,code,name,tracking_code,kickback_pct,status,created_at,updated_at";
+const MANAGER_FIELDS = "id,email,hotel_id,role,status,created_at,updated_at";
+
+const HOTEL_TYPES = new Set(["kickback", "pool"]);
+const HOTEL_LOCATIONS = new Set(["Banff", "Canmore"]);
+const HOTEL_STATUSES = new Set(["active", "terminated"]);
+const STAFF_STATUSES = new Set(["active", "terminated"]);
+const MANAGER_STATUSES = new Set(["active", "revoked"]);
+const SLUG_RE = /^[a-z0-9-]{2,40}$/;
+const TRACKING_CODE_RE = /^[A-Z0-9_]{2,40}$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+async function handleAdminHotelsList(env, request) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+
+  const select =
+    HOTEL_FIELDS +
+    `,staff:hotel_staff(${STAFF_FIELDS})` +
+    `,managers:hotel_users(${MANAGER_FIELDS})`;
+  const rows = await supabaseSelect(env, `hotels?select=${select}&order=code.asc`);
+  return jsonResponse({ hotels: rows.map(normaliseHotel) }, 200, request);
+}
+
+async function handleAdminHotelCreate(request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+
+  const v = validateHotel(body, { creating: true });
+  if (v.error) return jsonResponse({ error: v.error }, 400, request);
+
+  try {
+    const inserted = await supabaseInsert(env, "hotels", [v.row], { returnRow: true });
+    return jsonResponse({ hotel: normaliseHotel(inserted[0]) }, 201, request);
+  } catch (err) {
+    if (err.body && /duplicate key|already exists/i.test(JSON.stringify(err.body))) {
+      return jsonResponse({ error: `hotel with code "${v.row.code}" already exists` }, 409, request);
+    }
+    throw err;
+  }
+}
+
+async function handleAdminHotelUpdate(id, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(id)) return jsonResponse({ error: "invalid hotel id" }, 400, request);
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+
+  const v = validateHotel(body, { creating: false });
+  if (v.error) return jsonResponse({ error: v.error }, 400, request);
+  // Don't allow code changes — slug is the URL identity, would break QR codes.
+  delete v.row.code;
+
+  const updated = await supabaseUpdate(
+    env, `hotels?id=eq.${encodeURIComponent(id)}`, v.row, { returnRow: true },
+  );
+  if (!Array.isArray(updated) || !updated.length) {
+    return jsonResponse({ error: "hotel not found" }, 404, request);
+  }
+  return jsonResponse({ hotel: normaliseHotel(updated[0]) }, 200, request);
+}
+
+async function handleAdminHotelTerminate(id, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(id)) return jsonResponse({ error: "invalid hotel id" }, 400, request);
+
+  const updated = await supabaseUpdate(
+    env, `hotels?id=eq.${encodeURIComponent(id)}`,
+    { status: "terminated" }, { returnRow: true },
+  );
+  if (!Array.isArray(updated) || !updated.length) {
+    return jsonResponse({ error: "hotel not found" }, 404, request);
+  }
+  return jsonResponse({ hotel: normaliseHotel(updated[0]) }, 200, request);
+}
+
+async function handleAdminStaffCreate(request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+
+  const v = validateStaff(body, { creating: true });
+  if (v.error) return jsonResponse({ error: v.error }, 400, request);
+
+  try {
+    const inserted = await supabaseInsert(env, "hotel_staff", [v.row], { returnRow: true });
+    return jsonResponse({ staff: normaliseStaff(inserted[0]) }, 201, request);
+  } catch (err) {
+    if (err.body && /duplicate key|already exists/i.test(JSON.stringify(err.body))) {
+      return jsonResponse({ error: `staff with code "${v.row.code}" already exists` }, 409, request);
+    }
+    throw err;
+  }
+}
+
+async function handleAdminStaffUpdate(id, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(id)) return jsonResponse({ error: "invalid staff id" }, 400, request);
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+
+  const v = validateStaff(body, { creating: false });
+  if (v.error) return jsonResponse({ error: v.error }, 400, request);
+  delete v.row.code;     // slug is identity
+  delete v.row.hotel_id; // can't reassign staff to a different hotel
+
+  const updated = await supabaseUpdate(
+    env, `hotel_staff?id=eq.${encodeURIComponent(id)}`, v.row, { returnRow: true },
+  );
+  if (!Array.isArray(updated) || !updated.length) {
+    return jsonResponse({ error: "staff not found" }, 404, request);
+  }
+  return jsonResponse({ staff: normaliseStaff(updated[0]) }, 200, request);
+}
+
+async function handleAdminStaffTerminate(id, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(id)) return jsonResponse({ error: "invalid staff id" }, 400, request);
+
+  const updated = await supabaseUpdate(
+    env, `hotel_staff?id=eq.${encodeURIComponent(id)}`,
+    { status: "terminated" }, { returnRow: true },
+  );
+  if (!Array.isArray(updated) || !updated.length) {
+    return jsonResponse({ error: "staff not found" }, 404, request);
+  }
+  return jsonResponse({ staff: normaliseStaff(updated[0]) }, 200, request);
+}
+
+async function handleAdminHotelUserCreate(request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+
+  const email = typeof body.email === "string" ? body.email.trim() : "";
+  if (!EMAIL_RE.test(email)) return jsonResponse({ error: "valid email required" }, 400, request);
+  const hotel_id = typeof body.hotel_id === "string" ? body.hotel_id.trim() : "";
+  if (!UUID_RE.test(hotel_id)) return jsonResponse({ error: "valid hotel_id required" }, 400, request);
+  const role = body.role === "admin" ? "admin" : "manager";
+
+  try {
+    const inserted = await supabaseInsert(
+      env, "hotel_users",
+      [{ email, hotel_id, role, status: "active" }],
+      { returnRow: true },
+    );
+    return jsonResponse({ manager: inserted[0] }, 201, request);
+  } catch (err) {
+    if (err.body && /duplicate key|unique/i.test(JSON.stringify(err.body))) {
+      return jsonResponse({ error: `${email} is already an active manager for this hotel` }, 409, request);
+    }
+    throw err;
+  }
+}
+
+async function handleAdminHotelUserUpdate(id, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(id)) return jsonResponse({ error: "invalid hotel-user id" }, 400, request);
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+
+  const patch = {};
+  if (typeof body.status === "string") {
+    if (!MANAGER_STATUSES.has(body.status)) {
+      return jsonResponse({ error: "status must be active or revoked" }, 400, request);
+    }
+    patch.status = body.status;
+  }
+  if (typeof body.role === "string") {
+    if (!["manager", "admin"].includes(body.role)) {
+      return jsonResponse({ error: "role must be manager or admin" }, 400, request);
+    }
+    patch.role = body.role;
+  }
+  if (Object.keys(patch).length === 0) {
+    return jsonResponse({ error: "no editable fields in body" }, 400, request);
+  }
+
+  const updated = await supabaseUpdate(
+    env, `hotel_users?id=eq.${encodeURIComponent(id)}`, patch, { returnRow: true },
+  );
+  if (!Array.isArray(updated) || !updated.length) {
+    return jsonResponse({ error: "hotel-user not found" }, 404, request);
+  }
+  return jsonResponse({ manager: updated[0] }, 200, request);
+}
+
+// Triggers a Cloudflare Pages rebuild via the deploy hook URL stored
+// as CF_PAGES_DEPLOY_HOOK on the worker. The build runs the
+// `npm run build:partners` script which regenerates partners.json
+// from Supabase. Propagation: ~60–120s end-to-end.
+async function handleAdminRepublish(request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!env.CF_PAGES_DEPLOY_HOOK) {
+    return jsonResponse(
+      { error: "CF_PAGES_DEPLOY_HOOK not configured on worker" },
+      500, request,
+    );
+  }
+  let res;
+  try {
+    res = await fetch(env.CF_PAGES_DEPLOY_HOOK, { method: "POST" });
+  } catch (err) {
+    return jsonResponse({ error: "deploy hook fetch failed: " + err.message }, 502, request);
+  }
+  if (!res.ok) {
+    return jsonResponse(
+      { error: "deploy hook returned " + res.status },
+      502, request,
+    );
+  }
+  return jsonResponse({ ok: true, triggered_at: new Date().toISOString() }, 200, request);
+}
+
+// ── CRUD validators / normalisers ──────────────────────────────────────
+
+function validateHotel(body, { creating }) {
+  const row = {};
+  if (creating) {
+    const code = typeof body.code === "string" ? body.code.trim().toLowerCase() : "";
+    if (!SLUG_RE.test(code)) return { error: "code (lowercase slug, 2–40 chars [a-z0-9-]) required" };
+    row.code = code;
+  }
+  if (typeof body.name === "string" && body.name.trim()) {
+    row.name = body.name.trim();
+  } else if (creating) {
+    return { error: "name required" };
+  }
+  if (typeof body.location === "string") {
+    if (!HOTEL_LOCATIONS.has(body.location)) return { error: "location must be Banff or Canmore" };
+    row.location = body.location;
+  } else if (creating) {
+    return { error: "location required" };
+  }
+  if (typeof body.type === "string") {
+    if (!HOTEL_TYPES.has(body.type)) return { error: "type must be kickback or pool" };
+    row.type = body.type;
+  } else if (creating) {
+    return { error: "type required" };
+  }
+  if (typeof body.status === "string") {
+    if (!HOTEL_STATUSES.has(body.status)) return { error: "status must be active or terminated" };
+    row.status = body.status;
+  }
+  if (body.effective_date === null) {
+    row.effective_date = null;
+  } else if (typeof body.effective_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.effective_date)) {
+    row.effective_date = body.effective_date;
+  }
+  if (body.default_tracking_code === null) {
+    row.default_tracking_code = null;
+  } else if (typeof body.default_tracking_code === "string") {
+    const t = body.default_tracking_code.trim().toUpperCase();
+    if (t && !TRACKING_CODE_RE.test(t)) {
+      return { error: "default_tracking_code must be UPPERCASE_WITH_UNDERSCORES" };
+    }
+    row.default_tracking_code = t || null;
+  } else if (creating) {
+    // Auto-derive from code if not supplied.
+    row.default_tracking_code = row.code.toUpperCase().replace(/-/g, "_");
+  }
+  if (typeof body.commission_pct === "number") row.commission_pct = body.commission_pct;
+  else if (creating) row.commission_pct = 0;
+  if (body.kickback_pool_pct === null) row.kickback_pool_pct = null;
+  else if (typeof body.kickback_pool_pct === "number") row.kickback_pool_pct = body.kickback_pool_pct;
+  if (body.notes === null) row.notes = null;
+  else if (typeof body.notes === "string") row.notes = body.notes;
+
+  return { row };
+}
+
+function validateStaff(body, { creating }) {
+  const row = {};
+  if (creating) {
+    const hotel_id = typeof body.hotel_id === "string" ? body.hotel_id.trim() : "";
+    if (!UUID_RE.test(hotel_id)) return { error: "valid hotel_id required" };
+    row.hotel_id = hotel_id;
+    const code = typeof body.code === "string" ? body.code.trim().toLowerCase() : "";
+    if (!SLUG_RE.test(code)) return { error: "code (lowercase slug, 2–40 chars) required" };
+    row.code = code;
+  }
+  if (typeof body.name === "string" && body.name.trim()) {
+    row.name = body.name.trim();
+  } else if (creating) {
+    return { error: "name required" };
+  }
+  if (body.tracking_code === null) {
+    row.tracking_code = null;
+  } else if (typeof body.tracking_code === "string") {
+    const t = body.tracking_code.trim().toUpperCase();
+    if (t && !TRACKING_CODE_RE.test(t)) {
+      return { error: "tracking_code must be UPPERCASE_WITH_UNDERSCORES" };
+    }
+    row.tracking_code = t || null;
+  } else if (creating) {
+    row.tracking_code = row.code.toUpperCase().replace(/-/g, "_");
+  }
+  if (typeof body.kickback_pct === "number") row.kickback_pct = body.kickback_pct;
+  else if (creating) row.kickback_pct = 0;
+  if (typeof body.status === "string") {
+    if (!STAFF_STATUSES.has(body.status)) return { error: "status must be active or terminated" };
+    row.status = body.status;
+  }
+  return { row };
+}
+
+function normaliseHotel(h) {
+  // PostgREST returns numeric as strings; coerce so the UI can do math.
+  return {
+    ...h,
+    commission_pct:    h.commission_pct    != null ? Number(h.commission_pct)    : null,
+    kickback_pool_pct: h.kickback_pool_pct != null ? Number(h.kickback_pool_pct) : null,
+    staff:    Array.isArray(h.staff)    ? h.staff.map(normaliseStaff)    : [],
+    managers: Array.isArray(h.managers) ? h.managers                     : [],
+  };
+}
+
+function normaliseStaff(s) {
+  return {
+    ...s,
+    kickback_pct: s.kickback_pct != null ? Number(s.kickback_pct) : null,
+  };
 }
 
 // Authorization gate for the internal admin surface (/admin/ + the
