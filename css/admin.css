@@ -171,12 +171,10 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 
 .app-nav {
   flex: 1;
-  /* 10px horizontal so items inset from both sidebar edges (active
-     + hover tints become contained rounded rectangles, never touch
-     the sidebar's vertical border). 10px paired with the brand's
-     18px padding-left means brand-icon centre + nav-icon centre
-     line up at 30px from the sidebar's left edge. */
-  padding: 0 10px;
+  /* 9px horizontal so items inset cleanly + the 18px nav icons stay
+     centred with the brand "h" mark above them
+     (9 + 12 + 9 = 30 = 18 + 12 from brand). */
+  padding: 0 9px;
   overflow-y: auto;
   display: flex; flex-direction: column; gap: var(--s5);
 }
@@ -184,20 +182,20 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   font-size: 0.75rem;
   letter-spacing: 0;
   color: var(--text-faint);
-  font-weight: 300;       /* Stripe-thin — quieter than the labels */
+  font-weight: 300;
   padding: 0 var(--s3) var(--s2);
   margin-top: var(--s3);
 }
-.app-nav__group { display: flex; flex-direction: column; gap: 2px; }
+.app-nav__group { display: flex; flex-direction: column; gap: 1px; }
 
 .app-nav__item {
   display: flex; align-items: center;
   gap: 8px;
   padding: 7px var(--s3);
   border-radius: var(--r-sm);
-  color: var(--nav-text);         /* #30313d */
-  font-size: 0.875rem;            /* 14px */
-  font-weight: 400;               /* slightly thicker — matches Stripe item labels */
+  color: var(--nav-text);
+  font-size: 0.8125rem;        /* 13px — tighter than the previous 14px */
+  font-weight: 400;
   letter-spacing: -0.003em;
   cursor: pointer;
   background: none;
@@ -222,7 +220,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 .app-nav__item--active .app-nav__icon { color: var(--accent); }
 .app-nav__icon {
-  width: 16px; height: 16px;
+  width: 18px; height: 18px;               /* up from 16; pairs with 13px label */
   display: inline-flex; align-items: center; justify-content: center;
   color: var(--nav-icon);                  /* #667691 */
   flex-shrink: 0;
