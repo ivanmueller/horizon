@@ -470,17 +470,29 @@ async function handleDashboardBookings(url, env, request) {
   }
   const h = hotelRows[0];
 
-  // 2) Authorize: caller must have an active hotel_users row matching
-  //    this hotel. ilike with no wildcards = case-insensitive equals,
-  //    which lines up with how lower(email) is indexed on hotel_users
-  //    and how RLS compares the email claim.
-  const assignmentRows = await supabaseSelect(
+  // 2) Authorize. Two paths:
+  //    a) horizon_admins → can read any hotel's bookings (the /admin/
+  //       dashboard expands every hotel row + generates invoices for
+  //       all of them).
+  //    b) hotel_users    → restricted to their assigned hotel(s) —
+  //       this is the partner-side dashboard at /dashboard/hotel/.
+  //    ilike with no wildcards = case-insensitive equals, lines up
+  //    with how lower(email) is indexed on both tables.
+  const adminRows = await supabaseSelect(
     env,
-    `hotel_users?email=ilike.${encodeURIComponent(userEmail)}` +
-      `&hotel_id=eq.${h.id}&status=eq.active&select=id`,
+    `horizon_admins?email=ilike.${encodeURIComponent(userEmail)}` +
+      `&status=eq.active&select=id`,
   );
-  if (!assignmentRows.length) {
-    return jsonResponse({ error: "forbidden" }, 403, request);
+  const isHorizonAdmin = adminRows.length > 0;
+  if (!isHorizonAdmin) {
+    const assignmentRows = await supabaseSelect(
+      env,
+      `hotel_users?email=ilike.${encodeURIComponent(userEmail)}` +
+        `&hotel_id=eq.${h.id}&status=eq.active&select=id`,
+    );
+    if (!assignmentRows.length) {
+      return jsonResponse({ error: "forbidden" }, 403, request);
+    }
   }
 
   // 3) Pull the bookings, embedding the linked staff row when present.
