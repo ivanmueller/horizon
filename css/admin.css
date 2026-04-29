@@ -147,8 +147,12 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
    to 20px on both rows for the icons to vertically line up. */
 
 .app-brand {
-  display: flex; align-items: center; gap: var(--s3);
-  padding: var(--s5) var(--s5) var(--s8);   /* extra room below "Horizon Tours" */
+  display: flex; align-items: center; gap: var(--s2);
+  /* Brand padding-left is 18px (vs the default --s5 = 20px) so the
+     "h" mark sits 2px further left. Pairs with the nav padding-left
+     bump below to centre the brand icon vertically with the nav
+     icons that sit beneath it. */
+  padding: var(--s5) var(--s5) var(--s8) 18px;
 }
 .app-brand__icon {
   width: 24px; height: 24px;
@@ -167,10 +171,12 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 
 .app-nav {
   flex: 1;
-  /* 8px horizontal padding so items don't touch the sidebar edges —
-     active + hover tints become rounded rectangles inset from both
-     sides, matching Stripe's containment. */
-  padding: 0 var(--s2);
+  /* 10px horizontal so items inset from both sidebar edges (active
+     + hover tints become contained rounded rectangles, never touch
+     the sidebar's vertical border). 10px paired with the brand's
+     18px padding-left means brand-icon centre + nav-icon centre
+     line up at 30px from the sidebar's left edge. */
+  padding: 0 10px;
   overflow-y: auto;
   display: flex; flex-direction: column; gap: var(--s5);
 }
@@ -178,7 +184,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   font-size: 0.75rem;
   letter-spacing: 0;
   color: var(--text-faint);
-  font-weight: 500;
+  font-weight: 300;       /* Stripe-thin — quieter than the labels */
   padding: 0 var(--s3) var(--s2);
   margin-top: var(--s3);
 }
@@ -186,12 +192,12 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 
 .app-nav__item {
   display: flex; align-items: center;
-  gap: 8px;                       /* tighter icon ↔ label gap */
-  padding: 7px var(--s3);         /* internal padding; rounded item */
+  gap: 8px;
+  padding: 7px var(--s3);
   border-radius: var(--r-sm);
   color: var(--nav-text);         /* #30313d */
   font-size: 0.875rem;            /* 14px */
-  font-weight: 300;               /* Inter Light — closer to Stripe's Sohne */
+  font-weight: 400;               /* slightly thicker — matches Stripe item labels */
   letter-spacing: -0.003em;
   cursor: pointer;
   background: none;
@@ -200,15 +206,18 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   transition: background var(--t-fast), color var(--t-fast);
 }
 .app-nav__item:hover {
-  background: var(--nav-hover);   /* #f4f7fa cool wash, contained rect */
+  background: var(--nav-hover);   /* #f4f7fa cool wash on hover */
 }
+/* Active at rest: only the text + icon turn coral, background stays
+   transparent. Coral wash appears only on hover so the resting
+   state is calm and the hover gives the click affordance. */
 .app-nav__item--active {
-  background: var(--accent-soft); /* faint coral wash, contained rect */
+  background: transparent;
   color: var(--accent);
   font-weight: 500;
 }
 .app-nav__item--active:hover {
-  background: rgba(255, 107, 74, 0.12);   /* slightly more saturated on hover */
+  background: var(--accent-soft); /* faint coral wash on hover only */
   color: var(--accent);
 }
 .app-nav__item--active .app-nav__icon { color: var(--accent); }
