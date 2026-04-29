@@ -33,11 +33,17 @@ attached to that historical row and is never reissued to a different person.
 
 ## Source of truth
 
-`partners.json` (in the repo root) is the authoritative registry. Each entry
-maps row-for-row to future database tables and matches exactly what an
-onboarding form would POST when that gets built.
+The Supabase `hotels` and `hotel_staff` tables. Admins edit them
+through the UI at `/admin/hotels/` (see
+[`ADDING_A_PARTNER.md`](./ADDING_A_PARTNER.md) for the workflow).
 
-### Schema
+`partners.json` at the repo root is a build artifact, not source —
+it's regenerated from Supabase on every Cloudflare Pages deploy by
+`scripts/build/generate-partners-json.mjs` and is `.gitignore`d.
+The static site reads it for fast attribution lookups without a
+worker round-trip; admins never edit it directly.
+
+### Shape of `partners.json`
 
 ```json
 {

@@ -12,3 +12,11 @@ scripts/bokun/.dumps/
 
 # Generated commission invoices — contain guest names + emails
 invoices/
+
+# Generated at build time from Supabase by
+# scripts/build/generate-partners-json.mjs. CF Pages regenerates it on
+# every deploy; admins edit the source data in Supabase via
+# /admin/hotels/. Kept out of the repo so the working tree never
+# disagrees with what's live on the site. Run `npm run build:partners`
+# locally to regenerate it from the .env in scripts/supabase/.
+partners.json
