@@ -29,10 +29,10 @@
   --text-muted:   #6B7280;
   --text-faint:   #9CA3AF;
 
-  /* Accent teal — used sparingly (primary CTA, active nav, key badges) */
-  --accent:       #0F766E;
-  --accent-hover: #0C625B;
-  --accent-soft:  rgba(15, 118, 110, 0.08);
+  /* Accent — used sparingly (primary CTA, active nav, key badges) */
+  --accent:       #08BDAF;
+  --accent-hover: #07A89C;
+  --accent-soft:  rgba(8, 189, 175, 0.08);
 
   /* Status palette for badges + alerts */
   --ok-bg:        #ECFDF5;
@@ -51,7 +51,7 @@
   --nav-text:           #30313d;   /* unselected nav label */
   --nav-icon:           #667691;   /* unselected nav icon */
   --nav-hover:          #f4f7fa;   /* unselected hover bg */
-  --nav-hover-active:   #ECF4F3;   /* hover bg when item is already active (faint accent-teal wash) */
+  --nav-hover-active:   #E5F8F6;   /* hover bg when item is already active (faint accent wash) */
 
   /* Type */
   --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -87,7 +87,7 @@
 
   /* Layout */
   --sidebar-w: 240px;
-  --content-max: 1200px;
+  --content-max: 1600px;
 
   /* Motion */
   --t-fast: 120ms ease-out;
@@ -135,7 +135,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 
 .app__content {
   flex: 1;
-  padding: var(--s8) var(--s10) var(--s12);
+  padding: var(--s8) var(--s6) var(--s12);
   max-width: var(--content-max);
   width: 100%;
   margin: 0 auto;   /* centre within the main column (excludes sidebar) */
@@ -223,7 +223,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   font-weight: 600;             /* selected reads slightly bolder */
 }
 .app-nav__item--active:hover {
-  background: var(--accent-soft);
+  background: var(--nav-hover-active);
   color: var(--accent);
 }
 .app-nav__item--active .app-nav__icon { color: var(--accent); }
@@ -894,7 +894,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
    Replicates the layout of stripe.com/dashboard/transactions:
    page title + right-side actions, sub-tabs, status stat cards,
    filter chips, then a wide flat data table.
-   Variables only — accent comes from --accent (#0F766E).
+   Variables only — accent comes from --accent (#08BDAF).
    ─────────────────────────────────────────────────────────────── */
 .bk-page__head {
   display: flex; align-items: flex-start; justify-content: space-between;
@@ -1052,7 +1052,8 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   color: #1a2c44;
   text-align: left;
   padding: 10px var(--s4);
-  background: #f4f7fa;
+  background: transparent;
+  border-top: 1px solid #d4dee9;
   border-bottom: 1px solid #d4dee9;
   white-space: nowrap;
 }
