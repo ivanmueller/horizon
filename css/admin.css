@@ -216,7 +216,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .app-nav__item--active {
   background: transparent;
   color: var(--accent);
-  font-weight: 500;
+  font-weight: 600;             /* selected reads slightly bolder */
 }
 .app-nav__item--active:hover {
   background: var(--accent-soft);
