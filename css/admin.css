@@ -756,6 +756,56 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 /* Highlight the row whose hotel is open in the drawer. */
 .row--selected > td { background: var(--bg-sunken) !important; }
 
+/* Drawer form (create / edit) — stacked label + input rows. */
+.drawer-form {
+  display: flex; flex-direction: column;
+  gap: var(--s4);
+}
+.drawer-form__row {
+  display: flex; flex-direction: column;
+  gap: 6px;
+}
+.drawer-form__label {
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  font-weight: 600;
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: var(--s2);
+}
+.drawer-form__req {
+  font-size: 0.65rem;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text-faint);
+  font-weight: 400;
+}
+.drawer-form__hint {
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+.drawer-form__pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s4);
+}
+.drawer-form select.input {
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2356595e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px;
+}
+.drawer-actions {
+  display: flex; justify-content: flex-end;
+  gap: var(--s3);
+  margin-top: var(--s8);
+  padding-top: var(--s5);
+  border-top: 1px solid var(--border);
+}
+
 /* ── Utilities ────────────────────────────────────────────────── */
 .muted { color: var(--text-muted); }
 .faint { color: var(--text-faint); }
