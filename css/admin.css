@@ -30,9 +30,9 @@
   --text-faint:   #9CA3AF;
 
   /* Accent teal — used sparingly (primary CTA, active nav, key badges) */
-  --accent:       #0B5F63;
-  --accent-hover: #094E51;
-  --accent-soft:  rgba(11, 95, 99, 0.08);
+  --accent:       #0F766E;
+  --accent-hover: #0C625B;
+  --accent-soft:  rgba(15, 118, 110, 0.08);
 
   /* Status palette for badges + alerts */
   --ok-bg:        #ECFDF5;
@@ -51,7 +51,7 @@
   --nav-text:           #30313d;   /* unselected nav label */
   --nav-icon:           #667691;   /* unselected nav icon */
   --nav-hover:          #f4f7fa;   /* unselected hover bg */
-  --nav-hover-active:   #EEF4F4;   /* hover bg when item is already active (faint accent-teal wash, mathematically equivalent to the previous coral wash) */
+  --nav-hover-active:   #ECF4F3;   /* hover bg when item is already active (faint accent-teal wash) */
 
   /* Type */
   --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
