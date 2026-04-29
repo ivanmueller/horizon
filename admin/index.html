@@ -319,71 +319,92 @@
       bookings() {
         return {
           html: `
-            <header class="page-head">
-              <div>
-                <h1 class="page-head__title">Bookings</h1>
-                <p class="page-head__sub" id="bkSub">—</p>
-              </div>
-              <div class="page-head__actions">
-                <button type="button" class="btn" id="bkRefresh">Refresh</button>
+            <header class="bk-page__head">
+              <h1 class="bk-page__title">Bookings</h1>
+              <div class="bk-page__actions">
+                <button type="button" class="btn btn--primary" id="bkCreate">+ Create booking</button>
+                <button type="button" class="btn" id="bkAnalyze">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
+                  Analyze
+                </button>
               </div>
             </header>
 
+            <nav class="bk-tabs" aria-label="Bookings sub-navigation">
+              <button type="button" class="bk-tabs__btn bk-tabs__btn--active" data-tab="bookings">Bookings</button>
+              <button type="button" class="bk-tabs__btn" data-tab="payouts">Payouts</button>
+              <button type="button" class="bk-tabs__btn" data-tab="all">All activity</button>
+            </nav>
+
             <div class="alert alert--bad" id="bkError" hidden></div>
 
-            <div class="bookings-controls">
-              <div class="pills" role="group" aria-label="Period">
-                <button type="button" class="pills__btn" data-period="this-month">This month</button>
-                <button type="button" class="pills__btn" data-period="last-month">Last month</button>
-                <button type="button" class="pills__btn" data-period="ytd">YTD</button>
-                <button type="button" class="pills__btn" data-period="custom">Custom</button>
+            <div class="bk-statcards" id="bkStatcards" role="group" aria-label="Status filter">
+              <button type="button" class="bk-statcard bk-statcard--active" data-status="all">
+                <div class="bk-statcard__label">All</div>
+                <div class="bk-statcard__value" data-count="all">—</div>
+              </button>
+              <button type="button" class="bk-statcard" data-status="confirmed">
+                <div class="bk-statcard__label">Confirmed</div>
+                <div class="bk-statcard__value" data-count="confirmed">—</div>
+              </button>
+              <button type="button" class="bk-statcard" data-status="refunded">
+                <div class="bk-statcard__label">Refunded</div>
+                <div class="bk-statcard__value" data-count="refunded">—</div>
+              </button>
+              <button type="button" class="bk-statcard" data-status="cancelled">
+                <div class="bk-statcard__label">Cancelled</div>
+                <div class="bk-statcard__value" data-count="cancelled">—</div>
+              </button>
+              <button type="button" class="bk-statcard" data-status="pending_refund">
+                <div class="bk-statcard__label">Pending refund</div>
+                <div class="bk-statcard__value" data-count="pending_refund">—</div>
+              </button>
+            </div>
+
+            <div class="bk-toolbar">
+              <div class="bk-filters">
+                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Date and time</button>
+                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Amount</button>
+                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Currency</button>
+                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Status</button>
+                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Hotel</button>
+                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> More filters</button>
               </div>
-              <div class="range-custom" id="bkCustom">
-                <input type="date" id="bkFrom"> <span class="muted">→</span>
-                <input type="date" id="bkTo">
-                <button type="button" class="btn btn--sm" id="bkCustomApply">Apply</button>
+              <div class="bk-toolbar__actions">
+                <button type="button" class="bk-iconbtn" id="bkExport">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Export
+                </button>
+                <button type="button" class="bk-iconbtn" id="bkEditCols">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                  Edit columns
+                </button>
               </div>
             </div>
 
-            <section class="stat-grid" style="margin-bottom: var(--s6);">
-              <div class="stat"><div class="stat__label">Bookings</div>      <div class="stat__value" id="bkBookings">—</div></div>
-              <div class="stat"><div class="stat__label">Travelers</div>     <div class="stat__value" id="bkTravelers">—</div></div>
-              <div class="stat"><div class="stat__label">Revenue</div>       <div class="stat__value" id="bkRevenue">—</div></div>
-              <div class="stat"><div class="stat__label">Commission owed</div><div class="stat__value" id="bkCommission">—</div></div>
-              <div class="stat"><div class="stat__label">Kickbacks owed</div><div class="stat__value" id="bkKickbacks">—</div></div>
-              <div class="stat"><div class="stat__label">Net to Horizon</div><div class="stat__value" style="color: var(--accent);" id="bkNet">—</div></div>
-            </section>
-
-            <section class="card" style="padding: 0;">
-              <div class="card__head" style="padding: var(--s5) var(--s6); margin: 0; border-bottom: 1px solid var(--border);">
-                <div>
-                  <div class="card__title">Hotels</div>
-                  <div class="card__sub">Click a hotel to expand its bookings + kickbacks.</div>
-                </div>
-              </div>
-              <div style="overflow-x: auto;">
-                <table class="table" id="bkTable">
+            <div class="bk-table-wrap">
+              <div class="bk-table-scroll">
+                <table class="bk-table" id="bkTable">
                   <thead>
                     <tr>
+                      <th class="bk-table__check"><input type="checkbox" id="bkCheckAll" aria-label="Select all"></th>
+                      <th>Amount</th>
                       <th>Hotel</th>
-                      <th>Location</th>
-                      <th>Type</th>
-                      <th class="num">Bookings</th>
-                      <th class="num">Revenue</th>
-                      <th class="num">Commission</th>
-                      <th class="num">Kickbacks</th>
-                      <th class="num">Net</th>
-                      <th></th>
+                      <th>Description</th>
+                      <th>Customer</th>
+                      <th>Date</th>
+                      <th>Refunded date</th>
+                      <th>Decline reason</th>
+                      <th class="bk-table__kebab"></th>
                     </tr>
                   </thead>
-                  <tbody id="bkBody"></tbody>
+                  <tbody id="bkBody">
+                    <tr><td colspan="9" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>
+                  </tbody>
                 </table>
               </div>
-              <div class="empty" id="bkEmpty" hidden style="border: 0; border-radius: 0; padding: var(--s10) var(--s5);">
-                <div class="empty__title">No bookings in this period</div>
-                <p class="empty__body">Try a different range, or check back once partners are sending traffic.</p>
-              </div>
-            </section>
+              <div class="bk-table__footer" id="bkFooter">— items</div>
+            </div>
           `,
           mount: mountBookings,
         };
@@ -549,77 +570,90 @@
     let customRange = null;
     let hotelByCode = {};
 
+    // In-memory cache of all bookings for the current period, plus the
+    // active status filter selected via the stat cards. Module-scoped so
+    // the route can re-render itself without re-fetching.
+    let bkRecords = [];
+    let bkStatusFilter = 'all';
+
     function mountBookings(container) {
       const els = {
-        sub:        container.querySelector('#bkSub'),
-        refresh:    container.querySelector('#bkRefresh'),
         error:      container.querySelector('#bkError'),
-        pillBtns:   container.querySelectorAll('.pills__btn'),
-        custom:     container.querySelector('#bkCustom'),
-        from:       container.querySelector('#bkFrom'),
-        to:         container.querySelector('#bkTo'),
-        customApply:container.querySelector('#bkCustomApply'),
-        bookings:   container.querySelector('#bkBookings'),
-        travelers:  container.querySelector('#bkTravelers'),
-        revenue:    container.querySelector('#bkRevenue'),
-        commission: container.querySelector('#bkCommission'),
-        kickbacks:  container.querySelector('#bkKickbacks'),
-        net:        container.querySelector('#bkNet'),
+        statcards:  container.querySelector('#bkStatcards'),
+        tabs:       container.querySelectorAll('.bk-tabs__btn'),
         body:       container.querySelector('#bkBody'),
-        empty:      container.querySelector('#bkEmpty'),
+        footer:     container.querySelector('#bkFooter'),
+        checkAll:   container.querySelector('#bkCheckAll'),
+        export:     container.querySelector('#bkExport'),
+        editCols:   container.querySelector('#bkEditCols'),
+        create:     container.querySelector('#bkCreate'),
+        analyze:    container.querySelector('#bkAnalyze'),
+        chips:      container.querySelectorAll('.bk-chip'),
       };
 
-      // Reflect current period on the pills.
-      els.pillBtns.forEach(btn => {
-        btn.classList.toggle('pills__btn--active', btn.dataset.period === currentPeriod);
+      // Reset filter to "All" on every mount so the page opens neutral.
+      bkStatusFilter = 'all';
+      els.statcards.querySelectorAll('.bk-statcard').forEach(card => {
+        card.classList.toggle('bk-statcard--active', card.dataset.status === 'all');
       });
-      if (currentPeriod === 'custom') els.custom.classList.add('range-custom--show');
 
-      els.pillBtns.forEach(btn => {
+      // Stat-card click → filter rows by booking status.
+      els.statcards.addEventListener('click', (e) => {
+        const card = e.target.closest('.bk-statcard');
+        if (!card) return;
+        bkStatusFilter = card.dataset.status || 'all';
+        els.statcards.querySelectorAll('.bk-statcard').forEach(c => {
+          c.classList.toggle('bk-statcard--active', c === card);
+        });
+        renderBookingRows(els);
+      });
+
+      // Sub-tabs: Bookings / Payouts / All activity.
+      // Payouts + All activity are shells until those surfaces ship.
+      els.tabs.forEach(btn => {
         btn.addEventListener('click', () => {
-          els.pillBtns.forEach(b => b.classList.remove('pills__btn--active'));
-          btn.classList.add('pills__btn--active');
-          currentPeriod = btn.dataset.period;
-          if (currentPeriod === 'custom') {
-            els.custom.classList.add('range-custom--show');
-          } else {
-            els.custom.classList.remove('range-custom--show');
-            customRange = null;
-            loadSummary(els);
-          }
+          els.tabs.forEach(b => b.classList.toggle('bk-tabs__btn--active', b === btn));
         });
       });
 
-      els.customApply.addEventListener('click', () => {
-        const f = els.from.value, t = els.to.value;
-        if (!f || !t)  return showError(els, 'Pick both dates first.');
-        if (f > t)     return showError(els, 'From date must be before To date.');
-        customRange = makeRange(
-          new Date(f + 'T00:00:00'),
-          new Date(t + 'T23:59:59.999'),
-        );
-        loadSummary(els);
+      // Filter chips + Export + Edit columns + Create + Analyze are all
+      // shells for now — wired in the next pass per the rebuild plan.
+      els.chips.forEach(c => c.addEventListener('click', noopChip));
+      els.export.addEventListener('click',   noopChip);
+      els.editCols.addEventListener('click', noopChip);
+      els.create.addEventListener('click',   noopChip);
+      els.analyze.addEventListener('click',  noopChip);
+
+      // Header "select all" — toggles every row checkbox.
+      els.checkAll.addEventListener('change', () => {
+        els.body.querySelectorAll('input[type="checkbox"][data-bk-row]')
+          .forEach(cb => { cb.checked = els.checkAll.checked; });
       });
 
-      els.refresh.addEventListener('click', () => loadSummary(els));
-
-      loadSummary(els);
+      loadBookings(els);
     }
 
-    function showError(els, msg) {
+    function noopChip() { /* shell — future-feature placeholder */ }
+
+    function showBkError(els, msg) {
       els.error.textContent = msg;
       els.error.hidden = false;
     }
-    function clearError(els) {
+    function clearBkError(els) {
       els.error.hidden = true;
       els.error.textContent = '';
     }
 
-    function loadSummary(els) {
+    // Pulls a flat list of every booking across every hotel for the
+    // current period. The worker doesn't expose an "all hotels" feed
+    // yet, so we ask /api/admin/summary for the hotel list and fan out
+    // /api/dashboard/bookings calls in parallel, then merge + sort.
+    function loadBookings(els) {
       const r = rangeForPeriod();
       if (!r) return;
-      clearError(els);
-      els.sub.textContent = formatRange(r.labelFrom, r.labelTo);
+      clearBkError(els);
+      els.body.innerHTML = '<tr><td colspan="9" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>';
+      els.footer.textContent = '— items';
 
       fetch(BOKUN_API_BASE + '/api/admin/summary' +
             '?from=' + encodeURIComponent(r.from) +
@@ -633,161 +667,127 @@
             throw new Error('unauthorized');
           }
           if (res.status === 403) {
-            showError(els, 'Your account isn’t authorised for the Horizon admin dashboard.');
+            showBkError(els, 'Your account isn’t authorised for the Horizon admin dashboard.');
             throw new Error('forbidden');
           }
           return res.json().then(b => ({ ok: res.ok, body: b }));
         })
         .then(res => {
           if (!res.ok) throw new Error((res.body && res.body.error) || 'fetch_failed');
-          renderTotals(els, res.body.totals || {});
-          renderHotels(els, res.body.hotels || [], r);
+          const hotels = res.body.hotels || [];
+          hotelByCode = {};
+          hotels.forEach(h => { hotelByCode[h.code] = h; });
+
+          if (!hotels.length) {
+            bkRecords = [];
+            renderStatcardCounts(els, []);
+            renderBookingRows(els);
+            return;
+          }
+
+          const qs = '&from=' + encodeURIComponent(r.from) + '&to=' + encodeURIComponent(r.to);
+          return Promise.all(hotels.map(h =>
+            fetch(BOKUN_API_BASE + '/api/dashboard/bookings?hotel=' + encodeURIComponent(h.code) + qs, {
+              cache: 'no-store',
+              headers: { Authorization: 'Bearer ' + session.access_token },
+            })
+              .then(rr => rr.json().then(b => ({ ok: rr.ok, body: b, hotel: h })))
+          )).then(results => {
+            const merged = [];
+            results.forEach(({ ok, body, hotel }) => {
+              if (!ok) return;
+              (body.records || []).forEach(rec => {
+                merged.push(Object.assign({ _hotel: hotel }, rec));
+              });
+            });
+            // Newest first.
+            merged.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+            bkRecords = merged;
+            renderStatcardCounts(els, merged);
+            renderBookingRows(els);
+          });
         })
         .catch(err => {
           if (err && (err.message === 'unauthorized' || err.message === 'forbidden')) return;
-          console.error('admin summary fetch failed', err);
-          showError(els, 'Could not load summary: ' + (err && err.message || 'unknown error'));
+          console.error('admin bookings fetch failed', err);
+          showBkError(els, 'Could not load bookings: ' + (err && err.message || 'unknown error'));
+          els.body.innerHTML = '<tr><td colspan="9" class="bk-empty"><div class="bk-empty__title">Could not load bookings</div><p class="bk-empty__body">Try again in a moment.</p></td></tr>';
         });
     }
 
-    function renderTotals(els, t) {
-      els.bookings.textContent   = String(t.bookings || 0);
-      els.travelers.textContent  = String(t.travelers || 0);
-      els.revenue.textContent    = formatMoney(t.revenue || 0);
-      els.commission.textContent = formatMoney(t.commission_owed || 0);
-      els.kickbacks.textContent  = formatMoney(t.kickbacks_owed || 0);
-      els.net.textContent        = formatMoney(t.net_to_horizon || 0);
-    }
-
-    function renderHotels(els, hotels, range) {
-      els.body.innerHTML = '';
-      hotelByCode = {};
-      hotels.forEach(h => { hotelByCode[h.code] = h; });
-      if (!hotels.length) { els.empty.hidden = false; return; }
-      els.empty.hidden = true;
-
-      const frag = document.createDocumentFragment();
-      hotels.forEach(h => {
-        const net = (h.revenue || 0) - (h.commission_owed || 0) - (h.kickbacks_total || 0);
-        const typePill = h.type === 'kickback'
-          ? '<span class="type-pill type-pill--kickback">kickback</span>'
-          : '<span class="type-pill type-pill--pool">pool</span>';
-
-        const tr = document.createElement('tr');
-        tr.className = 'hotel-row';
-        tr.innerHTML =
-          '<td><span class="row-caret"></span>' + escapeHtml(h.name) + '</td>' +
-          '<td class="muted">' + escapeHtml(h.location || '—') + '</td>' +
-          '<td>' + typePill + '</td>' +
-          '<td class="num">' + (h.bookings || 0) + '</td>' +
-          '<td class="num">' + formatMoney(h.revenue || 0) + '</td>' +
-          '<td class="num">' + formatMoney(h.commission_owed || 0) + '</td>' +
-          '<td class="num">' + formatMoney(h.kickbacks_total || 0) + '</td>' +
-          '<td class="num">' + formatMoney(net) + '</td>' +
-          '<td><button class="btn btn--primary btn--sm invoice-btn" data-hotel="' + escapeHtml(h.code) + '" type="button">Invoice</button></td>';
-
-        const detail = document.createElement('tr');
-        detail.className = 'detail-row';
-        detail.hidden = true;
-        detail.innerHTML = '<td colspan="9">' + buildDetailShell(h) + '</td>';
-
-        let loaded = false;
-        tr.addEventListener('click', () => {
-          const open = tr.classList.toggle('hotel-row--open');
-          detail.hidden = !open;
-          if (open && !loaded) {
-            loaded = true;
-            loadHotelBookings(h.code, range, detail);
-          }
-        });
-
-        frag.appendChild(tr);
-        frag.appendChild(detail);
-      });
-      els.body.appendChild(frag);
-    }
-
-    function buildDetailShell(h) {
-      let html = '<div class="detail-inner">';
-      if (h.type === 'kickback' && h.kickbacks && h.kickbacks.length) {
-        html += '<h3>Kickback breakdown</h3><table><thead><tr>' +
-          '<th>Staff</th><th class="num">Rate</th><th class="num">Bookings</th>' +
-          '<th class="num">Revenue</th><th class="num">Kickback owed</th></tr></thead><tbody>';
-        h.kickbacks.forEach(k => {
-          html +=
-            '<tr><td>' + escapeHtml(k.staff_name) + '</td>' +
-            '<td class="num">' + (k.kickback_pct || 0) + '%</td>' +
-            '<td class="num">' + (k.bookings || 0) + '</td>' +
-            '<td class="num">' + formatMoney(k.revenue || 0) + '</td>' +
-            '<td class="num">' + formatMoney(k.kickback_owed || 0) + '</td></tr>';
-        });
-        html += '</tbody></table>';
-      }
-      html += '<h3>Bookings</h3><div data-bookings-slot></div>';
-      html += '</div>';
-      return html;
-    }
-
-    function loadHotelBookings(hotelCode, range, detailRow) {
-      const slot = detailRow.querySelector('[data-bookings-slot]');
-      if (!slot) return;
-      slot.innerHTML = '<p class="muted" style="font-size: var(--t-sm)">Loading…</p>';
-
-      const qs = '?hotel=' + encodeURIComponent(hotelCode) +
-                 '&from=' + encodeURIComponent(range.from) +
-                 '&to='   + encodeURIComponent(range.to);
-      fetch(BOKUN_API_BASE + '/api/dashboard/bookings' + qs, {
-        cache: 'no-store',
-        headers: { Authorization: 'Bearer ' + session.access_token },
-      })
-        .then(r => r.json().then(b => ({ ok: r.ok, body: b })))
-        .then(res => {
-          if (!res.ok) throw new Error((res.body && res.body.error) || 'fetch_failed');
-          slot.innerHTML = renderBookingsTable(res.body.records || []);
-        })
-        .catch(err => {
-          slot.innerHTML = '<p class="muted" style="font-size: var(--t-sm); color: var(--bad-fg)">Could not load bookings: ' +
-            escapeHtml(err && err.message || 'unknown error') + '</p>';
-        });
-    }
-
-    function renderBookingsTable(records) {
-      if (!records.length) {
-        return '<p class="muted" style="font-size: var(--t-sm)">No bookings in this period.</p>';
-      }
-      let html = '<table><thead><tr>' +
-        '<th>Booked</th><th>Tour date</th><th>Tour</th><th>Guest</th>' +
-        '<th class="num">Travelers</th><th class="num">Amount</th>' +
-        '<th>Attribution</th><th>Confirmation</th><th>Status</th></tr></thead><tbody>';
+    function renderStatcardCounts(els, records) {
+      const counts = { all: records.length, confirmed: 0, refunded: 0, cancelled: 0, pending_refund: 0 };
       records.forEach(r => {
-        const travelers = (r.adults || 0) + (r.youth || 0) + (r.infants || 0);
-        const attribution = r.staff && r.staff.name
-          ? escapeHtml(r.staff.name)
-          : '<span class="faint">hotel pool</span>';
-        const status = r.status || 'confirmed';
-        const sel =
-          '<select class="status status--' + escapeHtml(status) + '" ' +
-                  'data-id="' + escapeHtml(r.id) + '" data-prev="' + escapeHtml(status) + '">' +
-            '<option value="confirmed"'      + (status === 'confirmed' ? ' selected' : '')      + '>Confirmed</option>' +
-            '<option value="cancelled"'      + (status === 'cancelled' ? ' selected' : '')      + '>Cancelled</option>' +
-            '<option value="refunded"'       + (status === 'refunded' ? ' selected' : '')       + '>Refunded</option>' +
-            '<option value="pending_refund"' + (status === 'pending_refund' ? ' selected' : '') + '>Pending refund</option>' +
-          '</select>';
-        html +=
-          '<tr>' +
-            '<td>' + escapeHtml(formatHumanDateTime(r.created_at)) + '</td>' +
-            '<td>' + escapeHtml(formatHumanDate(r.date) || '—') + '</td>' +
-            '<td>' + escapeHtml(r.tour_title || '—') + '</td>' +
-            '<td>' + escapeHtml(r.lead_name || '—') + '</td>' +
-            '<td class="num">' + travelers + '</td>' +
-            '<td class="num">' + escapeHtml(r.amount != null ? formatMoney(r.amount) : '—') + '</td>' +
-            '<td>' + attribution + '</td>' +
-            '<td><span class="mono faint">' + escapeHtml(r.confirmation_code || '—') + '</span></td>' +
-            '<td>' + sel + '</td>' +
-          '</tr>';
+        const s = r.status || 'confirmed';
+        if (counts[s] != null) counts[s] += 1;
       });
-      html += '</tbody></table>';
-      return html;
+      els.statcards.querySelectorAll('[data-count]').forEach(node => {
+        const k = node.dataset.count;
+        node.textContent = String(counts[k] != null ? counts[k] : 0);
+      });
+    }
+
+    function renderBookingRows(els) {
+      const filtered = bkStatusFilter === 'all'
+        ? bkRecords
+        : bkRecords.filter(r => (r.status || 'confirmed') === bkStatusFilter);
+
+      if (els.checkAll) els.checkAll.checked = false;
+
+      if (!filtered.length) {
+        els.body.innerHTML =
+          '<tr><td colspan="9" class="bk-empty">' +
+            '<div class="bk-empty__title">No bookings in this period</div>' +
+            '<p class="bk-empty__body">Once partners start sending traffic, confirmed bookings will appear here.</p>' +
+          '</td></tr>';
+        els.footer.textContent = '0 items';
+        return;
+      }
+
+      const rows = filtered.map(r => {
+        const status   = r.status || 'confirmed';
+        const amount   = r.amount != null ? Number(r.amount).toFixed(2) : '—';
+        const currency = (r.currency || 'CAD').toUpperCase();
+        const hotel    = r._hotel || {};
+        const desc     = r.tour_title || r.confirmation_code || '—';
+        const customer = r.lead_email || r.lead_name || '—';
+        const dateStr  = formatHumanDateTime(r.created_at);
+        const refunded = (status === 'refunded' || status === 'pending_refund')
+          ? formatHumanDateTime(r.updated_at)
+          : '—';
+
+        return (
+          '<tr>' +
+            '<td class="bk-table__check"><input type="checkbox" data-bk-row="' + escapeHtml(r.id) + '" aria-label="Select booking"></td>' +
+            '<td>' +
+              '<span class="bk-table__amount">' + (amount === '—' ? '—' : '$' + escapeHtml(amount)) + '</span>' +
+              '<span class="bk-table__currency">' + escapeHtml(currency) + '</span>' +
+              renderBkPill(status) +
+            '</td>' +
+            '<td>' + escapeHtml(hotel.name || '—') + '</td>' +
+            '<td class="bk-table__desc">' + escapeHtml(desc) + '</td>' +
+            '<td>' + escapeHtml(customer) + '</td>' +
+            '<td>' + escapeHtml(dateStr) + '</td>' +
+            '<td class="bk-table__muted">' + escapeHtml(refunded) + '</td>' +
+            '<td class="bk-table__muted">—</td>' +
+            '<td class="bk-table__kebab"><button type="button" class="bk-kebab" aria-label="Row actions">⋯</button></td>' +
+          '</tr>'
+        );
+      }).join('');
+
+      els.body.innerHTML = rows;
+      els.footer.textContent = filtered.length + (filtered.length === 1 ? ' item' : ' items');
+    }
+
+    function renderBkPill(status) {
+      const refresh = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>';
+      const check   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      const cross   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+      if (status === 'confirmed')      return '<span class="bk-pill bk-pill--ok">Confirmed ' + check + '</span>';
+      if (status === 'refunded')       return '<span class="bk-pill bk-pill--neutral">Refunded ' + refresh + '</span>';
+      if (status === 'cancelled')      return '<span class="bk-pill bk-pill--neutral">Cancelled ' + cross + '</span>';
+      if (status === 'pending_refund') return '<span class="bk-pill bk-pill--warn">Pending refund ' + refresh + '</span>';
+      return '<span class="bk-pill bk-pill--neutral">' + escapeHtml(status) + '</span>';
     }
 
     /* ── Delegated handlers — survive route re-renders ───── */

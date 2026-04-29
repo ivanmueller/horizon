@@ -138,6 +138,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   padding: var(--s8) var(--s10) var(--s12);
   max-width: var(--content-max);
   width: 100%;
+  margin: 0 auto;   /* centre within the main column (excludes sidebar) */
 }
 
 /* ── Sidebar: brand + nav + footer ────────────────────────────── */
@@ -887,3 +888,242 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .faint { color: var(--text-faint); }
 .mono  { font-family: var(--font-mono); font-size: 0.85em; }
 .hide  { display: none !important; }
+
+/* ─────────────────────────────────────────────────────────────────
+   Bookings page — Stripe-style transactions surface.
+   Replicates the layout of stripe.com/dashboard/transactions:
+   page title + right-side actions, sub-tabs, status stat cards,
+   filter chips, then a wide flat data table.
+   Variables only — accent comes from --accent (#0F766E).
+   ─────────────────────────────────────────────────────────────── */
+.bk-page__head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: var(--s5);
+  gap: var(--s4);
+}
+.bk-page__title {
+  font-family: var(--font-display);
+  font-size: 1.625rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--text);
+  margin: 0;
+}
+.bk-page__actions { display: flex; gap: var(--s2); flex-shrink: 0; }
+
+/* ── Sub-tabs (Bookings / Payouts / All activity) ─────────────── */
+.bk-tabs {
+  display: flex;
+  gap: var(--s5);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--s6);
+}
+.bk-tabs__btn {
+  background: none; border: 0;
+  padding: var(--s2) 0;
+  margin-bottom: -1px;
+  font: inherit;
+  font-size: var(--t-base);
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color var(--t-fast), border-color var(--t-fast);
+}
+.bk-tabs__btn:hover { color: var(--text); }
+.bk-tabs__btn--active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+.bk-tabs__btn--active:hover { color: var(--accent); }
+
+/* ── Status stat cards (All / Confirmed / Refunded …) ─────────── */
+.bk-statcards {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--s3);
+  margin-bottom: var(--s5);
+}
+.bk-statcard {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 14px var(--s4);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition: border-color var(--t-fast), background var(--t-fast);
+}
+.bk-statcard:hover { border-color: var(--border-strong); }
+.bk-statcard--active {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.bk-statcard__label {
+  font-size: var(--t-sm);
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+.bk-statcard--active .bk-statcard__label { color: var(--accent); }
+.bk-statcard__value {
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: var(--text);
+  font-feature-settings: 'tnum' 1;
+  line-height: 1.1;
+}
+
+/* ── Toolbar: filter chips + right-side actions ───────────────── */
+.bk-toolbar {
+  display: flex; flex-wrap: wrap;
+  align-items: center; gap: var(--s2);
+  margin-bottom: var(--s4);
+}
+.bk-filters { display: flex; flex-wrap: wrap; gap: var(--s2); flex: 1; }
+.bk-toolbar__actions { display: flex; gap: var(--s2); margin-left: auto; }
+
+.bk-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--bg);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-full);
+  padding: 5px 12px 5px 8px;
+  font: inherit;
+  font-size: var(--t-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color var(--t-fast), border-color var(--t-fast), background var(--t-fast);
+}
+.bk-chip:hover {
+  color: var(--text);
+  border-color: var(--text-muted);
+  background: var(--bg-subtle);
+}
+.bk-chip__plus {
+  width: 14px; height: 14px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--text-faint);
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1;
+}
+.bk-chip:hover .bk-chip__plus { border-color: var(--text-muted); color: var(--text); }
+
+.bk-iconbtn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 6px 12px;
+  font: inherit;
+  font-size: var(--t-sm);
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+.bk-iconbtn:hover { background: var(--bg-subtle); border-color: var(--border-strong); }
+.bk-iconbtn svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+/* ── Data table ───────────────────────────────────────────────── */
+.bk-table-wrap {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.bk-table-scroll { overflow-x: auto; }
+.bk-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-sm);
+}
+.bk-table thead th {
+  font-weight: 600;
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+  text-align: left;
+  padding: 10px var(--s4);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.bk-table tbody td {
+  padding: 12px var(--s4);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  color: var(--text);
+  vertical-align: middle;
+}
+.bk-table tbody tr:last-child > td { border-bottom: 0; }
+.bk-table tbody tr:hover > td { background: var(--bg-subtle); }
+.bk-table__check { width: 28px; padding-right: 0 !important; }
+.bk-table__check input { cursor: pointer; }
+.bk-table__kebab { width: 36px; text-align: right; }
+.bk-table__amount {
+  font-weight: 600;
+  font-feature-settings: 'tnum' 1;
+}
+.bk-table__currency {
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-left: 6px;
+  font-size: var(--t-xs);
+  letter-spacing: 0.02em;
+}
+.bk-table__desc { font-family: var(--font-mono); font-size: 0.8125rem; color: var(--text); }
+.bk-table__muted { color: var(--text-muted); }
+
+.bk-kebab {
+  background: none; border: 0;
+  padding: 4px 6px;
+  border-radius: var(--r-sm);
+  color: var(--text-faint);
+  cursor: pointer;
+  line-height: 1;
+}
+.bk-kebab:hover { color: var(--text); background: var(--bg-subtle); }
+
+.bk-table__footer {
+  padding: 10px var(--s4);
+  font-size: var(--t-sm);
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+
+/* ── Status badge next to amount (Stripe pill style) ──────────── */
+.bk-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--r-sm);
+  font-size: var(--t-xs);
+  font-weight: 500;
+  margin-left: var(--s2);
+  white-space: nowrap;
+}
+.bk-pill svg { width: 11px; height: 11px; }
+.bk-pill--ok       { background: var(--ok-bg);      color: var(--ok-fg); }
+.bk-pill--neutral  { background: var(--neutral-bg); color: var(--neutral-fg); }
+.bk-pill--warn     { background: var(--warn-bg);    color: var(--warn-fg); }
+.bk-pill--bad      { background: var(--bad-bg);     color: var(--bad-fg); }
+
+/* ── Empty state inside the table card ────────────────────────── */
+.bk-empty {
+  padding: var(--s12) var(--s5);
+  text-align: center;
+  color: var(--text-muted);
+}
+.bk-empty__title {
+  font-family: var(--font-display);
+  font-size: var(--t-lg);
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: var(--s2);
+}
+.bk-empty__body { font-size: var(--t-sm); max-width: 32em; margin: 0 auto; }
