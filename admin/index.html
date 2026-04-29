@@ -1006,7 +1006,7 @@
 
     function loadHotels(els) {
       els.error.hidden = true;
-      fetch(BOKUN_API_BASE + '/api/admin/hotels', {
+      return fetch(BOKUN_API_BASE + '/api/admin/hotels', {
         cache: 'no-store',
         headers: { Authorization: 'Bearer ' + session.access_token },
       })
@@ -1075,14 +1075,42 @@
     const hotelDrawerBody  = document.getElementById('hotelDrawerBody');
     const hotelDrawerClose = document.getElementById('hotelDrawerClose');
 
+    // Drawer state — set when the drawer opens, used by the inline
+    // staff/manager forms (commits 4c+) so we can re-render after a
+    // CRUD op without refetching from the user's POV.
+    let drawerCurrentHotelId = null;
+    let drawerStaffForm      = null;  // null | 'add' | { editId: <staff.id> }
+
     function openHotelDrawer(hotel) {
+      drawerCurrentHotelId = hotel.id;
+      drawerStaffForm = null;
       hotelDrawerTitle.textContent = hotel.name;
       hotelDrawerSub.textContent = hotel.code;
-      hotelDrawerBody.innerHTML = renderHotelDrawerBody(hotel);
+      renderAndWireDrawer(hotel);
       hotelDrawer.hidden = false;
+    }
 
-      // Wire the edit form. The drawer body is fresh markup each open,
-      // so we attach listeners every time — no need to detach.
+    // Re-render the drawer body for the currently-open hotel using the
+    // freshest object in hotelsCache. Used after any successful CRUD
+    // op to reflect server state without a flash of empty UI.
+    function refreshDrawerFromCache() {
+      if (drawerCurrentHotelId == null) return;
+      const hotel = hotelsCache.find((h) => h.id === drawerCurrentHotelId);
+      if (!hotel) { closeHotelDrawer(); return; }
+      hotelDrawerTitle.textContent = hotel.name;
+      hotelDrawerSub.textContent = hotel.code;
+      renderAndWireDrawer(hotel);
+    }
+
+    function renderAndWireDrawer(hotel) {
+      // Preserve scroll position across re-renders so users editing
+      // halfway down the drawer aren't kicked back to the top.
+      const panel = hotelDrawer.querySelector('.drawer__panel');
+      const scrollTop = panel ? panel.scrollTop : 0;
+      hotelDrawerBody.innerHTML = renderHotelDrawerBody(hotel);
+      if (panel) panel.scrollTop = scrollTop;
+
+      // ── Hotel-overview form
       const form = hotelDrawerBody.querySelector('#heForm');
       form.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -1102,6 +1130,57 @@
         reinstateBtn.addEventListener('click', () => {
           setHotelStatus(hotel, 'active');
         });
+      }
+
+      // ── Staff section
+      const addStaffBtn = hotelDrawerBody.querySelector('#heAddStaff');
+      if (addStaffBtn) {
+        addStaffBtn.addEventListener('click', () => {
+          drawerStaffForm = 'add';
+          renderAndWireDrawer(hotel);
+        });
+      }
+      hotelDrawerBody.querySelectorAll('[data-staff-edit]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          drawerStaffForm = { editId: btn.dataset.staffEdit };
+          renderAndWireDrawer(hotel);
+        });
+      });
+      hotelDrawerBody.querySelectorAll('[data-staff-revoke]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const staffId = btn.dataset.staffRevoke;
+          const staffName = btn.dataset.staffName || 'this staff member';
+          if (!confirm(`Revoke ${staffName}?\n\nFuture bookings under their tracking code will stop earning kickback. Past bookings are preserved.`)) return;
+          revokeStaff(hotel, staffId);
+        });
+      });
+      const staffForm = hotelDrawerBody.querySelector('#hsForm');
+      if (staffForm) {
+        staffForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          if (drawerStaffForm === 'add') submitStaffCreate(staffForm, hotel);
+          else if (drawerStaffForm && drawerStaffForm.editId)
+            submitStaffEdit(staffForm, hotel, drawerStaffForm.editId);
+        });
+        const cancelBtn = hotelDrawerBody.querySelector('#hsCancel');
+        if (cancelBtn) cancelBtn.addEventListener('click', () => {
+          drawerStaffForm = null;
+          renderAndWireDrawer(hotel);
+        });
+        // Auto-derive tracking code from slug while typing (add mode only,
+        // and only until the user touches the tracking field manually).
+        const slugEl  = staffForm.querySelector('#hsCode');
+        const trackEl = staffForm.querySelector('#hsTracking');
+        if (slugEl && trackEl && drawerStaffForm === 'add') {
+          let touched = false;
+          trackEl.addEventListener('input', () => { touched = true; });
+          slugEl.addEventListener('input', () => {
+            if (touched) return;
+            trackEl.value = (slugEl.value || '').toUpperCase().replace(/-/g, '_');
+          });
+        }
       }
     }
     function openHotelCreateDrawer() {
@@ -1132,6 +1211,8 @@
     }
     function closeHotelDrawer() {
       hotelDrawer.hidden = true;
+      drawerCurrentHotelId = null;
+      drawerStaffForm = null;
       // Drop selected-row highlight.
       document.querySelectorAll('.row--selected').forEach((r) => r.classList.remove('row--selected'));
     }
@@ -1238,26 +1319,44 @@
       `;
 
       const staff = (h.staff || []).filter((s) => s.status === 'active');
+      const editingStaff = drawerStaffForm && drawerStaffForm.editId
+        ? staff.find((s) => s.id === drawerStaffForm.editId) || null
+        : null;
       const staffSection = `
         <section class="drawer-section">
           <div class="drawer-section__head">
             <h3 class="drawer-section__title">Staff (${staff.length})</h3>
+            <button type="button" class="btn btn--sm" id="heAddStaff"
+                    ${drawerStaffForm ? 'disabled' : ''}>+ Add</button>
           </div>
           ${staff.length
             ? `<table class="table">
                  <thead><tr>
-                   <th>Name</th><th>Slug</th><th>Tracking</th><th class="num">Kickback</th>
+                   <th>Name</th><th>Slug</th><th>Tracking</th>
+                   <th class="num">Kickback</th><th class="row-actions__col"></th>
                  </tr></thead>
                  <tbody>${staff.map((s) => `
-                   <tr>
+                   <tr ${drawerStaffForm && drawerStaffForm.editId === s.id ? 'class="row--selected"' : ''}>
                      <td>${escapeHtml(s.name)}</td>
                      <td class="mono faint">${escapeHtml(s.code)}</td>
                      <td class="mono">${escapeHtml(s.tracking_code || '—')}</td>
                      <td class="num">${s.kickback_pct != null ? s.kickback_pct + '%' : '—'}</td>
+                     <td class="row-actions">
+                       <button type="button" class="row-actions__btn"
+                               data-staff-edit="${escapeHtml(s.id)}"
+                               aria-label="Edit ${escapeHtml(s.name)}">Edit</button>
+                       <button type="button" class="row-actions__btn row-actions__btn--danger"
+                               data-staff-revoke="${escapeHtml(s.id)}"
+                               data-staff-name="${escapeHtml(s.name)}"
+                               aria-label="Revoke ${escapeHtml(s.name)}">Revoke</button>
+                     </td>
                    </tr>`).join('')}
                  </tbody>
                </table>`
-            : '<p class="muted" style="font-size: var(--t-sm)">No staff yet.</p>'}
+            : '<p class="muted" style="font-size: var(--t-sm)">No staff yet — click + Add to onboard the first one.</p>'}
+          ${drawerStaffForm
+            ? renderStaffForm(drawerStaffForm === 'add' ? null : editingStaff)
+            : ''}
         </section>
       `;
 
@@ -1587,6 +1686,173 @@
       hotelsEls.error.textContent = msg;
       hotelsEls.error.hidden = false;
       setTimeout(() => { if (hotelsEls && hotelsEls.error) hotelsEls.error.hidden = true; }, 6000);
+    }
+
+    // ── Staff sub-form (add or edit, rendered below the staff table)
+    function renderStaffForm(staff /* null = add mode */) {
+      const isAdd = !staff;
+      return `
+        <form id="hsForm" class="staff-form" novalidate>
+          <h4 class="staff-form__title">${isAdd ? 'Add staff member' : 'Edit ' + escapeHtml(staff.name)}</h4>
+          <div class="alert alert--bad" id="hsError" hidden></div>
+          <div class="drawer-form">
+            <label class="drawer-form__row">
+              <span class="drawer-form__label">Name <span class="drawer-form__req">required</span></span>
+              <input class="input" id="hsName" type="text" required maxlength="120"
+                     value="${isAdd ? '' : escapeHtml(staff.name)}"
+                     placeholder="Jane Smith">
+            </label>
+            <label class="drawer-form__row">
+              <span class="drawer-form__label">Slug ${isAdd
+                ? '<span class="drawer-form__req">required · permanent</span>'
+                : '<span class="drawer-form__req">permanent</span>'}</span>
+              <input class="input" id="hsCode" type="text"
+                     ${isAdd ? 'required' : 'disabled'}
+                     autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+                     pattern="[a-z0-9-]{2,40}" maxlength="40"
+                     value="${isAdd ? '' : escapeHtml(staff.code)}"
+                     placeholder="jane-smith"
+                     style="font-family: var(--font-mono); font-size: 0.9em;">
+              ${isAdd ? '<span class="drawer-form__hint">Internal identifier. Auto-derives the tracking code below.</span>' : ''}
+            </label>
+            <div class="drawer-form__pair">
+              <label class="drawer-form__row">
+                <span class="drawer-form__label">Tracking code</span>
+                <input class="input" id="hsTracking" type="text"
+                       autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false"
+                       pattern="[A-Z0-9_]{2,40}" maxlength="40"
+                       value="${isAdd ? '' : escapeHtml(staff.tracking_code || '')}"
+                       placeholder="AUTO_FROM_SLUG"
+                       style="font-family: var(--font-mono); font-size: 0.9em;">
+              </label>
+              <label class="drawer-form__row">
+                <span class="drawer-form__label">Kickback %</span>
+                <input class="input" id="hsKickback" type="number" min="0" max="100" step="0.1"
+                       value="${isAdd ? '' : (staff.kickback_pct != null ? staff.kickback_pct : '')}"
+                       placeholder="5">
+              </label>
+            </div>
+          </div>
+          <div class="staff-form__actions">
+            <button type="button" class="btn btn--sm" id="hsCancel">Cancel</button>
+            <button type="submit" class="btn btn--primary btn--sm" id="hsSave">${isAdd ? 'Add staff' : 'Save changes'}</button>
+          </div>
+        </form>
+      `;
+    }
+
+    function submitStaffCreate(form, hotel) {
+      const errEl   = form.querySelector('#hsError');
+      const saveBtn = form.querySelector('#hsSave');
+      errEl.hidden = true;
+
+      const code     = form.querySelector('#hsCode').value.trim().toLowerCase();
+      const name     = form.querySelector('#hsName').value.trim();
+      const tracking = form.querySelector('#hsTracking').value.trim().toUpperCase();
+      const kickback = form.querySelector('#hsKickback').value.trim();
+
+      if (!/^[a-z0-9-]{2,40}$/.test(code)) {
+        return showInline(errEl, 'Slug must be 2–40 lowercase letters, digits, or hyphens.');
+      }
+      if (!name) return showInline(errEl, 'Name is required.');
+
+      const body = { hotel_id: hotel.id, code, name };
+      if (tracking) body.tracking_code = tracking;
+      if (kickback !== '') body.kickback_pct = Number(kickback);
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Adding…';
+
+      fetch(BOKUN_API_BASE + '/api/admin/staff', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + session.access_token,
+        },
+        body: JSON.stringify(body),
+      })
+        .then((r) => r.json().then((b) => ({ ok: r.ok, status: r.status, body: b })))
+        .then((res) => {
+          if (!res.ok) {
+            const msg = (res.body && res.body.error) ||
+              (res.status === 409 ? 'A staff member with this slug already exists for this hotel.' :
+                                    'Could not add staff (HTTP ' + res.status + ').');
+            throw new Error(msg);
+          }
+          drawerStaffForm = null;
+          triggerRepublish();
+          flashHotelsNotice('Staff added. Republishing partners.json (~30s)…');
+          if (hotelsEls) loadHotels(hotelsEls).then(refreshDrawerFromCache);
+        })
+        .catch((err) => {
+          showInline(errEl, err.message || 'Unknown error');
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Add staff';
+        });
+    }
+
+    function submitStaffEdit(form, hotel, staffId) {
+      const errEl   = form.querySelector('#hsError');
+      const saveBtn = form.querySelector('#hsSave');
+      errEl.hidden = true;
+
+      const name     = form.querySelector('#hsName').value.trim();
+      const tracking = form.querySelector('#hsTracking').value.trim().toUpperCase();
+      const kickback = form.querySelector('#hsKickback').value.trim();
+
+      if (!name) return showInline(errEl, 'Name is required.');
+
+      const body = { name };
+      body.tracking_code = tracking || null;
+      body.kickback_pct  = kickback !== '' ? Number(kickback) : 0;
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving…';
+
+      fetch(BOKUN_API_BASE + '/api/admin/staff/' + encodeURIComponent(staffId), {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + session.access_token,
+        },
+        body: JSON.stringify(body),
+      })
+        .then((r) => r.json().then((b) => ({ ok: r.ok, status: r.status, body: b })))
+        .then((res) => {
+          if (!res.ok) {
+            const msg = (res.body && res.body.error) ||
+              (res.status === 404 ? 'Staff not found — refresh and retry.' :
+                                    'Save failed (HTTP ' + res.status + ').');
+            throw new Error(msg);
+          }
+          drawerStaffForm = null;
+          triggerRepublish();
+          flashHotelsNotice('Staff updated. Republishing partners.json (~30s)…');
+          if (hotelsEls) loadHotels(hotelsEls).then(refreshDrawerFromCache);
+        })
+        .catch((err) => {
+          showInline(errEl, err.message || 'Unknown error');
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save changes';
+        });
+    }
+
+    function revokeStaff(hotel, staffId) {
+      fetch(BOKUN_API_BASE + '/api/admin/staff/' + encodeURIComponent(staffId), {
+        method: 'DELETE',
+        headers: { Authorization: 'Bearer ' + session.access_token },
+      })
+        .then((r) => r.json().then((b) => ({ ok: r.ok, status: r.status, body: b })))
+        .then((res) => {
+          if (!res.ok) {
+            flashHotelsError((res.body && res.body.error) || 'Revoke failed (HTTP ' + res.status + ').');
+            return;
+          }
+          triggerRepublish();
+          flashHotelsNotice('Staff revoked. Republishing partners.json (~30s)…');
+          if (hotelsEls) loadHotels(hotelsEls).then(refreshDrawerFromCache);
+        })
+        .catch((err) => flashHotelsError(err.message || 'Unknown error'));
     }
 
     /* ── Period / range / formatting helpers ─────────────── */

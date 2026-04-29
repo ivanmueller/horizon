@@ -815,6 +815,48 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   border-top: 1px solid var(--border);
 }
 
+/* Per-row Edit / Revoke buttons inside drawer tables. */
+.row-actions__col { width: 1%; white-space: nowrap; }
+.row-actions {
+  white-space: nowrap; text-align: right;
+  display: flex; gap: 4px; justify-content: flex-end;
+}
+.row-actions__btn {
+  background: none; border: 0; cursor: pointer;
+  padding: 4px 8px; border-radius: var(--r-sm);
+  font-size: var(--t-xs); font-weight: 500;
+  color: var(--text-muted);
+  transition: background var(--t-fast), color var(--t-fast);
+}
+.row-actions__btn:hover {
+  background: var(--bg-subtle);
+  color: var(--text);
+}
+.row-actions__btn--danger { color: var(--bad-fg); }
+.row-actions__btn--danger:hover {
+  background: var(--bad-bg);
+  color: var(--bad-fg);
+}
+
+/* Add/edit form rendered below the staff (and managers) tables. */
+.staff-form {
+  margin-top: var(--s4);
+  padding: var(--s5);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-subtle);
+}
+.staff-form__title {
+  font-family: var(--font-display);
+  font-size: var(--t-sm); font-weight: 600;
+  color: var(--text);
+  margin: 0 0 var(--s4);
+}
+.staff-form__actions {
+  display: flex; justify-content: flex-end; gap: var(--s2);
+  margin-top: var(--s4);
+}
+
 /* Danger zone — terminate / reinstate inside the hotel drawer. */
 .drawer-danger { margin-top: var(--s8); }
 .drawer-danger .drawer-section__title { color: var(--bad-fg); }
