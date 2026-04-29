@@ -1,0 +1,80 @@
+# Auto-deploy Cloudflare Workers on push to main.
+#
+# Why this exists
+# ───────────────
+# The static site (everything outside workers/) is auto-deployed by
+# Cloudflare Pages when main moves. Workers aren't — until this file,
+# every worker change had to be pushed AND `wrangler deploy`d locally.
+# That's a foot-gun: someone merges a worker fix, CI is green, prod is
+# still running the old code.
+#
+# This workflow closes the loop: any push to main that touches a
+# worker source file deploys the affected worker(s) within ~30s.
+#
+# One-time setup
+# ──────────────
+# 1. Create a Cloudflare API token (one-time, lives in CF dashboard):
+#    Cloudflare → My Profile → API Tokens → Create Token
+#      → use the "Edit Cloudflare Workers" template
+#      → Account Resources: Include → your account
+#      → Zone Resources: Include → All zones (or just gowithhorizon.com)
+#      → Continue to summary → Create Token → copy the token
+#
+# 2. Add the token to GitHub:
+#    GitHub repo → Settings → Secrets and variables → Actions
+#      → New repository secret
+#      → Name:  CLOUDFLARE_API_TOKEN
+#      → Value: <paste>
+#
+# That's it. Worker secrets (STRIPE_SECRET_KEY, BOKUN_*, etc.) stay
+# managed via `wrangler secret put` from your machine — they're
+# per-worker, not per-deploy, so they don't need to live in CI.
+#
+# Adding a new worker
+# ───────────────────
+# 1. Create workers/<name>/wrangler.toml + index.js as usual.
+# 2. Add the directory name (e.g. "<name>") to the `worker` matrix
+#    below.
+# That's it — the next push to main deploys it.
+
+name: Deploy workers
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'workers/**'
+      - '.github/workflows/deploy-workers.yml'
+  # Manual fallback if you ever need to redeploy without a code change
+  # (e.g. after rotating a secret or recovering from a botched deploy).
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy ${{ matrix.worker }}
+    runs-on: ubuntu-latest
+    strategy:
+      # Don't cancel sibling deploys if one fails — the workers are
+      # independent, and a bokun failure shouldn't block checkout.
+      fail-fast: false
+      matrix:
+        worker: [bokun, checkout]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Deploy worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: workers/${{ matrix.worker }}
+          # `wrangler deploy` is the default. Spelling it out makes
+          # the workflow self-documenting and easier to extend later
+          # (e.g. `deploy --env staging` if we add environments).
+          command: deploy
