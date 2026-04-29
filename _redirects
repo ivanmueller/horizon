@@ -1,0 +1,16 @@
+# Cloudflare Pages — URL rewrites.
+#
+# /admin/ is a single-page app: one HTML file, JS routes between
+# views by reading window.location.pathname. Without this rule,
+# navigating directly to /admin/bookings/ would 404 because there's
+# no /admin/bookings/index.html on disk. The 200 status code rewrites
+# the request to serve /admin/index.html while keeping the visible
+# URL in the address bar — the JS then reads pathname and renders
+# the right route.
+#
+# Doesn't affect any other path: Cloudflare Pages tries to find a
+# static file first and only falls back to these rules on miss.
+# /dashboard/hotel/, /dashboard/login/, /tours/.../, and the rest of
+# the static site are unaffected.
+
+/admin/*  /admin/index.html  200

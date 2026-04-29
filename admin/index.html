@@ -217,26 +217,45 @@
     const navItems   = {};
 
     for (const route of ROUTES) {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'app-nav__item';
-      btn.dataset.route = route.id;
-      btn.innerHTML =
+      const a = document.createElement('a');
+      a.className = 'app-nav__item';
+      a.href = pathFor(route.id);
+      a.dataset.route = route.id;
+      a.innerHTML =
         '<span class="app-nav__icon">' + route.icon() + '</span>' +
         '<span>' + route.label + '</span>';
-      btn.addEventListener('click', () => navigate(route.id));
-      navItems[route.id] = btn;
-      (route.group === 'finance' ? navFinance : navMain).appendChild(btn);
+      a.addEventListener('click', (e) => {
+        // Cmd/Ctrl/middle-click → let the browser open in a new tab.
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+        e.preventDefault();
+        navigate(route.id);
+      });
+      navItems[route.id] = a;
+      (route.group === 'finance' ? navFinance : navMain).appendChild(a);
+    }
+
+    function pathFor(routeId) {
+      return routeId === 'home' ? '/admin/' : '/admin/' + routeId + '/';
     }
 
     function navigate(routeId) {
-      window.location.hash = '#/' + routeId;
+      const path = pathFor(routeId);
+      if (window.location.pathname === path) return;
+      history.pushState(null, '', path);
+      render();
     }
 
     function currentRoute() {
-      const m = window.location.hash.match(/^#\/([a-z]+)/);
+      const m = window.location.pathname.match(/^\/admin\/([a-z]+)\/?$/);
       const id = m && m[1];
       return ROUTES.find(r => r.id === id) ? id : 'home';
+    }
+
+    // One-time migration of any old hash-based URLs to path-based URLs.
+    // /admin/#/bookings  →  /admin/bookings/
+    const oldHash = window.location.hash.match(/^#\/([a-z]+)$/);
+    if (oldHash && ROUTES.find(r => r.id === oldHash[1])) {
+      history.replaceState(null, '', pathFor(oldHash[1]));
     }
 
     function render() {
@@ -256,7 +275,9 @@
       document.title = 'Horizon admin — ' + (ROUTES.find(r => r.id === id) || ROUTES[0]).label;
     }
 
-    window.addEventListener('hashchange', render);
+    // Browser back/forward buttons walk pushState entries; popstate
+    // fires for those navigations and we re-render.
+    window.addEventListener('popstate', render);
     render();
 
     /* ── Route renderers (stubs for now; commits 2+ fill them in) ── */
