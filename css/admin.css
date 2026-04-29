@@ -211,15 +211,15 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .app-nav__item:hover {
   background: var(--nav-hover);   /* #f4f7fa cool wash on hover */
 }
-/* Active state matches Stripe: very faint tinted bg at rest + coral
-   text/icon. Hover bumps the tint slightly for click affordance. */
+/* Active state: only text + icon turn coral. No background at rest;
+   hover paints the faint coral wash for click affordance. */
 .app-nav__item--active {
-  background: rgba(255, 107, 74, 0.05);
+  background: transparent;
   color: var(--accent);
   font-weight: 500;
 }
 .app-nav__item--active:hover {
-  background: var(--accent-soft);   /* rgba(255, 107, 74, 0.08) — slightly more saturated */
+  background: var(--accent-soft);
   color: var(--accent);
 }
 .app-nav__item--active .app-nav__icon { color: var(--accent); }
