@@ -1031,11 +1031,14 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .bk-iconbtn svg { width: 14px; height: 14px; flex-shrink: 0; }
 
 /* ── Data table ───────────────────────────────────────────────── */
+/* No card wrapper — table sits directly on the page background to
+   match Stripe's transactions list. Header gets a tinted gray-blue
+   background; row separators use the same #d4dee9 outline that the
+   status pills do. */
 .bk-table-wrap {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  overflow: hidden;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
 }
 .bk-table-scroll { overflow-x: auto; }
 .bk-table {
@@ -1045,85 +1048,115 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 .bk-table thead th {
   font-weight: 600;
-  font-size: var(--t-xs);
-  color: var(--text-muted);
+  font-size: var(--t-sm);
+  color: #1a2c44;
   text-align: left;
   padding: 10px var(--s4);
-  background: var(--bg);
-  border-bottom: 1px solid var(--border);
+  background: #f4f7fa;
+  border-bottom: 1px solid #d4dee9;
   white-space: nowrap;
 }
 .bk-table tbody td {
   padding: 12px var(--s4);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid #d4dee9;
   white-space: nowrap;
-  color: var(--text);
+  color: #1a2c44;
   vertical-align: middle;
+  font-weight: 500;
 }
 .bk-table tbody tr:last-child > td { border-bottom: 0; }
-.bk-table tbody tr:hover > td { background: var(--bg-subtle); }
+.bk-table tbody tr:hover > td { background: #f4f7fa; }
 .bk-table__check { width: 28px; padding-right: 0 !important; }
 .bk-table__check input { cursor: pointer; }
 .bk-table__kebab { width: 36px; text-align: right; }
 .bk-table__amount {
   font-weight: 600;
   font-feature-settings: 'tnum' 1;
+  color: #1a2c44;
 }
 .bk-table__currency {
-  color: var(--text-muted);
+  color: #35455a;
   font-weight: 500;
   margin-left: 6px;
-  font-size: var(--t-xs);
-  letter-spacing: 0.02em;
+  font-size: var(--t-sm);
+  letter-spacing: 0.01em;
 }
-.bk-table__desc { font-family: var(--font-mono); font-size: 0.8125rem; color: var(--text); }
-.bk-table__muted { color: var(--text-muted); }
+.bk-table__desc {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: #1a2c44;
+  font-weight: 500;
+}
+.bk-table__muted { color: #35455a; font-weight: 500; }
 
 .bk-kebab {
   background: none; border: 0;
   padding: 4px 6px;
   border-radius: var(--r-sm);
-  color: var(--text-faint);
+  color: #50617a;
   cursor: pointer;
   line-height: 1;
 }
-.bk-kebab:hover { color: var(--text); background: var(--bg-subtle); }
+.bk-kebab:hover { color: #1a2c44; background: #ecf1f6; }
 
 .bk-table__footer {
-  padding: 10px var(--s4);
+  padding: 10px 0 0;
   font-size: var(--t-sm);
-  color: var(--text-muted);
-  border-top: 1px solid var(--border);
-  background: var(--bg);
+  color: #35455a;
+  font-weight: 500;
+  border-top: 0;
+  background: transparent;
 }
 
 /* ── Status badge next to amount (Stripe pill style) ──────────── */
+/* Pills are 1px-bordered, ~6px radius, light fill. Two flavours:
+   succeeded (light green) and a neutral cool-gray for everything
+   that ended in a non-success state — refunded, reversed, cancelled,
+   pending refund. */
 .bk-pill {
   display: inline-flex; align-items: center; gap: 4px;
-  padding: 2px 8px;
-  border-radius: var(--r-sm);
+  padding: 1px 7px;
+  border-radius: 5px;
+  border: 1px solid transparent;
   font-size: var(--t-xs);
   font-weight: 500;
   margin-left: var(--s2);
   white-space: nowrap;
+  line-height: 1.5;
 }
 .bk-pill svg { width: 11px; height: 11px; }
-.bk-pill--ok       { background: var(--ok-bg);      color: var(--ok-fg); }
-.bk-pill--neutral  { background: var(--neutral-bg); color: var(--neutral-fg); }
-.bk-pill--warn     { background: var(--warn-bg);    color: var(--warn-fg); }
-.bk-pill--bad      { background: var(--bad-bg);     color: var(--bad-fg); }
+.bk-pill--ok {
+  background: #eafcdd;
+  border-color: #a8f170;
+  color:        #217005;
+}
+.bk-pill--neutral {
+  background: #ecf1f6;
+  border-color: #d4dee9;
+  color:        #50617a;
+}
+.bk-pill--warn {
+  background: #ecf1f6;
+  border-color: #d4dee9;
+  color:        #50617a;
+}
+.bk-pill--bad {
+  background: #ecf1f6;
+  border-color: #d4dee9;
+  color:        #50617a;
+}
 
 /* ── Empty state inside the table card ────────────────────────── */
 .bk-empty {
   padding: var(--s12) var(--s5);
   text-align: center;
-  color: var(--text-muted);
+  color: #35455a;
 }
 .bk-empty__title {
   font-family: var(--font-display);
   font-size: var(--t-lg);
   font-weight: 600;
-  color: var(--text);
+  color: #1a2c44;
   margin-bottom: var(--s2);
 }
 .bk-empty__body { font-size: var(--t-sm); max-width: 32em; margin: 0 auto; }
