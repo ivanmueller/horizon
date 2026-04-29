@@ -668,6 +668,94 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   background: var(--bg-subtle);
 }
 
+/* ── Slide-over drawer ────────────────────────────────────────── */
+.drawer {
+  position: fixed; inset: 0;
+  z-index: 200;
+  display: flex; justify-content: flex-end;
+}
+.drawer[hidden] { display: none; }
+.drawer::before {
+  /* Backdrop — click to close. */
+  content: '';
+  position: absolute; inset: 0;
+  background: rgba(26, 26, 46, 0.35);
+}
+.drawer__panel {
+  position: relative;
+  width: 100%; max-width: 540px;
+  background: var(--bg);
+  height: 100vh;
+  overflow-y: auto;
+  box-shadow: -8px 0 30px rgba(0,0,0,0.1);
+  display: flex; flex-direction: column;
+}
+.drawer__head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding: var(--s5) var(--s6);
+  border-bottom: 1px solid var(--border);
+  gap: var(--s3);
+  flex-shrink: 0;
+}
+.drawer__title {
+  font-family: var(--font-display);
+  font-size: var(--t-xl); font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.drawer__sub {
+  font-size: var(--t-sm); color: var(--text-muted);
+  margin-top: 2px;
+  font-family: var(--font-mono);
+}
+.drawer__close {
+  background: none; border: 0; cursor: pointer;
+  font-size: 24px; line-height: 1; color: var(--text-muted);
+  padding: 0 6px;
+}
+.drawer__close:hover { color: var(--text); }
+.drawer__body {
+  padding: var(--s6);
+  flex: 1;
+}
+
+.drawer-section + .drawer-section { margin-top: var(--s8); }
+.drawer-section__head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: var(--s3);
+  gap: var(--s3);
+}
+.drawer-section__title {
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Definition-list field grid: label on the left, value on the right. */
+.drawer-fields {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: var(--s3) var(--s4);
+  margin: 0;
+  font-size: var(--t-sm);
+}
+.drawer-fields dt {
+  color: var(--text-muted);
+  font-weight: 500;
+  align-self: center;
+}
+.drawer-fields dd {
+  margin: 0;
+  color: var(--text);
+  word-break: break-word;
+}
+
+/* Highlight the row whose hotel is open in the drawer. */
+.row--selected > td { background: var(--bg-sunken) !important; }
+
 /* ── Utilities ────────────────────────────────────────────────── */
 .muted { color: var(--text-muted); }
 .faint { color: var(--text-faint); }

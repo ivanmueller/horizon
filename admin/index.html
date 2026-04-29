@@ -90,6 +90,20 @@
     </div>
   </div>
 
+  <!-- ── Hotel detail drawer (slides in from the right) ─────── -->
+  <div class="drawer" id="hotelDrawer" hidden>
+    <div class="drawer__panel">
+      <header class="drawer__head">
+        <div>
+          <h2 class="drawer__title" id="hotelDrawerTitle">Hotel</h2>
+          <span class="drawer__sub" id="hotelDrawerSub">—</span>
+        </div>
+        <button type="button" class="drawer__close" id="hotelDrawerClose" aria-label="Close">×</button>
+      </header>
+      <div class="drawer__body" id="hotelDrawerBody"></div>
+    </div>
+  </div>
+
   <!-- ── Account modal (set / change password) ────────────── -->
   <div class="modal" id="acctModal" hidden>
     <form class="modal__card" id="acctForm">
@@ -375,11 +389,40 @@
         };
       },
       hotels() {
-        return placeholderPage(
-          'Hotels',
-          'Active partner directory.',
-          'List of partner hotels with their commission %, employees, and status. Coming in a follow-up sprint.',
-        );
+        return {
+          html: `
+            <header class="page-head">
+              <div>
+                <h1 class="page-head__title">Hotels</h1>
+                <p class="page-head__sub">Partner directory — click a row to view detail.</p>
+              </div>
+            </header>
+
+            <div class="alert alert--bad" id="hotelsError" hidden></div>
+
+            <section class="card" style="padding: 0;">
+              <div style="overflow-x: auto;">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Hotel</th>
+                      <th>Location</th>
+                      <th>Type</th>
+                      <th class="num">Commission</th>
+                      <th class="num">Staff</th>
+                      <th class="num">Managers</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="hotelsBody">
+                    <tr><td colspan="7" class="muted" style="padding: var(--s8); text-align: center;">Loading…</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          `,
+          mount: mountHotels,
+        };
       },
       tours() {
         return placeholderPage(
@@ -924,6 +967,186 @@
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && !pdfModal.hidden) hidePdfPreview();
     });
+
+    /* ── Hotels route ────────────────────────────────────── */
+    let hotelsCache = [];   // last list response, indexed by index
+
+    function mountHotels(container) {
+      const els = {
+        body:  container.querySelector('#hotelsBody'),
+        error: container.querySelector('#hotelsError'),
+      };
+      loadHotels(els);
+      els.body.addEventListener('click', (e) => {
+        const tr = e.target.closest('tr[data-hotel-idx]');
+        if (!tr) return;
+        const hotel = hotelsCache[Number(tr.dataset.hotelIdx)];
+        if (!hotel) return;
+        // Highlight the row that's open in the drawer.
+        els.body.querySelectorAll('tr').forEach((r) => r.classList.remove('row--selected'));
+        tr.classList.add('row--selected');
+        openHotelDrawer(hotel);
+      });
+    }
+
+    function loadHotels(els) {
+      els.error.hidden = true;
+      fetch(BOKUN_API_BASE + '/api/admin/hotels', {
+        cache: 'no-store',
+        headers: { Authorization: 'Bearer ' + session.access_token },
+      })
+        .then((r) => {
+          if (r.status === 401) { window.location.replace('/dashboard/login/'); throw new Error('unauthorized'); }
+          return r.json().then((b) => ({ ok: r.ok, body: b }));
+        })
+        .then((res) => {
+          if (!res.ok) throw new Error((res.body && res.body.error) || 'fetch_failed');
+          hotelsCache = res.body.hotels || [];
+          renderHotelsTable(els.body, hotelsCache);
+        })
+        .catch((err) => {
+          if (err && err.message === 'unauthorized') return;
+          console.error('admin hotels fetch failed', err);
+          els.error.textContent = 'Could not load hotels: ' + (err && err.message || 'unknown error');
+          els.error.hidden = false;
+          els.body.innerHTML =
+            '<tr><td colspan="7" class="muted" style="padding:var(--s8);text-align:center">Failed to load.</td></tr>';
+        });
+    }
+
+    function renderHotelsTable(body, hotels) {
+      if (!hotels.length) {
+        body.innerHTML =
+          '<tr><td colspan="7" class="muted" style="padding:var(--s8);text-align:center">No partners yet. Add the first one with the +Add button.</td></tr>';
+        return;
+      }
+      const frag = document.createDocumentFragment();
+      hotels.forEach((h, idx) => {
+        const activeStaff   = (h.staff    || []).filter((s) => s.status === 'active').length;
+        const activeMngrs   = (h.managers || []).filter((m) => m.status === 'active').length;
+        const tr = document.createElement('tr');
+        tr.className = 'hotel-row';
+        tr.dataset.hotelIdx = String(idx);
+        tr.innerHTML =
+          '<td>' + escapeHtml(h.name) + '</td>' +
+          '<td class="muted">' + escapeHtml(h.location || '—') + '</td>' +
+          '<td>' + typePill(h.type) + '</td>' +
+          '<td class="num">' + (h.commission_pct != null ? h.commission_pct + '%' : '—') + '</td>' +
+          '<td class="num">' + activeStaff + '</td>' +
+          '<td class="num">' + activeMngrs + '</td>' +
+          '<td>' + statusBadge(h.status) + '</td>';
+        frag.appendChild(tr);
+      });
+      body.innerHTML = '';
+      body.appendChild(frag);
+    }
+
+    function typePill(type) {
+      if (type === 'kickback') return '<span class="type-pill type-pill--kickback">kickback</span>';
+      if (type === 'pool')     return '<span class="type-pill type-pill--pool">pool</span>';
+      return '<span class="muted">—</span>';
+    }
+    function statusBadge(status) {
+      if (status === 'active')     return '<span class="badge badge--ok">Active</span>';
+      if (status === 'terminated') return '<span class="badge badge--neutral">Terminated</span>';
+      if (status === 'revoked')    return '<span class="badge badge--bad">Revoked</span>';
+      return '<span class="badge badge--neutral">' + escapeHtml(status || '—') + '</span>';
+    }
+
+    /* ── Hotel detail drawer ─────────────────────────────── */
+    const hotelDrawer      = document.getElementById('hotelDrawer');
+    const hotelDrawerTitle = document.getElementById('hotelDrawerTitle');
+    const hotelDrawerSub   = document.getElementById('hotelDrawerSub');
+    const hotelDrawerBody  = document.getElementById('hotelDrawerBody');
+    const hotelDrawerClose = document.getElementById('hotelDrawerClose');
+
+    function openHotelDrawer(hotel) {
+      hotelDrawerTitle.textContent = hotel.name;
+      hotelDrawerSub.textContent = hotel.code;
+      hotelDrawerBody.innerHTML = renderHotelDrawerBody(hotel);
+      hotelDrawer.hidden = false;
+    }
+    function closeHotelDrawer() {
+      hotelDrawer.hidden = true;
+      // Drop selected-row highlight.
+      document.querySelectorAll('.row--selected').forEach((r) => r.classList.remove('row--selected'));
+    }
+    hotelDrawerClose.addEventListener('click', closeHotelDrawer);
+    hotelDrawer.addEventListener('click', (e) => {
+      // Click on the backdrop (outside the panel) closes the drawer.
+      if (e.target === hotelDrawer) closeHotelDrawer();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !hotelDrawer.hidden) closeHotelDrawer();
+    });
+
+    function renderHotelDrawerBody(h) {
+      const overview = `
+        <section class="drawer-section">
+          <div class="drawer-section__head">
+            <h3 class="drawer-section__title">Overview</h3>
+          </div>
+          <dl class="drawer-fields">
+            <dt>Status</dt>          <dd>${statusBadge(h.status)}</dd>
+            <dt>Slug</dt>            <dd class="mono">${escapeHtml(h.code)}</dd>
+            <dt>Location</dt>        <dd>${escapeHtml(h.location || '—')}</dd>
+            <dt>Type</dt>            <dd>${typePill(h.type)}</dd>
+            <dt>Commission</dt>      <dd>${h.commission_pct != null ? h.commission_pct + '%' : '—'}</dd>
+            <dt>Kickback pool</dt>   <dd>${h.kickback_pool_pct != null ? h.kickback_pool_pct + '%' : '<span class="faint">not set</span>'}</dd>
+            <dt>Tracking code</dt>   <dd class="mono">${escapeHtml(h.default_tracking_code || '—')}</dd>
+            <dt>Effective date</dt>  <dd>${escapeHtml(h.effective_date || '—')}</dd>
+            <dt>Notes</dt>           <dd>${h.notes ? escapeHtml(h.notes) : '<span class="faint">—</span>'}</dd>
+          </dl>
+        </section>
+      `;
+
+      const staff = (h.staff || []).filter((s) => s.status === 'active');
+      const staffSection = `
+        <section class="drawer-section">
+          <div class="drawer-section__head">
+            <h3 class="drawer-section__title">Staff (${staff.length})</h3>
+          </div>
+          ${staff.length
+            ? `<table class="table">
+                 <thead><tr>
+                   <th>Name</th><th>Slug</th><th>Tracking</th><th class="num">Kickback</th>
+                 </tr></thead>
+                 <tbody>${staff.map((s) => `
+                   <tr>
+                     <td>${escapeHtml(s.name)}</td>
+                     <td class="mono faint">${escapeHtml(s.code)}</td>
+                     <td class="mono">${escapeHtml(s.tracking_code || '—')}</td>
+                     <td class="num">${s.kickback_pct != null ? s.kickback_pct + '%' : '—'}</td>
+                   </tr>`).join('')}
+                 </tbody>
+               </table>`
+            : '<p class="muted" style="font-size: var(--t-sm)">No staff yet.</p>'}
+        </section>
+      `;
+
+      const managers = (h.managers || []).filter((m) => m.status === 'active');
+      const managersSection = `
+        <section class="drawer-section">
+          <div class="drawer-section__head">
+            <h3 class="drawer-section__title">Managers (${managers.length})</h3>
+          </div>
+          ${managers.length
+            ? `<table class="table">
+                 <thead><tr><th>Email</th><th>Role</th><th>Added</th></tr></thead>
+                 <tbody>${managers.map((m) => `
+                   <tr>
+                     <td>${escapeHtml(m.email)}</td>
+                     <td class="muted">${escapeHtml(m.role || 'manager')}</td>
+                     <td class="muted">${escapeHtml(formatHumanDate((m.created_at || '').slice(0, 10)) || '—')}</td>
+                   </tr>`).join('')}
+                 </tbody>
+               </table>`
+            : '<p class="muted" style="font-size: var(--t-sm)">No managers assigned yet.</p>'}
+        </section>
+      `;
+
+      return overview + staffSection + managersSection;
+    }
 
     /* ── Period / range / formatting helpers ─────────────── */
     function startOfDay(d) { const c = new Date(d); c.setHours(0, 0, 0, 0); return c; }
