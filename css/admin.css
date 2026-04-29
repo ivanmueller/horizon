@@ -154,6 +154,11 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
      icons that sit beneath it. */
   padding: var(--s5) var(--s5) var(--s8) 18px;
 }
+.app-brand__chevron {
+  margin-left: auto;
+  display: inline-flex; align-items: center;
+  color: var(--text-faint);
+}
 .app-brand__icon {
   width: 24px; height: 24px;
   border-radius: var(--r-sm);
@@ -182,19 +187,19 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   font-size: 0.75rem;
   letter-spacing: 0;
   color: var(--text-faint);
-  font-weight: 300;
+  font-weight: 400;            /* matches Stripe's "Shortcuts" — light but present */
   padding: 0 var(--s3) var(--s2);
   margin-top: var(--s3);
 }
-.app-nav__group { display: flex; flex-direction: column; gap: 1px; }
+.app-nav__group { display: flex; flex-direction: column; gap: 2px; }
 
 .app-nav__item {
   display: flex; align-items: center;
-  gap: 8px;
+  gap: 10px;                   /* slightly more breathing between icon and label */
   padding: 7px var(--s3);
   border-radius: var(--r-sm);
   color: var(--nav-text);
-  font-size: 0.8125rem;        /* 13px — tighter than the previous 14px */
+  font-size: 0.8125rem;        /* 13px */
   font-weight: 400;
   letter-spacing: -0.003em;
   cursor: pointer;
@@ -206,16 +211,15 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .app-nav__item:hover {
   background: var(--nav-hover);   /* #f4f7fa cool wash on hover */
 }
-/* Active at rest: only the text + icon turn coral, background stays
-   transparent. Coral wash appears only on hover so the resting
-   state is calm and the hover gives the click affordance. */
+/* Active state matches Stripe: very faint tinted bg at rest + coral
+   text/icon. Hover bumps the tint slightly for click affordance. */
 .app-nav__item--active {
-  background: transparent;
+  background: rgba(255, 107, 74, 0.05);
   color: var(--accent);
   font-weight: 500;
 }
 .app-nav__item--active:hover {
-  background: var(--accent-soft); /* faint coral wash on hover only */
+  background: var(--accent-soft);   /* rgba(255, 107, 74, 0.08) — slightly more saturated */
   color: var(--accent);
 }
 .app-nav__item--active .app-nav__icon { color: var(--accent); }
