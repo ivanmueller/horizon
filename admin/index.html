@@ -67,6 +67,24 @@
 
   </div>
 
+  <!-- ── PDF invoice preview modal ────────────────────────── -->
+  <div class="pdf-modal" id="pdfModal" hidden>
+    <div class="pdf-modal__card">
+      <div class="pdf-modal__head">
+        <div>
+          <div class="pdf-modal__title" id="pdfTitle">Invoice</div>
+          <div class="pdf-modal__sub" id="pdfSub">—</div>
+        </div>
+        <button type="button" class="pdf-modal__close" id="pdfClose" aria-label="Close preview">×</button>
+      </div>
+      <iframe class="pdf-modal__frame" id="pdfFrame" title="Invoice preview"></iframe>
+      <div class="pdf-modal__actions">
+        <button type="button" class="btn" id="pdfCancel">Close</button>
+        <button type="button" class="btn btn--primary" id="pdfDownload">Download PDF</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Account modal (set / change password) ────────────── -->
   <div class="modal" id="acctModal" hidden>
     <form class="modal__card" id="acctForm">
@@ -93,6 +111,60 @@
       </div>
     </form>
   </div>
+
+  <!-- pdfkit (browser bundle) for the in-dashboard invoice generator.
+       Loaded ahead of the main module so window.PDFDocument is set
+       by the time bookings render. ~600KB, internal page only. -->
+  <script src="https://unpkg.com/pdfkit@0.15.0/js/pdfkit.standalone.js"></script>
+
+  <!-- Minimal blob-stream replacement. The npm `blob-stream` package
+       is published as Node CommonJS and won't load via a CDN <script>.
+       This polyfill implements just enough of the Writable contract
+       for pdfkit's pipe loop. -->
+  <script>
+    window.blobStream = function () {
+      var chunks = [];
+      var listeners = Object.create(null);
+      function emit(ev) {
+        var cbs = listeners[ev]; if (!cbs) return;
+        var args = [].slice.call(arguments, 1);
+        cbs.slice().forEach(function (cb) {
+          try { cb.apply(null, args); } catch (err) { console.error(err); }
+        });
+      }
+      return {
+        writable: true,
+        write: function (chunk) { if (chunk != null) chunks.push(chunk); return true; },
+        end: function (chunk) {
+          if (chunk != null) chunks.push(chunk);
+          setTimeout(function () { emit('finish'); }, 0);
+        },
+        on: function (ev, cb) { (listeners[ev] = listeners[ev] || []).push(cb); return this; },
+        once: function (ev, cb) {
+          var self = this;
+          var wrap = function () { self.off(ev, wrap); cb.apply(null, arguments); };
+          return this.on(ev, wrap);
+        },
+        off: function (ev, cb) {
+          if (!listeners[ev]) return this;
+          listeners[ev] = listeners[ev].filter(function (x) { return x !== cb; });
+          return this;
+        },
+        removeListener: function (ev, cb) { return this.off(ev, cb); },
+        emit: emit,
+        toBlob: function (type) { return new Blob(chunks, { type: type || 'application/octet-stream' }); },
+      };
+    };
+  </script>
+
+  <!-- Shared PDF rendering module. Same code path the Node CLI uses
+       so dashboard-generated PDFs match the cron output byte-for-byte. -->
+  <script type="module">
+    import { renderInvoice, computeAggregates }
+      from '/scripts/horizon/invoice-pdf.mjs';
+    window.__horizonInvoice = { renderInvoice, computeAggregates };
+    document.dispatchEvent(new Event('horizon-invoice-ready'));
+  </script>
 
   <script type="module">
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
@@ -173,7 +245,14 @@
         navItems[r.id].classList.toggle('app-nav__item--active', r.id === id);
       }
       const renderer = renderers[id] || renderers.home;
-      document.getElementById('appContent').innerHTML = renderer();
+      const out = renderer();
+      const container = document.getElementById('appContent');
+      if (typeof out === 'string') {
+        container.innerHTML = out;
+      } else {
+        container.innerHTML = out.html || '';
+        if (typeof out.mount === 'function') out.mount(container);
+      }
       document.title = 'Horizon admin — ' + (ROUTES.find(r => r.id === id) || ROUTES[0]).label;
     }
 
@@ -197,18 +276,76 @@
         `;
       },
       bookings() {
-        return `
-          <header class="page-head">
-            <div>
-              <h1 class="page-head__title">Bookings</h1>
-              <p class="page-head__sub">Cross-hotel commission rollup with per-partner detail.</p>
+        return {
+          html: `
+            <header class="page-head">
+              <div>
+                <h1 class="page-head__title">Bookings</h1>
+                <p class="page-head__sub" id="bkSub">—</p>
+              </div>
+              <div class="page-head__actions">
+                <button type="button" class="btn" id="bkRefresh">Refresh</button>
+              </div>
+            </header>
+
+            <div class="alert alert--bad" id="bkError" hidden></div>
+
+            <div class="bookings-controls">
+              <div class="pills" role="group" aria-label="Period">
+                <button type="button" class="pills__btn" data-period="this-month">This month</button>
+                <button type="button" class="pills__btn" data-period="last-month">Last month</button>
+                <button type="button" class="pills__btn" data-period="ytd">YTD</button>
+                <button type="button" class="pills__btn" data-period="custom">Custom</button>
+              </div>
+              <div class="range-custom" id="bkCustom">
+                <input type="date" id="bkFrom"> <span class="muted">→</span>
+                <input type="date" id="bkTo">
+                <button type="button" class="btn btn--sm" id="bkCustomApply">Apply</button>
+              </div>
             </div>
-          </header>
-          <div class="empty">
-            <div class="empty__title">Re-skinning in progress</div>
-            <p class="empty__body">The existing summary, kickback breakdown, status mutation, and invoice button move into this view in the next commit. Behaviour stays identical; just the chrome changes.</p>
-          </div>
-        `;
+
+            <section class="stat-grid" style="margin-bottom: var(--s6);">
+              <div class="stat"><div class="stat__label">Bookings</div>      <div class="stat__value" id="bkBookings">—</div></div>
+              <div class="stat"><div class="stat__label">Travelers</div>     <div class="stat__value" id="bkTravelers">—</div></div>
+              <div class="stat"><div class="stat__label">Revenue</div>       <div class="stat__value" id="bkRevenue">—</div></div>
+              <div class="stat"><div class="stat__label">Commission owed</div><div class="stat__value" id="bkCommission">—</div></div>
+              <div class="stat"><div class="stat__label">Kickbacks owed</div><div class="stat__value" id="bkKickbacks">—</div></div>
+              <div class="stat"><div class="stat__label">Net to Horizon</div><div class="stat__value" style="color: var(--accent);" id="bkNet">—</div></div>
+            </section>
+
+            <section class="card" style="padding: 0;">
+              <div class="card__head" style="padding: var(--s5) var(--s6); margin: 0; border-bottom: 1px solid var(--border);">
+                <div>
+                  <div class="card__title">Hotels</div>
+                  <div class="card__sub">Click a hotel to expand its bookings + kickbacks.</div>
+                </div>
+              </div>
+              <div style="overflow-x: auto;">
+                <table class="table" id="bkTable">
+                  <thead>
+                    <tr>
+                      <th>Hotel</th>
+                      <th>Location</th>
+                      <th>Type</th>
+                      <th class="num">Bookings</th>
+                      <th class="num">Revenue</th>
+                      <th class="num">Commission</th>
+                      <th class="num">Kickbacks</th>
+                      <th class="num">Net</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="bkBody"></tbody>
+                </table>
+              </div>
+              <div class="empty" id="bkEmpty" hidden style="border: 0; border-radius: 0; padding: var(--s10) var(--s5);">
+                <div class="empty__title">No bookings in this period</div>
+                <p class="empty__body">Try a different range, or check back once partners are sending traffic.</p>
+              </div>
+            </section>
+          `,
+          mount: mountBookings,
+        };
       },
       hotels() {
         return placeholderPage(
@@ -329,7 +466,507 @@
       }
     });
 
-    /* ── Icons (Lucide-style line, 18px viewBox=24) ──────── */
+    /* ── Bookings route ──────────────────────────────────── */
+    const BOKUN_API_BASE = 'https://horizon-bokun.ivan-mueller02.workers.dev';
+
+    // Module-level so period choice survives Refresh + sidebar
+    // re-renders within the bookings route.
+    let currentPeriod = 'this-month';
+    let customRange = null;
+    let hotelByCode = {};
+
+    function mountBookings(container) {
+      const els = {
+        sub:        container.querySelector('#bkSub'),
+        refresh:    container.querySelector('#bkRefresh'),
+        error:      container.querySelector('#bkError'),
+        pillBtns:   container.querySelectorAll('.pills__btn'),
+        custom:     container.querySelector('#bkCustom'),
+        from:       container.querySelector('#bkFrom'),
+        to:         container.querySelector('#bkTo'),
+        customApply:container.querySelector('#bkCustomApply'),
+        bookings:   container.querySelector('#bkBookings'),
+        travelers:  container.querySelector('#bkTravelers'),
+        revenue:    container.querySelector('#bkRevenue'),
+        commission: container.querySelector('#bkCommission'),
+        kickbacks:  container.querySelector('#bkKickbacks'),
+        net:        container.querySelector('#bkNet'),
+        body:       container.querySelector('#bkBody'),
+        empty:      container.querySelector('#bkEmpty'),
+      };
+
+      // Reflect current period on the pills.
+      els.pillBtns.forEach(btn => {
+        btn.classList.toggle('pills__btn--active', btn.dataset.period === currentPeriod);
+      });
+      if (currentPeriod === 'custom') els.custom.classList.add('range-custom--show');
+
+      els.pillBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          els.pillBtns.forEach(b => b.classList.remove('pills__btn--active'));
+          btn.classList.add('pills__btn--active');
+          currentPeriod = btn.dataset.period;
+          if (currentPeriod === 'custom') {
+            els.custom.classList.add('range-custom--show');
+          } else {
+            els.custom.classList.remove('range-custom--show');
+            customRange = null;
+            loadSummary(els);
+          }
+        });
+      });
+
+      els.customApply.addEventListener('click', () => {
+        const f = els.from.value, t = els.to.value;
+        if (!f || !t)  return showError(els, 'Pick both dates first.');
+        if (f > t)     return showError(els, 'From date must be before To date.');
+        customRange = makeRange(
+          new Date(f + 'T00:00:00'),
+          new Date(t + 'T23:59:59.999'),
+        );
+        loadSummary(els);
+      });
+
+      els.refresh.addEventListener('click', () => loadSummary(els));
+
+      loadSummary(els);
+    }
+
+    function showError(els, msg) {
+      els.error.textContent = msg;
+      els.error.hidden = false;
+    }
+    function clearError(els) {
+      els.error.hidden = true;
+      els.error.textContent = '';
+    }
+
+    function loadSummary(els) {
+      const r = rangeForPeriod();
+      if (!r) return;
+      clearError(els);
+      els.sub.textContent = formatRange(r.labelFrom, r.labelTo);
+
+      fetch(BOKUN_API_BASE + '/api/admin/summary' +
+            '?from=' + encodeURIComponent(r.from) +
+            '&to='   + encodeURIComponent(r.to), {
+        headers: { Authorization: 'Bearer ' + session.access_token },
+        cache: 'no-store',
+      })
+        .then(res => {
+          if (res.status === 401) {
+            window.location.replace('/dashboard/login/');
+            throw new Error('unauthorized');
+          }
+          if (res.status === 403) {
+            showError(els, 'Your account isn’t authorised for the Horizon admin dashboard.');
+            throw new Error('forbidden');
+          }
+          return res.json().then(b => ({ ok: res.ok, body: b }));
+        })
+        .then(res => {
+          if (!res.ok) throw new Error((res.body && res.body.error) || 'fetch_failed');
+          renderTotals(els, res.body.totals || {});
+          renderHotels(els, res.body.hotels || [], r);
+        })
+        .catch(err => {
+          if (err && (err.message === 'unauthorized' || err.message === 'forbidden')) return;
+          console.error('admin summary fetch failed', err);
+          showError(els, 'Could not load summary: ' + (err && err.message || 'unknown error'));
+        });
+    }
+
+    function renderTotals(els, t) {
+      els.bookings.textContent   = String(t.bookings || 0);
+      els.travelers.textContent  = String(t.travelers || 0);
+      els.revenue.textContent    = formatMoney(t.revenue || 0);
+      els.commission.textContent = formatMoney(t.commission_owed || 0);
+      els.kickbacks.textContent  = formatMoney(t.kickbacks_owed || 0);
+      els.net.textContent        = formatMoney(t.net_to_horizon || 0);
+    }
+
+    function renderHotels(els, hotels, range) {
+      els.body.innerHTML = '';
+      hotelByCode = {};
+      hotels.forEach(h => { hotelByCode[h.code] = h; });
+      if (!hotels.length) { els.empty.hidden = false; return; }
+      els.empty.hidden = true;
+
+      const frag = document.createDocumentFragment();
+      hotels.forEach(h => {
+        const net = (h.revenue || 0) - (h.commission_owed || 0) - (h.kickbacks_total || 0);
+        const typePill = h.type === 'kickback'
+          ? '<span class="type-pill type-pill--kickback">kickback</span>'
+          : '<span class="type-pill type-pill--pool">pool</span>';
+
+        const tr = document.createElement('tr');
+        tr.className = 'hotel-row';
+        tr.innerHTML =
+          '<td><span class="row-caret"></span>' + escapeHtml(h.name) + '</td>' +
+          '<td class="muted">' + escapeHtml(h.location || '—') + '</td>' +
+          '<td>' + typePill + '</td>' +
+          '<td class="num">' + (h.bookings || 0) + '</td>' +
+          '<td class="num">' + formatMoney(h.revenue || 0) + '</td>' +
+          '<td class="num">' + formatMoney(h.commission_owed || 0) + '</td>' +
+          '<td class="num">' + formatMoney(h.kickbacks_total || 0) + '</td>' +
+          '<td class="num">' + formatMoney(net) + '</td>' +
+          '<td><button class="btn btn--primary btn--sm invoice-btn" data-hotel="' + escapeHtml(h.code) + '" type="button">Invoice</button></td>';
+
+        const detail = document.createElement('tr');
+        detail.className = 'detail-row';
+        detail.hidden = true;
+        detail.innerHTML = '<td colspan="9">' + buildDetailShell(h) + '</td>';
+
+        let loaded = false;
+        tr.addEventListener('click', () => {
+          const open = tr.classList.toggle('hotel-row--open');
+          detail.hidden = !open;
+          if (open && !loaded) {
+            loaded = true;
+            loadHotelBookings(h.code, range, detail);
+          }
+        });
+
+        frag.appendChild(tr);
+        frag.appendChild(detail);
+      });
+      els.body.appendChild(frag);
+    }
+
+    function buildDetailShell(h) {
+      let html = '<div class="detail-inner">';
+      if (h.type === 'kickback' && h.kickbacks && h.kickbacks.length) {
+        html += '<h3>Kickback breakdown</h3><table><thead><tr>' +
+          '<th>Staff</th><th class="num">Rate</th><th class="num">Bookings</th>' +
+          '<th class="num">Revenue</th><th class="num">Kickback owed</th></tr></thead><tbody>';
+        h.kickbacks.forEach(k => {
+          html +=
+            '<tr><td>' + escapeHtml(k.staff_name) + '</td>' +
+            '<td class="num">' + (k.kickback_pct || 0) + '%</td>' +
+            '<td class="num">' + (k.bookings || 0) + '</td>' +
+            '<td class="num">' + formatMoney(k.revenue || 0) + '</td>' +
+            '<td class="num">' + formatMoney(k.kickback_owed || 0) + '</td></tr>';
+        });
+        html += '</tbody></table>';
+      }
+      html += '<h3>Bookings</h3><div data-bookings-slot></div>';
+      html += '</div>';
+      return html;
+    }
+
+    function loadHotelBookings(hotelCode, range, detailRow) {
+      const slot = detailRow.querySelector('[data-bookings-slot]');
+      if (!slot) return;
+      slot.innerHTML = '<p class="muted" style="font-size: var(--t-sm)">Loading…</p>';
+
+      const qs = '?hotel=' + encodeURIComponent(hotelCode) +
+                 '&from=' + encodeURIComponent(range.from) +
+                 '&to='   + encodeURIComponent(range.to);
+      fetch(BOKUN_API_BASE + '/api/dashboard/bookings' + qs, {
+        cache: 'no-store',
+        headers: { Authorization: 'Bearer ' + session.access_token },
+      })
+        .then(r => r.json().then(b => ({ ok: r.ok, body: b })))
+        .then(res => {
+          if (!res.ok) throw new Error((res.body && res.body.error) || 'fetch_failed');
+          slot.innerHTML = renderBookingsTable(res.body.records || []);
+        })
+        .catch(err => {
+          slot.innerHTML = '<p class="muted" style="font-size: var(--t-sm); color: var(--bad-fg)">Could not load bookings: ' +
+            escapeHtml(err && err.message || 'unknown error') + '</p>';
+        });
+    }
+
+    function renderBookingsTable(records) {
+      if (!records.length) {
+        return '<p class="muted" style="font-size: var(--t-sm)">No bookings in this period.</p>';
+      }
+      let html = '<table><thead><tr>' +
+        '<th>Booked</th><th>Tour date</th><th>Tour</th><th>Guest</th>' +
+        '<th class="num">Travelers</th><th class="num">Amount</th>' +
+        '<th>Attribution</th><th>Confirmation</th><th>Status</th></tr></thead><tbody>';
+      records.forEach(r => {
+        const travelers = (r.adults || 0) + (r.youth || 0) + (r.infants || 0);
+        const attribution = r.staff && r.staff.name
+          ? escapeHtml(r.staff.name)
+          : '<span class="faint">hotel pool</span>';
+        const status = r.status || 'confirmed';
+        const sel =
+          '<select class="status status--' + escapeHtml(status) + '" ' +
+                  'data-id="' + escapeHtml(r.id) + '" data-prev="' + escapeHtml(status) + '">' +
+            '<option value="confirmed"'      + (status === 'confirmed' ? ' selected' : '')      + '>Confirmed</option>' +
+            '<option value="cancelled"'      + (status === 'cancelled' ? ' selected' : '')      + '>Cancelled</option>' +
+            '<option value="refunded"'       + (status === 'refunded' ? ' selected' : '')       + '>Refunded</option>' +
+            '<option value="pending_refund"' + (status === 'pending_refund' ? ' selected' : '') + '>Pending refund</option>' +
+          '</select>';
+        html +=
+          '<tr>' +
+            '<td>' + escapeHtml(formatHumanDateTime(r.created_at)) + '</td>' +
+            '<td>' + escapeHtml(formatHumanDate(r.date) || '—') + '</td>' +
+            '<td>' + escapeHtml(r.tour_title || '—') + '</td>' +
+            '<td>' + escapeHtml(r.lead_name || '—') + '</td>' +
+            '<td class="num">' + travelers + '</td>' +
+            '<td class="num">' + escapeHtml(r.amount != null ? formatMoney(r.amount) : '—') + '</td>' +
+            '<td>' + attribution + '</td>' +
+            '<td><span class="mono faint">' + escapeHtml(r.confirmation_code || '—') + '</span></td>' +
+            '<td>' + sel + '</td>' +
+          '</tr>';
+      });
+      html += '</tbody></table>';
+      return html;
+    }
+
+    /* ── Delegated handlers — survive route re-renders ───── */
+    document.body.addEventListener('change', (e) => {
+      const sel = e.target;
+      if (!sel || !sel.classList || !sel.classList.contains('status')) return;
+      onStatusChange(sel);
+    });
+
+    document.body.addEventListener('click', (e) => {
+      const btn = e.target && e.target.closest && e.target.closest('.invoice-btn');
+      if (!btn) return;
+      e.stopPropagation();
+      e.preventDefault();
+      onInvoiceClick(btn);
+    });
+
+    function onStatusChange(sel) {
+      const id = sel.dataset.id;
+      const prev = sel.dataset.prev;
+      const next = sel.value;
+      if (next === prev) return;
+      if (!window.confirm('Change booking status from "' + prev + '" to "' + next +
+                          '"? Totals on this page will be stale until you hit Refresh.')) {
+        sel.value = prev;
+        return;
+      }
+      sel.disabled = true;
+      fetch(BOKUN_API_BASE + '/api/admin/bookings/' + encodeURIComponent(id), {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + session.access_token,
+        },
+        body: JSON.stringify({ status: next }),
+      })
+        .then(r => {
+          if (r.status === 401) {
+            window.location.replace('/dashboard/login/');
+            throw new Error('unauthorized');
+          }
+          return r.json().then(b => ({ ok: r.ok, body: b }));
+        })
+        .then(res => {
+          if (!res.ok) throw new Error((res.body && res.body.error) || 'update_failed');
+          sel.dataset.prev = next;
+          sel.className = 'status status--' + next;
+          sel.disabled = false;
+        })
+        .catch(err => {
+          if (err && err.message === 'unauthorized') return;
+          console.error('status update failed', err);
+          window.alert('Could not update status: ' + (err && err.message || 'unknown error'));
+          sel.value = prev;
+          sel.disabled = false;
+        });
+    }
+
+    function onInvoiceClick(btn) {
+      const code = btn.dataset.hotel;
+      const hotel = hotelByCode[code];
+      if (!hotel) return window.alert('Hotel not loaded — refresh and try again.');
+      const range = rangeForPeriod();
+      if (!range || !range.slug) return window.alert('Pick a period first.');
+
+      const orig = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Generating…';
+
+      generateInvoice(hotel, range)
+        .catch(err => {
+          console.error('invoice generation failed', err);
+          window.alert('Could not generate invoice: ' + (err && err.message || 'unknown error'));
+        })
+        .then(() => {
+          btn.disabled = false;
+          btn.textContent = orig;
+        });
+    }
+
+    function whenInvoiceReady() {
+      if (window.__horizonInvoice) return Promise.resolve();
+      return new Promise(resolve => {
+        document.addEventListener('horizon-invoice-ready', function onReady() {
+          document.removeEventListener('horizon-invoice-ready', onReady);
+          resolve();
+        });
+        setTimeout(resolve, 8000);
+      });
+    }
+
+    function generateInvoice(hotel, range) {
+      return whenInvoiceReady().then(() => {
+        if (!window.__horizonInvoice) throw new Error('Invoice module did not load — check console for /scripts/horizon/invoice-pdf.mjs errors.');
+        if (!window.PDFDocument)      throw new Error('pdfkit did not load — unpkg may be blocked.');
+        if (!window.blobStream)       throw new Error('blob-stream polyfill missing.');
+
+        const qs = '?hotel=' + encodeURIComponent(hotel.code) +
+                   '&from=' + encodeURIComponent(range.from) +
+                   '&to='   + encodeURIComponent(range.to);
+
+        return fetch(BOKUN_API_BASE + '/api/dashboard/bookings' + qs, {
+          cache: 'no-store',
+          headers: { Authorization: 'Bearer ' + session.access_token },
+        })
+          .then(r => r.json().then(b => ({ ok: r.ok, body: b })))
+          .then(res => {
+            if (!res.ok) throw new Error((res.body && res.body.error) || 'fetch_failed');
+            const records = (res.body.records || []).filter(r => r.status === 'confirmed');
+            if (!records.length) throw new Error('No confirmed bookings in this period');
+
+            const commissionPct = (res.body.hotel && Number(res.body.hotel.commission_pct)) || 0;
+            const name = (res.body.hotel && res.body.hotel.name) || hotel.name;
+            const aggregates = window.__horizonInvoice.computeAggregates(records, commissionPct);
+
+            const doc = new window.PDFDocument({
+              size: 'A4', margin: 50, bufferPages: true,
+              info: {
+                Title:   'Horizon commission ' + range.label + ' — ' + name,
+                Author:  'Horizon Tours',
+                Subject: 'Commission statement',
+              },
+            });
+            const stream = doc.pipe(window.blobStream());
+
+            window.__horizonInvoice.renderInvoice(doc, {
+              hotel:     { code: hotel.code, name: name, commission_pct: commissionPct },
+              range:     range,
+              totals:    aggregates.totals,
+              kickbacks: aggregates.kickbacks,
+              records:   records,
+            });
+            doc.end();
+
+            return new Promise((resolve, reject) => {
+              stream.on('finish', () => {
+                try {
+                  const blob = stream.toBlob('application/pdf');
+                  showPdfPreview(blob, hotel.code + '_' + range.slug + '.pdf', name, range.label);
+                  resolve();
+                } catch (err) { reject(err); }
+              });
+              stream.on('error', reject);
+            });
+          });
+      });
+    }
+
+    /* ── PDF preview modal ───────────────────────────────── */
+    let currentPdfPreview = null;
+    const pdfModal    = document.getElementById('pdfModal');
+    const pdfFrame    = document.getElementById('pdfFrame');
+    const pdfTitle    = document.getElementById('pdfTitle');
+    const pdfSub      = document.getElementById('pdfSub');
+
+    function showPdfPreview(blob, filename, hotelName, periodLabel) {
+      if (currentPdfPreview && currentPdfPreview.blobUrl) URL.revokeObjectURL(currentPdfPreview.blobUrl);
+      const blobUrl = URL.createObjectURL(blob);
+      currentPdfPreview = { blobUrl, filename };
+      pdfTitle.textContent = hotelName;
+      pdfSub.textContent   = periodLabel;
+      pdfFrame.src         = blobUrl;
+      pdfModal.hidden      = false;
+    }
+    function hidePdfPreview() {
+      pdfModal.hidden = true;
+      pdfFrame.src    = 'about:blank';
+      if (currentPdfPreview && currentPdfPreview.blobUrl) URL.revokeObjectURL(currentPdfPreview.blobUrl);
+      currentPdfPreview = null;
+    }
+    document.getElementById('pdfClose').addEventListener('click', hidePdfPreview);
+    document.getElementById('pdfCancel').addEventListener('click', hidePdfPreview);
+    document.getElementById('pdfDownload').addEventListener('click', () => {
+      if (!currentPdfPreview) return;
+      const a = document.createElement('a');
+      a.href = currentPdfPreview.blobUrl;
+      a.download = currentPdfPreview.filename;
+      document.body.appendChild(a); a.click(); a.remove();
+    });
+    pdfModal.addEventListener('click', (e) => { if (e.target === pdfModal) hidePdfPreview(); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !pdfModal.hidden) hidePdfPreview();
+    });
+
+    /* ── Period / range / formatting helpers ─────────────── */
+    function startOfDay(d) { const c = new Date(d); c.setHours(0, 0, 0, 0); return c; }
+    function endOfDay(d)   { const c = new Date(d); c.setHours(23, 59, 59, 999); return c; }
+    function pad2(n) { return String(n).padStart(2, '0'); }
+    function monthLong(m) {
+      return ['January','February','March','April','May','June',
+              'July','August','September','October','November','December'][m] || '';
+    }
+    function makeRange(fromDate, toDate, opts) {
+      const labelFrom = ymd(fromDate);
+      const labelTo   = ymd(toDate);
+      return {
+        from:      fromDate.toISOString(),
+        to:        toDate.toISOString(),
+        labelFrom, labelTo,
+        slug:  (opts && opts.slug)  || (labelFrom + '_' + labelTo),
+        label: (opts && opts.label) || (formatHumanDate(labelFrom) + ' – ' + formatHumanDate(labelTo)),
+      };
+    }
+    function rangeForPeriod() {
+      const now = new Date();
+      const y = now.getFullYear(), m = now.getMonth();
+      if (currentPeriod === 'this-month') {
+        return makeRange(startOfDay(new Date(y, m, 1)), now,
+          { slug: y + '-' + pad2(m + 1), label: monthLong(m) + ' ' + y });
+      }
+      if (currentPeriod === 'last-month') {
+        const firstThis = new Date(y, m, 1);
+        const lastPrev  = endOfDay(new Date(firstThis.getTime() - 1));
+        const firstPrev = startOfDay(new Date(lastPrev.getFullYear(), lastPrev.getMonth(), 1));
+        return makeRange(firstPrev, lastPrev,
+          { slug: lastPrev.getFullYear() + '-' + pad2(lastPrev.getMonth() + 1),
+            label: monthLong(lastPrev.getMonth()) + ' ' + lastPrev.getFullYear() });
+      }
+      if (currentPeriod === 'ytd') {
+        return makeRange(startOfDay(new Date(y, 0, 1)), now,
+          { slug: y + '-ytd', label: y + ' year-to-date' });
+      }
+      if (currentPeriod === 'custom' && customRange) return customRange;
+      return makeRange(startOfDay(new Date(y, m, 1)), now,
+        { slug: y + '-' + pad2(m + 1), label: monthLong(m) + ' ' + y });
+    }
+    function ymd(d) {
+      return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+    }
+    function formatMoney(n) {
+      return 'CA$' + (Math.round((n || 0) * 100) / 100).toFixed(2);
+    }
+    function formatRange(from, to) {
+      return formatHumanDate(from) + ' – ' + formatHumanDate(to);
+    }
+    function formatHumanDate(s) {
+      if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return s || '';
+      const p = s.split('-').map(Number);
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return months[p[1] - 1] + ' ' + p[2] + ', ' + p[0];
+    }
+    function formatHumanDateTime(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return '—';
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      let hr = d.getHours(); const mer = hr >= 12 ? 'pm' : 'am';
+      hr = hr % 12; if (hr === 0) hr = 12;
+      const min = String(d.getMinutes()).padStart(2, '0');
+      return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear() + ' ' + hr + ':' + min + mer;
+    }
+
+    /* ── Icons (Lucide-style line, 16px viewBox=24) ──────── */
     function svg(d) {
       return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
     }
