@@ -162,7 +162,10 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .app-brand__icon {
   width: 24px; height: 24px;
   border-radius: var(--r-sm);
-  background: var(--accent);
+  /* Logo stays coral even though the rest of the admin moved to teal —
+     the Horizon mark is brand identity, not a UI accent. Hardcoded so
+     it doesn't track --accent. */
+  background: #FF6B4A;
   display: inline-flex; align-items: center; justify-content: center;
   color: #fff;
   flex-shrink: 0;
