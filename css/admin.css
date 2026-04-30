@@ -897,7 +897,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
    Variables only — accent comes from --accent (#08BDAF).
    ─────────────────────────────────────────────────────────────── */
 .bk-page__head {
-  display: flex; align-items: flex-start; justify-content: space-between;
+  display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 0;
   gap: var(--s4);
 }
