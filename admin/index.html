@@ -412,39 +412,87 @@
       hotels() {
         return {
           html: `
-            <header class="page-head">
-              <div>
-                <h1 class="page-head__title">Hotels</h1>
-                <p class="page-head__sub">Partner directory — click a row to view detail.</p>
-              </div>
-              <div class="page-head__actions">
+            <header class="bk-page__head">
+              <h1 class="bk-page__title">Hotels</h1>
+              <div class="bk-page__actions">
                 <button type="button" class="btn btn--primary" id="hotelsAdd">+ Add hotel</button>
+                <button type="button" class="btn" id="hotelsAnalyze">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
+                  Analyze
+                </button>
               </div>
             </header>
 
             <div class="alert alert--bad" id="hotelsError" hidden></div>
             <div class="alert alert--ok"  id="hotelsNotice" hidden></div>
 
-            <section class="card" style="padding: 0;">
-              <div style="overflow-x: auto;">
-                <table class="table">
+            <div class="bk-statcards" id="hotelsStatcards" role="group" aria-label="Hotel filter">
+              <button type="button" class="bk-statcard bk-statcard--active" data-filter="all">
+                <div class="bk-statcard__label">All</div>
+                <div class="bk-statcard__value" data-count="all">—</div>
+              </button>
+              <button type="button" class="bk-statcard" data-filter="active">
+                <div class="bk-statcard__label">Active</div>
+                <div class="bk-statcard__value" data-count="active">—</div>
+              </button>
+              <button type="button" class="bk-statcard" data-filter="terminated">
+                <div class="bk-statcard__label">Terminated</div>
+                <div class="bk-statcard__value" data-count="terminated">—</div>
+              </button>
+              <button type="button" class="bk-statcard" data-filter="kickback">
+                <div class="bk-statcard__label">Kickback</div>
+                <div class="bk-statcard__value" data-count="kickback">—</div>
+              </button>
+              <button type="button" class="bk-statcard" data-filter="pool">
+                <div class="bk-statcard__label">Pool</div>
+                <div class="bk-statcard__value" data-count="pool">—</div>
+              </button>
+            </div>
+
+            <div class="bk-toolbar">
+              <div class="bk-filters">
+                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Name</button>
+                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Location</button>
+                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Type</button>
+                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Status</button>
+                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> More filters</button>
+              </div>
+              <div class="bk-toolbar__actions">
+                <button type="button" class="bk-iconbtn" id="hotelsExport">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Export
+                </button>
+                <button type="button" class="bk-iconbtn" id="hotelsEditCols">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                  Edit columns
+                </button>
+              </div>
+            </div>
+
+            <div class="bk-table-wrap">
+              <div class="bk-table-scroll">
+                <table class="bk-table" id="hotelsTable">
                   <thead>
                     <tr>
+                      <th class="bk-table__check"><input type="checkbox" id="hotelsCheckAll" aria-label="Select all"></th>
                       <th>Hotel</th>
                       <th>Location</th>
                       <th>Type</th>
-                      <th class="num">Commission</th>
-                      <th class="num">Staff</th>
-                      <th class="num">Managers</th>
+                      <th>Commission</th>
+                      <th>Staff</th>
+                      <th>Managers</th>
                       <th>Status</th>
+                      <th>Effective date</th>
+                      <th class="bk-table__kebab"></th>
                     </tr>
                   </thead>
                   <tbody id="hotelsBody">
-                    <tr><td colspan="7" class="muted" style="padding: var(--s8); text-align: center;">Loading…</td></tr>
+                    <tr><td colspan="10" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>
                   </tbody>
                 </table>
               </div>
-            </section>
+              <div class="bk-table__footer" id="hotelsFooter">— items</div>
+            </div>
           `,
           mount: mountHotels,
         };
@@ -973,28 +1021,71 @@
     });
 
     /* ── Hotels route ────────────────────────────────────── */
-    let hotelsCache = [];     // last list response, indexed by index
-    let hotelsEls   = null;   // captured in mountHotels so handlers can reload
+    let hotelsCache  = [];      // last list response, indexed by index
+    let hotelsEls    = null;    // captured in mountHotels so handlers can reload
+    let hotelsFilter = 'all';   // active stat-card filter
 
     function mountHotels(container) {
       hotelsEls = {
-        body:   container.querySelector('#hotelsBody'),
-        error:  container.querySelector('#hotelsError'),
-        notice: container.querySelector('#hotelsNotice'),
-        add:    container.querySelector('#hotelsAdd'),
+        body:       container.querySelector('#hotelsBody'),
+        error:      container.querySelector('#hotelsError'),
+        notice:     container.querySelector('#hotelsNotice'),
+        add:        container.querySelector('#hotelsAdd'),
+        analyze:    container.querySelector('#hotelsAnalyze'),
+        statcards:  container.querySelector('#hotelsStatcards'),
+        chips:      container.querySelectorAll('.bk-chip'),
+        export:     container.querySelector('#hotelsExport'),
+        editCols:   container.querySelector('#hotelsEditCols'),
+        footer:     container.querySelector('#hotelsFooter'),
+        checkAll:   container.querySelector('#hotelsCheckAll'),
       };
-      loadHotels(hotelsEls);
+
+      // Reset filter to "All" on every mount so the page opens neutral.
+      hotelsFilter = 'all';
+      hotelsEls.statcards.querySelectorAll('.bk-statcard').forEach(card => {
+        card.classList.toggle('bk-statcard--active', card.dataset.filter === 'all');
+      });
+
+      // Stat-card click → filter rows in-memory.
+      hotelsEls.statcards.addEventListener('click', (e) => {
+        const card = e.target.closest('.bk-statcard');
+        if (!card) return;
+        hotelsFilter = card.dataset.filter || 'all';
+        hotelsEls.statcards.querySelectorAll('.bk-statcard').forEach(c => {
+          c.classList.toggle('bk-statcard--active', c === card);
+        });
+        renderHotelsTable(hotelsEls.body, hotelsCache);
+      });
+
+      // Filter chips, Export, Edit columns, Analyze are shells for now.
+      hotelsEls.chips.forEach(c => c.addEventListener('click', noopChip));
+      hotelsEls.export.addEventListener('click',   noopChip);
+      hotelsEls.editCols.addEventListener('click', noopChip);
+      hotelsEls.analyze.addEventListener('click',  noopChip);
+
+      // Header "select all" — toggles every visible row checkbox.
+      hotelsEls.checkAll.addEventListener('change', () => {
+        hotelsEls.body.querySelectorAll('input[type="checkbox"][data-hotels-row]')
+          .forEach(cb => { cb.checked = hotelsEls.checkAll.checked; });
+      });
+
+      // Existing flows: "+ Add hotel" opens the create drawer; clicking
+      // a row opens the detail drawer + paints the row selected.
       hotelsEls.add.addEventListener('click', openHotelCreateDrawer);
       hotelsEls.body.addEventListener('click', (e) => {
+        // Ignore clicks on the row checkbox + kebab so they don't open
+        // the drawer.
+        if (e.target.closest('input,button.bk-kebab')) return;
         const tr = e.target.closest('tr[data-hotel-idx]');
         if (!tr) return;
         const hotel = hotelsCache[Number(tr.dataset.hotelIdx)];
         if (!hotel) return;
-        // Highlight the row that's open in the drawer.
         hotelsEls.body.querySelectorAll('tr').forEach((r) => r.classList.remove('row--selected'));
         tr.classList.add('row--selected');
         openHotelDrawer(hotel);
       });
+
+      loadHotels(hotelsEls);
     }
 
     function flashHotelsNotice(msg) {
@@ -1025,37 +1116,101 @@
           els.error.textContent = 'Could not load hotels: ' + (err && err.message || 'unknown error');
           els.error.hidden = false;
           els.body.innerHTML =
-            '<tr><td colspan="7" class="muted" style="padding:var(--s8);text-align:center">Failed to load.</td></tr>';
+            '<tr><td colspan="10" class="bk-empty"><div class="bk-empty__title">Failed to load</div><p class="bk-empty__body">Try again in a moment.</p></td></tr>';
         });
     }
 
     function renderHotelsTable(body, hotels) {
-      if (!hotels.length) {
+      // Update stat-card counts from the full unfiltered list every
+      // render — counts always reflect totals, not the current filter.
+      updateHotelsStatcardCounts(hotels);
+
+      const filtered = hotels.filter((h) => matchesHotelsFilter(h, hotelsFilter));
+
+      if (hotelsEls && hotelsEls.checkAll) hotelsEls.checkAll.checked = false;
+
+      if (!filtered.length) {
+        const msg = hotels.length
+          ? 'No partners match this filter.'
+          : 'No partners yet. Add the first one with the + Add hotel button.';
         body.innerHTML =
-          '<tr><td colspan="7" class="muted" style="padding:var(--s8);text-align:center">No partners yet. Add the first one with the +Add button.</td></tr>';
+          '<tr><td colspan="10" class="bk-empty">' +
+            '<div class="bk-empty__title">' + escapeHtml(msg) + '</div>' +
+          '</td></tr>';
+        if (hotelsEls && hotelsEls.footer) hotelsEls.footer.textContent = '0 items';
         return;
       }
+
       const frag = document.createDocumentFragment();
-      hotels.forEach((h, idx) => {
-        const activeStaff   = (h.staff    || []).filter((s) => s.status === 'active').length;
-        const activeMngrs   = (h.managers || []).filter((m) => m.status === 'active').length;
+      filtered.forEach((h) => {
+        // Original index inside hotelsCache — preserved so the existing
+        // row-click handler (data-hotel-idx) keeps resolving the right
+        // record after the visible list is filtered.
+        const idx = hotels.indexOf(h);
+        const activeStaff = (h.staff    || []).filter((s) => s.status === 'active').length;
+        const activeMngrs = (h.managers || []).filter((m) => m.status === 'active').length;
+        const typeLabel   = h.type === 'kickback' ? 'Kickback'
+                          : h.type === 'pool'     ? 'Pool'
+                          : '—';
+
         const tr = document.createElement('tr');
-        tr.className = 'hotel-row';
         tr.dataset.hotelIdx = String(idx);
         tr.innerHTML =
+          '<td class="bk-table__check"><input type="checkbox" data-hotels-row="' + escapeHtml(h.id || '') + '" aria-label="Select hotel"></td>' +
           '<td>' + escapeHtml(h.name) + '</td>' +
-          '<td class="muted">' + escapeHtml(h.location || '—') + '</td>' +
-          '<td>' + typePill(h.type) + '</td>' +
-          '<td class="num">' + (h.commission_pct != null ? h.commission_pct + '%' : '—') + '</td>' +
-          '<td class="num">' + activeStaff + '</td>' +
-          '<td class="num">' + activeMngrs + '</td>' +
-          '<td>' + statusBadge(h.status) + '</td>';
+          '<td class="bk-table__muted">' + escapeHtml(h.location || '—') + '</td>' +
+          '<td>' + escapeHtml(typeLabel) + '</td>' +
+          '<td>' + (h.commission_pct != null ? escapeHtml(h.commission_pct + '%') : '—') + '</td>' +
+          '<td>' + activeStaff + '</td>' +
+          '<td>' + activeMngrs + '</td>' +
+          '<td>' + hotelStatusPill(h.status) + '</td>' +
+          '<td class="bk-table__muted">' + escapeHtml(formatHumanDate(h.effective_date) || '—') + '</td>' +
+          '<td class="bk-table__kebab"><button type="button" class="bk-kebab" aria-label="Row actions">⋯</button></td>';
         frag.appendChild(tr);
       });
       body.innerHTML = '';
       body.appendChild(frag);
+
+      if (hotelsEls && hotelsEls.footer) {
+        hotelsEls.footer.textContent =
+          filtered.length + (filtered.length === 1 ? ' item' : ' items');
+      }
     }
 
+    function matchesHotelsFilter(h, filter) {
+      if (filter === 'all')        return true;
+      if (filter === 'active')     return h.status === 'active';
+      if (filter === 'terminated') return h.status === 'terminated';
+      if (filter === 'kickback')   return h.type === 'kickback';
+      if (filter === 'pool')       return h.type === 'pool';
+      return true;
+    }
+
+    function updateHotelsStatcardCounts(hotels) {
+      if (!hotelsEls || !hotelsEls.statcards) return;
+      const counts = {
+        all:        hotels.length,
+        active:     hotels.filter((h) => h.status === 'active').length,
+        terminated: hotels.filter((h) => h.status === 'terminated').length,
+        kickback:   hotels.filter((h) => h.type   === 'kickback').length,
+        pool:       hotels.filter((h) => h.type   === 'pool').length,
+      };
+      hotelsEls.statcards.querySelectorAll('[data-count]').forEach((node) => {
+        const k = node.dataset.count;
+        node.textContent = String(counts[k] != null ? counts[k] : 0);
+      });
+    }
+
+    function hotelStatusPill(status) {
+      if (status === 'active')     return '<span class="bk-pill bk-pill--ok">Active</span>';
+      if (status === 'terminated') return '<span class="bk-pill bk-pill--neutral">Terminated</span>';
+      if (status === 'revoked')    return '<span class="bk-pill bk-pill--neutral">Revoked</span>';
+      return '<span class="bk-pill bk-pill--neutral">' + escapeHtml(status || '—') + '</span>';
+    }
+
+    // Kept for any drawer-internal code that still references it. The
+    // hotels list now renders types as plain text per the Stripe-style
+    // table, but the drawer + detail-row breakdowns still call typePill.
     function typePill(type) {
       if (type === 'kickback') return '<span class="type-pill type-pill--kickback">kickback</span>';
       if (type === 'pool')     return '<span class="type-pill type-pill--pool">pool</span>';

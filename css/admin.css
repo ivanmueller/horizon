@@ -1067,6 +1067,9 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 .bk-table tbody tr:last-child > td { border-bottom: 0; }
 .bk-table tbody tr:hover > td { background: #f4f7fa; }
+.bk-table tbody tr.row--selected > td { background: #ecf1f6; }
+.bk-table tbody tr[data-hotel-idx],
+.bk-table tbody tr[data-bk-clickable] { cursor: pointer; }
 .bk-table__check { width: 28px; padding-right: 0 !important; }
 .bk-table__check input { cursor: pointer; }
 .bk-table__kebab { width: 36px; text-align: right; }
