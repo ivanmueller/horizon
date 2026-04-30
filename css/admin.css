@@ -307,6 +307,15 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   color: #fff;
 }
 .btn--primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+/* Hotels page primary CTA — fixed pill size + slightly bolder label.
+   Override .btn paddings so the explicit width/height land. */
+.hotels-add-btn {
+  width: 150px;
+  height: 30px;
+  padding: 0 var(--s3);
+  font-weight: 600;
+}
 .btn--ghost {
   background: none; border-color: transparent;
   color: var(--text-muted);
@@ -901,6 +910,10 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   margin-bottom: 0;
   gap: var(--s4);
 }
+/* Bigger gap below the page head when the page goes title→stat-cards
+   directly (no sub-tabs row). Used by Hotels; Bookings still has the
+   tabs row and stays at margin-bottom: 0. */
+.bk-page__head--md { margin-bottom: 21px; }
 .bk-page__title {
   font-family: var(--font-display);
   font-size: 1.625rem;
@@ -976,6 +989,18 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   font-feature-settings: 'tnum' 1;
   line-height: 1.1;
 }
+
+/* Label-only variant — used by Hotels where each card is just a
+   filter chip, not a stat. Centres the label horizontally and
+   vertically and drops the bottom margin between (now-absent) value. */
+.bk-statcard--label-only {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 56px;
+}
+.bk-statcard--label-only .bk-statcard__label { margin-bottom: 0; }
 
 /* ── Toolbar: filter chips + right-side actions ───────────────── */
 .bk-toolbar {

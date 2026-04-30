@@ -412,14 +412,10 @@
       hotels() {
         return {
           html: `
-            <header class="bk-page__head">
+            <header class="bk-page__head bk-page__head--md">
               <h1 class="bk-page__title">Hotels</h1>
               <div class="bk-page__actions">
-                <button type="button" class="btn btn--primary" id="hotelsAdd">+ Add hotel</button>
-                <button type="button" class="btn" id="hotelsAnalyze">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
-                  Analyze
-                </button>
+                <button type="button" class="btn btn--primary hotels-add-btn" id="hotelsAdd">+ Add hotel</button>
               </div>
             </header>
 
@@ -427,25 +423,20 @@
             <div class="alert alert--ok"  id="hotelsNotice" hidden></div>
 
             <div class="bk-statcards" id="hotelsStatcards" role="group" aria-label="Hotel filter">
-              <button type="button" class="bk-statcard bk-statcard--active" data-filter="all">
+              <button type="button" class="bk-statcard bk-statcard--label-only bk-statcard--active" data-filter="all">
                 <div class="bk-statcard__label">All</div>
-                <div class="bk-statcard__value" data-count="all">—</div>
               </button>
-              <button type="button" class="bk-statcard" data-filter="active">
+              <button type="button" class="bk-statcard bk-statcard--label-only" data-filter="active">
                 <div class="bk-statcard__label">Active</div>
-                <div class="bk-statcard__value" data-count="active">—</div>
               </button>
-              <button type="button" class="bk-statcard" data-filter="terminated">
+              <button type="button" class="bk-statcard bk-statcard--label-only" data-filter="terminated">
                 <div class="bk-statcard__label">Terminated</div>
-                <div class="bk-statcard__value" data-count="terminated">—</div>
               </button>
-              <button type="button" class="bk-statcard" data-filter="kickback">
+              <button type="button" class="bk-statcard bk-statcard--label-only" data-filter="kickback">
                 <div class="bk-statcard__label">Kickback</div>
-                <div class="bk-statcard__value" data-count="kickback">—</div>
               </button>
-              <button type="button" class="bk-statcard" data-filter="pool">
+              <button type="button" class="bk-statcard bk-statcard--label-only" data-filter="pool">
                 <div class="bk-statcard__label">Pool</div>
-                <div class="bk-statcard__value" data-count="pool">—</div>
               </button>
             </div>
 
@@ -1031,7 +1022,6 @@
         error:      container.querySelector('#hotelsError'),
         notice:     container.querySelector('#hotelsNotice'),
         add:        container.querySelector('#hotelsAdd'),
-        analyze:    container.querySelector('#hotelsAnalyze'),
         statcards:  container.querySelector('#hotelsStatcards'),
         chips:      container.querySelectorAll('.bk-chip'),
         export:     container.querySelector('#hotelsExport'),
@@ -1061,7 +1051,6 @@
       hotelsEls.chips.forEach(c => c.addEventListener('click', noopChip));
       hotelsEls.export.addEventListener('click',   noopChip);
       hotelsEls.editCols.addEventListener('click', noopChip);
-      hotelsEls.analyze.addEventListener('click',  noopChip);
 
       // Header "select all" — toggles every visible row checkbox.
       hotelsEls.checkAll.addEventListener('change', () => {
