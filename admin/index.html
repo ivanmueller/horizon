@@ -390,7 +390,7 @@
                       <th class="bk-table__check"><input type="checkbox" id="bkCheckAll" aria-label="Select all"></th>
                       <th>Amount</th>
                       <th>Hotel</th>
-                      <th>Description</th>
+                      <th>Tour ID</th>
                       <th>Customer</th>
                       <th>Date</th>
                       <th>Refunded date</th>
@@ -749,7 +749,7 @@
         const amount   = r.amount != null ? Number(r.amount).toFixed(2) : '—';
         const currency = (r.currency || 'CAD').toUpperCase();
         const hotel    = r._hotel || {};
-        const desc     = r.tour_title || r.confirmation_code || '—';
+        const desc     = 'HGCT';
         const customer = r.lead_email || r.lead_name || '—';
         const dateStr  = formatHumanDateTime(r.created_at);
         const refunded = (status === 'refunded' || status === 'pending_refund')
