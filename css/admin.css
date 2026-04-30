@@ -1054,12 +1054,12 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   padding: 10px var(--s4);
   background: transparent;
   border-top: 1px solid #d4dee9;
-  border-bottom: 1px solid #d4dee9;
+  border-bottom: 1px solid #ecf1f6;
   white-space: nowrap;
 }
 .bk-table tbody td {
   padding: 12px var(--s4);
-  border-bottom: 1px solid #d4dee9;
+  border-bottom: 1px solid #ecf1f6;
   white-space: nowrap;
   color: #1a2c44;
   vertical-align: middle;
@@ -1105,7 +1105,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   font-size: var(--t-sm);
   color: #35455a;
   font-weight: 500;
-  border-top: 0;
+  border-top: 1px solid #d4dee9;
   background: transparent;
 }
 
