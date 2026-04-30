@@ -308,13 +308,37 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 .btn--primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 
-/* Hotels page primary CTA — fixed pill size + slightly bolder label.
-   Override .btn paddings so the explicit width/height land. */
+/* Hotels page primary CTA — fixed pill size + slightly bolder label,
+   with a translucent "n" key hint at the right edge (mirrors Stripe's
+   keyboard-shortcut chip on Add customer). The label is centred in the
+   remaining space; the kbd sits inside the right padding. */
 .hotels-add-btn {
   width: 150px;
   height: 30px;
-  padding: 0 var(--s3);
+  padding: 0 6px 0 var(--s3);
   font-weight: 600;
+  position: relative;
+  gap: 0;
+}
+.hotels-add-btn__label {
+  flex: 1;
+  text-align: center;
+}
+.btn__kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  flex-shrink: 0;
 }
 .btn--ghost {
   background: none; border-color: transparent;

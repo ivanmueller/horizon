@@ -415,7 +415,10 @@
             <header class="bk-page__head bk-page__head--md">
               <h1 class="bk-page__title">Hotels</h1>
               <div class="bk-page__actions">
-                <button type="button" class="btn btn--primary hotels-add-btn" id="hotelsAdd">+ Add hotel</button>
+                <button type="button" class="btn btn--primary hotels-add-btn" id="hotelsAdd">
+                  <span class="hotels-add-btn__label">+ Add hotel</span>
+                  <kbd class="btn__kbd" aria-label="Shortcut: n">n</kbd>
+                </button>
               </div>
             </header>
 
@@ -1409,6 +1412,22 @@
     });
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && !hotelDrawer.hidden) closeHotelDrawer();
+    });
+
+    // "n" anywhere on the Hotels route opens the new-hotel drawer,
+    // mirroring Stripe's keyboard shortcut on the Customers page.
+    // Skipped while the user is typing in a field or the drawer is
+    // already open, and only on /admin/hotels/ so it doesn't fire on
+    // unrelated pages.
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'n' && e.key !== 'N') return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (currentRoute() !== 'hotels') return;
+      if (!hotelDrawer.hidden) return;
+      const t = e.target;
+      if (t && (t.matches('input, textarea, select') || t.isContentEditable)) return;
+      e.preventDefault();
+      openHotelCreateDrawer();
     });
 
     function renderHotelDrawerBody(h) {
