@@ -310,22 +310,24 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 
 /* Hotels page primary CTA — fixed pill size + slightly bolder label,
    with a translucent "n" key hint at the right edge (mirrors Stripe's
-   keyboard-shortcut chip on Add customer). The label is centred in the
-   remaining space; the kbd sits inside the right padding. */
+   keyboard-shortcut chip on Add customer). Padding is symmetric so
+   the gap to the left of the plus glyph matches the gap to the right
+   of the kbd badge; the spacer between label and kbd is a flex gap. */
 .hotels-add-btn {
   width: 130px;
   height: 30px;
-  padding: 0 6px 0 var(--s3);
+  padding: 0 8px;
   font-weight: 600;
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 0;
 }
 .hotels-add-btn__label {
-  flex: 1;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
+  gap: 4px;
 }
 /* Tall, thin plus glyph — sized to the cap-line of the label text and
    stroked thinner than the label itself so the icon reads light. */
@@ -334,6 +336,13 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   height: 12px;
   flex-shrink: 0;
   display: block;
+}
+/* Hover: keep the same teal fill (no darken) and add a barely-there
+   drop shadow so the affordance is felt rather than seen. */
+.hotels-add-btn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 .btn__kbd {
   display: inline-flex;
