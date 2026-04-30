@@ -135,7 +135,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 
 .app__content {
   flex: 1;
-  padding: var(--s8) 120px var(--s12);
+  padding: 85px 120px var(--s12);
   max-width: var(--content-max);
   width: 100%;
   margin: 0 auto;   /* centre within the main column (excludes sidebar) */
@@ -898,7 +898,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
    ─────────────────────────────────────────────────────────────── */
 .bk-page__head {
   display: flex; align-items: flex-start; justify-content: space-between;
-  margin-bottom: var(--s5);
+  margin-bottom: 24px;
   gap: var(--s4);
 }
 .bk-page__title {
@@ -923,7 +923,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   padding: var(--s2) 0;
   margin-bottom: -1px;
   font: inherit;
-  font-size: var(--t-base);
+  font-size: var(--t-sm);
   font-weight: 500;
   color: var(--text-muted);
   cursor: pointer;
