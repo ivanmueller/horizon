@@ -1015,16 +1015,28 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 
 /* Label-only variant — used by Hotels where each card is just a
-   filter chip, not a stat. Centres the label horizontally and
-   vertically and drops the bottom margin between (now-absent) value. */
+   filter chip, not a stat. Drops the bottom margin between (now-absent)
+   value; alignment is handled per-page (left for Hotels, see
+   .bk-statcards--hotels below). */
 .bk-statcard--label-only {
   display: flex;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-  min-height: 56px;
 }
 .bk-statcard--label-only .bk-statcard__label { margin-bottom: 0; }
+
+/* Hotels: 7 fixed-size 180×46 cards, label left-aligned. Override the
+   shared 5-column auto grid so the cards don't stretch. */
+.bk-statcards--hotels {
+  grid-template-columns: repeat(7, 180px);
+  gap: var(--s2);
+}
+.bk-statcards--hotels .bk-statcard {
+  width: 180px;
+  height: 46px;
+  padding: 0 var(--s4);
+  justify-content: flex-start;
+  text-align: left;
+}
 
 /* ── Toolbar: filter chips + right-side actions ───────────────── */
 .bk-toolbar {
@@ -1119,6 +1131,14 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .bk-table tbody tr.row--selected > td { background: #ecf1f6; }
 .bk-table tbody tr[data-hotel-idx],
 .bk-table tbody tr[data-bk-clickable] { cursor: pointer; }
+
+/* Hotels table — drops the rule above the header (the toolbar above
+   already provides separation), bolds the hotel name cell to match
+   the page title weight, and thins every other body cell to match
+   the filter-chip weight (400). */
+.bk-table--hotels thead th { border-top: 0; }
+.bk-table--hotels tbody td { font-weight: 400; }
+.bk-table--hotels tbody td.bk-table__name { font-weight: 700; }
 .bk-table__check { width: 28px; padding-right: 0 !important; }
 .bk-table__check input { cursor: pointer; }
 .bk-table__kebab { width: 36px; text-align: right; }
