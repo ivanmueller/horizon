@@ -954,13 +954,9 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 /* Bigger gap below the page head when the page goes title→stat-cards
    directly (no sub-tabs row). Used by Hotels; Bookings still has the
-   tabs row and stays at margin-bottom: 0. The width cap matches the
-   intrinsic width of the 7-up Hotels stat-cards row (7 × 180px + 6 ×
-   6px gap = 1296px) so the right-side primary button visually
-   aligns with the right edge of the last card. */
+   tabs row and stays at margin-bottom: 0. */
 .bk-page__head--md {
   margin-bottom: 21px;
-  max-width: 1296px;
 }
 .bk-page__title {
   font-family: var(--font-display);
@@ -1048,11 +1044,15 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 .bk-statcard--label-only .bk-statcard__label { margin-bottom: 0; }
 
-/* Hotels: 7 fixed-size 180×46 cards, label left-aligned. Override the
-   shared 5-column auto grid so the cards don't stretch. */
+/* Hotels: 7 fixed-size 180×46 cards spread across the full content
+   width via space-between. The gap between cards flexes with the
+   viewport so the row always reaches the same right edge as the
+   page head above it (where the Add hotel button sits) — Canmore's
+   right edge tracks the button's right edge at every width. */
 .bk-statcards--hotels {
-  grid-template-columns: repeat(7, 180px);
-  gap: 6px;
+  display: flex;
+  justify-content: space-between;
+  gap: 0;
 }
 .bk-statcards--hotels .bk-statcard {
   width: 180px;
