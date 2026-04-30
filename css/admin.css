@@ -310,24 +310,22 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 
 /* Hotels page primary CTA — fixed pill size + slightly bolder label,
    with a translucent "n" key hint at the right edge (mirrors Stripe's
-   keyboard-shortcut chip on Add customer). Padding is symmetric so
-   the gap to the left of the plus glyph matches the gap to the right
-   of the kbd badge; the spacer between label and kbd is a flex gap. */
+   keyboard-shortcut chip on Add customer). 3-column grid so the plus
+   pins to the left padding, the kbd pins to the right padding, and
+   the label centres in the column between them. */
 .hotels-add-btn {
   width: 130px;
   height: 30px;
   padding: 0 8px;
   font-weight: 600;
   position: relative;
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  justify-content: space-between;
   gap: 0;
 }
 .hotels-add-btn__label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+  text-align: center;
 }
 /* Tall, thin plus glyph — sized to the cap-line of the label text and
    stroked thinner than the label itself so the icon reads light. */
@@ -1006,7 +1004,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: var(--s3);
-  margin-bottom: var(--s5);
+  margin-bottom: 14px;
 }
 .bk-statcard {
   background: var(--bg);
