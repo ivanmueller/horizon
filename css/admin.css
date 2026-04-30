@@ -898,7 +898,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
    ─────────────────────────────────────────────────────────────── */
 .bk-page__head {
   display: flex; align-items: flex-start; justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 0;
   gap: var(--s4);
 }
 .bk-page__title {
