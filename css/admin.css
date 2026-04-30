@@ -925,7 +925,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   font: inherit;
   font-size: var(--t-sm);
   font-weight: 500;
-  color: var(--text-muted);
+  color: #1a2c44;
   cursor: pointer;
   border-bottom: 2px solid transparent;
   transition: color var(--t-fast), border-color var(--t-fast);
@@ -963,7 +963,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 .bk-statcard__label {
   font-size: var(--t-sm);
-  color: var(--text-muted);
+  color: #1a2c44;
   font-weight: 500;
   margin-bottom: 6px;
 }
@@ -994,7 +994,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   padding: 5px 12px 5px 8px;
   font: inherit;
   font-size: var(--t-sm);
-  color: var(--text-muted);
+  color: #1a2c44;
   cursor: pointer;
   transition: color var(--t-fast), border-color var(--t-fast), background var(--t-fast);
 }
