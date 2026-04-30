@@ -1157,12 +1157,16 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .bk-table tbody tr[data-bk-clickable] { cursor: pointer; }
 
 /* Hotels table — drops the rule above the header (the toolbar above
-   already provides separation), bolds the hotel name cell to match
-   the page title weight, and thins every other body cell to match
-   the filter-chip weight (400). */
+   already provides separation), and tunes the hotel-name cell to read
+   slightly bigger and a touch lighter than the table headers above it
+   (header: 13px / 600; name: 15px / 600 with the same #1a2c44). Every
+   other body cell stays at 13px / 400 to match the filter chips. */
 .bk-table--hotels thead th { border-top: 0; }
 .bk-table--hotels tbody td { font-weight: 400; }
-.bk-table--hotels tbody td.bk-table__name { font-weight: 700; }
+.bk-table--hotels tbody td.bk-table__name {
+  font-weight: 600;
+  font-size: var(--t-base);
+}
 .bk-table__check { width: 28px; padding-right: 0 !important; }
 .bk-table__check input { cursor: pointer; }
 .bk-table__kebab { width: 36px; text-align: right; }
