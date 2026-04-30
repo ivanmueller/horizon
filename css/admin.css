@@ -135,7 +135,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 
 .app__content {
   flex: 1;
-  padding: var(--s8) var(--s6) var(--s12);
+  padding: var(--s8) 120px var(--s12);
   max-width: var(--content-max);
   width: 100%;
   margin: 0 auto;   /* centre within the main column (excludes sidebar) */
