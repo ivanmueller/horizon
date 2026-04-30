@@ -135,7 +135,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 
 .app__content {
   flex: 1;
-  padding: 85px 120px var(--s12);
+  padding: 85px 90px var(--s12);
   max-width: var(--content-max);
   width: 100%;
   margin: 0 auto;   /* centre within the main column (excludes sidebar) */
@@ -313,7 +313,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
    keyboard-shortcut chip on Add customer). The label is centred in the
    remaining space; the kbd sits inside the right padding. */
 .hotels-add-btn {
-  width: 150px;
+  width: 130px;
   height: 30px;
   padding: 0 6px 0 var(--s3);
   font-weight: 600;
@@ -322,7 +322,18 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 .hotels-add-btn__label {
   flex: 1;
-  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+/* Tall, thin plus glyph — sized to the cap-line of the label text and
+   stroked thinner than the label itself so the icon reads light. */
+.hotels-add-btn__plus {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  display: block;
 }
 .btn__kbd {
   display: inline-flex;
@@ -936,8 +947,14 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 /* Bigger gap below the page head when the page goes title→stat-cards
    directly (no sub-tabs row). Used by Hotels; Bookings still has the
-   tabs row and stays at margin-bottom: 0. */
-.bk-page__head--md { margin-bottom: 21px; }
+   tabs row and stays at margin-bottom: 0. The width cap matches the
+   intrinsic width of the 7-up Hotels stat-cards row (7 × 180px + 6 ×
+   8px gap = 1308px) so the right-side primary button visually
+   aligns with the right edge of the last card. */
+.bk-page__head--md {
+  margin-bottom: 21px;
+  max-width: 1308px;
+}
 .bk-page__title {
   font-family: var(--font-display);
   font-size: 1.625rem;
