@@ -956,11 +956,11 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
    directly (no sub-tabs row). Used by Hotels; Bookings still has the
    tabs row and stays at margin-bottom: 0. The width cap matches the
    intrinsic width of the 7-up Hotels stat-cards row (7 × 180px + 6 ×
-   8px gap = 1308px) so the right-side primary button visually
+   6px gap = 1296px) so the right-side primary button visually
    aligns with the right edge of the last card. */
 .bk-page__head--md {
   margin-bottom: 21px;
-  max-width: 1308px;
+  max-width: 1296px;
 }
 .bk-page__title {
   font-family: var(--font-display);
@@ -1052,7 +1052,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
    shared 5-column auto grid so the cards don't stretch. */
 .bk-statcards--hotels {
   grid-template-columns: repeat(7, 180px);
-  gap: var(--s2);
+  gap: 6px;
 }
 .bk-statcards--hotels .bk-statcard {
   width: 180px;
