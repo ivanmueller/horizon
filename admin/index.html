@@ -415,14 +415,17 @@
             <header class="bk-page__head bk-page__head--md">
               <h1 class="bk-page__title">Hotels</h1>
               <div class="bk-page__actions">
-                <button type="button" class="btn btn--primary hotels-add-btn" id="hotelsAdd">+ Add hotel</button>
+                <button type="button" class="btn btn--primary hotels-add-btn" id="hotelsAdd">
+                  <span class="hotels-add-btn__label">+ Add hotel</span>
+                  <kbd class="btn__kbd" aria-label="Shortcut: n">n</kbd>
+                </button>
               </div>
             </header>
 
             <div class="alert alert--bad" id="hotelsError" hidden></div>
             <div class="alert alert--ok"  id="hotelsNotice" hidden></div>
 
-            <div class="bk-statcards" id="hotelsStatcards" role="group" aria-label="Hotel filter">
+            <div class="bk-statcards bk-statcards--hotels" id="hotelsStatcards" role="group" aria-label="Hotel filter">
               <button type="button" class="bk-statcard bk-statcard--label-only bk-statcard--active" data-filter="all">
                 <div class="bk-statcard__label">All</div>
               </button>
@@ -437,6 +440,12 @@
               </button>
               <button type="button" class="bk-statcard bk-statcard--label-only" data-filter="pool">
                 <div class="bk-statcard__label">Pool</div>
+              </button>
+              <button type="button" class="bk-statcard bk-statcard--label-only" data-filter="banff">
+                <div class="bk-statcard__label">Banff</div>
+              </button>
+              <button type="button" class="bk-statcard bk-statcard--label-only" data-filter="canmore">
+                <div class="bk-statcard__label">Canmore</div>
               </button>
             </div>
 
@@ -462,7 +471,7 @@
 
             <div class="bk-table-wrap">
               <div class="bk-table-scroll">
-                <table class="bk-table" id="hotelsTable">
+                <table class="bk-table bk-table--hotels" id="hotelsTable">
                   <thead>
                     <tr>
                       <th class="bk-table__check"><input type="checkbox" id="hotelsCheckAll" aria-label="Select all"></th>
@@ -474,11 +483,12 @@
                       <th>Managers</th>
                       <th>Status</th>
                       <th>Effective date</th>
+                      <th>Created</th>
                       <th class="bk-table__kebab"></th>
                     </tr>
                   </thead>
                   <tbody id="hotelsBody">
-                    <tr><td colspan="10" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>
+                    <tr><td colspan="11" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>
                   </tbody>
                 </table>
               </div>
@@ -1105,7 +1115,7 @@
           els.error.textContent = 'Could not load hotels: ' + (err && err.message || 'unknown error');
           els.error.hidden = false;
           els.body.innerHTML =
-            '<tr><td colspan="10" class="bk-empty"><div class="bk-empty__title">Failed to load</div><p class="bk-empty__body">Try again in a moment.</p></td></tr>';
+            '<tr><td colspan="11" class="bk-empty"><div class="bk-empty__title">Failed to load</div><p class="bk-empty__body">Try again in a moment.</p></td></tr>';
         });
     }
 
@@ -1123,7 +1133,7 @@
           ? 'No partners match this filter.'
           : 'No partners yet. Add the first one with the + Add hotel button.';
         body.innerHTML =
-          '<tr><td colspan="10" class="bk-empty">' +
+          '<tr><td colspan="11" class="bk-empty">' +
             '<div class="bk-empty__title">' + escapeHtml(msg) + '</div>' +
           '</td></tr>';
         if (hotelsEls && hotelsEls.footer) hotelsEls.footer.textContent = '0 items';
@@ -1146,14 +1156,15 @@
         tr.dataset.hotelIdx = String(idx);
         tr.innerHTML =
           '<td class="bk-table__check"><input type="checkbox" data-hotels-row="' + escapeHtml(h.id || '') + '" aria-label="Select hotel"></td>' +
-          '<td>' + escapeHtml(h.name) + '</td>' +
-          '<td class="bk-table__muted">' + escapeHtml(h.location || '—') + '</td>' +
+          '<td class="bk-table__name">' + escapeHtml(h.name) + '</td>' +
+          '<td>' + escapeHtml(h.location || '—') + '</td>' +
           '<td>' + escapeHtml(typeLabel) + '</td>' +
           '<td>' + (h.commission_pct != null ? escapeHtml(h.commission_pct + '%') : '—') + '</td>' +
           '<td>' + activeStaff + '</td>' +
           '<td>' + activeMngrs + '</td>' +
           '<td>' + hotelStatusPill(h.status) + '</td>' +
-          '<td class="bk-table__muted">' + escapeHtml(formatHumanDate(h.effective_date) || '—') + '</td>' +
+          '<td>' + escapeHtml(formatHumanDate(h.effective_date) || '—') + '</td>' +
+          '<td>' + escapeHtml(formatHumanDateTime(h.created_at)) + '</td>' +
           '<td class="bk-table__kebab"><button type="button" class="bk-kebab" aria-label="Row actions">⋯</button></td>';
         frag.appendChild(tr);
       });
@@ -1172,6 +1183,8 @@
       if (filter === 'terminated') return h.status === 'terminated';
       if (filter === 'kickback')   return h.type === 'kickback';
       if (filter === 'pool')       return h.type === 'pool';
+      if (filter === 'banff')      return (h.location || '').toLowerCase() === 'banff';
+      if (filter === 'canmore')    return (h.location || '').toLowerCase() === 'canmore';
       return true;
     }
 
@@ -1409,6 +1422,22 @@
     });
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && !hotelDrawer.hidden) closeHotelDrawer();
+    });
+
+    // "n" anywhere on the Hotels route opens the new-hotel drawer,
+    // mirroring Stripe's keyboard shortcut on the Customers page.
+    // Skipped while the user is typing in a field or the drawer is
+    // already open, and only on /admin/hotels/ so it doesn't fire on
+    // unrelated pages.
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'n' && e.key !== 'N') return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (currentRoute() !== 'hotels') return;
+      if (!hotelDrawer.hidden) return;
+      const t = e.target;
+      if (t && (t.matches('input, textarea, select') || t.isContentEditable)) return;
+      e.preventDefault();
+      openHotelCreateDrawer();
     });
 
     function renderHotelDrawerBody(h) {
