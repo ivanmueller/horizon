@@ -30,9 +30,7 @@
 
       <div class="app-brand">
         <span class="app-brand__icon" aria-hidden="true">
-          <svg width="16" height="16" viewBox="0 0 36 36" fill="none">
-            <path d="M13 7v22M13 18c0-6 12-6 12 0v11" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>
-          </svg>
+          <span class="app-brand__letter" id="appBrandLetter">H</span>
         </span>
         <span class="app-brand__name">Horizon Tours</span>
         <span class="app-brand__chevron" aria-hidden="true">
@@ -550,6 +548,13 @@
     /* ── Sidebar footer (email + Account + Sign out) ─────── */
     document.getElementById('appEmail').textContent =
       (session.user && session.user.email) || '—';
+
+    // Sidebar brand letter — first character of the signed-in admin's
+    // email. Capitalised. Falls back to "H" if the session is somehow
+    // empty so the icon never renders blank.
+    const __brandSrc = (session.user && session.user.email) || 'H';
+    const __brandLetter = (__brandSrc.trim()[0] || 'H').toUpperCase();
+    document.getElementById('appBrandLetter').textContent = __brandLetter;
 
     const signoutBtn = document.getElementById('appSignout');
     signoutBtn.addEventListener('click', async () => {
