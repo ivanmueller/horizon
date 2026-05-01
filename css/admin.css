@@ -1048,9 +1048,14 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 /* Stacked head — small breadcrumb-style back link sitting above the
    page title. The link's TOP edge lines up with where the title sits
    on a regular (non-stacked) page, so the title itself shifts down
-   by the link's height + gap. Used by /admin/hotels/<slug>/. */
+   by the link's height + gap. Used by /admin/hotels/<slug>/.
+   Margin-top adds 6px on top of .app__content's 85px padding-top so
+   the top of the back-link "H" lands at exactly 91px from the page
+   top per the hotel-detail spec. */
 .bk-page__head--stack {
   display: block;
+  margin-top: 6px;
+  margin-bottom: 20px;     /* gap between hotel-name h1 and the sub-tabs row */
 }
 .bk-page__back {
   display: inline-block;
@@ -1059,7 +1064,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   color: var(--accent);
   text-decoration: none;
   line-height: 1;
-  margin-bottom: 6px;
+  margin-bottom: 20px;     /* gap between the small "Hotels" link and the hotel-name h1 */
   cursor: pointer;
   transition: color var(--t-fast);
 }
