@@ -1607,3 +1607,208 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   text-decoration: none;
 }
 .hm-widget__more:hover { text-decoration: underline; }
+
+/* ─────────────────────────────────────────────────────────────────
+   Bookings — Date and time filter popover.
+   Anchored under the "Date and time" chip; mirrors Stripe's filter
+   widget (operator dropdown, conditional fields, inline calendar,
+   timezone radio, Apply button). Lives in <body> so it can extend
+   beyond the bookings card.
+   ─────────────────────────────────────────────────────────────── */
+.bk-datepop {
+  position: absolute;
+  z-index: 100;
+  width: 280px;
+  background: var(--bg);
+  border: 1px solid #d4dee9;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(20, 30, 50, 0.10),
+              0  2px  6px rgba(20, 30, 50, 0.06);
+  padding: 16px;
+  display: flex; flex-direction: column;
+  gap: 12px;
+  font-size: var(--t-sm);
+  color: #1a2c44;
+}
+.bk-datepop[hidden] { display: none; }
+.bk-datepop__title {
+  font-weight: 600;
+  color: #1a2c44;
+  font-size: 0.8125rem;
+}
+
+.bk-datepop__op,
+.bk-datepop__unit,
+.bk-datepop__num {
+  height: 32px;
+  border: 1px solid #d4dee9;
+  border-radius: 6px;
+  background: var(--bg);
+  font: inherit;
+  font-size: var(--t-sm);
+  color: #1a2c44;
+  padding: 0 8px;
+}
+.bk-datepop__op { width: 100%; padding-right: 24px; }
+.bk-datepop__num { width: 60px; text-align: left; }
+.bk-datepop__unit { flex: 1; min-width: 0; }
+
+.bk-datepop__op:focus,
+.bk-datepop__unit:focus,
+.bk-datepop__num:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.bk-datepop__row {
+  display: flex; align-items: center; gap: 8px;
+}
+.bk-datepop__row[hidden] { display: none; }
+.bk-datepop__hook {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 14px; height: 14px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.bk-datepop__hook svg { width: 14px; height: 14px; }
+.bk-datepop__and {
+  font-size: var(--t-sm);
+  color: #50617a;
+}
+
+.bk-datepop__date-btn {
+  flex: 1; min-width: 0;
+  height: 32px;
+  background: var(--bg);
+  border: 1px solid #d4dee9;
+  border-radius: 6px;
+  font: inherit;
+  font-size: var(--t-sm);
+  color: #1a2c44;
+  padding: 0 10px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--t-fast);
+}
+.bk-datepop__date-btn:hover { border-color: var(--text-muted); }
+
+.bk-datepop__check {
+  display: flex; align-items: center; gap: 8px;
+  font-size: var(--t-sm);
+  color: #1a2c44;
+  cursor: pointer;
+}
+.bk-datepop__check input { accent-color: var(--accent); }
+
+.bk-datepop__tz {
+  display: flex; align-items: center; gap: 12px;
+  font-size: var(--t-sm);
+  color: #35455a;
+}
+.bk-datepop__tz-label { color: #35455a; }
+.bk-datepop__radio {
+  display: inline-flex; align-items: center; gap: 6px;
+  cursor: pointer;
+  color: #1a2c44;
+}
+.bk-datepop__radio input { accent-color: var(--accent); }
+
+.bk-datepop__apply {
+  height: 36px;
+  background: var(--accent);
+  border: 0;
+  border-radius: 6px;
+  color: #fff;
+  font: inherit;
+  font-size: var(--t-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--t-fast);
+}
+.bk-datepop__apply:hover { background: var(--accent-hover); }
+
+/* ── Calendar (inline inside the date popover) ────────────────── */
+.bk-cal {
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 10px 12px 12px;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  gap: 8px;
+}
+.bk-cal[hidden] { display: none; }
+.bk-cal__input {
+  width: 100%;
+  height: 30px;
+  border: 0;
+  font: inherit;
+  font-size: var(--t-sm);
+  color: #1a2c44;
+  padding: 0 4px;
+  background: transparent;
+}
+.bk-cal__input:focus { outline: none; }
+.bk-cal__nav {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1a2c44;
+  padding-top: 4px;
+  border-top: 1px solid #ecf1f6;
+}
+.bk-cal__month { flex: 1; }
+.bk-cal__navbtn {
+  width: 24px; height: 24px;
+  background: none; border: 0;
+  border-radius: 4px;
+  color: #50617a;
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast);
+}
+.bk-cal__navbtn:hover { background: #f4f7fa; color: #1a2c44; }
+.bk-cal__navbtn svg { width: 14px; height: 14px; }
+.bk-cal__dows {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #50617a;
+  padding: 4px 0;
+}
+.bk-cal__grid {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.bk-cal__day {
+  height: 30px;
+  background: none; border: 0;
+  border-radius: 4px;
+  font: inherit;
+  font-size: var(--t-sm);
+  color: #1a2c44;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: background var(--t-fast);
+}
+.bk-cal__day:hover { background: var(--accent-soft); color: var(--accent); }
+.bk-cal__day--empty { visibility: hidden; cursor: default; }
+
+/* ── Active filter chip (e.g. "✕ Date and time | Last 7 days") ── */
+.bk-chip--active {
+  border-style: solid;
+  border-color: #d4dee9;
+  background: var(--bg);
+  padding-left: 6px;
+}
+.bk-chip__sep   { color: #d4dee9; margin: 0 2px; }
+.bk-chip__value { color: var(--accent); font-weight: 600; }
+.bk-chip__close {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 14px; height: 14px;
+  color: #50617a;
+  cursor: pointer;
+}
+.bk-chip__close svg { width: 14px; height: 14px; }
+.bk-chip--active:hover .bk-chip__close { color: #1a2c44; }

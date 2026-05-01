@@ -139,6 +139,84 @@
     </div>
   </div>
 
+  <!-- ── Bookings — Date and time filter popover ─────────── -->
+  <!-- Lives in <body> so it can position absolutely against the page
+       and overflow the bookings card. Toggled by the Date-and-time
+       chip on /admin/bookings/. Mirrors the Stripe filter widget. -->
+  <div class="bk-datepop" id="bkDatePop" hidden role="dialog" aria-label="Filter by date and time">
+    <div class="bk-datepop__title">Filter by: date and time</div>
+    <select class="bk-datepop__op" id="bkDateOp">
+      <option value="last">is in the last</option>
+      <option value="eq">is equal to</option>
+      <option value="between">is between</option>
+      <option value="after">is on or after</option>
+      <option value="before">is before or on</option>
+    </select>
+
+    <div class="bk-datepop__row" data-row="last">
+      <span class="bk-datepop__hook" aria-hidden="true">
+        <svg viewBox="0 0 12 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 1v9a3 3 0 0 0 3 3h6"/><polyline points="8 10 11 13 8 16"/></svg>
+      </span>
+      <input type="number" class="bk-datepop__num" id="bkDateLastN" min="1" placeholder="">
+      <select class="bk-datepop__unit" id="bkDateUnit">
+        <option value="days">days</option>
+        <option value="weeks">weeks</option>
+        <option value="months">months</option>
+        <option value="years">years</option>
+      </select>
+    </div>
+
+    <div class="bk-datepop__row" data-row="single">
+      <span class="bk-datepop__hook" aria-hidden="true">
+        <svg viewBox="0 0 12 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 1v9a3 3 0 0 0 3 3h6"/><polyline points="8 10 11 13 8 16"/></svg>
+      </span>
+      <button type="button" class="bk-datepop__date-btn" data-target="single">Select date</button>
+    </div>
+
+    <div class="bk-datepop__row" data-row="between">
+      <span class="bk-datepop__hook" aria-hidden="true">
+        <svg viewBox="0 0 12 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 1v9a3 3 0 0 0 3 3h6"/><polyline points="8 10 11 13 8 16"/></svg>
+      </span>
+      <button type="button" class="bk-datepop__date-btn" data-target="a">Select date</button>
+      <span class="bk-datepop__and">and</span>
+      <button type="button" class="bk-datepop__date-btn" data-target="b">Select date</button>
+    </div>
+
+    <!-- Inline calendar shown after a Select date click. -->
+    <div class="bk-cal" id="bkCal" hidden>
+      <input type="text" class="bk-cal__input" id="bkCalInput" placeholder="MM / DD / YYYY">
+      <div class="bk-cal__nav">
+        <span class="bk-cal__month" id="bkCalMonth">—</span>
+        <button type="button" class="bk-cal__navbtn" id="bkCalPrev" aria-label="Previous month">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button type="button" class="bk-cal__navbtn" id="bkCalNext" aria-label="Next month">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+      <div class="bk-cal__dows">
+        <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+      </div>
+      <div class="bk-cal__grid" id="bkCalGrid"></div>
+    </div>
+
+    <label class="bk-datepop__check" data-row="time-toggle">
+      <input type="checkbox" id="bkDateIncludeTime"> Include time
+    </label>
+
+    <div class="bk-datepop__tz">
+      <span class="bk-datepop__tz-label">Time zone:</span>
+      <label class="bk-datepop__radio">
+        <input type="radio" name="bkDateTz" value="MT" checked> MT
+      </label>
+      <label class="bk-datepop__radio">
+        <input type="radio" name="bkDateTz" value="UTC"> UTC
+      </label>
+    </div>
+
+    <button type="button" class="bk-datepop__apply" id="bkDateApply">Apply</button>
+  </div>
+
   <!-- ── Account modal (set / change password) ────────────── -->
   <div class="modal" id="acctModal" hidden>
     <form class="modal__card" id="acctForm">
@@ -493,7 +571,7 @@
 
             <div class="bk-toolbar">
               <div class="bk-filters">
-                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Date and time</button>
+                <button type="button" class="bk-chip" id="bkDateChip" data-chip="date"><span class="bk-chip__plus">+</span> <span class="bk-chip__text">Date and time</span></button>
                 <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Amount</button>
                 <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Currency</button>
                 <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Status</button>
@@ -858,6 +936,12 @@
     // the route can re-render itself without re-fetching.
     let bkRecords = [];
     let bkStatusFilter = 'all';
+    let bkEls = null;            // captured in mountBookings so handlers can refetch
+
+    // Date-and-time filter state. null = no filter (show every booking
+    // ever recorded). Otherwise an object describing the active rule.
+    let bkDateFilter = null;     // applied
+    let bkDatePopForm = null;    // staged form state inside the popover
 
     function mountBookings(container) {
       const els = {
@@ -899,9 +983,15 @@
         });
       });
 
-      // Filter chips + Export + Edit columns + Create + Analyze are all
-      // shells for now — wired in the next pass per the rebuild plan.
-      els.chips.forEach(c => c.addEventListener('click', noopChip));
+      // Most filter chips, Export, Edit columns, Create, Analyze are
+      // shells for now. The Date-and-time chip is wired below.
+      els.chips.forEach(c => {
+        if (c.dataset.chip === 'date') {
+          c.addEventListener('click', () => openBkDatePop(c));
+        } else {
+          c.addEventListener('click', noopChip);
+        }
+      });
       els.export.addEventListener('click',   noopChip);
       els.editCols.addEventListener('click', noopChip);
       els.create.addEventListener('click',   noopChip);
@@ -913,10 +1003,250 @@
           .forEach(cb => { cb.checked = els.checkAll.checked; });
       });
 
+      bkEls = els;
+      updateBkDateChipUi();
       loadBookings(els);
     }
 
     function noopChip() { /* shell — future-feature placeholder */ }
+
+    /* ── Date-and-time filter popover ────────────────────── */
+    const BK_DATE_OPS = ['last', 'eq', 'between', 'after', 'before'];
+    function freshBkPopForm() {
+      return {
+        op: 'last',
+        lastN: 7,
+        lastUnit: 'days',
+        single: null,
+        betweenA: null,
+        betweenB: null,
+        includeTime: false,
+        tz: 'MT',
+      };
+    }
+    let bkCalState = { viewY: 2026, viewM: 0, target: null };
+
+    function openBkDatePop(anchor) {
+      const pop = document.getElementById('bkDatePop');
+      const r = anchor.getBoundingClientRect();
+      pop.style.top  = (r.bottom + window.scrollY + 6) + 'px';
+      pop.style.left = (r.left + window.scrollX) + 'px';
+      bkDatePopForm = bkDateFilter ? Object.assign(freshBkPopForm(), bkDateFilter) : freshBkPopForm();
+      renderBkPopForm();
+      document.getElementById('bkCal').hidden = true;
+      bkCalState.target = null;
+      pop.hidden = false;
+    }
+    function closeBkDatePop() {
+      document.getElementById('bkDatePop').hidden = true;
+      document.getElementById('bkCal').hidden = true;
+    }
+
+    function renderBkPopForm() {
+      const op = bkDatePopForm.op;
+      document.getElementById('bkDateOp').value = op;
+      // Show/hide rows depending on the operator.
+      document.querySelectorAll('.bk-datepop__row').forEach((row) => {
+        const k = row.dataset.row;
+        let show = false;
+        if (k === 'last'    && op === 'last')                          show = true;
+        if (k === 'single'  && (op === 'eq' || op === 'after' || op === 'before')) show = true;
+        if (k === 'between' && op === 'between')                       show = true;
+        row.hidden = !show;
+      });
+      document.getElementById('bkDateLastN').value = bkDatePopForm.lastN || '';
+      document.getElementById('bkDateUnit').value  = bkDatePopForm.lastUnit;
+      document.getElementById('bkDateIncludeTime').checked = !!bkDatePopForm.includeTime;
+      document.querySelectorAll('input[name="bkDateTz"]').forEach((el) => {
+        el.checked = el.value === bkDatePopForm.tz;
+      });
+      document.querySelectorAll('.bk-datepop__date-btn').forEach((btn) => {
+        const key = btn.dataset.target === 'single' ? 'single'
+                  : btn.dataset.target === 'a'      ? 'betweenA'
+                  : 'betweenB';
+        btn.textContent = bkDatePopForm[key]
+          ? formatHumanDate(bkDatePopForm[key])
+          : 'Select date';
+      });
+    }
+
+    function renderBkCal() {
+      const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      document.getElementById('bkCalMonth').textContent =
+        monthNames[bkCalState.viewM] + ' ' + bkCalState.viewY;
+      const grid = document.getElementById('bkCalGrid');
+      const firstDay = new Date(bkCalState.viewY, bkCalState.viewM, 1);
+      const daysInMonth = new Date(bkCalState.viewY, bkCalState.viewM + 1, 0).getDate();
+      const startWeekday = firstDay.getDay();
+      let html = '';
+      for (let i = 0; i < startWeekday; i++) html += '<span class="bk-cal__day bk-cal__day--empty"></span>';
+      for (let d = 1; d <= daysInMonth; d++) {
+        html += '<button type="button" class="bk-cal__day" data-day="' + d + '">' + d + '</button>';
+      }
+      grid.innerHTML = html;
+    }
+
+    function pickBkCalDate(day) {
+      const dateStr =
+        bkCalState.viewY + '-' +
+        String(bkCalState.viewM + 1).padStart(2, '0') + '-' +
+        String(day).padStart(2, '0');
+      const t = bkCalState.target;
+      if (t === 'single') bkDatePopForm.single   = dateStr;
+      if (t === 'a')      bkDatePopForm.betweenA = dateStr;
+      if (t === 'b')      bkDatePopForm.betweenB = dateStr;
+      document.getElementById('bkCal').hidden = true;
+      bkCalState.target = null;
+      renderBkPopForm();
+    }
+
+    // Convert a filter object → ISO range. Returns { from, to } where
+    // either bound may be undefined (e.g. "is on or after" has no `to`).
+    // Returns null when the filter is null.
+    function bkFilterToRange(f) {
+      if (!f) return null;
+      const now = new Date();
+      if (f.op === 'last') {
+        const n = Number(f.lastN) || 0;
+        if (n <= 0) return null;
+        const ms =
+          f.lastUnit === 'weeks'  ? n * 7  * 86400000
+        : f.lastUnit === 'months' ? n * 30 * 86400000
+        : f.lastUnit === 'years'  ? n * 365 * 86400000
+        : n * 86400000;
+        return { from: new Date(now.getTime() - ms).toISOString(), to: now.toISOString() };
+      }
+      if (f.op === 'eq' && f.single) {
+        return {
+          from: new Date(f.single + 'T00:00:00').toISOString(),
+          to:   new Date(f.single + 'T23:59:59.999').toISOString(),
+        };
+      }
+      if (f.op === 'after' && f.single) {
+        return { from: new Date(f.single + 'T00:00:00').toISOString() };
+      }
+      if (f.op === 'before' && f.single) {
+        return { to: new Date(f.single + 'T23:59:59.999').toISOString() };
+      }
+      if (f.op === 'between' && f.betweenA && f.betweenB) {
+        const a = f.betweenA <= f.betweenB ? f.betweenA : f.betweenB;
+        const b = f.betweenA <= f.betweenB ? f.betweenB : f.betweenA;
+        return {
+          from: new Date(a + 'T00:00:00').toISOString(),
+          to:   new Date(b + 'T23:59:59.999').toISOString(),
+        };
+      }
+      return null;
+    }
+
+    // Short label that appears inside the chip after Apply, e.g.
+    // "Last 7 days" or "May 1 – May 7, 2026" or "On May 1, 2026".
+    function bkFilterChipText(f) {
+      if (!f) return '';
+      if (f.op === 'last')   return 'Last ' + (f.lastN || 0) + ' ' + f.lastUnit;
+      if (f.op === 'eq')     return f.single ? formatHumanDate(f.single) : '';
+      if (f.op === 'after')  return f.single ? 'After ' + formatHumanDate(f.single) : '';
+      if (f.op === 'before') return f.single ? 'Before ' + formatHumanDate(f.single) : '';
+      if (f.op === 'between' && f.betweenA && f.betweenB) {
+        return formatHumanDate(f.betweenA) + ' – ' + formatHumanDate(f.betweenB);
+      }
+      return '';
+    }
+
+    function updateBkDateChipUi() {
+      const chip = document.getElementById('bkDateChip');
+      if (!chip) return;
+      const text = bkFilterChipText(bkDateFilter);
+      if (!text) {
+        chip.classList.remove('bk-chip--active');
+        chip.innerHTML = '<span class="bk-chip__plus">+</span> <span class="bk-chip__text">Date and time</span>';
+        return;
+      }
+      chip.classList.add('bk-chip--active');
+      chip.innerHTML =
+        '<span class="bk-chip__close" data-clear="1" aria-label="Clear filter">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>' +
+        '</span>' +
+        '<span class="bk-chip__text">Date and time</span>' +
+        '<span class="bk-chip__sep">|</span>' +
+        '<span class="bk-chip__value">' + escapeHtml(text) + '</span>';
+    }
+
+    // Wiring — set up once, survives bookings re-mounts.
+    document.getElementById('bkDateOp').addEventListener('change', (e) => {
+      bkDatePopForm.op = e.target.value;
+      document.getElementById('bkCal').hidden = true;
+      bkCalState.target = null;
+      renderBkPopForm();
+    });
+    document.getElementById('bkDateLastN').addEventListener('input', (e) => {
+      bkDatePopForm.lastN = Number(e.target.value) || 0;
+    });
+    document.getElementById('bkDateUnit').addEventListener('change', (e) => {
+      bkDatePopForm.lastUnit = e.target.value;
+    });
+    document.getElementById('bkDateIncludeTime').addEventListener('change', (e) => {
+      bkDatePopForm.includeTime = e.target.checked;
+    });
+    document.querySelectorAll('input[name="bkDateTz"]').forEach((el) => {
+      el.addEventListener('change', () => {
+        if (el.checked) bkDatePopForm.tz = el.value;
+      });
+    });
+    document.querySelectorAll('.bk-datepop__date-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        bkCalState.target = btn.dataset.target;
+        const now = new Date();
+        bkCalState.viewY = now.getFullYear();
+        bkCalState.viewM = now.getMonth();
+        renderBkCal();
+        document.getElementById('bkCal').hidden = false;
+      });
+    });
+    document.getElementById('bkCalPrev').addEventListener('click', () => {
+      bkCalState.viewM -= 1;
+      if (bkCalState.viewM < 0) { bkCalState.viewM = 11; bkCalState.viewY -= 1; }
+      renderBkCal();
+    });
+    document.getElementById('bkCalNext').addEventListener('click', () => {
+      bkCalState.viewM += 1;
+      if (bkCalState.viewM > 11) { bkCalState.viewM = 0; bkCalState.viewY += 1; }
+      renderBkCal();
+    });
+    document.getElementById('bkCalGrid').addEventListener('click', (e) => {
+      const t = e.target.closest('button[data-day]');
+      if (!t) return;
+      pickBkCalDate(Number(t.dataset.day));
+    });
+    document.getElementById('bkDateApply').addEventListener('click', () => {
+      bkDateFilter = Object.assign({}, bkDatePopForm);
+      closeBkDatePop();
+      updateBkDateChipUi();
+      if (bkEls) loadBookings(bkEls);
+    });
+    // Click-outside closes the popover. Filter chip itself is excluded
+    // so its own click handler can reopen the popover.
+    document.addEventListener('click', (e) => {
+      const pop = document.getElementById('bkDatePop');
+      if (pop.hidden) return;
+      if (pop.contains(e.target)) return;
+      const chip = document.getElementById('bkDateChip');
+      if (chip && chip.contains(e.target)) return;
+      closeBkDatePop();
+    });
+    document.addEventListener('keydown', (e) => {
+      const pop = document.getElementById('bkDatePop');
+      if (e.key === 'Escape' && !pop.hidden) closeBkDatePop();
+    });
+    // Click the X on the active chip → clear the filter.
+    document.body.addEventListener('click', (e) => {
+      const x = e.target.closest && e.target.closest('[data-clear="1"]');
+      if (!x) return;
+      e.stopPropagation();
+      bkDateFilter = null;
+      updateBkDateChipUi();
+      if (bkEls) loadBookings(bkEls);
+    });
 
     function showBkError(els, msg) {
       els.error.textContent = msg;
@@ -932,15 +1262,20 @@
     // yet, so we ask /api/admin/summary for the hotel list and fan out
     // /api/dashboard/bookings calls in parallel, then merge + sort.
     function loadBookings(els) {
-      const r = rangeForPeriod();
-      if (!r) return;
+      // bkDateFilter null → no constraint; we still need a range for
+      // /api/admin/summary which requires from/to, so default to a
+      // very wide window (year 2000 → +30 years from now).
+      const r = bkFilterToRange(bkDateFilter);
+      const summaryFrom = r && r.from ? r.from : '2000-01-01T00:00:00.000Z';
+      const summaryTo   = r && r.to   ? r.to   : new Date(Date.now() + 30 * 365 * 86400000).toISOString();
+
       clearBkError(els);
       els.body.innerHTML = '<tr><td colspan="9" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>';
       els.footer.textContent = '— items';
 
       fetch(BOKUN_API_BASE + '/api/admin/summary' +
-            '?from=' + encodeURIComponent(r.from) +
-            '&to='   + encodeURIComponent(r.to), {
+            '?from=' + encodeURIComponent(summaryFrom) +
+            '&to='   + encodeURIComponent(summaryTo), {
         headers: { Authorization: 'Bearer ' + session.access_token },
         cache: 'no-store',
       })
@@ -968,7 +1303,12 @@
             return;
           }
 
-          const qs = '&from=' + encodeURIComponent(r.from) + '&to=' + encodeURIComponent(r.to);
+          // For per-hotel bookings calls, only attach from/to when an
+          // active filter actually has them (the worker treats both
+          // params as optional and returns every row when omitted).
+          let qs = '';
+          if (r && r.from) qs += '&from=' + encodeURIComponent(r.from);
+          if (r && r.to)   qs += '&to='   + encodeURIComponent(r.to);
           return Promise.all(hotels.map(h =>
             fetch(BOKUN_API_BASE + '/api/dashboard/bookings?hotel=' + encodeURIComponent(h.code) + qs, {
               cache: 'no-store',
