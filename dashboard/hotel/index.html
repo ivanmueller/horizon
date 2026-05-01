@@ -41,7 +41,17 @@
       display: inline-flex; align-items: center; gap: var(--space-2);
       text-decoration: none; color: var(--near-black);
     }
-    .hd-header__logo-icon { width: 32px; height: 32px; }
+    .hd-header__logo-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      background: #FF6B4A;
+      display: inline-flex; align-items: center; justify-content: center;
+      color: #fff;
+    }
+    .hd-header__logo-letter {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 16px; font-weight: 700; line-height: 1;
+    }
     .hd-header__logo-text {
       font-family: 'Plus Jakarta Sans', sans-serif;
       font-size: 1.3rem; font-weight: 700; color: var(--coral);
@@ -337,11 +347,8 @@
   <header class="hd-header">
     <div class="hd-header__inner">
       <a href="/" class="hd-header__logo">
-        <span class="hd-header__logo-icon">
-          <svg width="32" height="32" viewBox="0 0 36 36" aria-hidden="true">
-            <rect width="36" height="36" rx="8" fill="#FF6B4A"/>
-            <path d="M13 7v22M13 18c0-6 12-6 12 0v11" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>
-          </svg>
+        <span class="hd-header__logo-icon" aria-hidden="true">
+          <span class="hd-header__logo-letter" id="hdBrandLetter">H</span>
         </span>
         <span class="hd-header__logo-text">horizon</span>
         <span class="hd-header__sub">partner dashboard</span>
@@ -573,6 +580,13 @@
           } else {
             els.hotelName.textContent = hotelRecord.name;
             document.title = hotelRecord.name + ' — Partner dashboard';
+            // Header logo letter follows the hotel name (admin side
+            // does the same with the admin email — see admin/index.html).
+            var __brandLetterEl = document.getElementById('hdBrandLetter');
+            if (__brandLetterEl) {
+              __brandLetterEl.textContent =
+                ((hotelRecord.name || 'H').trim()[0] || 'H').toUpperCase();
+            }
             els.headerActions.hidden = false;
             loadBookings();
           }
