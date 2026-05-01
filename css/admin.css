@@ -1059,8 +1059,8 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
    add the rest. */
 .bk-page__head--stack {
   display: block;
-  margin-top: 5px;
-  margin-bottom: 4px;
+  margin-top: -2px;
+  margin-bottom: -2px;
 }
 .bk-page__back {
   display: inline-block;
@@ -1069,7 +1069,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   color: var(--accent);
   text-decoration: none;
   line-height: 1;
-  margin-bottom: 8px;
+  margin-bottom: 11px;
   cursor: pointer;
   transition: color var(--t-fast);
 }
