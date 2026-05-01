@@ -1728,25 +1728,33 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 .bk-datepop__apply:hover { background: var(--accent-hover); }
 
-/* ── Calendar (inline inside the date popover) ────────────────── */
+/* ── Calendar (separate floating panel, anchored next to the date
+   popover; positioned in JS via getBoundingClientRect) ────────── */
 .bk-cal {
-  border: 1px solid var(--accent);
-  border-radius: 8px;
-  padding: 10px 12px 12px;
+  position: absolute;
+  z-index: 110;
+  width: 280px;
   background: var(--bg);
+  border: 1px solid #d4dee9;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(20, 30, 50, 0.10),
+              0  2px  6px rgba(20, 30, 50, 0.06);
+  padding: 14px 14px 16px;
   display: flex; flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 .bk-cal[hidden] { display: none; }
 .bk-cal__input {
   width: 100%;
-  height: 30px;
-  border: 0;
+  height: 34px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
   font: inherit;
   font-size: var(--t-sm);
   color: #1a2c44;
-  padding: 0 4px;
-  background: transparent;
+  padding: 0 10px;
+  background: var(--bg);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 .bk-cal__input:focus { outline: none; }
 .bk-cal__nav {
