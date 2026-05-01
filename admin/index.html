@@ -182,24 +182,6 @@
       <button type="button" class="bk-datepop__date-btn" data-target="b">Select date</button>
     </div>
 
-    <!-- Inline calendar shown after a Select date click. -->
-    <div class="bk-cal" id="bkCal" hidden>
-      <input type="text" class="bk-cal__input" id="bkCalInput" placeholder="MM / DD / YYYY">
-      <div class="bk-cal__nav">
-        <span class="bk-cal__month" id="bkCalMonth">—</span>
-        <button type="button" class="bk-cal__navbtn" id="bkCalPrev" aria-label="Previous month">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
-        <button type="button" class="bk-cal__navbtn" id="bkCalNext" aria-label="Next month">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
-      </div>
-      <div class="bk-cal__dows">
-        <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
-      </div>
-      <div class="bk-cal__grid" id="bkCalGrid"></div>
-    </div>
-
     <label class="bk-datepop__check" data-row="time-toggle">
       <input type="checkbox" id="bkDateIncludeTime"> Include time
     </label>
@@ -215,6 +197,26 @@
     </div>
 
     <button type="button" class="bk-datepop__apply" id="bkDateApply">Apply</button>
+  </div>
+
+  <!-- Calendar — separate floating panel anchored next to the date
+       popover. Lives in <body> so it can extend past the popover and
+       layer above neighbouring content. -->
+  <div class="bk-cal" id="bkCal" hidden>
+    <input type="text" class="bk-cal__input" id="bkCalInput" placeholder="MM / DD / YYYY">
+    <div class="bk-cal__nav">
+      <span class="bk-cal__month" id="bkCalMonth">—</span>
+      <button type="button" class="bk-cal__navbtn" id="bkCalPrev" aria-label="Previous month">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <button type="button" class="bk-cal__navbtn" id="bkCalNext" aria-label="Next month">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+    <div class="bk-cal__dows">
+      <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+    </div>
+    <div class="bk-cal__grid" id="bkCalGrid"></div>
   </div>
 
   <!-- ── Account modal (set / change password) ────────────── -->
@@ -1200,7 +1202,27 @@
         bkCalState.viewY = now.getFullYear();
         bkCalState.viewM = now.getMonth();
         renderBkCal();
-        document.getElementById('bkCal').hidden = false;
+        const cal = document.getElementById('bkCal');
+        const popRect = document.getElementById('bkDatePop').getBoundingClientRect();
+        // Float the calendar next to the popover. Default: to the
+        // right with the top edges aligned. If there isn't room on
+        // the right (e.g. narrow viewport), drop down below instead.
+        cal.hidden = false;     // need real dimensions for fit checks
+        const calW = cal.offsetWidth || 280;
+        const calH = cal.offsetHeight || 320;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        let top  = popRect.top + window.scrollY;
+        let left = popRect.right + 8 + window.scrollX;
+        if (left + calW > vw + window.scrollX - 8) {
+          left = popRect.left + window.scrollX;
+          top  = popRect.bottom + 8 + window.scrollY;
+        }
+        if (top + calH > vh + window.scrollY - 8) {
+          top = Math.max(window.scrollY + 8, vh + window.scrollY - calH - 8);
+        }
+        cal.style.top  = top  + 'px';
+        cal.style.left = left + 'px';
       });
     });
     document.getElementById('bkCalPrev').addEventListener('click', () => {
@@ -1224,12 +1246,16 @@
       updateBkDateChipUi();
       if (bkEls) loadBookings(bkEls);
     });
-    // Click-outside closes the popover. Filter chip itself is excluded
-    // so its own click handler can reopen the popover.
+    // Click-outside closes the popover. Filter chip itself + the
+    // floating calendar are excluded — the calendar lives in <body>
+    // as a sibling rather than a child, so we have to guard it
+    // explicitly or every click on a day would close the popover.
     document.addEventListener('click', (e) => {
       const pop = document.getElementById('bkDatePop');
       if (pop.hidden) return;
       if (pop.contains(e.target)) return;
+      const cal = document.getElementById('bkCal');
+      if (cal && !cal.hidden && cal.contains(e.target)) return;
       const chip = document.getElementById('bkDateChip');
       if (chip && chip.contains(e.target)) return;
       closeBkDatePop();
