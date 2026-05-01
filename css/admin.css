@@ -148,13 +148,19 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
    to 20px on both rows for the icons to vertically line up. */
 
 .app-brand {
-  display: flex; align-items: center; gap: 10px;
-  /* Outer margin matches .app-nav's 9px sides; the 12px inner
-     padding matches .app-nav__item's so the 24px brand icon's
-     left edge lands at exactly the same x as the 18px nav icons
-     below it (sidebar 9px padding + 12px item padding-left = 21px). */
+  display: flex; align-items: center;
+  /* gap and padding tuned so:
+       — the 24px brand icon's CENTRE lines up with the 18px nav-icon
+         centres below (both at x=30 from sidebar edge): margin 9px +
+         padding-left 9px = 18px → icon spans 18–42, centre at 30,
+         matching .app-nav (9px) + .app-nav__item (12px) + half of
+         the 18px icon.
+       — the brand LABEL's left edge lines up with the nav labels
+         below (x=49): icon ends at 42 + gap 7 = 49, matching
+         .app-nav__item content + 18px icon + .app-nav__item gap (10). */
+  gap: 7px;
   margin: var(--s5) 9px var(--s8);
-  padding: 6px 12px;
+  padding: 6px 9px;
   border-radius: var(--r-sm);
   cursor: pointer;
   transition: background var(--t-fast);
