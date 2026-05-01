@@ -28,7 +28,7 @@
     <!-- ── Sidebar ──────────────────────────────────────────── -->
     <aside class="app__sidebar">
 
-      <div class="app-brand">
+      <div class="app-brand" id="appBrand" role="button" tabindex="0" aria-haspopup="menu" aria-expanded="false">
         <span class="app-brand__icon" aria-hidden="true">
           <span class="app-brand__letter" id="appBrandLetter">H</span>
         </span>
@@ -38,6 +38,51 @@
             <polyline points="6 9 12 15 18 9"/>
           </svg>
         </span>
+      </div>
+
+      <!-- Workspace dropdown — opens on click of .app-brand. Mirrors the
+           Stripe workspace switcher: workspace head, Settings + Create
+           shells, then user row + Sign out. -->
+      <div class="brand-menu" id="brandMenu" role="menu" hidden>
+        <div class="brand-menu__head">
+          <div class="brand-menu__avatar" id="brandMenuAvatar">HT</div>
+          <div class="brand-menu__title">Horizon Tours</div>
+        </div>
+        <div class="brand-menu__section">
+          <button type="button" class="brand-menu__item" id="brandMenuSettings" role="menuitem">
+            <span class="brand-menu__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </span>
+            <span class="brand-menu__label">Settings</span>
+          </button>
+          <button type="button" class="brand-menu__item brand-menu__item--has-sub" id="brandMenuCreate" role="menuitem">
+            <span class="brand-menu__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </span>
+            <span class="brand-menu__label">Create</span>
+            <span class="brand-menu__chev" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
+            </span>
+          </button>
+        </div>
+        <hr class="brand-menu__divider">
+        <div class="brand-menu__section">
+          <button type="button" class="brand-menu__item brand-menu__item--user" id="brandMenuUser" role="menuitem">
+            <span class="brand-menu__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </span>
+            <span class="brand-menu__label" id="brandMenuUserName">—</span>
+            <span class="brand-menu__info" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="8.01"/><line x1="12" y1="11" x2="12" y2="16"/></svg>
+            </span>
+          </button>
+          <button type="button" class="brand-menu__item" id="brandMenuSignout" role="menuitem">
+            <span class="brand-menu__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </span>
+            <span class="brand-menu__label">Sign out</span>
+          </button>
+        </div>
       </div>
 
       <nav class="app-nav" aria-label="Admin navigation">
@@ -50,14 +95,6 @@
         </div>
 
       </nav>
-
-      <div class="app-userchip">
-        <div class="app-userchip__email" id="appEmail">—</div>
-        <div class="app-userchip__actions">
-          <button type="button" class="app-userchip__btn" id="appAccount">Account</button>
-          <button type="button" class="app-userchip__btn" id="appSignout">Sign out</button>
-        </div>
-      </div>
 
     </aside>
 
@@ -545,18 +582,72 @@
       `;
     }
 
-    /* ── Sidebar footer (email + Account + Sign out) ─────── */
-    document.getElementById('appEmail').textContent =
-      (session.user && session.user.email) || '—';
-
-    // Sidebar brand letter — first character of the signed-in admin's
-    // email. Capitalised. Falls back to "H" if the session is somehow
-    // empty so the icon never renders blank.
+    /* ── Sidebar brand + workspace dropdown ──────────────── */
+    // Brand letter — first character of the signed-in admin's email.
+    // Capitalised. Falls back to "H" if the session is somehow empty
+    // so the icon never renders blank.
     const __brandSrc = (session.user && session.user.email) || 'H';
     const __brandLetter = (__brandSrc.trim()[0] || 'H').toUpperCase();
     document.getElementById('appBrandLetter').textContent = __brandLetter;
 
-    const signoutBtn = document.getElementById('appSignout');
+    // Email/name shown inside the workspace dropdown's user row.
+    document.getElementById('brandMenuUserName').textContent =
+      (session.user && session.user.email) || '—';
+
+    const brandEl    = document.getElementById('appBrand');
+    const brandMenu  = document.getElementById('brandMenu');
+    function brandMenuOpen() {
+      brandMenu.hidden = false;
+      brandEl.setAttribute('aria-expanded', 'true');
+      brandEl.classList.add('app-brand--open');
+    }
+    function brandMenuClose() {
+      brandMenu.hidden = true;
+      brandEl.setAttribute('aria-expanded', 'false');
+      brandEl.classList.remove('app-brand--open');
+    }
+    function brandMenuToggle() {
+      if (brandMenu.hidden) brandMenuOpen(); else brandMenuClose();
+    }
+    brandEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      brandMenuToggle();
+    });
+    brandEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        brandMenuToggle();
+      }
+    });
+    // Click outside the menu/brand → close.
+    document.addEventListener('click', (e) => {
+      if (brandMenu.hidden) return;
+      if (brandMenu.contains(e.target) || brandEl.contains(e.target)) return;
+      brandMenuClose();
+    });
+    // Escape closes the menu.
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !brandMenu.hidden) brandMenuClose();
+    });
+
+    // Settings + Create are shells until those surfaces ship.
+    document.getElementById('brandMenuSettings').addEventListener('click', () => {
+      brandMenuClose();
+    });
+    document.getElementById('brandMenuCreate').addEventListener('click', (e) => {
+      e.stopPropagation();
+      // Shell — keeps the menu open in case a sub-menu lands here later.
+    });
+
+    // User row → password / account modal (replaces the old footer
+    // Account button).
+    document.getElementById('brandMenuUser').addEventListener('click', () => {
+      brandMenuClose();
+      openAcct();
+    });
+
+    // Sign out (replaces the old footer Sign out button).
+    const signoutBtn = document.getElementById('brandMenuSignout');
     signoutBtn.addEventListener('click', async () => {
       signoutBtn.disabled = true;
       await supabase.auth.signOut();
@@ -582,7 +673,6 @@
     }
     function closeAcct() { acctModal.hidden = true; }
 
-    document.getElementById('appAccount').addEventListener('click', openAcct);
     document.getElementById('acctClose').addEventListener('click', closeAcct);
     document.getElementById('acctCancel').addEventListener('click', closeAcct);
     acctModal.addEventListener('click', (e) => { if (e.target === acctModal) closeAcct(); });

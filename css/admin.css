@@ -256,37 +256,102 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 .app-nav__icon svg { width: 100%; height: 100%; }
 
-/* Sidebar footer — user chip + actions */
-.app-userchip {
-  border-top: 1px solid var(--border);
-  padding: var(--s4) var(--s5);
-  display: flex; flex-direction: column; gap: var(--s2);
+/* ── Workspace dropdown menu (anchored under .app-brand) ──────── */
+/* Opens when the user clicks the brand row at the top of the sidebar.
+   Mirrors Stripe's workspace switcher: avatar + name on top, then a
+   group of workspace actions, then a divider, then the user row +
+   sign out. The panel sits on top of the sidebar's right edge so it
+   can extend beyond it without resizing the sidebar. */
+.brand-menu {
+  position: absolute;
+  top: 60px;
+  left: 9px;
+  width: 268px;
+  z-index: 50;
+  background: var(--bg);
+  border: 1px solid #d4dee9;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(20, 30, 50, 0.10),
+              0  2px  6px rgba(20, 30, 50, 0.06);
+  padding: 8px;
 }
-.app-userchip__email {
-  font-size: var(--t-xs);
-  color: var(--text-muted);
+.brand-menu[hidden] { display: none; }
+
+.brand-menu__head {
+  display: flex; flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 8px 14px;
+}
+.brand-menu__avatar {
+  width: 36px; height: 36px;
+  border-radius: var(--r-sm);
+  background: var(--nav-hover);
+  color: #1a2c44;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.brand-menu__title {
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #1a2c44;
+}
+
+.brand-menu__section {
+  display: flex; flex-direction: column;
+  gap: 1px;
+}
+.brand-menu__divider {
+  border: 0; border-top: 1px solid #ecf1f6;
+  margin: 6px 0;
+}
+
+.brand-menu__item {
+  display: flex; align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: none; border: 0;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #1a2c44;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--t-fast);
+}
+.brand-menu__item:hover { background: var(--nav-hover); }
+.brand-menu__item:disabled { opacity: 0.55; cursor: progress; }
+
+.brand-menu__icon {
+  width: 18px; height: 18px;
+  flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: #50617a;
+}
+.brand-menu__icon svg { width: 16px; height: 16px; }
+
+.brand-menu__label { flex: 1; }
+.brand-menu__chev,
+.brand-menu__info {
+  display: inline-flex; align-items: center; justify-content: center;
+  color: #50617a;
+}
+.brand-menu__chev svg,
+.brand-menu__info svg { width: 14px; height: 14px; }
+
+.brand-menu__item--user .brand-menu__label {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.app-userchip__actions {
-  display: flex; gap: var(--s2);
-}
-.app-userchip__btn {
-  flex: 1;
-  padding: 5px 10px;
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: var(--r-sm);
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all var(--t-fast);
-}
-.app-userchip__btn:hover {
-  background: var(--bg-subtle);
-  color: var(--text);
-  border-color: var(--border-strong);
-}
-.app-userchip__btn:disabled { opacity: 0.6; cursor: progress; }
+
+/* Chevron in the brand row flips when the menu is open. */
+.app-brand--open .app-brand__chevron { transform: rotate(180deg); }
+.app-brand__chevron { transition: transform var(--t-fast); }
 
 /* ── Page heading (top of every route) ────────────────────────── */
 .page-head {
