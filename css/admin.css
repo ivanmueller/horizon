@@ -148,17 +148,20 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
    to 20px on both rows for the icons to vertically line up. */
 
 .app-brand {
-  display: flex; align-items: center; gap: var(--s2);
-  /* Brand padding-left is 18px (vs the default --s5 = 20px) so the
-     account-letter mark sits 2px further left. Pairs with the nav
-     padding-left bump below to centre the brand icon vertically with
-     the nav icons that sit beneath it. */
-  padding: var(--s5) var(--s5) var(--s8) 18px;
+  display: flex; align-items: center; gap: 10px;
+  /* Outer margin keeps the row visually inset from the sidebar edges
+     by 9px on each side (matches .app-nav padding) — the rounded
+     hover wash then lives inside that inset, exactly like a nav item.
+     Margin-bottom holds the breathing room between the brand and the
+     first nav group. */
+  margin: var(--s5) 9px var(--s8);
+  padding: 6px 9px;
+  border-radius: var(--r-sm);
   cursor: pointer;
   transition: background var(--t-fast);
 }
-/* Hover: whole brand row picks up the same wash that the nav items
-   below use for unselected hover. */
+/* Hover: the inset rectangle picks up the same wash + radius the
+   nav rows below use for unselected hover. */
 .app-brand:hover { background: var(--nav-hover); }
 .app-brand__chevron {
   margin-left: auto;
@@ -184,10 +187,11 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   line-height: 1;
 }
 .app-brand__name {
-  font-family: 'Plus Jakarta Sans', var(--font-display), sans-serif;
-  font-weight: 600; font-size: 0.9375rem;
-  color: var(--text);
-  letter-spacing: -0.005em;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 0.8125rem;
+  color: var(--nav-text);
+  letter-spacing: -0.003em;
 }
 
 .app-nav {
