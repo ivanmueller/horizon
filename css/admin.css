@@ -1347,3 +1347,259 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   margin-bottom: var(--s2);
 }
 .bk-empty__body { font-size: var(--t-sm); max-width: 32em; margin: 0 auto; }
+
+/* ─────────────────────────────────────────────────────────────────
+   Home page — Stripe-style overview shell.
+   Two stacked sections: "Today" (KPIs + intraday chart on the left,
+   balance + payouts panel on the right), and "Your overview" (filter
+   chips + grid of six metric widgets).
+   ─────────────────────────────────────────────────────────────── */
+
+.hm-section { margin-bottom: 40px; }
+.hm-section__head {
+  border-bottom: 1px solid #ecf1f6;
+  padding-bottom: 14px;
+  margin-bottom: 20px;
+}
+.hm-section__title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a2c44;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+/* ── Today block — chart + side panel ─────────────────────────── */
+.hm-today {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 48px;
+  align-items: start;
+}
+.hm-today__main { min-width: 0; }
+
+.hm-today__kpis {
+  display: flex;
+  gap: 48px;
+  margin-bottom: 16px;
+}
+.hm-kpi {
+  background: none; border: 0; padding: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  display: flex; flex-direction: column;
+  gap: 4px;
+  color: #1a2c44;
+}
+.hm-kpi__label {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #35455a;
+}
+.hm-kpi__chev {
+  width: 12px; height: 12px;
+  color: #50617a;
+}
+.hm-kpi__value {
+  font-family: var(--font-display);
+  font-size: 1.625rem;
+  font-weight: 700;
+  color: #1a2c44;
+  letter-spacing: -0.01em;
+  font-feature-settings: 'tnum' 1;
+}
+.hm-kpi__time {
+  font-size: 0.75rem;
+  color: #50617a;
+}
+
+.hm-chart {
+  position: relative;
+  margin-top: 8px;
+}
+.hm-chart__note {
+  position: absolute;
+  top: -22px;
+  right: 0;
+  font-size: 0.75rem;
+  color: #50617a;
+}
+.hm-chart__svg {
+  display: block;
+  width: 100%;
+  height: 200px;
+}
+.hm-chart__axis {
+  display: flex; justify-content: space-between;
+  font-size: 0.75rem;
+  color: #50617a;
+  margin-top: 4px;
+}
+
+/* ── Today right side panel — balance + payouts ───────────────── */
+.hm-today__side {
+  padding-left: 32px;
+  border-left: 1px solid #ecf1f6;
+}
+.hm-side__row {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px;
+}
+.hm-side__col { display: flex; flex-direction: column; gap: 4px; }
+.hm-side__label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #35455a;
+}
+.hm-side__value {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a2c44;
+  font-feature-settings: 'tnum' 1;
+}
+.hm-side__value--muted { color: #50617a; }
+.hm-side__hint {
+  font-size: 0.75rem;
+  color: #50617a;
+}
+.hm-side__link {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--accent);
+  text-decoration: none;
+}
+.hm-side__link:hover { text-decoration: underline; }
+.hm-side__divider {
+  border: 0; border-top: 1px solid #ecf1f6;
+  margin: 20px 0;
+}
+
+/* ── Filter row above the widgets grid ────────────────────────── */
+.hm-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.hm-filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.hm-toolbar__actions { display: flex; gap: 8px; }
+
+.hm-filter {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--bg);
+  border: 1px dashed #d4dee9;
+  border-radius: var(--r-full);
+  padding: 5px 12px;
+  font: inherit;
+  font-size: var(--t-sm);
+  font-weight: 500;
+  color: #1a2c44;
+  cursor: pointer;
+  transition: border-color var(--t-fast), background var(--t-fast);
+}
+.hm-filter:hover {
+  border-color: var(--text-muted);
+  background: var(--bg-subtle);
+}
+.hm-filter__label { color: #1a2c44; font-weight: 500; }
+.hm-filter__sep   { color: #d4dee9; }
+.hm-filter__value { color: var(--accent); font-weight: 600; }
+.hm-filter__chev,
+.hm-filter__close {
+  width: 12px; height: 12px;
+  color: #50617a;
+}
+.hm-filter--removable .hm-filter__close {
+  width: 14px; height: 14px;
+  color: #50617a;
+}
+.hm-filter--removable:hover .hm-filter__close { color: #1a2c44; }
+
+/* ── Widgets grid ─────────────────────────────────────────────── */
+/* Six tiles in a 3×2 grid, joined by 1px dividers — implemented as
+   a 1px gap on a #d4dee9 background, with a wrapping border + radius
+   so the whole thing reads as a single panel like Stripe's. */
+.hm-widgets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  background: #d4dee9;
+  border: 1px solid #d4dee9;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.hm-widget {
+  background: var(--bg);
+  padding: 18px 20px 16px;
+  display: flex; flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.hm-widget__head {
+  display: flex; align-items: center; gap: 4px;
+  margin-bottom: 2px;
+}
+.hm-widget__title {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #1a2c44;
+}
+.hm-widget__info {
+  width: 13px; height: 13px;
+  color: #50617a;
+  flex-shrink: 0;
+}
+.hm-widget__value {
+  font-family: var(--font-display);
+  font-size: 1.625rem;
+  font-weight: 700;
+  color: #1a2c44;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  font-feature-settings: 'tnum' 1;
+}
+.hm-widget__sub {
+  font-size: 0.75rem;
+  color: #50617a;
+  margin-bottom: 12px;
+}
+.hm-widget__chart {
+  position: relative;
+  height: 110px;
+}
+.hm-widget__svg {
+  display: block;
+  width: 100%; height: 100%;
+}
+.hm-widget__yaxis {
+  position: absolute; top: 0; right: 0;
+  display: flex; flex-direction: column; justify-content: space-between;
+  height: 100%;
+  font-size: 0.6875rem;
+  color: #50617a;
+  text-align: right;
+  pointer-events: none;
+}
+.hm-widget__xaxis {
+  display: flex; justify-content: space-between;
+  font-size: 0.6875rem;
+  color: #50617a;
+  margin-top: 4px;
+}
+.hm-widget__foot {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #ecf1f6;
+  font-size: 0.75rem;
+}
+.hm-widget__updated { color: #50617a; }
+.hm-widget__more {
+  color: var(--accent);
+  font-weight: 500;
+  text-decoration: none;
+}
+.hm-widget__more:hover { text-decoration: underline; }
