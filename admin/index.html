@@ -767,7 +767,8 @@
         // Tabs are placeholders; tab bodies arrive in follow-up sprints.
         return {
           html: `
-            <header class="bk-page__head">
+            <header class="bk-page__head bk-page__head--stack">
+              <a href="/admin/hotels/" class="bk-page__back" id="hotelDetailBack">Hotels</a>
               <h1 class="bk-page__title" id="hotelDetailTitle">Loading…</h1>
             </header>
             <nav class="bk-tabs" aria-label="Hotel sub-navigation">
@@ -1737,6 +1738,15 @@
       const slug = currentHotelSlug;
       const titleEl = container.querySelector('#hotelDetailTitle');
       const tabs    = container.querySelectorAll('.bk-tabs__btn');
+      const backEl  = container.querySelector('#hotelDetailBack');
+
+      // Back link → SPA navigate (no full reload). Cmd/Ctrl-click still
+      // opens in a new tab via the native href.
+      backEl.addEventListener('click', (e) => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+        e.preventDefault();
+        navigate('hotels');
+      });
 
       // Sub-tab toggle is purely visual until each tab body ships.
       tabs.forEach((btn) => {
