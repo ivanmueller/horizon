@@ -368,19 +368,35 @@
       (route.group === 'finance' ? navFinance : navMain).appendChild(a);
     }
 
-    function pathFor(routeId) {
-      return routeId === 'home' ? '/admin/' : '/admin/' + routeId + '/';
+    function pathFor(routeId, opts) {
+      if (routeId === 'home') return '/admin/';
+      if (routeId === 'hotel-detail' && opts && opts.slug) {
+        return '/admin/hotels/' + opts.slug + '/';
+      }
+      return '/admin/' + routeId + '/';
     }
 
-    function navigate(routeId) {
-      const path = pathFor(routeId);
+    function navigate(routeId, opts) {
+      const path = pathFor(routeId, opts);
       if (window.location.pathname === path) return;
       history.pushState(null, '', path);
       render();
     }
 
+    // currentHotelSlug is set whenever the URL is /admin/hotels/<slug>/
+    // so the hotel-detail renderer can pick it up. Cleared on every
+    // non-detail route.
+    let currentHotelSlug = null;
+
     function currentRoute() {
-      const m = window.location.pathname.match(/^\/admin\/([a-z]+)\/?$/);
+      const path = window.location.pathname;
+      const detail = path.match(/^\/admin\/hotels\/([a-z0-9-]+)\/?$/);
+      if (detail) {
+        currentHotelSlug = detail[1];
+        return 'hotel-detail';
+      }
+      currentHotelSlug = null;
+      const m = path.match(/^\/admin\/([a-z]+)\/?$/);
       const id = m && m[1];
       return ROUTES.find(r => r.id === id) ? id : 'home';
     }
@@ -395,7 +411,10 @@
     function render() {
       const id = currentRoute();
       for (const r of ROUTES) {
-        navItems[r.id].classList.toggle('app-nav__item--active', r.id === id);
+        // Hotel-detail is a sub-route under Hotels — keep that nav row
+        // highlighted while the user is on /admin/hotels/<slug>/.
+        const isActive = r.id === id || (id === 'hotel-detail' && r.id === 'hotels');
+        navItems[r.id].classList.toggle('app-nav__item--active', isActive);
       }
       const renderer = renderers[id] || renderers.home;
       const out = renderer();
@@ -406,7 +425,10 @@
         container.innerHTML = out.html || '';
         if (typeof out.mount === 'function') out.mount(container);
       }
-      document.title = 'Horizon admin — ' + (ROUTES.find(r => r.id === id) || ROUTES[0]).label;
+      const labelRoute = ROUTES.find(r => r.id === id);
+      document.title = 'Horizon admin — ' + (
+        labelRoute ? labelRoute.label : (id === 'hotel-detail' ? 'Hotel' : ROUTES[0].label)
+      );
     }
 
     // Browser back/forward buttons walk pushState entries; popstate
@@ -739,6 +761,26 @@
           'Per-hotel monthly commission statements.',
           'Generate invoices for any hotel and any period. Today this lives on the Bookings view; it gets its own surface here in a follow-up sprint.',
         );
+      },
+      'hotel-detail'() {
+        // Layout mirrors the Bookings page shell: title row + sub-tabs.
+        // Tabs are placeholders; tab bodies arrive in follow-up sprints.
+        return {
+          html: `
+            <header class="bk-page__head">
+              <h1 class="bk-page__title" id="hotelDetailTitle">Loading…</h1>
+            </header>
+            <nav class="bk-tabs" aria-label="Hotel sub-navigation">
+              <button type="button" class="bk-tabs__btn bk-tabs__btn--active" data-tab="overview">Overview</button>
+              <button type="button" class="bk-tabs__btn" data-tab="links">Links &amp; QR</button>
+              <button type="button" class="bk-tabs__btn" data-tab="payouts">Payouts &amp; Banking</button>
+              <button type="button" class="bk-tabs__btn" data-tab="contacts">Contacts</button>
+              <button type="button" class="bk-tabs__btn" data-tab="agreement">Agreement &amp; Terms</button>
+              <button type="button" class="bk-tabs__btn" data-tab="activity">Activity Log</button>
+            </nav>
+          `,
+          mount: mountHotelDetail,
+        };
       },
     };
 
@@ -1668,23 +1710,68 @@
           .forEach(cb => { cb.checked = hotelsEls.checkAll.checked; });
       });
 
-      // Existing flows: "+ Add hotel" opens the create drawer; clicking
-      // a row opens the detail drawer + paints the row selected.
+      // "+ Add hotel" still opens the create drawer (drawer code is
+      // unchanged below). Clicking a row navigates to the new full
+      // hotel-detail page at /admin/hotels/<slug>/. The detail drawer
+      // (openHotelDrawer) stays defined so per-tab CRUD on the new
+      // page can call into the same flows once those tabs are wired.
       hotelsEls.add.addEventListener('click', openHotelCreateDrawer);
       hotelsEls.body.addEventListener('click', (e) => {
-        // Ignore clicks on the row checkbox + kebab so they don't open
-        // the drawer.
+        // Ignore clicks on the row checkbox + kebab.
         if (e.target.closest('input,button.bk-kebab')) return;
         const tr = e.target.closest('tr[data-hotel-idx]');
         if (!tr) return;
         const hotel = hotelsCache[Number(tr.dataset.hotelIdx)];
         if (!hotel) return;
-        hotelsEls.body.querySelectorAll('tr').forEach((r) => r.classList.remove('row--selected'));
-        tr.classList.add('row--selected');
-        openHotelDrawer(hotel);
+        navigate('hotel-detail', { slug: hotel.code });
       });
 
       loadHotels(hotelsEls);
+    }
+
+    /* ── Hotel detail page (full route, /admin/hotels/<slug>/) ──── */
+    // Drawer code (openHotelDrawer + everything below) is intentionally
+    // left in place — the create-hotel flow still uses it, and the
+    // detail-page rebuild lands feature-by-feature inside the new tabs.
+    function mountHotelDetail(container) {
+      const slug = currentHotelSlug;
+      const titleEl = container.querySelector('#hotelDetailTitle');
+      const tabs    = container.querySelectorAll('.bk-tabs__btn');
+
+      // Sub-tab toggle is purely visual until each tab body ships.
+      tabs.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          tabs.forEach((b) => b.classList.toggle('bk-tabs__btn--active', b === btn));
+        });
+      });
+
+      if (!slug) { titleEl.textContent = 'Hotel'; return; }
+
+      // Use the cache when available (lands here from the table click);
+      // fall back to a fresh fetch when the user deep-links straight to
+      // /admin/hotels/<slug>/ with an empty in-memory cache.
+      const cached = hotelsCache.find((h) => h.code === slug);
+      if (cached) { titleEl.textContent = cached.name; return; }
+
+      fetch(BOKUN_API_BASE + '/api/admin/hotels', {
+        cache: 'no-store',
+        headers: { Authorization: 'Bearer ' + session.access_token },
+      })
+        .then((r) => {
+          if (r.status === 401) { window.location.replace('/dashboard/login/'); throw new Error('unauthorized'); }
+          return r.json().then((b) => ({ ok: r.ok, body: b }));
+        })
+        .then((res) => {
+          if (!res.ok) throw new Error((res.body && res.body.error) || 'fetch_failed');
+          hotelsCache = res.body.hotels || [];
+          const found = hotelsCache.find((h) => h.code === slug);
+          titleEl.textContent = found ? found.name : 'Hotel not found';
+        })
+        .catch((err) => {
+          if (err && err.message === 'unauthorized') return;
+          console.error('hotel detail fetch failed', err);
+          titleEl.textContent = 'Could not load hotel';
+        });
     }
 
     function flashHotelsNotice(msg) {
