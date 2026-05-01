@@ -1050,17 +1050,17 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
    on a regular (non-stacked) page, so the title itself shifts down
    by the link's height + gap. Used by /admin/hotels/<slug>/.
 
-   Pixel targets (measured from page top):
-     • top of the back-link "H"          = 91 px
-     • baseline / cap-bottom of the h1   = 137 px
-     • cap-top of the sub-tabs text      = 217 px
-   These come from .app__content's 85px padding-top + the margins
-   below; values are tuned to Inter's metrics (cap-height ≈ 73% of
-   em, line-height 1.25 on the h1, line-height 1 on the back link). */
+   Targets (Inter, line-height 1 on the back link, 1.25 on the h1):
+     • baseline of the back-link "Hotels"     = 100 px from page top
+     • cap-top of the hotel-name h1           = 120 px (20 px gap)
+     • cap-top of the sub-tabs text           = 158 px (20 px gap
+       between the h1 baseline at ~138 and the tab cap-top)
+   .app__content's 85px padding-top is the anchor; the margins below
+   add the rest. */
 .bk-page__head--stack {
   display: block;
-  margin-top: 6px;
-  margin-bottom: 64px;
+  margin-top: 5px;
+  margin-bottom: 4px;
 }
 .bk-page__back {
   display: inline-block;
