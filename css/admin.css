@@ -135,8 +135,8 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 
 .app__content {
   flex: 1;
-  padding: 85px 90px var(--s12);
-  max-width: var(--content-max);
+  padding: 85px 16px var(--s12);
+  max-width: 1280px;
   width: 100%;
   margin: 0 auto;   /* centre within the main column (excludes sidebar) */
 }
@@ -1519,23 +1519,27 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .hm-filter--removable:hover .hm-filter__close { color: #1a2c44; }
 
 /* ── Widgets grid ─────────────────────────────────────────────── */
-/* Six tiles in a 3×2 grid sitting on a #f4f7fa wash. Each tile is
-   its own bordered + rounded card; the wash shows through the gaps
-   between them. Tile size matches the Stripe reference: 415×405. */
+/* Six tiles sitting on a #f4f7fa wash. Auto-fit grid: tiles aim
+   for 416×404 max but shrink to a 280px floor before wrapping to
+   the next row, so the layout reorganises itself as the viewport
+   narrows. min(100%, 280px) keeps it from overflowing on very
+   narrow viewports. The wash stays 8px thick around the tiles
+   regardless of width. */
 .hm-widgets {
   display: grid;
-  grid-template-columns: repeat(3, 415px);
-  grid-auto-rows: 405px;
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 416px));
+  grid-auto-rows: 404px;
+  gap: 8px;
   background: #f4f7fa;
   border-radius: 12px;
-  padding: 16px;
-  width: max-content;
-  max-width: 100%;
+  padding: 8px;
+  width: 100%;
 }
+/* No per-tile border — the wash provides the only visual seam.
+   Each tile keeps its own white fill + rounded corners so the
+   8px wash reads as the gap between tiles. */
 .hm-widget {
   background: var(--bg);
-  border: 1px solid #d4dee9;
   border-radius: 12px;
   padding: 20px 22px 16px;
   display: flex; flex-direction: column;
