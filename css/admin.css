@@ -428,6 +428,15 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   border-color: var(--accent);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
+
+/* Tour-catalog "Create product" — same shape, wider so the longer
+   label has air around it. The 3-col grid keeps plus + kbd pinned
+   to the edges; the extra width is absorbed by the 1fr label
+   column, leaving more breathing room around "Create product". */
+.tours-create-btn {
+  width: 175px;
+  padding: 0 12px;
+}
 .btn__kbd {
   display: inline-flex;
   align-items: center;
