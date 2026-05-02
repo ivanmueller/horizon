@@ -735,11 +735,97 @@
         };
       },
       tours() {
-        return placeholderPage(
-          'Tour catalog',
-          'Tours we currently sell.',
-          'Catalog of every tour Horizon runs — Bokun product id, base price, durations. Currently just the Banff Hidden Gem Canoe Tour. Detail view + add-tour flow lands here.',
-        );
+        return {
+          html: `
+            <header class="bk-page__head">
+              <h1 class="bk-page__title">Tour catalog</h1>
+              <div class="bk-page__actions">
+                <button type="button" class="btn" id="toursAnalyze">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
+                  Analyze
+                </button>
+                <button type="button" class="btn btn--primary hotels-add-btn" id="toursCreate">
+                  <svg class="hotels-add-btn__plus" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" aria-hidden="true">
+                    <line x1="8" y1="1.5" x2="8" y2="14.5"/>
+                    <line x1="1.5" y1="8" x2="14.5" y2="8"/>
+                  </svg>
+                  <span class="hotels-add-btn__label">Create product</span>
+                  <kbd class="btn__kbd" aria-label="Shortcut: n">n</kbd>
+                </button>
+              </div>
+            </header>
+
+            <nav class="bk-tabs" aria-label="Tour catalog sub-navigation">
+              <button type="button" class="bk-tabs__btn bk-tabs__btn--active" data-tab="all">All tours</button>
+              <button type="button" class="bk-tabs__btn" data-tab="features">Features</button>
+              <button type="button" class="bk-tabs__btn" data-tab="coupons">Coupons</button>
+              <button type="button" class="bk-tabs__btn" data-tab="shipping">Shipping rates</button>
+              <button type="button" class="bk-tabs__btn" data-tab="tax">Tax rates</button>
+              <button type="button" class="bk-tabs__btn" data-tab="pricing">Pricing tables</button>
+            </nav>
+
+            <div class="bk-statcards bk-statcards--tours" id="toursStatcards" role="group" aria-label="Tour filter">
+              <button type="button" class="bk-statcard bk-statcard--active" data-filter="all">
+                <div class="bk-statcard__label">All</div>
+                <div class="bk-statcard__value" data-count="all">—</div>
+              </button>
+              <button type="button" class="bk-statcard" data-filter="active">
+                <div class="bk-statcard__label">Active</div>
+                <div class="bk-statcard__value" data-count="active">—</div>
+              </button>
+              <button type="button" class="bk-statcard" data-filter="archived">
+                <div class="bk-statcard__label">Archived</div>
+                <div class="bk-statcard__value" data-count="archived">—</div>
+              </button>
+            </div>
+
+            <div class="bk-toolbar">
+              <div class="bk-filters">
+                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Created</button>
+                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Status</button>
+                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Product category</button>
+                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> More filters</button>
+              </div>
+              <div class="bk-toolbar__actions">
+                <button type="button" class="bk-iconbtn" id="toursExportPrices">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Export prices
+                </button>
+                <button type="button" class="bk-iconbtn" id="toursExportProducts">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Export products
+                </button>
+                <button type="button" class="bk-iconbtn" id="toursEditCols">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                  Edit columns
+                </button>
+              </div>
+            </div>
+
+            <div class="bk-table-wrap">
+              <div class="bk-table-scroll">
+                <table class="bk-table bk-table--tours" id="toursTable">
+                  <thead>
+                    <tr>
+                      <th class="bk-table__check"><input type="checkbox" id="toursCheckAll" aria-label="Select all"></th>
+                      <th>Name</th>
+                      <th>Pricing</th>
+                      <th>Product category</th>
+                      <th>Created</th>
+                      <th>Updated</th>
+                      <th class="bk-table__kebab"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="toursBody">
+                    <tr><td colspan="7" class="bk-empty"><div class="bk-empty__title">No tours yet</div><p class="bk-empty__body">Bokun product imports + the create-tour flow ship in a follow-up sprint.</p></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="bk-table__footer" id="toursFooter">— items</div>
+            </div>
+          `,
+          mount: mountTours,
+        };
       },
       payments() {
         return placeholderPage(
@@ -1809,6 +1895,61 @@
 
       loadHotels(hotelsEls);
     }
+
+    /* ── Tour catalog route ──────────────────────────────── */
+    // Pure shell for now: stat cards + sub-tabs flip visually, every
+    // chip + toolbar action is a no-op until the data layer ships.
+    function mountTours(container) {
+      const tabs      = container.querySelectorAll('.bk-tabs__btn');
+      const statcards = container.querySelector('#toursStatcards');
+      const chips     = container.querySelectorAll('.bk-chip');
+      const createBtn = container.querySelector('#toursCreate');
+      const checkAll  = container.querySelector('#toursCheckAll');
+
+      tabs.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          tabs.forEach((b) => b.classList.toggle('bk-tabs__btn--active', b === btn));
+        });
+      });
+
+      statcards.addEventListener('click', (e) => {
+        const card = e.target.closest('.bk-statcard');
+        if (!card) return;
+        statcards.querySelectorAll('.bk-statcard').forEach((c) => {
+          c.classList.toggle('bk-statcard--active', c === card);
+        });
+      });
+
+      chips.forEach((c) => c.addEventListener('click', noopChip));
+      container.querySelector('#toursAnalyze').addEventListener('click', noopChip);
+      container.querySelector('#toursExportPrices').addEventListener('click', noopChip);
+      container.querySelector('#toursExportProducts').addEventListener('click', noopChip);
+      container.querySelector('#toursEditCols').addEventListener('click', noopChip);
+
+      createBtn.addEventListener('click', openTourCreate);
+
+      checkAll.addEventListener('change', () => {
+        container.querySelectorAll('input[type="checkbox"][data-tours-row]')
+          .forEach((cb) => { cb.checked = checkAll.checked; });
+      });
+    }
+
+    function openTourCreate() {
+      // Shell — alert keeps the affordance visible until wired.
+      window.alert('Create product flow lands in the next sprint.');
+    }
+
+    // "n" anywhere on /admin/tours/ opens the create flow,
+    // mirroring the same shortcut on /admin/hotels/ and /admin/invoices/.
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'n' && e.key !== 'N') return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (currentRoute() !== 'tours') return;
+      const t = e.target;
+      if (t && (t.matches('input, textarea, select') || t.isContentEditable)) return;
+      e.preventDefault();
+      openTourCreate();
+    });
 
     /* ── Invoices route ──────────────────────────────────── */
     // Pure shell for now: stat cards filter visually, every other
