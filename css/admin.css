@@ -1187,6 +1187,21 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   text-align: left;
 }
 
+/* Tour catalog: 3 fixed-size 395×66 stat cards spread across a
+   1200 px row via space-between. 3 × 395 + 2 × ~7.5 gap = 1200. */
+.bk-statcards--tours {
+  display: flex;
+  justify-content: space-between;
+  width: 1200px;
+  max-width: 100%;
+  gap: 0;
+}
+.bk-statcards--tours .bk-statcard {
+  width: 395px;
+  height: 66px;
+  flex-shrink: 0;
+}
+
 /* Invoices: 5 fixed-size 250×42 filter cards in a row, 6px gap. The
    row total is 5 × 250 + 4 × 6 = 1274 px which sits inside the 1280
    content cap with 6 px of slack. */
