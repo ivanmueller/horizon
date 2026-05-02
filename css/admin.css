@@ -1196,9 +1196,12 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 /* Invoices page-head modifier — pulls the head up by 5 px so the
    title baseline lands at 105 px from the top of the page (with
    .app__content's 85 px padding-top + h1 line-box ≈ 25 px ascent
-   = 110 → minus 5 px head margin-top = 105). */
+   = 110 → minus 5 px head margin-top = 105). margin-bottom of 13 px
+   adds to the h1's ~7 px below-baseline descent so the stat-cards
+   row top sits exactly 20 px below the title baseline. */
 .bk-page__head--invoices {
   margin-top: -5px;
+  margin-bottom: 13px;
 }
 
 /* ── Toolbar: filter chips + right-side actions ───────────────── */
