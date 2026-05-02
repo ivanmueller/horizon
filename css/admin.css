@@ -1178,6 +1178,29 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   text-align: left;
 }
 
+/* Invoices: 5 fixed-size 250×42 filter cards in a row, 6px gap. The
+   row total is 5 × 250 + 4 × 6 = 1274 px which sits inside the 1280
+   content cap with 6 px of slack. */
+.bk-statcards--invoices {
+  display: flex;
+  gap: 6px;
+}
+.bk-statcards--invoices .bk-statcard {
+  width: 250px;
+  height: 42px;
+  padding: 0 14px;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center;
+}
+
+/* Invoices page-head modifier — pulls the head up by 5 px so the
+   title baseline lands at 105 px from the top of the page (with
+   .app__content's 85 px padding-top + h1 line-box ≈ 25 px ascent
+   = 110 → minus 5 px head margin-top = 105). */
+.bk-page__head--invoices {
+  margin-top: -5px;
+}
+
 /* ── Toolbar: filter chips + right-side actions ───────────────── */
 .bk-toolbar {
   display: flex; flex-wrap: wrap;

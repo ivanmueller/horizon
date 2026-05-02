@@ -756,11 +756,91 @@
         );
       },
       invoices() {
-        return placeholderPage(
-          'Invoices',
-          'Per-hotel monthly commission statements.',
-          'Generate invoices for any hotel and any period. Today this lives on the Bookings view; it gets its own surface here in a follow-up sprint.',
-        );
+        return {
+          html: `
+            <header class="bk-page__head bk-page__head--invoices">
+              <h1 class="bk-page__title">Invoices</h1>
+              <div class="bk-page__actions">
+                <button type="button" class="btn btn--primary hotels-add-btn" id="invoicesAdd">
+                  <svg class="hotels-add-btn__plus" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" aria-hidden="true">
+                    <line x1="8" y1="1.5" x2="8" y2="14.5"/>
+                    <line x1="1.5" y1="8" x2="14.5" y2="8"/>
+                  </svg>
+                  <span class="hotels-add-btn__label">Add invoice</span>
+                  <kbd class="btn__kbd" aria-label="Shortcut: n">n</kbd>
+                </button>
+              </div>
+            </header>
+
+            <div class="bk-statcards bk-statcards--invoices" id="invoicesStatcards" role="group" aria-label="Invoice filter">
+              <button type="button" class="bk-statcard bk-statcard--label-only bk-statcard--active" data-filter="all">
+                <div class="bk-statcard__label">All invoices</div>
+              </button>
+              <button type="button" class="bk-statcard bk-statcard--label-only" data-filter="draft">
+                <div class="bk-statcard__label">Draft</div>
+              </button>
+              <button type="button" class="bk-statcard bk-statcard--label-only" data-filter="open">
+                <div class="bk-statcard__label">Open</div>
+              </button>
+              <button type="button" class="bk-statcard bk-statcard--label-only" data-filter="past-due">
+                <div class="bk-statcard__label">Past due</div>
+              </button>
+              <button type="button" class="bk-statcard bk-statcard--label-only" data-filter="paid">
+                <div class="bk-statcard__label">Paid</div>
+              </button>
+            </div>
+
+            <div class="bk-toolbar">
+              <div class="bk-filters">
+                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Status</button>
+                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Created</button>
+                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Due date</button>
+                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Scheduled finalization date</button>
+                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Total</button>
+                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> More filters</button>
+              </div>
+              <div class="bk-toolbar__actions">
+                <button type="button" class="bk-iconbtn" id="invoicesExport">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Export
+                </button>
+                <button type="button" class="bk-iconbtn" id="invoicesAnalyze">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
+                  Analyze
+                </button>
+                <button type="button" class="bk-iconbtn" id="invoicesEditCols">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                  Edit columns
+                </button>
+              </div>
+            </div>
+
+            <div class="bk-table-wrap">
+              <div class="bk-table-scroll">
+                <table class="bk-table bk-table--invoices" id="invoicesTable">
+                  <thead>
+                    <tr>
+                      <th class="bk-table__check"><input type="checkbox" id="invoicesCheckAll" aria-label="Select all"></th>
+                      <th>Total</th>
+                      <th>Frequency</th>
+                      <th>Invoice number</th>
+                      <th>Customer name</th>
+                      <th>Customer email</th>
+                      <th>Due</th>
+                      <th>Created</th>
+                      <th class="bk-table__kebab"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="invoicesBody">
+                    <tr><td colspan="9" class="bk-empty"><div class="bk-empty__title">No invoices yet</div><p class="bk-empty__body">Drafted invoices, scheduled finalizations, and paid statements will appear here.</p></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="bk-table__footer" id="invoicesFooter">— items</div>
+            </div>
+          `,
+          mount: mountInvoices,
+        };
       },
       'hotel-detail'() {
         // Layout mirrors the Bookings page shell: title row + sub-tabs.
@@ -1729,6 +1809,56 @@
 
       loadHotels(hotelsEls);
     }
+
+    /* ── Invoices route ──────────────────────────────────── */
+    // Pure shell for now: stat cards filter visually, every other
+    // chip + toolbar action is a no-op until the data layer ships.
+    function mountInvoices(container) {
+      const statcards = container.querySelector('#invoicesStatcards');
+      const chips     = container.querySelectorAll('.bk-chip');
+      const addBtn    = container.querySelector('#invoicesAdd');
+      const checkAll  = container.querySelector('#invoicesCheckAll');
+
+      statcards.addEventListener('click', (e) => {
+        const card = e.target.closest('.bk-statcard');
+        if (!card) return;
+        statcards.querySelectorAll('.bk-statcard').forEach((c) => {
+          c.classList.toggle('bk-statcard--active', c === card);
+        });
+      });
+
+      chips.forEach((c) => c.addEventListener('click', noopChip));
+      container.querySelector('#invoicesExport').addEventListener('click', noopChip);
+      container.querySelector('#invoicesAnalyze').addEventListener('click', noopChip);
+      container.querySelector('#invoicesEditCols').addEventListener('click', noopChip);
+
+      addBtn.addEventListener('click', openInvoiceCreate);
+
+      checkAll.addEventListener('change', () => {
+        container.querySelectorAll('input[type="checkbox"][data-invoices-row]')
+          .forEach((cb) => { cb.checked = checkAll.checked; });
+      });
+    }
+
+    // Placeholder for the invoice-creation flow. The "n" keyboard
+    // shortcut + the "+ Add invoice" button both call this; wire it
+    // to the real drawer/modal once the create flow is built.
+    function openInvoiceCreate() {
+      // Shell — alert keeps the affordance visible until wired.
+      window.alert('Create invoice flow lands in the next sprint.');
+    }
+
+    // "n" anywhere on /admin/invoices/ opens the create flow,
+    // mirroring the same shortcut on /admin/hotels/.
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'n' && e.key !== 'N') return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (currentRoute() !== 'invoices') return;
+      const t = e.target;
+      if (t && (t.matches('input, textarea, select') || t.isContentEditable)) return;
+      e.preventDefault();
+      openInvoiceCreate();
+    });
 
     /* ── Hotel detail page (full route, /admin/hotels/<slug>/) ──── */
     // Drawer code (openHotelDrawer + everything below) is intentionally
