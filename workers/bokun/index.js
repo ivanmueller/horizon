@@ -898,12 +898,43 @@ async function handleAdminHotelUserCreate(request, env) {
       [{ email, hotel_id, role, status: "active" }],
       { returnRow: true },
     );
-    return jsonResponse({ manager: inserted[0] }, 201, request);
+    const invite_sent = await sendManagerInvite(env, email);
+    return jsonResponse({ manager: inserted[0], invite_sent }, 201, request);
   } catch (err) {
     if (err.body && /duplicate key|unique/i.test(JSON.stringify(err.body))) {
       return jsonResponse({ error: `${email} is already an active manager for this hotel` }, 409, request);
     }
     throw err;
+  }
+}
+
+// Sends a Supabase Auth invite email to a newly-added hotel manager.
+// The invite link redirects to /dashboard/setup/ where they set a
+// password on first sign-in. Returns true if the email was sent,
+// false if the user already has a confirmed Supabase Auth account
+// (they can just sign in normally) or if the invite call fails for
+// any other reason (the hotel_users row is already saved either way).
+async function sendManagerInvite(env, email) {
+  const redirectTo = "https://gowithhorizon.com/dashboard/setup/";
+  try {
+    const res = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/users`, {
+      method: "POST",
+      headers: {
+        apikey: env.SUPABASE_SERVICE_KEY,
+        Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, invite: true, email_redirect_to: redirectTo }),
+    });
+    if (res.ok) return true;
+    const text = await res.text().catch(() => "");
+    // 422 = user already exists and is confirmed — no invite needed.
+    if (res.status === 422 || /already (exists|registered)/i.test(text)) return false;
+    console.error(`sendManagerInvite ${res.status}:`, text);
+    return false;
+  } catch (err) {
+    console.error("sendManagerInvite failed:", err.message);
+    return false;
   }
 }
 

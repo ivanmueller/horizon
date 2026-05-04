@@ -3078,7 +3078,7 @@
                      autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
                      value="${isInvite ? '' : escapeHtml(manager.email)}"
                      placeholder="manager@hotel.com">
-              ${isInvite ? '<span class="drawer-form__hint">They sign in at /dashboard/login/ — magic link or Google OAuth.</span>' : ''}
+              ${isInvite ? '<span class="drawer-form__hint">An invite email will be sent. They\'ll set a password on first sign-in.</span>' : ''}
             </label>
             <label class="drawer-form__row">
               <span class="drawer-form__label">Role</span>
@@ -3130,7 +3130,10 @@
             throw new Error(msg);
           }
           drawerManagerForm = null;
-          flashHotelsNotice(`${email} can now sign in at /dashboard/login/.`);
+          const inviteMsg = res.body.invite_sent
+            ? `Invite sent to ${email}. They'll receive an email to set their password.`
+            : `${email} added. They already have an account and can sign in at /dashboard/login/.`;
+          flashHotelsNotice(inviteMsg);
           // No republish needed — managers are an auth concern, not
           // partners.json content.
           if (hotelsEls) loadHotels(hotelsEls).then(refreshDrawerFromCache);
