@@ -17,6 +17,17 @@
 //   PATCH /api/auth/mark-password-set  JWT required; stamps password_set_at
 //                                    on hotel_users or horizon_admins after
 //                                    the user saves a password in setup/modal.
+//   POST /api/auth/access-request   No auth. Inserts a pending row in
+//                                    access_requests for admin review.
+//                                    Body: { email, name, property_requested?,
+//                                    reason? }.
+//
+// Horizon admin — access requests:
+//   GET  /api/admin/access-requests  list all requests (most-recent first).
+//                                    ?status=pending|approved|denied to filter.
+//                                    Returns pending_count in response.
+//   PATCH /api/admin/access-requests/:id  body { status: approved|denied }.
+//                                    Stamps reviewed_by + reviewed_at.
 //
 // Booking state handoff (tour page → checkout page; KV-backed, 45min TTL):
 //   POST /api/booking/initiate         mint booking_id, persist cart + hotel
@@ -220,6 +231,16 @@ export default {
           return await handleAuthPreflight(request, env);
         if (request.method === "PATCH" && segs[2] === "mark-password-set")
           return await handleAuthMarkPasswordSet(request, env);
+        if (request.method === "POST" && segs[2] === "access-request")
+          return await handleAuthAccessRequest(request, env);
+      }
+
+      // ── Access requests (admin inbox) ───────────────────────────
+      if (segs[0] === "api" && segs[1] === "admin" && segs[2] === "access-requests") {
+        if (request.method === "GET" && !segs[3])
+          return await handleAdminAccessRequestsList(url, env, request);
+        if (request.method === "PATCH" && segs[3])
+          return await handleAdminAccessRequestReview(segs[3], request, env);
       }
 
       return jsonResponse({ error: "Not found" }, 404, request);
@@ -1071,6 +1092,97 @@ async function handleAuthMarkPasswordSet(request, env) {
   ]);
 
   return jsonResponse({ ok: true }, 200, request);
+}
+
+// POST /api/auth/access-request — no auth required.
+// Records a request-access submission from the login page's not-approved
+// state. Inserts a pending row into access_requests so the admin inbox
+// can surface it for review. Duplicate submissions are fine — the admin
+// sees all of them.
+async function handleAuthAccessRequest(request, env) {
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+
+  const email = typeof body.email === "string" ? body.email.trim() : "";
+  const name  = typeof body.name  === "string" ? body.name.trim()  : "";
+  if (!EMAIL_RE.test(email)) return jsonResponse({ error: "valid email required" }, 400, request);
+  if (!name) return jsonResponse({ error: "name required" }, 400, request);
+
+  const row = {
+    email,
+    name,
+    property_requested: typeof body.property_requested === "string"
+      ? body.property_requested.trim() || null : null,
+    reason: typeof body.reason === "string"
+      ? body.reason.trim() || null : null,
+  };
+
+  await supabaseInsert(env, "access_requests", [row]);
+  return jsonResponse({ ok: true }, 201, request);
+}
+
+// GET /api/admin/access-requests — admin auth required.
+// Returns all access requests newest-first. Optional ?status= filter.
+// pending_count is returned at the top level so the nav badge can be
+// populated without a separate call.
+async function handleAdminAccessRequestsList(url, env, request) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+
+  const statusFilter = url.searchParams.get("status");
+  const validStatuses = new Set(["pending", "approved", "denied"]);
+
+  let q =
+    "access_requests?select=id,email,name,property_requested,reason,status,reviewed_at,created_at" +
+    "&order=created_at.desc&limit=500";
+  if (statusFilter && validStatuses.has(statusFilter)) {
+    q += `&status=eq.${encodeURIComponent(statusFilter)}`;
+  }
+
+  const rows = await supabaseSelect(env, q);
+  const pendingCount = statusFilter
+    ? null
+    : rows.filter((r) => r.status === "pending").length;
+
+  return jsonResponse({ requests: rows, pending_count: pendingCount }, 200, request);
+}
+
+// PATCH /api/admin/access-requests/:id — admin auth required.
+// Sets status to approved or denied, stamps reviewed_by + reviewed_at.
+async function handleAdminAccessRequestReview(id, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+
+  if (!UUID_RE.test(id)) {
+    return jsonResponse({ error: "invalid access-request id" }, 400, request);
+  }
+
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+
+  const status = typeof body.status === "string" ? body.status.trim() : "";
+  if (status !== "approved" && status !== "denied") {
+    return jsonResponse({ error: "status must be approved or denied" }, 400, request);
+  }
+
+  const userEmail = String(auth.claims.email || "").trim();
+  const adminRows = await supabaseSelect(
+    env,
+    `horizon_admins?email=ilike.${encodeURIComponent(userEmail)}&status=eq.active&select=id`,
+  );
+  const reviewedBy = adminRows[0]?.id ?? null;
+
+  const updated = await supabaseUpdate(
+    env,
+    `access_requests?id=eq.${encodeURIComponent(id)}`,
+    { status, reviewed_by: reviewedBy, reviewed_at: new Date().toISOString() },
+    { returnRow: true },
+  );
+
+  if (!Array.isArray(updated) || !updated.length) {
+    return jsonResponse({ error: "access request not found" }, 404, request);
+  }
+  return jsonResponse({ ok: true, request: updated[0] }, 200, request);
 }
 
 // ── CRUD validators / normalisers ──────────────────────────────────────

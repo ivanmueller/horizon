@@ -256,6 +256,20 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 .app-nav__icon svg { width: 100%; height: 100%; }
 
+/* Pending-count badge on nav items (e.g. Access Requests inbox) */
+.app-nav__badge {
+  margin-left: auto;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.6875rem;   /* 11px */
+  font-weight: 600;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+
 /* ── Workspace dropdown menu (anchored under .app-brand) ──────── */
 /* Opens when the user clicks the brand row at the top of the sidebar.
    Mirrors Stripe's workspace switcher: avatar + name on top, then a
