@@ -178,12 +178,12 @@
       font-size: 14px;
       color: #697386;
       line-height: 1.55;
-      margin: 0 0 20px;
+      margin: 0 0 16px;
     }
-    .sl-not-approved__body a {
-      color: #FF6B4A;
-      text-decoration: underline;
-      text-underline-offset: 2px;
+    .sl-not-approved__actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
     }
     .sl-not-approved__back {
       background: none; border: 1px solid #e6ebf1;
@@ -193,6 +193,50 @@
       transition: background 0.15s;
     }
     .sl-not-approved__back:hover { background: #f6f9fc; }
+    .sl-not-approved__req-btn {
+      background: #FF6B4A; border: 0;
+      padding: 9px 16px; border-radius: 6px;
+      font: inherit; font-size: 14px; font-weight: 500;
+      color: #fff; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .sl-not-approved__req-btn:hover { background: #e85a3a; }
+
+    /* ── Inline request-access form ───────────────────────────────── */
+    .sl-req-form {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #f0f3f8;
+    }
+    .sl-req-form__title {
+      font-size: 14px; font-weight: 600; color: #1a1f36;
+      margin: 0 0 14px;
+    }
+    .sl-req-form .sl-field { margin-bottom: 14px; }
+    .sl-req-form .sl-label { font-size: 13px; }
+    .sl-req-form textarea.sl-input {
+      resize: vertical; min-height: 64px; line-height: 1.5;
+    }
+    .sl-req-form__footer { display: flex; gap: 12px; align-items: center; }
+    .sl-req-form__cancel {
+      background: none; border: 0; padding: 0;
+      font: inherit; font-size: 13px; color: #697386;
+      cursor: pointer; text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .sl-req-form__cancel:hover { color: #1a1f36; }
+
+    /* ── Request sent success banner ──────────────────────────────── */
+    .sl-req-sent {
+      margin-top: 14px;
+      padding: 12px 14px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #166534;
+      line-height: 1.5;
+    }
 
     /* ── Check-email success state ────────────────────────────────── */
     .sl-check-email { padding: 4px 0 8px; }
@@ -312,13 +356,48 @@
         <p class="sl-not-approved__heading">Access not found</p>
         <p class="sl-not-approved__body">
           <span id="slNotApprovedEmail" style="font-weight:500;"></span> isn't linked to
-          a Horizon partner account. If you believe this is a mistake or would like to
-          request access, contact us at
-          <a href="mailto:hello@gowithhorizon.com">hello@gowithhorizon.com</a>.
+          a Horizon partner account. You can request access below and our team will be in touch.
         </p>
-        <button type="button" class="sl-not-approved__back" id="slNotApprovedBack">
-          ← Try a different email
-        </button>
+        <div class="sl-not-approved__actions">
+          <button type="button" class="sl-not-approved__back" id="slNotApprovedBack">
+            ← Try a different email
+          </button>
+          <button type="button" class="sl-not-approved__req-btn" id="slReqAccessBtn">
+            Request access
+          </button>
+        </div>
+
+        <!-- Inline request form — hidden until "Request access" is clicked -->
+        <div class="sl-req-form" id="slReqForm" hidden>
+          <p class="sl-req-form__title">Request access</p>
+          <form id="slReqFormEl" novalidate>
+            <div class="sl-field">
+              <label class="sl-label" for="slReqName">Your name</label>
+              <input class="sl-input" type="text" id="slReqName"
+                     name="name" autocomplete="name" required placeholder="Full name">
+            </div>
+            <div class="sl-field">
+              <label class="sl-label" for="slReqProperty">Property or hotel <span style="color:#8898aa;font-weight:400">(optional)</span></label>
+              <input class="sl-input" type="text" id="slReqProperty"
+                     name="property" autocomplete="organization" placeholder="e.g. Fairmont Banff Springs">
+            </div>
+            <div class="sl-field">
+              <label class="sl-label" for="slReqReason">Why do you need access? <span style="color:#8898aa;font-weight:400">(optional)</span></label>
+              <textarea class="sl-input" id="slReqReason"
+                        name="reason" rows="3" placeholder="Brief description…"></textarea>
+            </div>
+            <div class="sl-req-form__footer">
+              <button class="sl-btn" type="submit" id="slReqSubmit"
+                      style="margin-top:0;flex:1">Send request</button>
+              <button type="button" class="sl-req-form__cancel" id="slReqCancel">Cancel</button>
+            </div>
+          </form>
+          <!-- Success message (hidden until submitted) -->
+          <p class="sl-req-sent" id="slReqSent" hidden>
+            Request sent! We'll review it and get back to you at
+            <strong id="slReqSentEmail"></strong>.
+          </p>
+        </div>
       </div>
     </div>
 
@@ -384,6 +463,16 @@
       stateNotApproved:  document.getElementById('slStateNotApproved'),
       notApprovedEmail:  document.getElementById('slNotApprovedEmail'),
       notApprovedBack:   document.getElementById('slNotApprovedBack'),
+      reqAccessBtn:      document.getElementById('slReqAccessBtn'),
+      reqForm:           document.getElementById('slReqForm'),
+      reqFormEl:         document.getElementById('slReqFormEl'),
+      reqName:           document.getElementById('slReqName'),
+      reqProperty:       document.getElementById('slReqProperty'),
+      reqReason:         document.getElementById('slReqReason'),
+      reqSubmit:         document.getElementById('slReqSubmit'),
+      reqCancel:         document.getElementById('slReqCancel'),
+      reqSent:           document.getElementById('slReqSent'),
+      reqSentEmail:      document.getElementById('slReqSentEmail'),
 
       stateCheckEmail:   document.getElementById('slStateCheckEmail'),
       checkEmailAddr:    document.getElementById('slCheckEmailAddr'),
@@ -495,12 +584,61 @@
     });
 
     els.notApprovedBack.addEventListener('click', () => {
+      // Reset request form when going back so it's clean next time.
+      els.reqForm.hidden = true;
+      els.reqSent.hidden = true;
+      els.reqFormEl.reset();
       showState('email');
       els.emailInput.select();
     });
 
     els.checkEmailBack.addEventListener('click', () => {
       showState('email');
+    });
+
+    // ── Request-access toggle / form ─────────────────────────────────
+    els.reqAccessBtn.addEventListener('click', () => {
+      els.reqForm.hidden = false;
+      els.reqAccessBtn.hidden = true;
+      els.reqName.focus();
+    });
+
+    els.reqCancel.addEventListener('click', () => {
+      els.reqForm.hidden = true;
+      els.reqAccessBtn.hidden = false;
+      els.reqFormEl.reset();
+      els.reqSent.hidden = true;
+    });
+
+    els.reqFormEl.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = els.reqName.value.trim();
+      if (!name) { els.reqName.focus(); return; }
+
+      els.reqSubmit.disabled = true;
+      els.reqSubmit.textContent = 'Sending…';
+
+      const email = els.notApprovedEmail.textContent.trim();
+      try {
+        const res = await fetch(BOKUN_API_BASE + '/api/auth/access-request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            name,
+            property_requested: els.reqProperty.value.trim() || undefined,
+            reason: els.reqReason.value.trim() || undefined,
+          }),
+        });
+        if (!res.ok) throw new Error('Request failed');
+        els.reqFormEl.hidden = true;
+        els.reqSentEmail.textContent = email;
+        els.reqSent.hidden = false;
+      } catch {
+        els.reqSubmit.disabled = false;
+        els.reqSubmit.textContent = 'Send request';
+        showError('Could not send request. Please try again or email hello@gowithhorizon.com.');
+      }
     });
 
     // ── Step 2: password sign-in ─────────────────────────────────────

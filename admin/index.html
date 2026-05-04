@@ -337,13 +337,14 @@
 
     /* ── Sidebar nav ─────────────────────────────────────── */
     const ROUTES = [
-      { id: 'home',     label: 'Home',         group: 'main',    icon: iconHome },
-      { id: 'bookings', label: 'Bookings',     group: 'main',    icon: iconBookings },
-      { id: 'hotels',   label: 'Hotels',       group: 'main',    icon: iconHotels },
-      { id: 'tours',    label: 'Tour catalog', group: 'main',    icon: iconCompass },
-      { id: 'payments', label: 'Payments',     group: 'finance', icon: iconCard },
-      { id: 'billing',  label: 'Billing',      group: 'finance', icon: iconReceipt },
-      { id: 'invoices', label: 'Invoices',     group: 'finance', icon: iconFile },
+      { id: 'home',            label: 'Home',            group: 'main',    icon: iconHome },
+      { id: 'bookings',        label: 'Bookings',        group: 'main',    icon: iconBookings },
+      { id: 'hotels',          label: 'Hotels',          group: 'main',    icon: iconHotels },
+      { id: 'access-requests', label: 'Access Requests', group: 'main',    icon: iconInbox, badge: 'arNavBadge' },
+      { id: 'tours',           label: 'Tour catalog',    group: 'main',    icon: iconCompass },
+      { id: 'payments',        label: 'Payments',        group: 'finance', icon: iconCard },
+      { id: 'billing',         label: 'Billing',         group: 'finance', icon: iconReceipt },
+      { id: 'invoices',        label: 'Invoices',        group: 'finance', icon: iconFile },
     ];
 
     const navMain    = document.getElementById('navMain');
@@ -355,9 +356,13 @@
       a.className = 'app-nav__item';
       a.href = pathFor(route.id);
       a.dataset.route = route.id;
+      const badgeHtml = route.badge
+        ? '<span class="app-nav__badge" id="' + route.badge + '" hidden></span>'
+        : '';
       a.innerHTML =
         '<span class="app-nav__icon">' + route.icon() + '</span>' +
-        '<span>' + route.label + '</span>';
+        '<span>' + route.label + '</span>' +
+        badgeHtml;
       a.addEventListener('click', (e) => {
         // Cmd/Ctrl/middle-click → let the browser open in a new tab.
         if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
@@ -366,6 +371,18 @@
       });
       navItems[route.id] = a;
       (route.group === 'finance' ? navFinance : navMain).appendChild(a);
+    }
+
+    // Update the Access Requests nav badge whenever the pending count changes.
+    function updateArNavBadge(count) {
+      const badge = document.getElementById('arNavBadge');
+      if (!badge) return;
+      if (count > 0) {
+        badge.textContent = count;
+        badge.hidden = false;
+      } else {
+        badge.hidden = true;
+      }
     }
 
     function pathFor(routeId, opts) {
@@ -396,14 +413,14 @@
         return 'hotel-detail';
       }
       currentHotelSlug = null;
-      const m = path.match(/^\/admin\/([a-z]+)\/?$/);
+      const m = path.match(/^\/admin\/([a-z][a-z0-9-]*)\/?$/);
       const id = m && m[1];
       return ROUTES.find(r => r.id === id) ? id : 'home';
     }
 
     // One-time migration of any old hash-based URLs to path-based URLs.
     // /admin/#/bookings  →  /admin/bookings/
-    const oldHash = window.location.hash.match(/^#\/([a-z]+)$/);
+    const oldHash = window.location.hash.match(/^#\/([a-z][a-z0-9-]*)$/);
     if (oldHash && ROUTES.find(r => r.id === oldHash[1])) {
       history.replaceState(null, '', pathFor(oldHash[1]));
     }
@@ -928,6 +945,47 @@
           mount: mountInvoices,
         };
       },
+      'access-requests'() {
+        return {
+          html: `
+            <header class="bk-page__head">
+              <h1 class="bk-page__title">Access Requests</h1>
+            </header>
+
+            <nav class="bk-tabs" aria-label="Access request filter" id="arTabs">
+              <button type="button" class="bk-tabs__btn bk-tabs__btn--active" data-tab="all">All</button>
+              <button type="button" class="bk-tabs__btn" data-tab="pending">Pending</button>
+              <button type="button" class="bk-tabs__btn" data-tab="approved">Approved</button>
+              <button type="button" class="bk-tabs__btn" data-tab="denied">Denied</button>
+            </nav>
+
+            <div class="bk-table-wrap">
+              <div class="bk-table-scroll">
+                <table class="bk-table" id="arTable">
+                  <thead>
+                    <tr>
+                      <th>Email</th>
+                      <th>Name</th>
+                      <th>Property</th>
+                      <th>Reason</th>
+                      <th>Status</th>
+                      <th>Submitted</th>
+                      <th class="bk-table__kebab"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="arBody">
+                    <tr><td colspan="7" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="bk-table__footer" id="arFooter">— items</div>
+            </div>
+
+            <div id="arNotice" class="hotels-notice" hidden></div>
+          `,
+          mount: mountAccessRequests,
+        };
+      },
       'hotel-detail'() {
         // Layout mirrors the Bookings page shell: title row + sub-tabs.
         // Tabs are placeholders; tab bodies arrive in follow-up sprints.
@@ -1135,6 +1193,20 @@
 
     /* ── Bookings route ──────────────────────────────────── */
     const BOKUN_API_BASE = 'https://horizon-bokun.ivan-mueller02.workers.dev';
+
+    // Preload access-request pending count for the nav badge.
+    // Fire-and-forget after auth passes so it doesn't block render.
+    (async () => {
+      try {
+        const res = await fetch(BOKUN_API_BASE + '/api/admin/access-requests', {
+          headers: { Authorization: 'Bearer ' + session.access_token },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.pending_count > 0) updateArNavBadge(data.pending_count);
+        }
+      } catch { /* non-fatal */ }
+    })();
 
     // Module-level so period choice survives Refresh + sidebar
     // re-renders within the bookings route.
@@ -2000,6 +2072,133 @@
       e.preventDefault();
       openInvoiceCreate();
     });
+
+    /* ── Access Requests route ───────────────────────────── */
+    let arRequests   = [];     // full list fetched from the worker
+    let arTabFilter  = 'all';  // 'all' | 'pending' | 'approved' | 'denied'
+    let arContainer  = null;
+
+    function mountAccessRequests(container) {
+      arContainer = container;
+      const tabs  = container.querySelector('#arTabs');
+
+      tabs.addEventListener('click', (e) => {
+        const btn = e.target.closest('.bk-tabs__btn');
+        if (!btn) return;
+        tabs.querySelectorAll('.bk-tabs__btn').forEach((b) => {
+          b.classList.toggle('bk-tabs__btn--active', b === btn);
+        });
+        arTabFilter = btn.dataset.tab || 'all';
+        renderArTable(container);
+      });
+
+      // Approve / deny via delegated click on the table body.
+      container.querySelector('#arBody').addEventListener('click', async (e) => {
+        const btn = e.target.closest('[data-ar-action]');
+        if (!btn) return;
+        const id     = btn.dataset.arId;
+        const action = btn.dataset.arAction; // 'approved' | 'denied'
+        btn.disabled = true;
+        btn.textContent = action === 'approved' ? 'Approving…' : 'Denying…';
+        try {
+          const res = await fetch(
+            BOKUN_API_BASE + '/api/admin/access-requests/' + encodeURIComponent(id),
+            {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: 'Bearer ' + session.access_token,
+              },
+              body: JSON.stringify({ status: action }),
+            },
+          );
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          // Update the local row so re-render is instant, no refetch.
+          const idx = arRequests.findIndex((r) => r.id === id);
+          if (idx !== -1) {
+            arRequests[idx] = { ...arRequests[idx], status: action, reviewed_at: new Date().toISOString() };
+          }
+          // Recount pending and refresh the nav badge.
+          updateArNavBadge(arRequests.filter((r) => r.status === 'pending').length);
+          renderArTable(container);
+          arFlash(container, action === 'approved' ? 'Request approved.' : 'Request denied.');
+        } catch (err) {
+          btn.disabled = false;
+          btn.textContent = action === 'approved' ? 'Approve' : 'Deny';
+          arFlash(container, 'Action failed: ' + (err.message || 'unknown error'), true);
+        }
+      });
+
+      loadArRequests(container);
+    }
+
+    function loadArRequests(container) {
+      const body = container.querySelector('#arBody');
+      body.innerHTML = '<tr><td colspan="7" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>';
+      fetch(BOKUN_API_BASE + '/api/admin/access-requests', {
+        headers: { Authorization: 'Bearer ' + session.access_token },
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          arRequests = data.requests || [];
+          if (data.pending_count !== null) updateArNavBadge(data.pending_count);
+          renderArTable(container);
+        })
+        .catch(() => {
+          body.innerHTML = '<tr><td colspan="7" class="bk-empty"><div class="bk-empty__title">Failed to load requests.</div></td></tr>';
+        });
+    }
+
+    function renderArTable(container) {
+      const body   = container.querySelector('#arBody');
+      const footer = container.querySelector('#arFooter');
+
+      const visible = arTabFilter === 'all'
+        ? arRequests
+        : arRequests.filter((r) => r.status === arTabFilter);
+
+      footer.textContent = visible.length + ' item' + (visible.length === 1 ? '' : 's');
+
+      if (!visible.length) {
+        const label = arTabFilter === 'all' ? 'No access requests yet.' : 'No ' + arTabFilter + ' requests.';
+        body.innerHTML = '<tr><td colspan="7" class="bk-empty"><div class="bk-empty__title">' + escapeHtml(label) + '</div></td></tr>';
+        return;
+      }
+
+      body.innerHTML = visible.map((r) => {
+        const isPending = r.status === 'pending';
+        const dateStr   = r.created_at ? new Date(r.created_at).toLocaleDateString('en-CA') : '—';
+        const actions   = isPending
+          ? `<button class="btn btn--sm btn--primary" data-ar-action="approved" data-ar-id="${escapeHtml(r.id)}">Approve</button>
+             <button class="btn btn--sm btn--danger"  data-ar-action="denied"   data-ar-id="${escapeHtml(r.id)}" style="margin-left:6px">Deny</button>`
+          : '';
+        return `<tr>
+          <td>${escapeHtml(r.email)}</td>
+          <td>${escapeHtml(r.name)}</td>
+          <td>${escapeHtml(r.property_requested || '—')}</td>
+          <td style="max-width:200px;white-space:normal">${escapeHtml(r.reason || '—')}</td>
+          <td>${arStatusBadge(r.status)}</td>
+          <td>${dateStr}</td>
+          <td class="bk-table__kebab">${actions}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function arStatusBadge(status) {
+      if (status === 'pending')  return '<span class="badge badge--warn">Pending</span>';
+      if (status === 'approved') return '<span class="badge badge--ok">Approved</span>';
+      if (status === 'denied')   return '<span class="badge badge--bad">Denied</span>';
+      return '<span class="badge badge--neutral">' + escapeHtml(status) + '</span>';
+    }
+
+    function arFlash(container, msg, isError) {
+      const el = container.querySelector('#arNotice');
+      if (!el) return;
+      el.textContent = msg;
+      el.className = 'hotels-notice' + (isError ? ' hotels-notice--error' : '');
+      el.hidden = false;
+      setTimeout(() => { el.hidden = true; }, 4000);
+    }
 
     /* ── Hotel detail page (full route, /admin/hotels/<slug>/) ──── */
     // Drawer code (openHotelDrawer + everything below) is intentionally
@@ -3281,6 +3480,7 @@
     function iconHome()     { return svg('<path d="M3 12l9-9 9 9"/><path d="M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/>'); }
     function iconBookings() { return svg('<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'); }
     function iconHotels()   { return svg('<path d="M5 22V4a1 1 0 011-1h12a1 1 0 011 1v18"/><path d="M3 22h18"/><circle cx="9"  cy="8"  r="0.5" fill="currentColor"/><circle cx="15" cy="8"  r="0.5" fill="currentColor"/><circle cx="9"  cy="13" r="0.5" fill="currentColor"/><circle cx="15" cy="13" r="0.5" fill="currentColor"/><path d="M10 22v-4h4v4"/>'); }
+    function iconInbox()    { return svg('<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/>'); }
     function iconCompass()  { return svg('<circle cx="12" cy="12" r="9"/><polygon points="15.5 8.5 13.5 13.5 8.5 15.5 10.5 10.5"/>'); }
     function iconCard()     { return svg('<rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>'); }
     function iconReceipt()  { return svg('<path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 1 2V2H4z"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/>'); }
