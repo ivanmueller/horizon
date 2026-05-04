@@ -11,6 +11,13 @@
 // Stripe orchestration (TOKEN-mode SetupIntent flow — see 0B_VALIDATION.md):
 //   POST /api/stripe/setup-intent      create Customer + off_session SetupIntent
 //
+// Auth helpers (login page ↔ worker; no Supabase JWT required):
+//   POST /api/auth/preflight        { email } → { status: password_required |
+//                                    first_time_setup | not_approved }
+//   PATCH /api/auth/mark-password-set  JWT required; stamps password_set_at
+//                                    on hotel_users or horizon_admins after
+//                                    the user saves a password in setup/modal.
+//
 // Booking state handoff (tour page → checkout page; KV-backed, 45min TTL):
 //   POST /api/booking/initiate         mint booking_id, persist cart + hotel
 //   GET  /api/booking/state/:id        read cart back on the checkout page
@@ -205,6 +212,14 @@ export default {
         segs[2] === "republish"
       ) {
         return await handleAdminRepublish(request, env);
+      }
+
+      // ── Auth helpers (login page ↔ worker) ──────────────────────
+      if (segs[0] === "api" && segs[1] === "auth") {
+        if (request.method === "POST" && segs[2] === "preflight")
+          return await handleAuthPreflight(request, env);
+        if (request.method === "PATCH" && segs[2] === "mark-password-set")
+          return await handleAuthMarkPasswordSet(request, env);
       }
 
       return jsonResponse({ error: "Not found" }, 404, request);
@@ -997,6 +1012,65 @@ async function handleAdminRepublish(request, env) {
     );
   }
   return jsonResponse({ ok: true, triggered_at: new Date().toISOString() }, 200, request);
+}
+
+// ── Auth helpers ──────────────────────────────────────────────────────
+//
+// POST /api/auth/preflight  { email }
+//   No auth required. Checks hotel_users and horizon_admins in parallel
+//   and returns one of three states the login page branches on:
+//     password_required  — active row exists and password_set_at is set
+//     first_time_setup   — active row exists but password never set
+//     not_approved       — no active row for this email
+//   Both DB queries always run regardless of result so response timing
+//   is consistent across all three outcomes (mitigates email enumeration).
+//
+// PATCH /api/auth/mark-password-set
+//   Requires a valid Supabase JWT. Called by /dashboard/setup/ and the
+//   Account modal after a successful supabase.auth.updateUser({ password }).
+//   Stamps password_set_at = now() on whichever table the caller's email
+//   belongs to — hotel_users or horizon_admins. Both updates run in
+//   parallel; the one with no matching row is a silent no-op.
+
+async function handleAuthPreflight(request, env) {
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+
+  const email = typeof body.email === "string" ? body.email.trim() : "";
+  if (!EMAIL_RE.test(email)) return jsonResponse({ error: "valid email required" }, 400, request);
+
+  const enc = encodeURIComponent(email);
+  const [adminRows, managerRows] = await Promise.all([
+    supabaseSelect(env, `horizon_admins?email=ilike.${enc}&status=eq.active&select=id,password_set_at`),
+    supabaseSelect(env, `hotel_users?email=ilike.${enc}&status=eq.active&select=id,password_set_at`),
+  ]);
+
+  const row = adminRows[0] ?? managerRows[0];
+  if (!row) return jsonResponse({ status: "not_approved" }, 200, request);
+
+  return jsonResponse(
+    { status: row.password_set_at ? "password_required" : "first_time_setup" },
+    200,
+    request,
+  );
+}
+
+async function handleAuthMarkPasswordSet(request, env) {
+  const auth = await requireAuthenticated(request, env);
+  if (auth.error) return auth.error;
+
+  const userEmail = String(auth.claims.email || "").trim();
+  if (!userEmail) return jsonResponse({ error: "jwt missing email claim" }, 401, request);
+
+  const enc = encodeURIComponent(userEmail);
+  const now = new Date().toISOString();
+
+  await Promise.all([
+    supabaseUpdate(env, `hotel_users?email=ilike.${enc}&status=eq.active`, { password_set_at: now }),
+    supabaseUpdate(env, `horizon_admins?email=ilike.${enc}&status=eq.active`, { password_set_at: now }),
+  ]);
+
+  return jsonResponse({ ok: true }, 200, request);
 }
 
 // ── CRUD validators / normalisers ──────────────────────────────────────
