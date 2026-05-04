@@ -74,31 +74,36 @@
       font-size: 0.8125rem;
       font-weight: 500;
       color: #1a1f36;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
 
-    /* Single code input */
-    .code-input {
-      display: block;
-      width: 100%;
-      padding: 12px 16px;
-      font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-      font-size: 1.375rem;
-      font-weight: 600;
-      letter-spacing: 0.15em;
-      color: #1a1f36;
+    /* 8-box code grid */
+    .otp-grid {
+      display: flex;
+      gap: 6px;
+    }
+    .otp-grid input {
+      flex: 1;
+      width: 0;
       text-align: center;
-      background: #fff;
+      font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #1a1f36;
+      padding: 12px 2px;
       border: 1px solid #e6ebf1;
       border-radius: 6px;
+      background: #fff;
       outline: none;
       transition: border-color 0.15s, box-shadow 0.15s;
+      text-transform: uppercase;
+      -webkit-text-size-adjust: 100%;
     }
-    .code-input:focus {
+    .otp-grid input:focus {
       border-color: #FF6B4A;
       box-shadow: 0 0 0 3px rgba(255,107,74,0.12);
     }
-    .code-input.code--invalid {
+    .otp-grid input.otp--invalid {
       border-color: #e25950;
       box-shadow: 0 0 0 3px rgba(226,89,80,0.12);
       animation: shake 0.3s ease;
@@ -106,8 +111,8 @@
 
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
-      20%       { transform: translateX(-5px); }
-      60%       { transform: translateX(5px); }
+      20%       { transform: translateX(-4px); }
+      60%       { transform: translateX(4px); }
       80%       { transform: translateX(-2px); }
     }
 
@@ -165,10 +170,7 @@
       color: #697386;
       text-align: center;
     }
-    .back-row a {
-      color: #697386;
-      text-decoration: none;
-    }
+    .back-row a { color: #697386; text-decoration: none; }
     .back-row a:hover { color: #1a1f36; text-decoration: underline; }
 
     .footer {
@@ -181,7 +183,9 @@
     .footer a { color: inherit; }
 
     @media (max-width: 520px) {
-      .card { padding: 32px 24px; }
+      .card { padding: 32px 20px; }
+      .otp-grid { gap: 4px; }
+      .otp-grid input { font-size: 1rem; padding: 10px 1px; }
     }
   </style>
 </head>
@@ -203,19 +207,17 @@
     </p>
 
     <div class="field">
-      <label for="codeInput">Verification code</label>
-      <input
-        class="code-input"
-        type="text"
-        id="codeInput"
-        inputmode="text"
-        autocomplete="one-time-code"
-        autocapitalize="none"
-        autocorrect="off"
-        spellcheck="false"
-        placeholder="Paste your code here"
-        autofocus
-      >
+      <label>Verification code</label>
+      <div class="otp-grid" id="otpGrid" role="group" aria-label="Verification code">
+        <input type="text" inputmode="text" maxlength="1" autocomplete="one-time-code" autocapitalize="characters" aria-label="Character 1">
+        <input type="text" inputmode="text" maxlength="1" autocapitalize="characters" aria-label="Character 2">
+        <input type="text" inputmode="text" maxlength="1" autocapitalize="characters" aria-label="Character 3">
+        <input type="text" inputmode="text" maxlength="1" autocapitalize="characters" aria-label="Character 4">
+        <input type="text" inputmode="text" maxlength="1" autocapitalize="characters" aria-label="Character 5">
+        <input type="text" inputmode="text" maxlength="1" autocapitalize="characters" aria-label="Character 6">
+        <input type="text" inputmode="text" maxlength="1" autocapitalize="characters" aria-label="Character 7">
+        <input type="text" inputmode="text" maxlength="1" autocapitalize="characters" aria-label="Character 8">
+      </div>
     </div>
 
     <p class="error-msg" id="errorMsg" hidden></p>
@@ -241,8 +243,9 @@
 
     const SUPABASE_URL  = 'https://lxdltzrntphnkhsniwin.supabase.co';
     const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4ZGx0enJudHBobmtoc25pd2luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNjA0OTAsImV4cCI6MjA5MjYzNjQ5MH0.toebJTpWH-_tRLOmwPCeTprGfQfH_JU_ZKgbqkGuz3M';
-    const LOGIN_PAGE    = '/dashboard/login/';
-    const SETUP_PAGE    = '/dashboard/setup/';
+    const LOGIN_PAGE = '/dashboard/login/';
+    const SETUP_PAGE = '/dashboard/setup/';
+    const CODE_LEN   = 8;
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
@@ -260,38 +263,101 @@
     document.getElementById('backLink').href = LOGIN_PAGE;
     document.body.style.visibility = 'visible';
 
-    const codeInput = document.getElementById('codeInput');
+    const grid      = document.getElementById('otpGrid');
+    const cells     = Array.from(grid.querySelectorAll('input'));
     const verifyBtn = document.getElementById('verifyBtn');
     const errorMsg  = document.getElementById('errorMsg');
 
-    function getCode() { return codeInput.value.trim(); }
+    // Accept letters and digits only, normalise to uppercase.
+    const VALID_CHAR = /^[a-zA-Z0-9]$/;
+
+    function getCode() { return cells.map(c => c.value).join(''); }
+    function isComplete() { return getCode().length === CODE_LEN; }
+
+    function updateVerifyState() {
+      verifyBtn.disabled = !isComplete();
+    }
 
     function showError(msg) {
       errorMsg.textContent = msg;
       errorMsg.hidden = false;
-      codeInput.classList.remove('code--invalid');
-      void codeInput.offsetWidth;
-      codeInput.classList.add('code--invalid');
+      cells.forEach(c => {
+        c.classList.remove('otp--invalid');
+        void c.offsetWidth;
+        c.classList.add('otp--invalid');
+      });
     }
 
     function clearError() {
       errorMsg.hidden = true;
       errorMsg.textContent = '';
-      codeInput.classList.remove('code--invalid');
+      cells.forEach(c => c.classList.remove('otp--invalid'));
     }
 
-    codeInput.addEventListener('input', () => {
-      clearError();
-      verifyBtn.disabled = getCode().length === 0;
+    function clearCells() {
+      cells.forEach(c => { c.value = ''; c.classList.remove('otp--invalid'); });
+      cells[0].focus();
+      updateVerifyState();
+    }
+
+    cells.forEach((cell, i) => {
+      cell.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !cell.value && i > 0) {
+          cells[i - 1].focus();
+        }
+      });
+
+      cell.addEventListener('input', (e) => {
+        clearError();
+        const raw = (e.data ?? cell.value).toUpperCase();
+
+        // Full code pasted into first cell.
+        if (i === 0 && raw.length === CODE_LEN && raw.split('').every(ch => VALID_CHAR.test(ch))) {
+          raw.split('').forEach((ch, j) => { cells[j].value = ch; });
+          cells[CODE_LEN - 1].focus();
+          updateVerifyState();
+          return;
+        }
+
+        // Single character — keep only the last valid char typed.
+        const ch = raw.replace(/[^A-Z0-9]/g, '').slice(-1);
+        cell.value = ch;
+
+        if (ch && i < cells.length - 1) {
+          cells[i + 1].focus();
+        }
+
+        updateVerifyState();
+      });
+
+      cell.addEventListener('paste', (e) => {
+        e.preventDefault();
+        clearError();
+        const pasted = (e.clipboardData || window.clipboardData)
+          .getData('text')
+          .toUpperCase()
+          .replace(/[^A-Z0-9]/g, '');
+        pasted.split('').forEach((ch, offset) => {
+          if (i + offset < cells.length) cells[i + offset].value = ch;
+        });
+        const next = Math.min(i + pasted.length, cells.length - 1);
+        cells[next].focus();
+        updateVerifyState();
+      });
+    });
+
+    // Auto-submit when all 8 characters are filled.
+    grid.addEventListener('input', () => {
+      if (isComplete()) verifyBtn.click();
     });
 
     // ── Verify ────────────────────────────────────────────────────────────────
 
     async function verify() {
-      const token = getCode();
-      if (!token) return;
-
       clearError();
+      const token = getCode();
+      if (token.length !== CODE_LEN) return;
+
       verifyBtn.disabled = true;
       verifyBtn.textContent = 'Verifying…';
 
@@ -303,7 +369,6 @@
         });
 
         if (error) throw error;
-
         window.location.replace(SETUP_PAGE);
       } catch (err) {
         console.error('verifyOtp failed', err);
@@ -319,10 +384,6 @@
     }
 
     verifyBtn.addEventListener('click', verify);
-
-    codeInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && getCode().length > 0) verify();
-    });
 
     // ── Resend ────────────────────────────────────────────────────────────────
 
@@ -358,9 +419,7 @@
           options: { shouldCreateUser: false },
         });
         if (error) throw error;
-        codeInput.value = '';
-        verifyBtn.disabled = true;
-        codeInput.focus();
+        clearCells();
         startCooldown(60);
       } catch (err) {
         console.error('resend OTP failed', err);
@@ -369,6 +428,8 @@
         resendBtn.textContent = 'Resend code';
       }
     });
+
+    cells[0].focus();
   </script>
 
 </body>
