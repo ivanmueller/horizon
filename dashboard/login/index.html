@@ -3,213 +3,352 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign in — Horizon partner dashboard</title>
-  <meta name="description" content="Sign in to your hotel's Horizon partner dashboard.">
+  <title>Sign in — Horizon</title>
   <meta name="robots" content="noindex,nofollow">
-  <link rel="canonical" href="https://gowithhorizon.com/dashboard/login/">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%23FF6B4A'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
-
-  <!-- Hide the page until the session check decides whether to show
-       the sign-in form or redirect a logged-in visitor straight to
-       the dashboard. Avoids flashing the form for one frame. -->
   <style>body { visibility: hidden; }</style>
 
   <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
     body {
-      background: var(--warm-white);
-      min-height: 100vh;
       margin: 0;
-      display: flex; flex-direction: column;
+      min-height: 100vh;
+      background: #f6f9fc;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 15px;
+      color: #1a1f36;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
     }
 
-    .hl-page {
-      flex: 1;
-      display: flex; align-items: center; justify-content: center;
-      padding: var(--space-6) var(--space-4);
+    /* ── Brand mark above the card ────────────────────────────────── */
+    .sl-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
     }
-    .hl-card {
+    .sl-brand__name {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #FF6B4A;
+      letter-spacing: -0.02em;
+    }
+
+    /* ── Card ─────────────────────────────────────────────────────── */
+    .sl-card {
       width: 100%;
-      max-width: 380px;
+      max-width: 440px;
       background: #fff;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-lg);
-      padding: var(--space-6);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.04);
-    }
-    .hl-logo {
-      display: flex; flex-direction: column; align-items: center;
-      gap: var(--space-2); margin-bottom: var(--space-4);
-    }
-    .hl-logo__icon {
-      width: 48px; height: 48px;
-    }
-    .hl-logo__text {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 1.5rem; font-weight: 700; color: var(--coral);
-    }
-    .hl-title {
-      text-align: center;
-      font-family: var(--font-display);
-      font-size: var(--text-xl); font-weight: 600;
-      color: var(--near-black);
-      margin: 0 0 var(--space-1);
-    }
-    .hl-sub {
-      text-align: center;
-      font-size: var(--text-sm); color: var(--mid-gray);
-      margin: 0 0 var(--space-5);
+      border: 1px solid #e6ebf1;
+      border-radius: 8px;
+      padding: 40px 48px 36px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
 
-    .hl-form { display: flex; flex-direction: column; gap: var(--space-3); }
-    .hl-form label {
-      font-size: var(--text-sm); font-weight: 600; color: var(--near-black);
-      margin-bottom: -2px;
-    }
-    .hl-form input[type="email"],
-    .hl-form input[type="password"] {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      font: inherit; font-size: var(--text-base);
-      box-sizing: border-box;
-      background: #fff;
-    }
-    .hl-form input[type="email"]:focus,
-    .hl-form input[type="password"]:focus {
-      outline: 2px solid var(--coral);
-      outline-offset: -1px;
-    }
-    .hl-btn {
-      width: 100%;
-      padding: 10px 16px;
-      background: var(--coral); color: #fff;
-      border: 0; border-radius: var(--radius-md);
-      font: inherit; font-size: var(--text-base); font-weight: 600;
-      cursor: pointer;
-      margin-top: var(--space-2);
-    }
-    .hl-btn:hover { background: var(--coral-hover); }
-    .hl-btn:disabled { opacity: 0.6; cursor: progress; }
-
-    /* Forgot-password link sits under the password field, right-aligned. */
-    .hl-forgot-row {
-      text-align: right;
-      margin-top: -2px;
+    .sl-card__title {
+      font-size: 1.375rem;
+      font-weight: 700;
+      color: #1a1f36;
+      margin: 0 0 28px;
+      letter-spacing: -0.01em;
     }
 
-    /* Inline link button (text styled, button semantics). */
-    .hl-link {
+    /* ── Field ────────────────────────────────────────────────────── */
+    .sl-field { margin-bottom: 20px; }
+
+    .sl-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 6px;
+    }
+    .sl-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #3c4257;
+    }
+    .sl-forgot-link {
       background: none; border: 0; padding: 0;
-      font: inherit; font-size: var(--text-sm); color: var(--coral);
+      font: inherit; font-size: 13px; color: #FF6B4A;
       cursor: pointer; text-decoration: underline;
       text-underline-offset: 2px;
     }
-    .hl-link:hover { color: var(--coral-hover); }
+    .sl-forgot-link:hover { color: #e85a3a; }
 
-    .hl-error {
-      background: #FEF2F2; border: 1px solid #FCA5A5; color: #991B1B;
-      padding: var(--space-2) var(--space-3);
-      border-radius: var(--radius-md);
-      font-size: var(--text-sm);
-      margin: 0 0 var(--space-3);
+    .sl-input {
+      display: block;
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #e6ebf1;
+      border-radius: 6px;
+      font: inherit;
+      font-size: 15px;
+      color: #1a1f36;
+      background: #fff;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
-    .hl-error[hidden] { display: none; }
+    .sl-input:focus {
+      outline: none;
+      border-color: #FF6B4A;
+      box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.15);
+    }
 
-    .hl-footer {
-      text-align: center;
-      font-size: var(--text-xs); color: var(--mid-gray);
-      margin: var(--space-5) 0 0;
+    /* ── Locked email chip (after preflight, returning user) ──────── */
+    .sl-email-chip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border: 1px solid #e6ebf1;
+      border-radius: 6px;
+      background: #f6f9fc;
+      margin-bottom: 20px;
     }
-    .hl-footer a { color: var(--mid-gray); text-decoration: underline; }
-    .hl-footer a:hover { color: var(--near-black); }
-
-    /* Success state — replaces the form once the email is sent. */
-    .hl-success { text-align: center; }
-    .hl-success__icon {
-      width: 56px; height: 56px;
-      background: rgba(255, 107, 74, 0.12);
-      border-radius: 50%;
-      display: inline-flex; align-items: center; justify-content: center;
-      margin-bottom: var(--space-4);
+    .sl-email-chip__addr {
+      font-size: 14px;
+      font-weight: 500;
+      color: #3c4257;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
-    .hl-success__icon svg { stroke: var(--coral); }
-    .hl-success__email {
-      font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
-      font-size: var(--text-sm); color: var(--near-black);
-      background: var(--warm-white-alt);
-      padding: 2px 8px; border-radius: 4px;
-    }
-    .hl-success__back {
-      display: inline-block; margin-top: var(--space-4);
+    .sl-email-chip__change {
       background: none; border: 0; padding: 0;
-      font: inherit; font-size: var(--text-sm); color: var(--coral);
+      font: inherit; font-size: 13px; color: #FF6B4A;
       cursor: pointer; text-decoration: underline;
+      text-underline-offset: 2px;
+      white-space: nowrap;
+      margin-left: 12px;
+      flex-shrink: 0;
     }
-    .hl-success__back:hover { color: var(--coral-hover); }
+    .sl-email-chip__change:hover { color: #e85a3a; }
+
+    /* ── Primary button ───────────────────────────────────────────── */
+    .sl-btn {
+      display: block;
+      width: 100%;
+      padding: 11px 16px;
+      background: #FF6B4A;
+      color: #fff;
+      border: 0;
+      border-radius: 6px;
+      font: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      margin-top: 8px;
+    }
+    .sl-btn:hover  { background: #e85a3a; }
+    .sl-btn:disabled { opacity: 0.6; cursor: progress; }
+
+    /* ── Error banner ─────────────────────────────────────────────── */
+    .sl-error {
+      background: #fff5f5;
+      border: 1px solid #fed7d7;
+      color: #c53030;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 14px;
+      line-height: 1.45;
+      margin-bottom: 20px;
+    }
+    .sl-error[hidden] { display: none; }
+
+    /* ── Not approved state ───────────────────────────────────────── */
+    .sl-not-approved {
+      padding: 4px 0 8px;
+    }
+    .sl-not-approved__heading {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1a1f36;
+      margin: 0 0 8px;
+    }
+    .sl-not-approved__body {
+      font-size: 14px;
+      color: #697386;
+      line-height: 1.55;
+      margin: 0 0 20px;
+    }
+    .sl-not-approved__body a {
+      color: #FF6B4A;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .sl-not-approved__back {
+      background: none; border: 1px solid #e6ebf1;
+      padding: 9px 16px; border-radius: 6px;
+      font: inherit; font-size: 14px; font-weight: 500;
+      color: #3c4257; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .sl-not-approved__back:hover { background: #f6f9fc; }
+
+    /* ── Check-email success state ────────────────────────────────── */
+    .sl-check-email { padding: 4px 0 8px; }
+    .sl-check-email__icon {
+      width: 44px; height: 44px;
+      background: rgba(255, 107, 74, 0.1);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 16px;
+    }
+    .sl-check-email__title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1a1f36;
+      margin: 0 0 8px;
+    }
+    .sl-check-email__body {
+      font-size: 14px;
+      color: #697386;
+      line-height: 1.55;
+      margin: 0 0 20px;
+    }
+    .sl-check-email__email {
+      font-family: 'SF Mono', 'Menlo', monospace;
+      font-size: 13px;
+      color: #1a1f36;
+      background: #f6f9fc;
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+    .sl-check-email__back {
+      background: none; border: 1px solid #e6ebf1;
+      padding: 9px 16px; border-radius: 6px;
+      font: inherit; font-size: 14px; font-weight: 500;
+      color: #3c4257; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .sl-check-email__back:hover { background: #f6f9fc; }
+
+    /* ── Reveal animation ─────────────────────────────────────────── */
+    @keyframes sl-reveal {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .sl-reveal { animation: sl-reveal 0.18s ease; }
+
+    /* ── Footer ───────────────────────────────────────────────────── */
+    .sl-card__footer {
+      font-size: 13px;
+      color: #8898aa;
+      margin: 24px 0 0;
+      padding-top: 20px;
+      border-top: 1px solid #f0f3f8;
+    }
+    .sl-card__footer a { color: #8898aa; text-decoration: underline; }
+    .sl-card__footer a:hover { color: #3c4257; }
+
+    /* ── Mobile ───────────────────────────────────────────────────── */
+    @media (max-width: 520px) {
+      .sl-card { padding: 32px 24px 28px; }
+    }
   </style>
 </head>
 <body>
 
-  <main class="hl-page">
+  <!-- Brand mark above the card -->
+  <div class="sl-brand">
+    <svg width="28" height="28" viewBox="0 0 36 36" aria-hidden="true">
+      <rect width="36" height="36" rx="8" fill="#FF6B4A"/>
+      <path d="M13 7v22M13 18c0-6 12-6 12 0v11" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>
+    </svg>
+    <span class="sl-brand__name">horizon</span>
+  </div>
 
-    <!-- ── Sign-in form ────────────────────────────────────────────── -->
-    <section class="hl-card" id="hlForm">
-      <div class="hl-logo">
-        <span class="hl-logo__icon">
-          <svg width="48" height="48" viewBox="0 0 36 36" aria-hidden="true">
-            <rect width="36" height="36" rx="8" fill="#FF6B4A"/>
-            <path d="M13 7v22M13 18c0-6 12-6 12 0v11" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>
-          </svg>
-        </span>
-        <span class="hl-logo__text">horizon</span>
-      </div>
+  <main class="sl-card">
+    <h1 class="sl-card__title">Sign in to your account</h1>
 
-      <h1 class="hl-title">Sign in to Horizon</h1>
-      <p class="hl-sub">Partner dashboard</p>
+    <!-- Error banner (shared across states) -->
+    <div class="sl-error" id="slError" hidden></div>
 
-      <p class="hl-error" id="hlError" hidden></p>
-
-      <form class="hl-form" id="hlSignInForm" autocomplete="on">
-        <label for="hlEmail">Email</label>
-        <input type="email" id="hlEmail" name="email" autocomplete="email" required autofocus>
-
-        <div id="hlPasswordSection">
-          <label for="hlPassword">Password</label>
-          <input type="password" id="hlPassword" name="password" autocomplete="current-password" required>
-          <div class="hl-forgot-row">
-            <button type="button" class="hl-link" id="hlForgot">Forgot password?</button>
+    <!-- ── State: email entry (default) ──────────────────────────── -->
+    <div id="slStateEmail">
+      <form id="slEmailForm" novalidate>
+        <div class="sl-field">
+          <div class="sl-label-row">
+            <label class="sl-label" for="slEmail">Email</label>
           </div>
+          <input class="sl-input" type="email" id="slEmail"
+                 name="email" autocomplete="email" required autofocus>
         </div>
-
-        <button type="submit" class="hl-btn" id="hlSubmit">Sign in</button>
+        <button class="sl-btn" type="submit" id="slContinueBtn">Continue</button>
       </form>
+    </div>
 
-      <p class="hl-footer">
-        Don't have access? <a href="mailto:hello@gowithhorizon.com">Contact us</a>
-        &nbsp;·&nbsp; Need help? <a href="mailto:hello@gowithhorizon.com">hello@gowithhorizon.com</a>
-      </p>
-    </section>
-
-    <!-- ── Success card (toggled visible once the email is sent) ───── -->
-    <section class="hl-card hl-success" id="hlSuccess" hidden>
-      <div class="hl-success__icon">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
+    <!-- ── State: password (returning user) ──────────────────────── -->
+    <div id="slStatePassword" hidden>
+      <div class="sl-email-chip">
+        <span class="sl-email-chip__addr" id="slEmailChip"></span>
+        <button type="button" class="sl-email-chip__change" id="slNotYou">Not you?</button>
       </div>
-      <h1 class="hl-title">Check your email</h1>
-      <p class="hl-sub" id="hlSuccessBody">
-        We sent a sign-in link to <span class="hl-success__email" id="hlSuccessEmail">—</span>.
-        Click it to land on your dashboard.
-      </p>
-      <button type="button" class="hl-success__back" id="hlBack">Back to sign in</button>
-    </section>
+      <form id="slPasswordForm" novalidate>
+        <div class="sl-field">
+          <div class="sl-label-row">
+            <label class="sl-label" for="slPassword">Password</label>
+            <button type="button" class="sl-forgot-link" id="slForgot">Forgot your password?</button>
+          </div>
+          <input class="sl-input" type="password" id="slPassword"
+                 name="password" autocomplete="current-password" required>
+        </div>
+        <button class="sl-btn" type="submit" id="slSignInBtn">Sign in</button>
+      </form>
+    </div>
 
+    <!-- ── State: not approved ───────────────────────────────────── -->
+    <div id="slStateNotApproved" hidden>
+      <div class="sl-not-approved">
+        <p class="sl-not-approved__heading">Access not found</p>
+        <p class="sl-not-approved__body">
+          <span id="slNotApprovedEmail" style="font-weight:500;"></span> isn't linked to
+          a Horizon partner account. If you believe this is a mistake or would like to
+          request access, contact us at
+          <a href="mailto:hello@gowithhorizon.com">hello@gowithhorizon.com</a>.
+        </p>
+        <button type="button" class="sl-not-approved__back" id="slNotApprovedBack">
+          ← Try a different email
+        </button>
+      </div>
+    </div>
+
+    <!-- ── State: check email (forgot-password success) ──────────── -->
+    <div id="slStateCheckEmail" hidden>
+      <div class="sl-check-email">
+        <div class="sl-check-email__icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+               stroke="#FF6B4A" stroke-width="2.5" stroke-linecap="round"
+               stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+        </div>
+        <p class="sl-check-email__title">Check your email</p>
+        <p class="sl-check-email__body">
+          We sent a password reset link to
+          <span class="sl-check-email__email" id="slCheckEmailAddr"></span>.
+          Click it to set a new password.
+        </p>
+        <button type="button" class="sl-check-email__back" id="slCheckEmailBack">
+          ← Back to sign in
+        </button>
+      </div>
+    </div>
+
+    <p class="sl-card__footer">
+      Access is by invitation only. &nbsp;·&nbsp;
+      Need help? <a href="mailto:hello@gowithhorizon.com">hello@gowithhorizon.com</a>
+    </p>
   </main>
 
   <script type="module">
@@ -217,27 +356,63 @@
 
     const SUPABASE_URL  = 'https://lxdltzrntphnkhsniwin.supabase.co';
     const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4ZGx0enJudHBobmtoc25pd2luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNjA0OTAsImV4cCI6MjA5MjYzNjQ5MH0.toebJTpWH-_tRLOmwPCeTprGfQfH_JU_ZKgbqkGuz3M';
+    const BOKUN_API_BASE = 'https://horizon-bokun.ivan-mueller02.workers.dev';
+    const SETUP_REDIRECT = window.location.origin + '/dashboard/setup/';
+    const OTP_PAGE       = window.location.origin + '/dashboard/otp/';
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON, {
       auth: { persistSession: true, autoRefreshToken: true },
     });
 
-    const SETUP_REDIRECT = window.location.origin + '/dashboard/setup/';
-
+    // ── DOM refs ────────────────────────────────────────────────────
     const els = {
-      form:         document.getElementById('hlForm'),
-      success:      document.getElementById('hlSuccess'),
-      successBody:  document.getElementById('hlSuccessBody'),
-      successEmail: document.getElementById('hlSuccessEmail'),
-      signInForm:   document.getElementById('hlSignInForm'),
-      email:        document.getElementById('hlEmail'),
-      password:     document.getElementById('hlPassword'),
-      submit:       document.getElementById('hlSubmit'),
-      error:        document.getElementById('hlError'),
-      back:         document.getElementById('hlBack'),
-      forgot:       document.getElementById('hlForgot'),
+      error:             document.getElementById('slError'),
+
+      stateEmail:        document.getElementById('slStateEmail'),
+      emailForm:         document.getElementById('slEmailForm'),
+      emailInput:        document.getElementById('slEmail'),
+      continueBtn:       document.getElementById('slContinueBtn'),
+
+      statePassword:     document.getElementById('slStatePassword'),
+      emailChip:         document.getElementById('slEmailChip'),
+      notYou:            document.getElementById('slNotYou'),
+      passwordForm:      document.getElementById('slPasswordForm'),
+      passwordInput:     document.getElementById('slPassword'),
+      signInBtn:         document.getElementById('slSignInBtn'),
+      forgot:            document.getElementById('slForgot'),
+
+      stateNotApproved:  document.getElementById('slStateNotApproved'),
+      notApprovedEmail:  document.getElementById('slNotApprovedEmail'),
+      notApprovedBack:   document.getElementById('slNotApprovedBack'),
+
+      stateCheckEmail:   document.getElementById('slStateCheckEmail'),
+      checkEmailAddr:    document.getElementById('slCheckEmailAddr'),
+      checkEmailBack:    document.getElementById('slCheckEmailBack'),
     };
 
+    // ── State machine ───────────────────────────────────────────────
+    const STATES = ['email', 'password', 'not-approved', 'check-email'];
+    function showState(name) {
+      els.stateEmail.hidden       = name !== 'email';
+      els.statePassword.hidden    = name !== 'password';
+      els.stateNotApproved.hidden = name !== 'not-approved';
+      els.stateCheckEmail.hidden  = name !== 'check-email';
+      clearError();
+      if (name === 'password') els.statePassword.classList.add('sl-reveal');
+      if (name === 'email')    els.emailInput.focus();
+      if (name === 'password') els.passwordInput.focus();
+    }
+
+    function showError(msg) {
+      els.error.textContent = msg;
+      els.error.hidden = false;
+    }
+    function clearError() {
+      els.error.hidden = true;
+      els.error.textContent = '';
+    }
+
+    // ── Session check — skip login if already authenticated ─────────
     async function destAfterAuth() {
       const { data: adminRow } = await supabase
         .from('horizon_admins')
@@ -250,96 +425,130 @@
 
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
-      const dest = await destAfterAuth();
-      window.location.replace(dest);
-      throw new Error('redirecting to ' + dest);
+      window.location.replace(await destAfterAuth());
+      throw new Error('redirecting');
     }
 
     document.body.style.visibility = 'visible';
 
-    function showError(msg) {
-      els.error.textContent = msg;
-      els.error.hidden = false;
-    }
-    function clearError() {
-      els.error.hidden = true;
-      els.error.textContent = '';
-    }
-    function lockForm(label) {
-      els.submit.disabled = true;
-      els.submit.textContent = label;
-    }
-    function unlockForm() {
-      els.submit.disabled = false;
-      els.submit.textContent = 'Sign in';
-    }
-    function showCheckEmail(email, body) {
-      els.successEmail.textContent = email;
-      els.successBody.innerHTML = body;
-      els.form.hidden = true;
-      els.success.hidden = false;
-    }
-
-    els.signInForm.addEventListener('submit', async (e) => {
+    // ── Step 1: email → preflight ────────────────────────────────────
+    els.emailForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       clearError();
-      const email    = els.email.value.trim();
-      const password = els.password.value;
+      const email = els.emailInput.value.trim();
       if (!email) return;
-      if (!password) { showError('Enter your password.'); return; }
-      lockForm('Signing in…');
+
+      els.continueBtn.disabled = true;
+      els.continueBtn.textContent = 'Checking…';
+
+      let status;
       try {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        const dest = await destAfterAuth();
-        window.location.replace(dest);
-      } catch (err) {
-        showError(
-          err.message && err.message.toLowerCase().includes('invalid login')
-            ? 'Wrong email or password.'
-            : (err.message || 'Could not sign in. Try again.'),
-        );
-        unlockForm();
+        const res = await fetch(BOKUN_API_BASE + '/api/auth/preflight', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const data = await res.json();
+        status = data.status;
+      } catch {
+        showError('Could not reach the server. Check your connection and try again.');
+        els.continueBtn.disabled = false;
+        els.continueBtn.textContent = 'Continue';
+        return;
+      }
+
+      if (status === 'password_required') {
+        els.emailChip.textContent = email;
+        showState('password');
+        els.continueBtn.disabled = false;
+        els.continueBtn.textContent = 'Continue';
+
+      } else if (status === 'first_time_setup') {
+        // Send OTP and hand off to the OTP page
+        try {
+          const { error } = await supabase.auth.signInWithOtp({
+            email,
+            options: { shouldCreateUser: false },
+          });
+          if (error) throw error;
+          window.location.href = OTP_PAGE + '?email=' + encodeURIComponent(email);
+        } catch (err) {
+          showError(err.message || 'Could not send verification code. Try again.');
+          els.continueBtn.disabled = false;
+          els.continueBtn.textContent = 'Continue';
+        }
+
+      } else {
+        // not_approved
+        els.notApprovedEmail.textContent = email;
+        showState('not-approved');
+        els.continueBtn.disabled = false;
+        els.continueBtn.textContent = 'Continue';
       }
     });
 
+    // ── "Not you?" — back to email step ─────────────────────────────
+    els.notYou.addEventListener('click', () => {
+      els.passwordInput.value = '';
+      showState('email');
+      els.emailInput.select();
+    });
+
+    els.notApprovedBack.addEventListener('click', () => {
+      showState('email');
+      els.emailInput.select();
+    });
+
+    els.checkEmailBack.addEventListener('click', () => {
+      showState('email');
+    });
+
+    // ── Step 2: password sign-in ─────────────────────────────────────
+    els.passwordForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearError();
+      const email    = els.emailChip.textContent.trim();
+      const password = els.passwordInput.value;
+      if (!password) { showError('Enter your password.'); return; }
+
+      els.signInBtn.disabled = true;
+      els.signInBtn.textContent = 'Signing in…';
+
+      try {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        window.location.replace(await destAfterAuth());
+      } catch (err) {
+        showError(
+          err.message && err.message.toLowerCase().includes('invalid login')
+            ? 'Wrong password. Try again or reset it below.'
+            : (err.message || 'Could not sign in. Try again.'),
+        );
+        els.signInBtn.disabled = false;
+        els.signInBtn.textContent = 'Sign in';
+        els.passwordInput.focus();
+      }
+    });
+
+    // ── Forgot password ──────────────────────────────────────────────
     els.forgot.addEventListener('click', async () => {
       clearError();
-      const email = els.email.value.trim();
-      if (!email) {
-        showError('Enter your email above first, then click "Forgot password?".');
-        els.email.focus();
-        return;
-      }
-      lockForm('Sending…');
+      const email = els.emailChip.textContent.trim();
+      els.forgot.disabled = true;
+
       try {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: SETUP_REDIRECT,
         });
         if (error) throw error;
-        showCheckEmail(
-          email,
-          'We sent a password-reset link to <span class="hl-success__email">' +
-            escapeHtml(email) + '</span>. Click it, then set a new password.',
-        );
+        els.checkEmailAddr.textContent = email;
+        showState('check-email');
       } catch (err) {
         showError(err.message || 'Could not send reset link. Try again.');
-        unlockForm();
+      } finally {
+        els.forgot.disabled = false;
       }
     });
-
-    els.back.addEventListener('click', () => {
-      els.success.hidden = true;
-      els.form.hidden = false;
-      unlockForm();
-      els.email.focus();
-      els.email.select();
-    });
-
-    function escapeHtml(s) {
-      return String(s == null ? '' : s).replace(/[&<>"']/g, (m) =>
-        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
-    }
   </script>
 
 </body>

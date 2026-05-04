@@ -152,6 +152,7 @@
 
     const SUPABASE_URL  = 'https://lxdltzrntphnkhsniwin.supabase.co';
     const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4ZGx0enJudHBobmtoc25pd2luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNjA0OTAsImV4cCI6MjA5MjYzNjQ5MH0.toebJTpWH-_tRLOmwPCeTprGfQfH_JU_ZKgbqkGuz3M';
+    const BOKUN_API     = 'https://horizon-bokun.ivan-mueller02.workers.dev';
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
@@ -204,9 +205,17 @@
       try {
         const { error } = await supabase.auth.updateUser({ password: pw });
         if (error) throw error;
-        // Flip the sign-in default — login page reads this and opens
-        // in password mode next visit since the user clearly opted in.
-        localStorage.setItem('horizon-last-signin-mode', 'password');
+
+        // Mark password as set in the DB so future preflight calls
+        // return password_required instead of first_time_setup.
+        const { data: { session: sess } } = await supabase.auth.getSession();
+        if (sess?.access_token) {
+          await fetch(`${BOKUN_API}/api/auth/mark-password-set`, {
+            method: 'PATCH',
+            headers: { Authorization: `Bearer ${sess.access_token}` },
+          }).catch(() => {}); // best-effort — don't block the redirect
+        }
+
         window.location.replace('/dashboard/hotel/');
       } catch (err) {
         console.error('updateUser failed', err);
