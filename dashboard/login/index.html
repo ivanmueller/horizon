@@ -101,6 +101,15 @@
       border-color: #FF6B4A;
       box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.15);
     }
+    /* Subtle pulse while auto-preflight is in flight */
+    @keyframes sl-checking {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.10); }
+      50%       { box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.28); }
+    }
+    .sl-input--checking {
+      border-color: #FF6B4A;
+      animation: sl-checking 1s ease infinite;
+    }
 
     /* ── Locked email chip (after preflight, returning user) ──────── */
     .sl-email-chip {
@@ -520,15 +529,27 @@
 
     document.body.style.visibility = 'visible';
 
-    // ── Step 1: email → preflight ────────────────────────────────────
-    els.emailForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      clearError();
-      const email = els.emailInput.value.trim();
-      if (!email) return;
+    // ── Preflight logic (shared by auto-detect + explicit submit) ──────
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    let preflightDebounce    = null;
+    let preflightController  = null;
 
-      els.continueBtn.disabled = true;
-      els.continueBtn.textContent = 'Checking…';
+    // silent = true → auto-detect mode: pulse animation, no button spinner.
+    // silent = false → explicit submit: button shows "Checking…".
+    async function runPreflight(email, { silent = false } = {}) {
+      clearError();
+
+      if (silent) {
+        els.emailInput.classList.add('sl-input--checking');
+      } else {
+        els.continueBtn.disabled = true;
+        els.continueBtn.textContent = 'Checking…';
+      }
+
+      // Cancel any previous in-flight request so only the latest wins.
+      if (preflightController) preflightController.abort();
+      preflightController = new AbortController();
+      const { signal } = preflightController;
 
       let status;
       try {
@@ -536,15 +557,25 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email }),
+          signal,
         });
         const data = await res.json();
         status = data.status;
-      } catch {
-        showError('Could not reach the server. Check your connection and try again.');
-        els.continueBtn.disabled = false;
-        els.continueBtn.textContent = 'Continue';
+      } catch (err) {
+        if (err.name === 'AbortError') return; // superseded — silently ignore
+        els.emailInput.classList.remove('sl-input--checking');
+        if (!silent) {
+          showError('Could not reach the server. Check your connection and try again.');
+          els.continueBtn.disabled = false;
+          els.continueBtn.textContent = 'Continue';
+        }
         return;
       }
+
+      // If the field changed while we were waiting, the result is stale.
+      if (els.emailInput.value.trim() !== email) return;
+
+      els.emailInput.classList.remove('sl-input--checking');
 
       if (status === 'password_required') {
         els.emailChip.textContent = email;
@@ -553,7 +584,6 @@
         els.continueBtn.textContent = 'Continue';
 
       } else if (status === 'first_time_setup') {
-        // Send OTP and hand off to the OTP page
         try {
           const { error } = await supabase.auth.signInWithOtp({
             email,
@@ -562,6 +592,7 @@
           if (error) throw error;
           window.location.href = OTP_PAGE + '?email=' + encodeURIComponent(email);
         } catch (err) {
+          els.emailInput.classList.remove('sl-input--checking');
           showError(err.message || 'Could not send verification code. Try again.');
           els.continueBtn.disabled = false;
           els.continueBtn.textContent = 'Continue';
@@ -574,6 +605,31 @@
         els.continueBtn.disabled = false;
         els.continueBtn.textContent = 'Continue';
       }
+    }
+
+    // ── Step 1a: explicit submit (Continue button / Enter key) ──────────
+    els.emailForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = els.emailInput.value.trim();
+      if (!email) return;
+      clearTimeout(preflightDebounce);
+      if (preflightController) preflightController.abort();
+      runPreflight(email, { silent: false });
+    });
+
+    // ── Step 1b: auto-detect as the email is typed ──────────────────────
+    // Fires 600 ms after the user stops typing, but only when the value
+    // looks like a complete email address. The Continue button stays as
+    // a fallback for accessibility and slow typists.
+    els.emailInput.addEventListener('input', () => {
+      clearTimeout(preflightDebounce);
+      if (preflightController) { preflightController.abort(); preflightController = null; }
+      els.emailInput.classList.remove('sl-input--checking');
+
+      const email = els.emailInput.value.trim();
+      if (!EMAIL_RE.test(email)) return;
+
+      preflightDebounce = setTimeout(() => runPreflight(email, { silent: true }), 600);
     });
 
     // ── "Not you?" — back to email step ─────────────────────────────
