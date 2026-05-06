@@ -120,7 +120,6 @@
       line-height: var(--type-body-line);
       color: var(--text-primary);
       background: var(--bg-surface);
-      transition: border-color 0.15s, box-shadow 0.15s;
     }
     .auth-input::placeholder { color: var(--text-tertiary); }
     .auth-input:hover  { border-color: var(--border-strong); }
@@ -133,14 +132,6 @@
       background: var(--bg-subtle);
       color: var(--text-secondary);
       cursor: not-allowed;
-    }
-    @keyframes auth-checking {
-      0%, 100% { box-shadow: 0 0 0 3px rgba(73, 32, 196, 0.10); }
-      50%      { box-shadow: 0 0 0 3px rgba(73, 32, 196, 0.28); }
-    }
-    .auth-input--checking {
-      border-color: var(--border-brand);
-      animation: auth-checking 1s ease infinite;
     }
 
     /* ── Locked email chip ───────────────────────────────────────── */
@@ -181,11 +172,22 @@
       line-height: var(--type-label-line);
       font-weight: var(--weight-medium);
       cursor: pointer;
-      transition: background-color 0.15s, border-color 0.15s, color 0.15s;
     }
     .auth-btn:focus-visible {
       outline: none;
       box-shadow: var(--shadow-focus-ring);
+    }
+    /* Loading spinner — indeterminate-progress affordance, the
+       documented exception to motion v1.0 (linear easing,
+       continuous loop). See horizon-motion-rules.md. */
+    .auth-btn__spinner {
+      display: none;
+      margin-right: var(--space-sm);
+      animation: auth-btn-spin 1s linear infinite;
+    }
+    .auth-btn[aria-busy="true"] .auth-btn__spinner { display: inline-block; }
+    @keyframes auth-btn-spin {
+      to { transform: rotate(360deg); }
     }
     .auth-btn--primary {
       background: var(--action-primary-default);
@@ -320,12 +322,12 @@
       border-radius: var(--radius-sm);
     }
 
-    /* ── Reveal animation ─────────────────────────────────────────── */
+    /* ── Reveal animation (matches dropdown/popover standard pattern) ── */
     @keyframes auth-reveal {
       from { opacity: 0; transform: translateY(-4px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    .auth-reveal { animation: auth-reveal 0.18s ease; }
+    .auth-reveal { animation: auth-reveal var(--motion-base) var(--motion-ease-out); }
 
     /* ── Footer ───────────────────────────────────────────────────── */
     .auth-card__footer {
@@ -365,7 +367,13 @@
           <input class="auth-input" type="email" id="slEmail"
                  name="email" autocomplete="email" required autofocus>
         </div>
-        <button class="auth-btn auth-btn--primary" type="submit" id="slContinueBtn">Continue</button>
+        <button class="auth-btn auth-btn--primary" type="submit" id="slContinueBtn">
+          <svg class="auth-btn__spinner" aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="2" opacity="0.25"/>
+            <path d="M14 8a6 6 0 0 0-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="auth-btn__label">Continue</span>
+        </button>
       </form>
     </div>
 
@@ -384,7 +392,13 @@
           <input class="auth-input" type="password" id="slPassword"
                  name="password" autocomplete="current-password" required>
         </div>
-        <button class="auth-btn auth-btn--primary" type="submit" id="slSignInBtn">Sign in</button>
+        <button class="auth-btn auth-btn--primary" type="submit" id="slSignInBtn">
+          <svg class="auth-btn__spinner" aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="2" opacity="0.25"/>
+            <path d="M14 8a6 6 0 0 0-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="auth-btn__label">Sign in</span>
+        </button>
       </form>
     </div>
 
@@ -434,7 +448,13 @@
           </div>
           <div class="auth-req-form__footer">
             <button class="auth-btn auth-btn--primary" type="submit" id="slReqSubmit"
-                    style="margin-top:0">Send request</button>
+                    style="margin-top:0">
+              <svg class="auth-btn__spinner" aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="2" opacity="0.25"/>
+                <path d="M14 8a6 6 0 0 0-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <span class="auth-btn__label">Send request</span>
+            </button>
             <button type="button" class="auth-btn auth-btn--secondary" id="slReqCancel">Cancel</button>
           </div>
         </form>
@@ -531,6 +551,13 @@
       if (name === 'password') els.passwordInput.focus();
     }
 
+    function setBtnLoading(btn, loading, label) {
+      btn.disabled = loading;
+      btn.setAttribute('aria-busy', loading ? 'true' : 'false');
+      const labelEl = btn.querySelector('.auth-btn__label');
+      if (labelEl) labelEl.textContent = label;
+    }
+
     function showError(msg) {
       els.error.textContent = msg;
       els.error.hidden = false;
@@ -565,12 +592,7 @@
     async function runPreflight(email, { silent = false } = {}) {
       clearError();
 
-      if (silent) {
-        els.emailInput.classList.add('auth-input--checking');
-      } else {
-        els.continueBtn.disabled = true;
-        els.continueBtn.textContent = 'Checking…';
-      }
+      if (!silent) setBtnLoading(els.continueBtn, true, 'Checking…');
 
       if (preflightController) preflightController.abort();
       preflightController = new AbortController();
@@ -588,24 +610,19 @@
         status = data.status;
       } catch (err) {
         if (err.name === 'AbortError') return;
-        els.emailInput.classList.remove('auth-input--checking');
         if (!silent) {
           showError('Could not reach the server. Check your connection and try again.');
-          els.continueBtn.disabled = false;
-          els.continueBtn.textContent = 'Continue';
+          setBtnLoading(els.continueBtn, false, 'Continue');
         }
         return;
       }
 
       if (els.emailInput.value.trim() !== email) return;
 
-      els.emailInput.classList.remove('auth-input--checking');
-
       if (status === 'password_required') {
         els.emailChip.textContent = email;
         showState('password');
-        els.continueBtn.disabled = false;
-        els.continueBtn.textContent = 'Continue';
+        if (!silent) setBtnLoading(els.continueBtn, false, 'Continue');
 
       } else if (status === 'first_time_setup') {
         try {
@@ -616,17 +633,14 @@
           if (error) throw error;
           window.location.href = OTP_PAGE + '?email=' + encodeURIComponent(email);
         } catch (err) {
-          els.emailInput.classList.remove('auth-input--checking');
           showError(err.message || 'Could not send verification code. Try again.');
-          els.continueBtn.disabled = false;
-          els.continueBtn.textContent = 'Continue';
+          if (!silent) setBtnLoading(els.continueBtn, false, 'Continue');
         }
 
       } else {
         els.notApprovedEmail.textContent = email;
         showState('not-approved');
-        els.continueBtn.disabled = false;
-        els.continueBtn.textContent = 'Continue';
+        if (!silent) setBtnLoading(els.continueBtn, false, 'Continue');
       }
     }
 
@@ -642,7 +656,6 @@
     els.emailInput.addEventListener('input', () => {
       clearTimeout(preflightDebounce);
       if (preflightController) { preflightController.abort(); preflightController = null; }
-      els.emailInput.classList.remove('auth-input--checking');
 
       const email = els.emailInput.value.trim();
       if (!EMAIL_RE.test(email)) return;
@@ -686,8 +699,7 @@
       const name = els.reqName.value.trim();
       if (!name) { els.reqName.focus(); return; }
 
-      els.reqSubmit.disabled = true;
-      els.reqSubmit.textContent = 'Sending…';
+      setBtnLoading(els.reqSubmit, true, 'Sending…');
 
       const email = els.notApprovedEmail.textContent.trim();
       try {
@@ -706,8 +718,7 @@
         els.reqSentEmail.textContent = email;
         els.reqSent.hidden = false;
       } catch {
-        els.reqSubmit.disabled = false;
-        els.reqSubmit.textContent = 'Send request';
+        setBtnLoading(els.reqSubmit, false, 'Send request');
         showError('Could not send request. Please try again or email hello@gowithhorizon.com.');
       }
     });
@@ -719,8 +730,7 @@
       const password = els.passwordInput.value;
       if (!password) { showError('Enter your password.'); return; }
 
-      els.signInBtn.disabled = true;
-      els.signInBtn.textContent = 'Signing in…';
+      setBtnLoading(els.signInBtn, true, 'Signing in…');
 
       try {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -732,8 +742,7 @@
             ? 'Wrong password. Try again or reset it below.'
             : (err.message || 'Could not sign in. Try again.'),
         );
-        els.signInBtn.disabled = false;
-        els.signInBtn.textContent = 'Sign in';
+        setBtnLoading(els.signInBtn, false, 'Sign in');
         els.passwordInput.focus();
       }
     });

@@ -222,6 +222,38 @@
 
   --weight-regular: 400;
   --weight-medium:  500;
+
+  /* ========================================================
+     SYSTEM — motion: duration
+     ========================================================
+     Three durations cover ~95% of UI motion. Faster = abrupt.
+     Slower = sluggish. The premium-feel range is narrow.
+     ======================================================== */
+
+  --motion-fast:    150ms;   /* hover, focus, button press, small color/opacity */
+  --motion-base:    200ms;   /* dropdown, tooltip, accordion, tab switch */
+  --motion-slow:    300ms;   /* modal, drawer, full-screen overlay */
+
+  /* ========================================================
+     SYSTEM — motion: easing
+     ========================================================
+     ease-out for entering/appearing (decelerates as it arrives).
+     ease-in for exiting/disappearing (accelerates as it leaves).
+     Linear and ease-in-out are almost always wrong; do not add.
+     ======================================================== */
+
+  --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);   /* entering */
+  --motion-ease-in:  cubic-bezier(0.7, 0, 0.84, 0);   /* exiting */
+
+  /* ========================================================
+     SYSTEM — motion: composed defaults
+     ========================================================
+     Pre-composed duration + easing for the most common case.
+     ======================================================== */
+
+  --transition-default: var(--motion-fast) var(--motion-ease-out);
+  --transition-base:    var(--motion-base) var(--motion-ease-out);
+  --transition-slow:    var(--motion-slow) var(--motion-ease-out);
 }
 
 /* ============================================================
@@ -261,3 +293,58 @@
 .t-caption    { font: var(--weight-regular) var(--type-caption-size)/var(--type-caption-line)       var(--font-sans); }
 .t-overline   { font: var(--weight-medium)  var(--type-overline-size)/var(--type-overline-line)     var(--font-sans); letter-spacing: 0.06em; text-transform: uppercase; }
 .t-mono       { font: var(--weight-regular) 13px/1.5                                                  var(--font-mono); }
+
+/* ============================================================
+   GLOBAL — default state transitions on interactive elements
+   ============================================================
+   This single block transforms how the product feels. Every
+   button, link, input, and interactive element gets smooth
+   transitions on color, border, shadow, opacity, and transform
+   changes. Imperceptible per interaction; transformative across
+   a session.
+   ============================================================ */
+
+button,
+a,
+input,
+select,
+textarea,
+[role="button"],
+[role="link"],
+[role="tab"],
+[role="menuitem"] {
+  transition:
+    background-color var(--transition-default),
+    border-color     var(--transition-default),
+    color            var(--transition-default),
+    box-shadow       var(--transition-default),
+    opacity          var(--transition-default),
+    transform        var(--transition-default);
+}
+
+/* ============================================================
+   ACCESSIBILITY — respect prefers-reduced-motion
+   ============================================================
+   Users who have enabled reduced motion in their OS get instant
+   state changes. This is a non-negotiable accessibility
+   requirement — some users get migraines or vertigo from motion.
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+  }
+
+  /* Belt-and-suspenders: also kill animations and transitions
+     globally for any code that doesn't reference the tokens. */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
