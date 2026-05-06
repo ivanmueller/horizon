@@ -324,7 +324,7 @@
 
     /* ── Reveal animation (matches dropdown/popover standard pattern) ── */
     @keyframes auth-reveal {
-      from { opacity: 0; transform: translateY(-4px); }
+      from { opacity: 0; transform: translateY(-8px); }
       to   { opacity: 1; transform: translateY(0); }
     }
     .auth-reveal { animation: auth-reveal var(--motion-base) var(--motion-ease-out); }
@@ -660,7 +660,7 @@
       const email = els.emailInput.value.trim();
       if (!EMAIL_RE.test(email)) return;
 
-      preflightDebounce = setTimeout(() => runPreflight(email, { silent: true }), 600);
+      preflightDebounce = setTimeout(() => runPreflight(email, { silent: true }), 300);
     });
 
     els.notYou.addEventListener('click', () => {
