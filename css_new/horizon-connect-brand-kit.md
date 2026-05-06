@@ -173,6 +173,19 @@ Shadow colour is rgba of Obsidian (`#0E0E14`) so shadows tonally harmonise with 
 
 ---
 
+## Card surfaces
+
+Cards are the default container for grouped product content. Use the `.card` utility class (defined in `horizon-connect-responsive.css`) — it composes `bg-surface`, `border-subtle`, `radius-lg`, `space-card` padding, and `shadow-e1` elevation in one place.
+
+| Class | Use |
+|---|---|
+| `.card` | Default elevated card (rule 9 — `e1` cards). Resting product surfaces. |
+| `.card .card--flat` | Border-only variant, no elevation. Auth screens, nested panels, surfaces where the page background is soft enough that a shadow reads as noise. |
+
+The flat variant is a deliberate, documented opt-out of elevation — not an improvised shadow (rule 10 stays intact). Reach for it when a card sits inside another framed surface, or on auth/onboarding screens where the visual register is intentionally calmer than the dense product UI.
+
+---
+
 ## Working principles
 
 A few rules that make the system hold up under pressure:

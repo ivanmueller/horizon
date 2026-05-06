@@ -48,14 +48,10 @@
       letter-spacing: -0.01em;
     }
 
-    /* ── Card ─────────────────────────────────────────────────────── */
+    /* ── Card — auth-specific extension of .card .card--flat ──────── */
     .auth-card {
       width: 100%;
       max-width: 440px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      padding: var(--space-card);
     }
     @media (min-width: 640px) /* --bp-sm */ {
       .auth-card { padding: var(--space-2xl); }
@@ -245,7 +241,7 @@
     <span class="auth-brand__name">Horizon</span>
   </div>
 
-  <main class="auth-card">
+  <main class="card card--flat auth-card">
     <h1 class="auth-card__title">Check your email</h1>
     <p class="auth-card__sub">
       We sent a verification code to <strong id="emailDisplay"></strong>.

@@ -46,17 +46,13 @@
       letter-spacing: -0.01em;
     }
 
-    /* ── Card ─────────────────────────────────────────────────────── */
+    /* ── Card — auth-specific extension of .card .card--flat ──────── */
     .auth-card {
       width: 100%;
       max-width: 440px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      padding: var(--space-card);
     }
-    /* tablet+ /* --bp-sm */
-    @media (min-width: 640px) {
+    /* tablet+ — auth surfaces get more breathing room than dense product cards */
+    @media (min-width: 640px) /* --bp-sm */ {
       .auth-card { padding: var(--space-2xl); }
     }
 
@@ -350,7 +346,7 @@
     <span class="auth-brand__name">Horizon</span>
   </div>
 
-  <main class="auth-card">
+  <main class="card card--flat auth-card">
     <h1 class="auth-card__title">Sign in to your account</h1>
 
     <div class="auth-banner auth-banner--error" id="slError" hidden></div>
