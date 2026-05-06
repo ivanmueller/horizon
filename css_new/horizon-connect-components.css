@@ -1,0 +1,44 @@
+/* ============================================================
+   HORIZON CONNECT — Components & Context Layouts v1.1
+   ============================================================
+   Import after horizon-connect-tokens.css and
+   horizon-connect-responsive.css.
+
+   This layer holds context-specific patterns: layouts and
+   composite components that take responsibility for how
+   primitives ( .card, .container, etc.) appear inside them.
+
+   Rule of thumb: if a context wants a primitive to look
+   different (e.g. flat card on auth screens), the context
+   declares the override here — the primitive does not gain
+   a variant in the token or responsive layer.
+   ============================================================ */
+
+/* ============================================================
+   AUTH LAYOUT — login, OTP, password setup, future auth flows
+   ============================================================
+   A centred single-card surface on a faintly tinted background.
+   Cards inside this context are intentionally flat: the soft
+   bg-subtle backdrop separates the card from the page, so
+   shadow-e1 reads as visual noise rather than helpful elevation.
+
+   This is the only context in the system where cards appear
+   flat. Wrap any auth/onboarding page with .auth-layout and
+   the card composes correctly with no further decisions.
+   ============================================================ */
+
+.auth-layout {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--space-xl);
+  padding: var(--space-xl) var(--gutter);
+  background: var(--bg-subtle);
+}
+
+/* Cards in the auth context lose elevation; the 1px border on
+   .card already carries separation against bg-subtle. */
+.auth-layout .card {
+  box-shadow: none;
+}

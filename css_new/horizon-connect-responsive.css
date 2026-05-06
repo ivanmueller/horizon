@@ -174,11 +174,10 @@
 .grid--narrow { grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); }
 .grid--wide   { grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr)); }
 
-/* CARD — surface primitive: white panel, subtle border, e1 elevation.
-   Default cards are elevated (rule 9). Use .card--flat to opt out of
-   elevation when the surface is already framed by a soft page background
-   and the border carries enough separation on its own (auth surfaces,
-   nested panels, etc.). Internal padding scales with --space-card. */
+/* CARD — surface primitive: white panel, subtle border, e1 elevation
+   per rule 9. Internal padding scales with --space-card. Context-specific
+   appearance overrides (e.g. flatness on auth screens) live in component
+   or layout stylesheets, not here. */
 .card {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
@@ -186,7 +185,6 @@
   padding: var(--space-card);
   box-shadow: var(--shadow-e1);
 }
-.card--flat { box-shadow: none; }
 
 /* SIDEBAR LAYOUT — sidebar + content that collapses on mobile */
 .sidebar-layout {

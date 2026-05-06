@@ -173,16 +173,27 @@ Shadow colour is rgba of Obsidian (`#0E0E14`) so shadows tonally harmonise with 
 
 ---
 
-## Card surfaces
+## Card surface
 
-Cards are the default container for grouped product content. Use the `.card` utility class (defined in `horizon-connect-responsive.css`) — it composes `bg-surface`, `border-subtle`, `radius-lg`, `space-card` padding, and `shadow-e1` elevation in one place.
+Cards are the default container for grouped product content. Use the `.card` utility class (defined in `horizon-connect-responsive.css`) — it composes `bg-surface`, `border-subtle`, `radius-lg`, `space-card` padding, and `shadow-e1` elevation in one place. There is one card. Don't add variants — context-specific appearance is the layout's responsibility, not the component's.
 
-| Class | Use |
-|---|---|
-| `.card` | Default elevated card (rule 9 — `e1` cards). Resting product surfaces. |
-| `.card .card--flat` | Border-only variant, no elevation. Auth screens, nested panels, surfaces where the page background is soft enough that a shadow reads as noise. |
+---
 
-The flat variant is a deliberate, documented opt-out of elevation — not an improvised shadow (rule 10 stays intact). Reach for it when a card sits inside another framed surface, or on auth/onboarding screens where the visual register is intentionally calmer than the dense product UI.
+## Auth layout
+
+Auth pages (login, signup, password flows, future 2FA, email verification) use the `.auth-layout` wrapper, defined in `horizon-connect-components.css`. The wrapper provides a faintly tinted (`--bg-subtle`) background to anchor the card and removes card elevation in this context — the soft backdrop separates the card from the page on its own, so a shadow reads as noise.
+
+```html
+<body>
+  <div class="auth-layout">
+    <!-- brand mark -->
+    <main class="card">…</main>
+    <!-- optional footer -->
+  </div>
+</body>
+```
+
+This is the only context in the system where cards appear flat. New auth-flow pages don't need to make any decisions about elevation, background, or centring — wrap in `.auth-layout` and the appearance follows.
 
 ---
 
