@@ -1,0 +1,241 @@
+/* ============================================================
+   HORIZON TOURS — Brand Theme v1.0
+   ============================================================
+   Sibling brand to Horizon Connect.
+   Shares the same token architecture; overrides specific values
+   to express the warmer, more emotional Tours register.
+
+   IMPORT ORDER:
+     1. horizon-connect-tokens.css     (core architecture — required)
+     2. horizon-connect-responsive.css (responsive layer — required)
+     3. horizon-tours-tokens.css       (this file — Tours overrides)
+
+   The Connect files supply the architecture, semantic structure,
+   spacing grid, type scale, and responsive system. This file
+   replaces only the values that should diverge between brands:
+   primary colour family, radius hierarchy, contextual spacing,
+   and the warm-tinted neutral ramp.
+
+   What stays identical to Connect:
+     - 4px spacing grid (xs through 4xl)
+     - Type scale and weights
+     - Breakpoints and responsive system
+     - Elevation system (e1, e2, e3, focus-ring)
+     - Semantic token architecture (text-primary, action-primary, etc.)
+     - Status ramp anchors (success, warning, danger, info)
+
+   What diverges:
+     - Primary brand colour: Aurora amber (Tours) replaces Violet (Connect)
+     - Accent: Violet becomes the rare accent, signalling sibling brand link
+     - Radius hierarchy: one stop softer everywhere
+     - Neutral ramp: warm-tinted (warm grey) instead of cool violet undertone
+     - Contextual spacing: more generous on Tours surfaces
+   ============================================================ */
+
+:root {
+
+  /* ========================================================
+     PRIMITIVES — Tours brand colour family
+     ========================================================
+     Amber ramp replaces Violet as the primary brand spine.
+     Anchor at 600 (#D4A155) — deeper and more saturated than
+     the original Aurora accent (#F4B860, which lives at 400).
+     ======================================================== */
+
+  /* Brand anchors — Tours overrides */
+  --color-brand-horizon-amber:    #D4A155;  /* primary — locked Tours brand */
+  --color-brand-marketing-warm:   #E8B85F;  /* vivid version for marketing surfaces */
+  --color-brand-deep-violet:      #4920C4;  /* sibling-link accent, not primary */
+
+  /* Amber ramp — primary brand spine, replaces Violet ramp's role */
+  --color-amber-50:   #FDF8EC;
+  --color-amber-100:  #FBEFD0;
+  --color-amber-200:  #F6DFA0;
+  --color-amber-300:  #EFC972;
+  --color-amber-400:  #E5B458;
+  --color-amber-500:  #D4A155;  /* marketing-vivid equivalent */
+  --color-amber-600:  #B8862F;  /* anchor — primary CTA, brand mark */
+  --color-amber-700:  #95691E;
+  --color-amber-800:  #704C12;
+
+  /* Note on the anchor: #D4A155 was the proposed primary, but at the 600
+     position we deepen to #B8862F to ensure WCAG AA contrast on white
+     (4.5:1 minimum for body text, 3:1 for UI elements). #D4A155 lives at
+     500 as the marketing-vivid stop — used on hero panels and ad creative
+     where contrast against white doesn't need to clear AA.
+
+     The "marketing primary" you see on horizontours.com hero sections is
+     visually #D4A155. The "product primary" inside the booking app is
+     #B8862F. Same family, calibrated for context — same pattern Connect
+     uses with violet-500 (marketing) vs violet-600 (product). */
+
+  /* ========================================================
+     PRIMITIVES — Warm-tinted neutral ramp
+     ========================================================
+     Connect's neutrals carry a faint violet undertone.
+     Tours' neutrals carry a faint warm undertone (~3% amber).
+     Same role, different temperature — keeps the entire UI
+     tonally unified with the warm primary.
+     ======================================================== */
+
+  --color-neutral-50:   #FAF9F6;
+  --color-neutral-100:  #F4F2EC;
+  --color-neutral-200:  #ECE8DE;
+  --color-neutral-300:  #D8D2C2;
+  --color-neutral-400:  #B0A793;
+  --color-neutral-500:  #807665;
+  --color-neutral-600:  #5C5446;
+  --color-neutral-700:  #3F3A30;
+  --color-neutral-800:  #25221C;
+  --color-neutral-900:  #14120E;  /* warm Obsidian — replaces #0E0E14 */
+
+  /* ========================================================
+     SEMANTIC remapping — point semantic tokens at amber, not violet
+     ========================================================
+     The semantic layer architecture stays identical. We only
+     change what the semantic tokens point at. Components written
+     against semantic tokens (--action-primary-default, --text-brand)
+     work in either brand without modification.
+     ======================================================== */
+
+  /* Backgrounds */
+  --bg-page:          var(--color-neutral-50);
+  --bg-surface:       #FFFFFF;
+  --bg-subtle:        var(--color-neutral-100);
+  --bg-muted:         var(--color-neutral-200);
+  --bg-inverse:       var(--color-neutral-900);
+  --bg-brand-subtle:  var(--color-amber-50);   /* was violet-50 */
+  --bg-brand-muted:   var(--color-amber-100);  /* was violet-100 */
+
+  /* Text */
+  --text-primary:    var(--color-neutral-800);
+  --text-body:       var(--color-neutral-700);
+  --text-secondary:  var(--color-neutral-500);
+  --text-tertiary:   var(--color-neutral-400);
+  --text-inverse:    var(--color-neutral-50);
+  --text-brand:      var(--color-amber-700);   /* was violet-600. amber-700 for AA contrast on white */
+
+  /* Borders */
+  --border-default:  var(--color-neutral-300);
+  --border-subtle:   var(--color-neutral-200);
+  --border-strong:   var(--color-neutral-400);
+  --border-brand:    var(--color-amber-600);   /* was violet-600 */
+
+  /* Action — primary (CTA) */
+  --action-primary-default:  var(--color-amber-600);   /* was violet-600 */
+  --action-primary-hover:    var(--color-amber-700);
+  --action-primary-pressed:  var(--color-amber-800);
+  --action-primary-disabled: var(--color-amber-300);
+
+  /* Action — secondary stays neutral, identical to Connect */
+  --action-secondary-default:  #FFFFFF;
+  --action-secondary-hover:    var(--color-neutral-100);
+  --action-secondary-pressed:  var(--color-neutral-200);
+  --action-secondary-border:   var(--color-neutral-300);
+
+  /* Focus ring — retinted to amber */
+  --shadow-focus-ring: 0 0 0 3px rgba(184, 134, 47, 0.18);  /* was rgba(73,32,196,0.18) */
+
+  /* Tinted shadows — warm undertone instead of cool */
+  --shadow-e1: 0 1px 2px rgba(20, 18, 14, 0.04), 0 1px 1px rgba(20, 18, 14, 0.06);
+  --shadow-e2: 0 4px 12px rgba(20, 18, 14, 0.08), 0 1px 2px rgba(20, 18, 14, 0.04);
+  --shadow-e3: 0 16px 40px rgba(20, 18, 14, 0.14), 0 4px 8px rgba(20, 18, 14, 0.06);
+
+  /* ========================================================
+     SYSTEM — Radius (Tours runs one stop softer)
+     ========================================================
+     Connect:  sm 4 / md 8 / lg 12 / xl 16
+     Tours:    sm 8 / md 12 / lg 16 / xl 20
+     Pill stays 999px in both — same job (tags, status badges).
+     ======================================================== */
+
+  --radius-sm:   8px;    /* was 4 — inputs */
+  --radius-md:   12px;   /* was 8 — buttons */
+  --radius-lg:   16px;   /* was 12 — cards */
+  --radius-xl:   20px;   /* was 16 — modals */
+  --radius-pill: 999px;  /* unchanged */
+
+  /* ========================================================
+     SYSTEM — Contextual spacing (Tours runs more generous)
+     ========================================================
+     The static spacing scale (xs through 4xl) stays identical
+     to Connect — the 4px grid is universal across both brands.
+     Only contextual spacing tokens grow on Tours surfaces.
+     ======================================================== */
+
+  --space-section: 48px;  /* was 32px — Tours mobile */
+  --space-page:    20px;  /* was 16px — Tours mobile */
+  --space-card:    20px;  /* was 16px — Tours mobile */
+}
+
+@media (min-width: 640px) {
+  :root {
+    --space-section: 64px;
+    --space-page:    32px;
+    --space-card:    24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --space-section: 80px;
+    --space-page:    40px;
+    --space-card:    28px;
+  }
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --space-section: 112px;  /* significantly more breathing room */
+    --space-page:    56px;
+    --space-card:    32px;
+  }
+}
+
+/* ========================================================
+   THE SIBLING-LINK ACCENT
+   ========================================================
+   Violet remains in the Tours system as a rare accent — used
+   only for "Operated by Horizon" trust signals, links to
+   Horizon Connect from Tours surfaces, and parent-brand badges.
+   ≤1% pixel coverage. This is what makes the two brands feel
+   like siblings rather than strangers.
+
+   Use class .sibling-accent on relevant elements; do not
+   reach for --color-brand-deep-violet anywhere else.
+   ======================================================== */
+
+.sibling-accent {
+  color: var(--color-brand-deep-violet);
+}
+
+.sibling-accent--bg {
+  background: var(--color-brand-deep-violet);
+  color: #FFFFFF;
+}
+
+/* ========================================================
+   DARK MODE — semantic tokens flip; primitives stay
+   ======================================================== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-page:         var(--color-neutral-900);
+    --bg-surface:      var(--color-neutral-800);
+    --bg-subtle:       #1A1814;
+    --bg-muted:        var(--color-neutral-700);
+    --bg-inverse:      var(--color-neutral-50);
+    --bg-brand-subtle: rgba(184, 134, 47, 0.12);
+    --bg-brand-muted:  rgba(184, 134, 47, 0.20);
+
+    --text-primary:    var(--color-neutral-50);
+    --text-body:       var(--color-neutral-200);
+    --text-secondary:  var(--color-neutral-400);
+    --text-tertiary:   var(--color-neutral-500);
+    --text-inverse:    var(--color-neutral-900);
+    --text-brand:      var(--color-amber-400);
+
+    --border-default:  var(--color-neutral-700);
+    --border-subtle:   var(--color-neutral-800);
+    --border-strong:   var(--color-neutral-600);
+  }
+}

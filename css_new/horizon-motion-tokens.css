@@ -1,0 +1,103 @@
+/* ============================================================
+   HORIZON CONNECT — Motion Tokens (addendum to v1.0)
+   ============================================================
+   Append this block to the SYSTEM section of horizon-connect-tokens.css,
+   immediately after the typography tokens. The reduced-motion media
+   query and the default transition rule go at the bottom of the file
+   (after the existing dark mode block).
+
+   Motion is part of the design system. Treat duration and easing
+   tokens with the same discipline as spacing and radius:
+   3 durations, 2 easings, no improvisation.
+   ============================================================ */
+
+:root {
+
+  /* ========================================================
+     SYSTEM — motion: duration
+     ========================================================
+     Three durations cover ~95% of UI motion. Faster = abrupt.
+     Slower = sluggish. The premium-feel range is narrow.
+     ======================================================== */
+
+  --motion-fast:    150ms;   /* hover, focus, button press, small color/opacity */
+  --motion-base:    200ms;   /* dropdown, tooltip, accordion, tab switch */
+  --motion-slow:    300ms;   /* modal, drawer, full-screen overlay */
+
+  /* ========================================================
+     SYSTEM — motion: easing
+     ========================================================
+     ease-out for entering/appearing (decelerates as it arrives).
+     ease-in for exiting/disappearing (accelerates as it leaves).
+     Linear and ease-in-out are almost always wrong; do not add.
+     ======================================================== */
+
+  --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);   /* entering */
+  --motion-ease-in:  cubic-bezier(0.7, 0, 0.84, 0);   /* exiting */
+
+  /* ========================================================
+     SYSTEM — motion: composed defaults
+     ========================================================
+     Pre-composed duration + easing for the most common case.
+     ======================================================== */
+
+  --transition-default: var(--motion-fast) var(--motion-ease-out);
+  --transition-base:    var(--motion-base) var(--motion-ease-out);
+  --transition-slow:    var(--motion-slow) var(--motion-ease-out);
+}
+
+/* ============================================================
+   GLOBAL — default state transitions on interactive elements
+   ============================================================
+   This single block transforms how the product feels. Every
+   button, link, input, and interactive element gets smooth
+   transitions on color, border, shadow, opacity, and transform
+   changes. Imperceptible per interaction; transformative across
+   a session. Place at the bottom of the tokens file.
+   ============================================================ */
+
+button,
+a,
+input,
+select,
+textarea,
+[role="button"],
+[role="link"],
+[role="tab"],
+[role="menuitem"] {
+  transition:
+    background-color var(--transition-default),
+    border-color     var(--transition-default),
+    color            var(--transition-default),
+    box-shadow       var(--transition-default),
+    opacity          var(--transition-default),
+    transform        var(--transition-default);
+}
+
+/* ============================================================
+   ACCESSIBILITY — respect prefers-reduced-motion
+   ============================================================
+   Users who have enabled reduced motion in their OS get instant
+   state changes. This is a non-negotiable accessibility
+   requirement — some users get migraines or vertigo from motion.
+   Place at the very bottom of the tokens file.
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+  }
+
+  /* Belt-and-suspenders: also kill animations and transitions
+     globally for any code that doesn't reference the tokens. */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
