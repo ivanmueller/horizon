@@ -97,7 +97,7 @@ const CURRENCY = "CAD";
 const TTL_PRODUCT = 3600; // 1h — product config rarely changes
 const TTL_PICKUP = 3600; // 1h — pickup places rarely change
 const TTL_AVAIL = 300; // 5min — overridable with ?fresh=1
-const TTL_BOOKING = 45 * 60; // 45min — checkout spot-hold window
+const TTL_BOOKING = 15 * 60; // 15min — checkout spot-hold window
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default {
@@ -325,7 +325,7 @@ async function handleCheckoutSubmit(request, env) {
 // ── Booking state handoff ──────────────────────────────────────────────────
 // The tour page POSTs the cart here, gets a booking_id, and redirects the
 // browser to /checkout/?id=<booking_id>. The checkout page then GETs the
-// state back. KV TTL is 45min — when it expires the entry is gone and the
+// state back. KV TTL is 15min — when it expires the entry is gone and the
 // checkout page treats it as a stale link.
 //
 // This is purely a state pouch for the surface handoff. The real Bokun hold
