@@ -7,8 +7,10 @@
   <meta name="robots" content="noindex,nofollow">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%23FF6B4A'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css_new/horizon-connect-tokens.css">
+  <link rel="stylesheet" href="/css_new/horizon-connect-responsive.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%234920C4'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
   <style>body { visibility: hidden; }</style>
 
   <style>
@@ -17,424 +19,456 @@
     body {
       margin: 0;
       min-height: 100vh;
-      background: #f6f9fc;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      font-size: 15px;
-      color: #1a1f36;
+      background: var(--bg-page);
+      font-family: var(--font-sans);
+      font-size: var(--type-body-size);
+      line-height: var(--type-body-line);
+      color: var(--text-body);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 24px 16px;
+      padding: var(--space-xl) var(--gutter);
     }
 
     /* ── Brand mark above the card ────────────────────────────────── */
-    .sl-brand {
+    .auth-brand {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 24px;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-xl);
     }
-    .sl-brand__name {
-      font-family: 'Inter', sans-serif;
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: #FF6B4A;
-      letter-spacing: -0.02em;
-    }
-
-    /* ── Card ─────────────────────────────────────────────────────── */
-    .sl-card {
-      width: 100%;
-      max-width: 440px;
-      background: #fff;
-      border: 1px solid #e6ebf1;
-      border-radius: 8px;
-      padding: 40px 48px 36px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
-
-    .sl-card__title {
-      font-size: 1.375rem;
-      font-weight: 700;
-      color: #1a1f36;
-      margin: 0 0 28px;
+    .auth-brand__name {
+      font-size: var(--type-subheading-size);
+      line-height: var(--type-subheading-line);
+      font-weight: var(--weight-medium);
+      color: var(--text-primary);
       letter-spacing: -0.01em;
     }
 
-    /* ── Field ────────────────────────────────────────────────────── */
-    .sl-field { margin-bottom: 20px; }
+    /* ── Card ─────────────────────────────────────────────────────── */
+    .auth-card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: var(--space-card);
+      box-shadow: var(--shadow-e1);
+    }
+    /* tablet+ /* --bp-sm */
+    @media (min-width: 640px) {
+      .auth-card { padding: var(--space-2xl); }
+    }
 
-    .sl-label-row {
+    .auth-card__title {
+      font-size: var(--type-heading-size);
+      line-height: var(--type-heading-line);
+      font-weight: var(--weight-medium);
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+      margin: 0 0 var(--space-xl);
+    }
+
+    /* ── Field ────────────────────────────────────────────────────── */
+    .auth-field { margin-bottom: var(--space-lg); }
+
+    .auth-label-row {
       display: flex;
       justify-content: space-between;
-      align-items: baseline;
-      margin-bottom: 6px;
+      align-items: center;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-xs);
+      min-height: 24px;
     }
-    .sl-label {
-      font-size: 14px;
-      font-weight: 500;
-      color: #3c4257;
+    .auth-label {
+      font-size: var(--type-label-size);
+      line-height: var(--type-label-line);
+      font-weight: var(--weight-medium);
+      color: var(--text-primary);
     }
-    .sl-forgot-link {
-      background: none; border: 0; padding: 0;
-      font: inherit; font-size: 13px; color: #FF6B4A;
-      cursor: pointer; text-decoration: underline;
-      text-underline-offset: 2px;
+    .auth-label__hint {
+      font-weight: var(--weight-regular);
+      color: var(--text-secondary);
     }
-    .sl-forgot-link:hover { color: #e85a3a; }
+    .auth-link-btn {
+      background: none;
+      border: 0;
+      padding: var(--space-xs) var(--space-sm);
+      margin: calc(-1 * var(--space-xs)) calc(-1 * var(--space-sm));
+      font: inherit;
+      font-size: var(--type-caption-size);
+      line-height: var(--type-caption-line);
+      color: var(--text-brand);
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+    }
+    .auth-link-btn:hover { color: var(--action-primary-hover); text-decoration: underline; }
+    .auth-link-btn:focus-visible {
+      outline: none;
+      box-shadow: var(--shadow-focus-ring);
+    }
 
-    .sl-input {
+    .auth-input {
       display: block;
       width: 100%;
-      padding: 10px 14px;
-      border: 1px solid #e6ebf1;
-      border-radius: 6px;
+      min-height: 44px;
+      padding: var(--space-md) var(--space-md);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
       font: inherit;
-      font-size: 15px;
-      color: #1a1f36;
-      background: #fff;
+      font-size: var(--type-body-size);
+      line-height: var(--type-body-line);
+      color: var(--text-primary);
+      background: var(--bg-surface);
       transition: border-color 0.15s, box-shadow 0.15s;
     }
-    .sl-input:focus {
+    .auth-input::placeholder { color: var(--text-tertiary); }
+    .auth-input:hover  { border-color: var(--border-strong); }
+    .auth-input:focus  {
       outline: none;
-      border-color: #FF6B4A;
-      box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.15);
+      border-color: var(--border-brand);
+      box-shadow: var(--shadow-focus-ring);
     }
-    /* Subtle pulse while auto-preflight is in flight */
-    @keyframes sl-checking {
-      0%, 100% { box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.10); }
-      50%       { box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.28); }
+    .auth-input:disabled {
+      background: var(--bg-subtle);
+      color: var(--text-secondary);
+      cursor: not-allowed;
     }
-    .sl-input--checking {
-      border-color: #FF6B4A;
-      animation: sl-checking 1s ease infinite;
+    @keyframes auth-checking {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(73, 32, 196, 0.10); }
+      50%      { box-shadow: 0 0 0 3px rgba(73, 32, 196, 0.28); }
+    }
+    .auth-input--checking {
+      border-color: var(--border-brand);
+      animation: auth-checking 1s ease infinite;
     }
 
-    /* ── Locked email chip (after preflight, returning user) ──────── */
-    .sl-email-chip {
+    /* ── Locked email chip ───────────────────────────────────────── */
+    .auth-email-chip {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 14px;
-      border: 1px solid #e6ebf1;
-      border-radius: 6px;
-      background: #f6f9fc;
-      margin-bottom: 20px;
+      gap: var(--space-md);
+      min-height: 44px;
+      padding: var(--space-sm) var(--space-md);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      background: var(--bg-subtle);
+      margin-bottom: var(--space-lg);
     }
-    .sl-email-chip__addr {
-      font-size: 14px;
-      font-weight: 500;
-      color: #3c4257;
+    .auth-email-chip__addr {
+      font-size: var(--type-body-size);
+      line-height: var(--type-body-line);
+      font-weight: var(--weight-medium);
+      color: var(--text-primary);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    .sl-email-chip__change {
-      background: none; border: 0; padding: 0;
-      font: inherit; font-size: 13px; color: #FF6B4A;
-      cursor: pointer; text-decoration: underline;
-      text-underline-offset: 2px;
-      white-space: nowrap;
-      margin-left: 12px;
-      flex-shrink: 0;
-    }
-    .sl-email-chip__change:hover { color: #e85a3a; }
 
-    /* ── Primary button ───────────────────────────────────────────── */
-    .sl-btn {
-      display: block;
+    /* ── Buttons ──────────────────────────────────────────────────── */
+    .auth-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       width: 100%;
-      padding: 11px 16px;
-      background: #FF6B4A;
-      color: #fff;
-      border: 0;
-      border-radius: 6px;
+      min-height: 44px;
+      padding: var(--space-md) var(--space-lg);
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
       font: inherit;
-      font-size: 15px;
-      font-weight: 600;
+      font-size: var(--type-label-size);
+      line-height: var(--type-label-line);
+      font-weight: var(--weight-medium);
       cursor: pointer;
-      transition: background 0.15s;
-      margin-top: 8px;
+      transition: background-color 0.15s, border-color 0.15s, color 0.15s;
     }
-    .sl-btn:hover  { background: #e85a3a; }
-    .sl-btn:disabled { opacity: 0.6; cursor: progress; }
+    .auth-btn:focus-visible {
+      outline: none;
+      box-shadow: var(--shadow-focus-ring);
+    }
+    .auth-btn--primary {
+      background: var(--action-primary-default);
+      color: var(--text-inverse);
+      margin-top: var(--space-sm);
+    }
+    .auth-btn--primary:hover   { background: var(--action-primary-hover); }
+    .auth-btn--primary:active  { background: var(--action-primary-pressed); }
+    .auth-btn--primary:disabled {
+      background: var(--action-primary-disabled);
+      cursor: progress;
+    }
+    .auth-btn--secondary {
+      background: var(--action-secondary-default);
+      border-color: var(--action-secondary-border);
+      color: var(--text-primary);
+    }
+    .auth-btn--secondary:hover  { background: var(--action-secondary-hover); }
+    .auth-btn--secondary:active { background: var(--action-secondary-pressed); }
 
-    /* ── Error banner ─────────────────────────────────────────────── */
-    .sl-error {
-      background: #fff5f5;
-      border: 1px solid #fed7d7;
-      color: #c53030;
-      padding: 10px 14px;
-      border-radius: 6px;
-      font-size: 14px;
-      line-height: 1.45;
-      margin-bottom: 20px;
+    /* ── Banners (error + success) ────────────────────────────────── */
+    .auth-banner {
+      padding: var(--space-md);
+      border-radius: var(--radius-md);
+      font-size: var(--type-caption-size);
+      line-height: var(--type-caption-line);
+      margin-bottom: var(--space-lg);
+      border-width: 1px;
+      border-style: solid;
     }
-    .sl-error[hidden] { display: none; }
+    .auth-banner--error {
+      background: var(--feedback-danger-bg);
+      border-color: var(--feedback-danger-border);
+      color: var(--feedback-danger-text);
+    }
+    .auth-banner--success {
+      background: var(--feedback-success-bg);
+      border-color: var(--feedback-success-border);
+      color: var(--feedback-success-text);
+      margin: var(--space-md) 0 0;
+    }
+    .auth-banner[hidden] { display: none; }
 
     /* ── Not approved state ───────────────────────────────────────── */
-    .sl-not-approved {
-      padding: 4px 0 8px;
+    .auth-not-approved__heading {
+      font-size: var(--type-subheading-size);
+      line-height: var(--type-subheading-line);
+      font-weight: var(--weight-medium);
+      color: var(--text-primary);
+      margin: 0 0 var(--space-sm);
     }
-    .sl-not-approved__heading {
-      font-size: 15px;
-      font-weight: 600;
-      color: #1a1f36;
-      margin: 0 0 8px;
+    .auth-not-approved__body {
+      font-size: var(--type-body-size);
+      line-height: var(--type-body-line);
+      color: var(--text-body);
+      margin: 0 0 var(--space-lg);
     }
-    .sl-not-approved__body {
-      font-size: 14px;
-      color: #697386;
-      line-height: 1.55;
-      margin: 0 0 16px;
+    .auth-not-approved__email {
+      font-weight: var(--weight-medium);
+      color: var(--text-primary);
     }
-    .sl-not-approved__actions {
+    .auth-actions {
       display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
+      flex-direction: column;
+      gap: var(--space-sm);
     }
-    .sl-not-approved__back {
-      background: none; border: 1px solid #e6ebf1;
-      padding: 9px 16px; border-radius: 6px;
-      font: inherit; font-size: 14px; font-weight: 500;
-      color: #3c4257; cursor: pointer;
-      transition: background 0.15s;
+    @media (min-width: 640px) /* --bp-sm */ {
+      .auth-actions { flex-direction: row; }
+      .auth-actions > * { flex: 1; }
     }
-    .sl-not-approved__back:hover { background: #f6f9fc; }
-    .sl-not-approved__req-btn {
-      background: #FF6B4A; border: 0;
-      padding: 9px 16px; border-radius: 6px;
-      font: inherit; font-size: 14px; font-weight: 500;
-      color: #fff; cursor: pointer;
-      transition: background 0.15s;
-    }
-    .sl-not-approved__req-btn:hover { background: #e85a3a; }
 
     /* ── Inline request-access form ───────────────────────────────── */
-    .sl-req-form {
-      margin-top: 20px;
-      padding-top: 20px;
-      border-top: 1px solid #f0f3f8;
+    .auth-req-form {
+      margin-top: var(--space-lg);
+      padding-top: var(--space-lg);
+      border-top: 1px solid var(--border-subtle);
     }
-    .sl-req-form__title {
-      font-size: 14px; font-weight: 600; color: #1a1f36;
-      margin: 0 0 14px;
+    .auth-req-form__title {
+      font-size: var(--type-label-size);
+      line-height: var(--type-label-line);
+      font-weight: var(--weight-medium);
+      color: var(--text-primary);
+      margin: 0 0 var(--space-md);
     }
-    .sl-req-form .sl-field { margin-bottom: 14px; }
-    .sl-req-form .sl-label { font-size: 13px; }
-    .sl-req-form textarea.sl-input {
-      resize: vertical; min-height: 64px; line-height: 1.5;
+    .auth-req-form .auth-field { margin-bottom: var(--space-md); }
+    .auth-req-form textarea.auth-input {
+      resize: vertical;
+      min-height: 64px;
     }
-    .sl-req-form__footer { display: flex; gap: 12px; align-items: center; }
-    .sl-req-form__cancel {
-      background: none; border: 0; padding: 0;
-      font: inherit; font-size: 13px; color: #697386;
-      cursor: pointer; text-decoration: underline;
-      text-underline-offset: 2px;
+    .auth-req-form__footer {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+      align-items: stretch;
     }
-    .sl-req-form__cancel:hover { color: #1a1f36; }
-
-    /* ── Request sent success banner ──────────────────────────────── */
-    .sl-req-sent {
-      margin-top: 14px;
-      padding: 12px 14px;
-      background: #f0fdf4;
-      border: 1px solid #bbf7d0;
-      border-radius: 6px;
-      font-size: 13px;
-      color: #166534;
-      line-height: 1.5;
+    @media (min-width: 640px) /* --bp-sm */ {
+      .auth-req-form__footer { flex-direction: row; align-items: center; }
+      .auth-req-form__footer .auth-btn { flex: 1; }
     }
 
     /* ── Check-email success state ────────────────────────────────── */
-    .sl-check-email { padding: 4px 0 8px; }
-    .sl-check-email__icon {
-      width: 44px; height: 44px;
-      background: rgba(255, 107, 74, 0.1);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      margin-bottom: 16px;
+    .auth-check-email__icon {
+      width: 48px;
+      height: 48px;
+      background: var(--bg-brand-subtle);
+      color: var(--text-brand);
+      border-radius: var(--radius-pill);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: var(--space-lg);
     }
-    .sl-check-email__title {
-      font-size: 15px;
-      font-weight: 600;
-      color: #1a1f36;
-      margin: 0 0 8px;
+    .auth-check-email__title {
+      font-size: var(--type-subheading-size);
+      line-height: var(--type-subheading-line);
+      font-weight: var(--weight-medium);
+      color: var(--text-primary);
+      margin: 0 0 var(--space-sm);
     }
-    .sl-check-email__body {
-      font-size: 14px;
-      color: #697386;
-      line-height: 1.55;
-      margin: 0 0 20px;
+    .auth-check-email__body {
+      font-size: var(--type-body-size);
+      line-height: var(--type-body-line);
+      color: var(--text-body);
+      margin: 0 0 var(--space-lg);
     }
-    .sl-check-email__email {
-      font-family: 'SF Mono', 'Menlo', monospace;
+    .auth-check-email__email {
+      font-family: var(--font-mono);
       font-size: 13px;
-      color: #1a1f36;
-      background: #f6f9fc;
-      padding: 1px 6px;
-      border-radius: 4px;
+      color: var(--text-primary);
+      background: var(--bg-subtle);
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
     }
-    .sl-check-email__back {
-      background: none; border: 1px solid #e6ebf1;
-      padding: 9px 16px; border-radius: 6px;
-      font: inherit; font-size: 14px; font-weight: 500;
-      color: #3c4257; cursor: pointer;
-      transition: background 0.15s;
-    }
-    .sl-check-email__back:hover { background: #f6f9fc; }
 
     /* ── Reveal animation ─────────────────────────────────────────── */
-    @keyframes sl-reveal {
-      from { opacity: 0; transform: translateY(-8px); }
+    @keyframes auth-reveal {
+      from { opacity: 0; transform: translateY(-4px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    .sl-reveal { animation: sl-reveal 0.18s ease; }
+    .auth-reveal { animation: auth-reveal 0.18s ease; }
 
     /* ── Footer ───────────────────────────────────────────────────── */
-    .sl-card__footer {
-      font-size: 13px;
-      color: #8898aa;
-      margin: 24px 0 0;
-      padding-top: 20px;
-      border-top: 1px solid #f0f3f8;
+    .auth-card__footer {
+      font-size: var(--type-caption-size);
+      line-height: var(--type-caption-line);
+      color: var(--text-secondary);
+      margin: var(--space-xl) 0 0;
+      padding-top: var(--space-lg);
+      border-top: 1px solid var(--border-subtle);
     }
-    .sl-card__footer a { color: #8898aa; text-decoration: underline; }
-    .sl-card__footer a:hover { color: #3c4257; }
-
-    /* ── Mobile ───────────────────────────────────────────────────── */
-    @media (max-width: 520px) {
-      .sl-card { padding: 32px 24px 28px; }
-    }
+    .auth-card__footer a { color: var(--text-secondary); text-decoration: underline; }
+    .auth-card__footer a:hover { color: var(--text-primary); }
   </style>
 </head>
 <body>
 
-  <!-- Brand mark above the card -->
-  <div class="sl-brand">
+  <div class="auth-brand">
     <svg width="28" height="28" viewBox="0 0 36 36" aria-hidden="true">
-      <rect width="36" height="36" rx="8" fill="#FF6B4A"/>
+      <rect width="36" height="36" rx="8" fill="#4920C4"/>
       <path d="M13 7v22M13 18c0-6 12-6 12 0v11" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>
     </svg>
-    <span class="sl-brand__name">horizon</span>
+    <span class="auth-brand__name">Horizon</span>
   </div>
 
-  <main class="sl-card">
-    <h1 class="sl-card__title">Sign in to your account</h1>
+  <main class="auth-card">
+    <h1 class="auth-card__title">Sign in to your account</h1>
 
-    <!-- Error banner (shared across states) -->
-    <div class="sl-error" id="slError" hidden></div>
+    <div class="auth-banner auth-banner--error" id="slError" hidden></div>
 
     <!-- ── State: email entry (default) ──────────────────────────── -->
     <div id="slStateEmail">
       <form id="slEmailForm" novalidate>
-        <div class="sl-field">
-          <div class="sl-label-row">
-            <label class="sl-label" for="slEmail">Email</label>
+        <div class="auth-field">
+          <div class="auth-label-row">
+            <label class="auth-label" for="slEmail">Email</label>
           </div>
-          <input class="sl-input" type="email" id="slEmail"
+          <input class="auth-input" type="email" id="slEmail"
                  name="email" autocomplete="email" required autofocus>
         </div>
-        <button class="sl-btn" type="submit" id="slContinueBtn">Continue</button>
+        <button class="auth-btn auth-btn--primary" type="submit" id="slContinueBtn">Continue</button>
       </form>
     </div>
 
     <!-- ── State: password (returning user) ──────────────────────── -->
     <div id="slStatePassword" hidden>
-      <div class="sl-email-chip">
-        <span class="sl-email-chip__addr" id="slEmailChip"></span>
-        <button type="button" class="sl-email-chip__change" id="slNotYou">Not you?</button>
+      <div class="auth-email-chip">
+        <span class="auth-email-chip__addr" id="slEmailChip"></span>
+        <button type="button" class="auth-link-btn" id="slNotYou">Not you?</button>
       </div>
       <form id="slPasswordForm" novalidate>
-        <div class="sl-field">
-          <div class="sl-label-row">
-            <label class="sl-label" for="slPassword">Password</label>
-            <button type="button" class="sl-forgot-link" id="slForgot">Forgot your password?</button>
+        <div class="auth-field">
+          <div class="auth-label-row">
+            <label class="auth-label" for="slPassword">Password</label>
+            <button type="button" class="auth-link-btn" id="slForgot">Forgot password?</button>
           </div>
-          <input class="sl-input" type="password" id="slPassword"
+          <input class="auth-input" type="password" id="slPassword"
                  name="password" autocomplete="current-password" required>
         </div>
-        <button class="sl-btn" type="submit" id="slSignInBtn">Sign in</button>
+        <button class="auth-btn auth-btn--primary" type="submit" id="slSignInBtn">Sign in</button>
       </form>
     </div>
 
     <!-- ── State: not approved ───────────────────────────────────── -->
     <div id="slStateNotApproved" hidden>
-      <div class="sl-not-approved">
-        <p class="sl-not-approved__heading">Access not found</p>
-        <p class="sl-not-approved__body">
-          <span id="slNotApprovedEmail" style="font-weight:500;"></span> isn't linked to
-          a Horizon partner account. You can request access below and our team will be in touch.
-        </p>
-        <div class="sl-not-approved__actions">
-          <button type="button" class="sl-not-approved__back" id="slNotApprovedBack">
-            ← Try a different email
-          </button>
-          <button type="button" class="sl-not-approved__req-btn" id="slReqAccessBtn">
-            Request access
-          </button>
-        </div>
+      <p class="auth-not-approved__heading">Access not found</p>
+      <p class="auth-not-approved__body">
+        <span class="auth-not-approved__email" id="slNotApprovedEmail"></span> isn't linked to
+        a Horizon partner account. You can request access below and our team will be in touch.
+      </p>
+      <div class="auth-actions">
+        <button type="button" class="auth-btn auth-btn--secondary" id="slNotApprovedBack">
+          Try a different email
+        </button>
+        <button type="button" class="auth-btn auth-btn--primary" id="slReqAccessBtn" style="margin-top:0">
+          Request access
+        </button>
+      </div>
 
-        <!-- Inline request form — hidden until "Request access" is clicked -->
-        <div class="sl-req-form" id="slReqForm" hidden>
-          <p class="sl-req-form__title">Request access</p>
-          <form id="slReqFormEl" novalidate>
-            <div class="sl-field">
-              <label class="sl-label" for="slReqName">Your name</label>
-              <input class="sl-input" type="text" id="slReqName"
-                     name="name" autocomplete="name" required placeholder="Full name">
+      <div class="auth-req-form" id="slReqForm" hidden>
+        <p class="auth-req-form__title">Request access</p>
+        <form id="slReqFormEl" novalidate>
+          <div class="auth-field">
+            <div class="auth-label-row">
+              <label class="auth-label" for="slReqName">Your name</label>
             </div>
-            <div class="sl-field">
-              <label class="sl-label" for="slReqProperty">Property or hotel <span style="color:#8898aa;font-weight:400">(optional)</span></label>
-              <input class="sl-input" type="text" id="slReqProperty"
-                     name="property" autocomplete="organization" placeholder="e.g. Fairmont Banff Springs">
+            <input class="auth-input" type="text" id="slReqName"
+                   name="name" autocomplete="name" required placeholder="Full name">
+          </div>
+          <div class="auth-field">
+            <div class="auth-label-row">
+              <label class="auth-label" for="slReqProperty">
+                Property or hotel <span class="auth-label__hint">(optional)</span>
+              </label>
             </div>
-            <div class="sl-field">
-              <label class="sl-label" for="slReqReason">Why do you need access? <span style="color:#8898aa;font-weight:400">(optional)</span></label>
-              <textarea class="sl-input" id="slReqReason"
-                        name="reason" rows="3" placeholder="Brief description…"></textarea>
+            <input class="auth-input" type="text" id="slReqProperty"
+                   name="property" autocomplete="organization" placeholder="e.g. Fairmont Banff Springs">
+          </div>
+          <div class="auth-field">
+            <div class="auth-label-row">
+              <label class="auth-label" for="slReqReason">
+                Why do you need access? <span class="auth-label__hint">(optional)</span>
+              </label>
             </div>
-            <div class="sl-req-form__footer">
-              <button class="sl-btn" type="submit" id="slReqSubmit"
-                      style="margin-top:0;flex:1">Send request</button>
-              <button type="button" class="sl-req-form__cancel" id="slReqCancel">Cancel</button>
-            </div>
-          </form>
-          <!-- Success message (hidden until submitted) -->
-          <p class="sl-req-sent" id="slReqSent" hidden>
-            Request sent! We'll review it and get back to you at
-            <strong id="slReqSentEmail"></strong>.
-          </p>
-        </div>
+            <textarea class="auth-input" id="slReqReason"
+                      name="reason" rows="3" placeholder="Brief description…"></textarea>
+          </div>
+          <div class="auth-req-form__footer">
+            <button class="auth-btn auth-btn--primary" type="submit" id="slReqSubmit"
+                    style="margin-top:0">Send request</button>
+            <button type="button" class="auth-btn auth-btn--secondary" id="slReqCancel">Cancel</button>
+          </div>
+        </form>
+        <p class="auth-banner auth-banner--success" id="slReqSent" hidden>
+          Request sent. We'll review it and get back to you at
+          <strong id="slReqSentEmail"></strong>.
+        </p>
       </div>
     </div>
 
     <!-- ── State: check email (forgot-password success) ──────────── -->
     <div id="slStateCheckEmail" hidden>
-      <div class="sl-check-email">
-        <div class="sl-check-email__icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-               stroke="#FF6B4A" stroke-width="2.5" stroke-linecap="round"
-               stroke-linejoin="round" aria-hidden="true">
-            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-            <polyline points="22,6 12,13 2,6"/>
-          </svg>
-        </div>
-        <p class="sl-check-email__title">Check your email</p>
-        <p class="sl-check-email__body">
-          We sent a password reset link to
-          <span class="sl-check-email__email" id="slCheckEmailAddr"></span>.
-          Click it to set a new password.
-        </p>
-        <button type="button" class="sl-check-email__back" id="slCheckEmailBack">
-          ← Back to sign in
-        </button>
+      <div class="auth-check-email__icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round"
+             stroke-linejoin="round">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+          <polyline points="22,6 12,13 2,6"/>
+        </svg>
       </div>
+      <p class="auth-check-email__title">Check your email</p>
+      <p class="auth-check-email__body">
+        We sent a password reset link to
+        <span class="auth-check-email__email" id="slCheckEmailAddr"></span>.
+        Click it to set a new password.
+      </p>
+      <button type="button" class="auth-btn auth-btn--secondary" id="slCheckEmailBack">
+        Back to sign in
+      </button>
     </div>
 
-    <p class="sl-card__footer">
-      Access is by invitation only. &nbsp;·&nbsp;
+    <p class="auth-card__footer">
+      Access is by invitation only.
       Need help? <a href="mailto:hello@gowithhorizon.com">hello@gowithhorizon.com</a>
     </p>
   </main>
@@ -452,7 +486,6 @@
       auth: { persistSession: true, autoRefreshToken: true },
     });
 
-    // ── DOM refs ────────────────────────────────────────────────────
     const els = {
       error:             document.getElementById('slError'),
 
@@ -488,15 +521,13 @@
       checkEmailBack:    document.getElementById('slCheckEmailBack'),
     };
 
-    // ── State machine ───────────────────────────────────────────────
-    const STATES = ['email', 'password', 'not-approved', 'check-email'];
     function showState(name) {
       els.stateEmail.hidden       = name !== 'email';
       els.statePassword.hidden    = name !== 'password';
       els.stateNotApproved.hidden = name !== 'not-approved';
       els.stateCheckEmail.hidden  = name !== 'check-email';
       clearError();
-      if (name === 'password') els.statePassword.classList.add('sl-reveal');
+      if (name === 'password') els.statePassword.classList.add('auth-reveal');
       if (name === 'email')    els.emailInput.focus();
       if (name === 'password') els.passwordInput.focus();
     }
@@ -510,7 +541,6 @@
       els.error.textContent = '';
     }
 
-    // ── Session check — skip login if already authenticated ─────────
     async function destAfterAuth() {
       const { data: adminRow } = await supabase
         .from('horizon_admins')
@@ -529,24 +559,20 @@
 
     document.body.style.visibility = 'visible';
 
-    // ── Preflight logic (shared by auto-detect + explicit submit) ──────
     const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     let preflightDebounce    = null;
     let preflightController  = null;
 
-    // silent = true → auto-detect mode: pulse animation, no button spinner.
-    // silent = false → explicit submit: button shows "Checking…".
     async function runPreflight(email, { silent = false } = {}) {
       clearError();
 
       if (silent) {
-        els.emailInput.classList.add('sl-input--checking');
+        els.emailInput.classList.add('auth-input--checking');
       } else {
         els.continueBtn.disabled = true;
         els.continueBtn.textContent = 'Checking…';
       }
 
-      // Cancel any previous in-flight request so only the latest wins.
       if (preflightController) preflightController.abort();
       preflightController = new AbortController();
       const { signal } = preflightController;
@@ -562,8 +588,8 @@
         const data = await res.json();
         status = data.status;
       } catch (err) {
-        if (err.name === 'AbortError') return; // superseded — silently ignore
-        els.emailInput.classList.remove('sl-input--checking');
+        if (err.name === 'AbortError') return;
+        els.emailInput.classList.remove('auth-input--checking');
         if (!silent) {
           showError('Could not reach the server. Check your connection and try again.');
           els.continueBtn.disabled = false;
@@ -572,10 +598,9 @@
         return;
       }
 
-      // If the field changed while we were waiting, the result is stale.
       if (els.emailInput.value.trim() !== email) return;
 
-      els.emailInput.classList.remove('sl-input--checking');
+      els.emailInput.classList.remove('auth-input--checking');
 
       if (status === 'password_required') {
         els.emailChip.textContent = email;
@@ -592,14 +617,13 @@
           if (error) throw error;
           window.location.href = OTP_PAGE + '?email=' + encodeURIComponent(email);
         } catch (err) {
-          els.emailInput.classList.remove('sl-input--checking');
+          els.emailInput.classList.remove('auth-input--checking');
           showError(err.message || 'Could not send verification code. Try again.');
           els.continueBtn.disabled = false;
           els.continueBtn.textContent = 'Continue';
         }
 
       } else {
-        // not_approved
         els.notApprovedEmail.textContent = email;
         showState('not-approved');
         els.continueBtn.disabled = false;
@@ -607,7 +631,6 @@
       }
     }
 
-    // ── Step 1a: explicit submit (Continue button / Enter key) ──────────
     els.emailForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const email = els.emailInput.value.trim();
@@ -617,14 +640,10 @@
       runPreflight(email, { silent: false });
     });
 
-    // ── Step 1b: auto-detect as the email is typed ──────────────────────
-    // Fires 600 ms after the user stops typing, but only when the value
-    // looks like a complete email address. The Continue button stays as
-    // a fallback for accessibility and slow typists.
     els.emailInput.addEventListener('input', () => {
       clearTimeout(preflightDebounce);
       if (preflightController) { preflightController.abort(); preflightController = null; }
-      els.emailInput.classList.remove('sl-input--checking');
+      els.emailInput.classList.remove('auth-input--checking');
 
       const email = els.emailInput.value.trim();
       if (!EMAIL_RE.test(email)) return;
@@ -632,7 +651,6 @@
       preflightDebounce = setTimeout(() => runPreflight(email, { silent: true }), 600);
     });
 
-    // ── "Not you?" — back to email step ─────────────────────────────
     els.notYou.addEventListener('click', () => {
       els.passwordInput.value = '';
       showState('email');
@@ -640,7 +658,6 @@
     });
 
     els.notApprovedBack.addEventListener('click', () => {
-      // Reset request form when going back so it's clean next time.
       els.reqForm.hidden = true;
       els.reqSent.hidden = true;
       els.reqFormEl.reset();
@@ -652,7 +669,6 @@
       showState('email');
     });
 
-    // ── Request-access toggle / form ─────────────────────────────────
     els.reqAccessBtn.addEventListener('click', () => {
       els.reqForm.hidden = false;
       els.reqAccessBtn.hidden = true;
@@ -697,7 +713,6 @@
       }
     });
 
-    // ── Step 2: password sign-in ─────────────────────────────────────
     els.passwordForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       clearError();
@@ -724,7 +739,6 @@
       }
     });
 
-    // ── Forgot password ──────────────────────────────────────────────
     els.forgot.addEventListener('click', async () => {
       clearError();
       const email = els.emailChip.textContent.trim();

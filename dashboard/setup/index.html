@@ -9,142 +9,243 @@
   <link rel="canonical" href="https://gowithhorizon.com/dashboard/setup/">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%23FF6B4A'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
-
-  <!-- Hide until the session check passes — see comments on
-       /dashboard/hotel/ for rationale. -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css_new/horizon-connect-tokens.css">
+  <link rel="stylesheet" href="/css_new/horizon-connect-responsive.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%234920C4'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
   <style>body { visibility: hidden; }</style>
 
   <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
     body {
-      background: var(--warm-white);
-      min-height: 100vh; margin: 0;
-      display: flex; flex-direction: column;
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg-page);
+      font-family: var(--font-sans);
+      font-size: var(--type-body-size);
+      line-height: var(--type-body-line);
+      color: var(--text-body);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-xl) var(--gutter);
     }
-    .hs-page {
-      flex: 1; display: flex; align-items: center; justify-content: center;
-      padding: var(--space-6) var(--space-4);
+
+    /* ── Brand mark ───────────────────────────────────────────────── */
+    .auth-brand {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-xl);
     }
-    .hs-card {
-      width: 100%; max-width: 420px;
-      background: #fff;
-      border: 1px solid var(--border-color);
+    .auth-brand__name {
+      font-size: var(--type-subheading-size);
+      line-height: var(--type-subheading-line);
+      font-weight: var(--weight-medium);
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+    }
+
+    /* ── Card ─────────────────────────────────────────────────────── */
+    .auth-card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
       border-radius: var(--radius-lg);
-      padding: var(--space-6);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+      padding: var(--space-card);
+      box-shadow: var(--shadow-e1);
     }
-    .hs-logo {
-      display: flex; flex-direction: column; align-items: center;
-      gap: var(--space-2); margin-bottom: var(--space-4);
+    @media (min-width: 640px) /* --bp-sm */ {
+      .auth-card { padding: var(--space-2xl); }
     }
-    .hs-logo__text {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 1.5rem; font-weight: 700; color: var(--coral);
+
+    .auth-card__title {
+      font-size: var(--type-heading-size);
+      line-height: var(--type-heading-line);
+      font-weight: var(--weight-medium);
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+      margin: 0 0 var(--space-sm);
     }
-    .hs-title {
-      text-align: center;
-      font-family: var(--font-display);
-      font-size: var(--text-xl); font-weight: 600; color: var(--near-black);
-      margin: 0 0 var(--space-1);
+    .auth-card__sub {
+      font-size: var(--type-body-size);
+      line-height: var(--type-body-line);
+      color: var(--text-body);
+      margin: 0 0 var(--space-xl);
     }
-    .hs-sub {
-      text-align: center;
-      font-size: var(--text-sm); color: var(--mid-gray);
-      margin: 0 0 var(--space-5);
+
+    /* ── Form ─────────────────────────────────────────────────────── */
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-lg);
     }
-    .hs-form { display: flex; flex-direction: column; gap: var(--space-3); }
-    .hs-form label {
-      font-size: var(--text-sm); font-weight: 600; color: var(--near-black);
-      margin-bottom: -2px;
+    .auth-field { display: flex; flex-direction: column; gap: var(--space-sm); }
+    .auth-label {
+      font-size: var(--type-label-size);
+      line-height: var(--type-label-line);
+      font-weight: var(--weight-medium);
+      color: var(--text-primary);
     }
-    .hs-form input[type="email"],
-    .hs-form input[type="password"] {
+    .auth-input {
+      display: block;
       width: 100%;
-      padding: 10px 12px;
-      border: 1px solid var(--border-color);
+      min-height: 44px;
+      padding: var(--space-md);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      font: inherit;
+      font-size: var(--type-body-size);
+      line-height: var(--type-body-line);
+      color: var(--text-primary);
+      background: var(--bg-surface);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .auth-input::placeholder { color: var(--text-tertiary); }
+    .auth-input:hover  { border-color: var(--border-strong); }
+    .auth-input:focus  {
+      outline: none;
+      border-color: var(--border-brand);
+      box-shadow: var(--shadow-focus-ring);
+    }
+    .auth-input:disabled {
+      background: var(--bg-subtle);
+      color: var(--text-secondary);
+      cursor: not-allowed;
+    }
+    .auth-hint {
+      font-size: var(--type-caption-size);
+      line-height: var(--type-caption-line);
+      color: var(--text-secondary);
+    }
+
+    /* ── Buttons ──────────────────────────────────────────────────── */
+    .auth-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 44px;
+      padding: var(--space-md) var(--space-lg);
+      border: 1px solid transparent;
       border-radius: var(--radius-md);
-      font: inherit; font-size: var(--text-base);
-      box-sizing: border-box;
-      background: #fff;
-    }
-    .hs-form input[type="email"]:disabled {
-      background: var(--warm-white-alt); color: var(--mid-gray);
-    }
-    .hs-form input[type="password"]:focus {
-      outline: 2px solid var(--coral); outline-offset: -1px;
-    }
-    .hs-btn {
-      width: 100%;
-      padding: 10px 16px;
-      background: var(--coral); color: #fff;
-      border: 0; border-radius: var(--radius-md);
-      font: inherit; font-size: var(--text-base); font-weight: 600;
+      font: inherit;
+      font-size: var(--type-label-size);
+      line-height: var(--type-label-line);
+      font-weight: var(--weight-medium);
       cursor: pointer;
-      margin-top: var(--space-2);
+      transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+      margin-top: var(--space-sm);
     }
-    .hs-btn:hover { background: var(--coral-hover); }
-    .hs-btn:disabled { opacity: 0.6; cursor: progress; }
-    .hs-error {
-      background: #FEF2F2; border: 1px solid #FCA5A5; color: #991B1B;
-      padding: var(--space-2) var(--space-3); border-radius: var(--radius-md);
-      font-size: var(--text-sm);
-      margin: 0 0 var(--space-3);
+    .auth-btn:focus-visible {
+      outline: none;
+      box-shadow: var(--shadow-focus-ring);
     }
-    .hs-error[hidden] { display: none; }
-    .hs-footer {
+    .auth-btn--primary {
+      background: var(--action-primary-default);
+      color: var(--text-inverse);
+    }
+    .auth-btn--primary:hover:not(:disabled)  { background: var(--action-primary-hover); }
+    .auth-btn--primary:active:not(:disabled) { background: var(--action-primary-pressed); }
+    .auth-btn--primary:disabled {
+      background: var(--action-primary-disabled);
+      cursor: progress;
+    }
+
+    /* ── Banner ───────────────────────────────────────────────────── */
+    .auth-banner {
+      padding: var(--space-md);
+      border-radius: var(--radius-md);
+      font-size: var(--type-caption-size);
+      line-height: var(--type-caption-line);
+      border-width: 1px;
+      border-style: solid;
+    }
+    .auth-banner--error {
+      background: var(--feedback-danger-bg);
+      border-color: var(--feedback-danger-border);
+      color: var(--feedback-danger-text);
+    }
+    .auth-banner[hidden] { display: none; }
+
+    /* ── Footer ───────────────────────────────────────────────────── */
+    .auth-card__footer {
+      font-size: var(--type-caption-size);
+      line-height: var(--type-caption-line);
+      color: var(--text-secondary);
       text-align: center;
-      font-size: var(--text-xs); color: var(--mid-gray);
-      margin: var(--space-5) 0 0;
+      margin: var(--space-xl) 0 0;
+      padding-top: var(--space-lg);
+      border-top: 1px solid var(--border-subtle);
     }
-    .hs-footer button {
-      background: none; border: 0; padding: 0;
-      font: inherit; font-size: var(--text-xs); color: var(--mid-gray);
-      cursor: pointer; text-decoration: underline;
+    .auth-link-btn {
+      background: none;
+      border: 0;
+      padding: var(--space-xs) var(--space-sm);
+      font: inherit;
+      font-size: inherit;
+      line-height: inherit;
+      color: var(--text-brand);
+      font-weight: var(--weight-medium);
+      cursor: pointer;
+      border-radius: var(--radius-sm);
     }
-    .hs-footer button:hover { color: var(--near-black); }
+    .auth-link-btn:hover { color: var(--action-primary-hover); text-decoration: underline; }
+    .auth-link-btn:focus-visible {
+      outline: none;
+      box-shadow: var(--shadow-focus-ring);
+    }
   </style>
 </head>
 <body>
 
-  <main class="hs-page">
-    <section class="hs-card">
-      <div class="hs-logo">
-        <span>
-          <svg width="48" height="48" viewBox="0 0 36 36" aria-hidden="true">
-            <rect width="36" height="36" rx="8" fill="#FF6B4A"/>
-            <path d="M13 7v22M13 18c0-6 12-6 12 0v11" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>
-          </svg>
-        </span>
-        <span class="hs-logo__text">horizon</span>
+  <div class="auth-brand">
+    <svg width="28" height="28" viewBox="0 0 36 36" aria-hidden="true">
+      <rect width="36" height="36" rx="8" fill="#4920C4"/>
+      <path d="M13 7v22M13 18c0-6 12-6 12 0v11" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>
+    </svg>
+    <span class="auth-brand__name">Horizon</span>
+  </div>
+
+  <main class="auth-card">
+    <h1 class="auth-card__title">Set your password</h1>
+    <p class="auth-card__sub">
+      You're signed in. Pick a password to use for future sign-ins —
+      it's faster than waiting for a verification code.
+    </p>
+
+    <p class="auth-banner auth-banner--error" id="hsError" hidden></p>
+
+    <form class="auth-form" id="hsSetupForm" autocomplete="on">
+      <div class="auth-field">
+        <label class="auth-label" for="hsEmail">Email</label>
+        <input class="auth-input" type="email" id="hsEmail" disabled>
       </div>
 
-      <h1 class="hs-title">Set your password</h1>
-      <p class="hs-sub">
-        You're signed in. Pick a password to use for future sign-ins —
-        it's faster than waiting for a magic-link email.
-      </p>
+      <div class="auth-field">
+        <label class="auth-label" for="hsPassword">New password</label>
+        <input class="auth-input" type="password" id="hsPassword"
+               autocomplete="new-password" minlength="8" required autofocus>
+        <span class="auth-hint">At least 8 characters.</span>
+      </div>
 
-      <p class="hs-error" id="hsError" hidden></p>
+      <div class="auth-field">
+        <label class="auth-label" for="hsConfirm">Confirm password</label>
+        <input class="auth-input" type="password" id="hsConfirm"
+               autocomplete="new-password" minlength="8" required>
+      </div>
 
-      <form class="hs-form" id="hsSetupForm" autocomplete="on">
-        <label for="hsEmail">Email</label>
-        <input type="email" id="hsEmail" disabled>
+      <button type="submit" class="auth-btn auth-btn--primary" id="hsSubmit">
+        Save password &amp; continue
+      </button>
+    </form>
 
-        <label for="hsPassword">New password</label>
-        <input type="password" id="hsPassword" autocomplete="new-password" minlength="8" required autofocus>
-
-        <label for="hsConfirm">Confirm password</label>
-        <input type="password" id="hsConfirm" autocomplete="new-password" minlength="8" required>
-
-        <button type="submit" class="hs-btn" id="hsSubmit">Save password &amp; continue</button>
-      </form>
-
-      <p class="hs-footer">
-        Wrong account? <button type="button" id="hsSignout">Sign out</button>
-      </p>
-    </section>
+    <p class="auth-card__footer">
+      Wrong account? <button type="button" class="auth-link-btn" id="hsSignout">Sign out</button>
+    </p>
   </main>
 
   <script type="module">
@@ -168,10 +269,6 @@
       signout:  document.getElementById('hsSignout'),
     };
 
-    // Boot — magic-link / recovery redirect drops the access_token
-    // in the URL hash; SDK auto-parses on createClient. Wait for the
-    // session to be ready, then bounce back to login if there's none
-    // (someone hit /setup/ without a valid sign-in).
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       window.location.replace('/dashboard/login/');
@@ -180,7 +277,6 @@
 
     document.body.style.visibility = 'visible';
 
-    // Strip the access-token hash for cleaner history.
     if (window.location.hash && window.location.hash.indexOf('access_token=') !== -1) {
       history.replaceState(null, '', window.location.pathname + window.location.search);
     }
@@ -196,8 +292,8 @@
 
       const pw  = els.password.value;
       const pw2 = els.confirm.value;
-      if (pw.length < 8)   { showError('Password must be at least 8 characters.');  return; }
-      if (pw !== pw2)      { showError('Passwords don’t match.');                    return; }
+      if (pw.length < 8)   { showError('Password must be at least 8 characters.'); return; }
+      if (pw !== pw2)      { showError('Passwords don’t match.'); return; }
 
       els.submit.disabled = true;
       els.submit.textContent = 'Saving…';
@@ -206,14 +302,12 @@
         const { error } = await supabase.auth.updateUser({ password: pw });
         if (error) throw error;
 
-        // Mark password as set in the DB so future preflight calls
-        // return password_required instead of first_time_setup.
         const { data: { session: sess } } = await supabase.auth.getSession();
         if (sess?.access_token) {
           await fetch(`${BOKUN_API}/api/auth/mark-password-set`, {
             method: 'PATCH',
             headers: { Authorization: `Bearer ${sess.access_token}` },
-          }).catch(() => {}); // best-effort — don't block the redirect
+          }).catch(() => {});
         }
 
         window.location.replace('/dashboard/hotel/');

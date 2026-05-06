@@ -9,205 +9,252 @@
   <link rel="canonical" href="https://gowithhorizon.com/dashboard/otp/">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%23FF6B4A'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css_new/horizon-connect-tokens.css">
+  <link rel="stylesheet" href="/css_new/horizon-connect-responsive.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%234920C4'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
+  <style>body { visibility: hidden; }</style>
 
   <style>
     *, *::before, *::after { box-sizing: border-box; }
 
     body {
-      visibility: hidden;
       margin: 0;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-size: 14px;
-      background: #f6f9fc;
-      color: #1a1f36;
       min-height: 100vh;
+      background: var(--bg-page);
+      font-family: var(--font-sans);
+      font-size: var(--type-body-size);
+      line-height: var(--type-body-line);
+      color: var(--text-body);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      padding: var(--space-xl) var(--gutter);
     }
 
-    .brand {
+    /* ── Brand mark ───────────────────────────────────────────────── */
+    .auth-brand {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 24px;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-xl);
     }
-    .brand__text {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: #1a1f36;
+    .auth-brand__name {
+      font-size: var(--type-subheading-size);
+      line-height: var(--type-subheading-line);
+      font-weight: var(--weight-medium);
+      color: var(--text-primary);
       letter-spacing: -0.01em;
     }
 
-    .card {
+    /* ── Card ─────────────────────────────────────────────────────── */
+    .auth-card {
       width: 100%;
       max-width: 440px;
-      background: #fff;
-      border: 1px solid #e6ebf1;
-      border-radius: 8px;
-      padding: 40px 48px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: var(--space-card);
+      box-shadow: var(--shadow-e1);
+    }
+    @media (min-width: 640px) /* --bp-sm */ {
+      .auth-card { padding: var(--space-2xl); }
     }
 
-    .card__title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: #1a1f36;
-      margin: 0 0 6px;
+    .auth-card__title {
+      font-size: var(--type-heading-size);
+      line-height: var(--type-heading-line);
+      font-weight: var(--weight-medium);
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+      margin: 0 0 var(--space-sm);
     }
-    .card__sub {
-      font-size: 0.875rem;
-      color: #697386;
-      margin: 0 0 28px;
-      line-height: 1.5;
+    .auth-card__sub {
+      font-size: var(--type-body-size);
+      line-height: var(--type-body-line);
+      color: var(--text-body);
+      margin: 0 0 var(--space-xl);
     }
-    .card__sub strong {
-      color: #1a1f36;
-      font-weight: 500;
+    .auth-card__sub strong {
+      color: var(--text-primary);
+      font-weight: var(--weight-medium);
     }
 
-    .field label {
+    /* ── Field ────────────────────────────────────────────────────── */
+    .auth-field { margin-bottom: var(--space-lg); }
+    .auth-label {
       display: block;
-      font-size: 0.8125rem;
-      font-weight: 500;
-      color: #1a1f36;
-      margin-bottom: 8px;
+      font-size: var(--type-label-size);
+      line-height: var(--type-label-line);
+      font-weight: var(--weight-medium);
+      color: var(--text-primary);
+      margin-bottom: var(--space-sm);
     }
 
-    /* 8-box code grid */
+    /* ── 8-cell OTP grid ──────────────────────────────────────────── */
     .otp-grid {
       display: flex;
-      gap: 6px;
+      gap: var(--space-xs);
     }
     .otp-grid input {
       flex: 1;
       width: 0;
+      min-width: 0;
+      min-height: 44px;
+      padding: var(--space-md) 0;
       text-align: center;
-      font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: #1a1f36;
-      padding: 12px 2px;
-      border: 1px solid #e6ebf1;
-      border-radius: 6px;
-      background: #fff;
+      font-family: var(--font-mono);
+      font-size: var(--type-subheading-size);
+      line-height: 1;
+      font-weight: var(--weight-medium);
+      color: var(--text-primary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      background: var(--bg-surface);
       outline: none;
       transition: border-color 0.15s, box-shadow 0.15s;
       text-transform: uppercase;
       -webkit-text-size-adjust: 100%;
     }
+    .otp-grid input:hover { border-color: var(--border-strong); }
     .otp-grid input:focus {
-      border-color: #FF6B4A;
-      box-shadow: 0 0 0 3px rgba(255,107,74,0.12);
+      border-color: var(--border-brand);
+      box-shadow: var(--shadow-focus-ring);
     }
     .otp-grid input.otp--invalid {
-      border-color: #e25950;
-      box-shadow: 0 0 0 3px rgba(226,89,80,0.12);
+      border-color: var(--feedback-danger-border);
+      box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18);
       animation: shake 0.3s ease;
     }
-
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
-      20%       { transform: translateX(-4px); }
-      60%       { transform: translateX(4px); }
-      80%       { transform: translateX(-2px); }
+      20%      { transform: translateX(-4px); }
+      60%      { transform: translateX(4px); }
+      80%      { transform: translateX(-2px); }
     }
 
-    .btn {
-      display: block;
+    /* ── Buttons ──────────────────────────────────────────────────── */
+    .auth-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       width: 100%;
-      margin-top: 20px;
-      padding: 10px 16px;
-      background: #FF6B4A;
-      color: #fff;
-      border: 0;
-      border-radius: 6px;
-      font-family: inherit;
-      font-size: 0.9375rem;
-      font-weight: 500;
+      min-height: 44px;
+      padding: var(--space-md) var(--space-lg);
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
+      font: inherit;
+      font-size: var(--type-label-size);
+      line-height: var(--type-label-line);
+      font-weight: var(--weight-medium);
       cursor: pointer;
-      transition: background 0.15s;
+      transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+      margin-top: var(--space-lg);
     }
-    .btn:hover:not(:disabled) { background: #e85e3f; }
-    .btn:disabled { opacity: 0.55; cursor: progress; }
-
-    .error-msg {
-      margin-top: 14px;
-      padding: 10px 14px;
-      background: #fff8f7;
-      border: 1px solid #f9c9c2;
-      border-radius: 6px;
-      font-size: 0.8125rem;
-      color: #a4271e;
+    .auth-btn:focus-visible {
+      outline: none;
+      box-shadow: var(--shadow-focus-ring);
     }
-    .error-msg[hidden] { display: none; }
+    .auth-btn--primary {
+      background: var(--action-primary-default);
+      color: var(--text-inverse);
+    }
+    .auth-btn--primary:hover:not(:disabled)  { background: var(--action-primary-hover); }
+    .auth-btn--primary:active:not(:disabled) { background: var(--action-primary-pressed); }
+    .auth-btn--primary:disabled {
+      background: var(--action-primary-disabled);
+      cursor: not-allowed;
+    }
 
-    .resend-row {
-      margin-top: 20px;
-      font-size: 0.8125rem;
-      color: #697386;
+    /* ── Banner ───────────────────────────────────────────────────── */
+    .auth-banner {
+      margin-top: var(--space-md);
+      padding: var(--space-md);
+      border-radius: var(--radius-md);
+      font-size: var(--type-caption-size);
+      line-height: var(--type-caption-line);
+      border-width: 1px;
+      border-style: solid;
+    }
+    .auth-banner--error {
+      background: var(--feedback-danger-bg);
+      border-color: var(--feedback-danger-border);
+      color: var(--feedback-danger-text);
+    }
+    .auth-banner[hidden] { display: none; }
+
+    /* ── Resend / back rows ───────────────────────────────────────── */
+    .auth-meta-row {
+      margin-top: var(--space-lg);
+      font-size: var(--type-caption-size);
+      line-height: var(--type-caption-line);
+      color: var(--text-secondary);
       text-align: center;
     }
-    .resend-row button {
+    .auth-meta-row--tight { margin-top: var(--space-sm); }
+    .auth-link-btn {
       background: none;
       border: 0;
-      padding: 0;
+      padding: var(--space-xs) var(--space-sm);
       font: inherit;
       font-size: inherit;
-      color: #FF6B4A;
+      line-height: inherit;
+      color: var(--text-brand);
+      font-weight: var(--weight-medium);
       cursor: pointer;
-      font-weight: 500;
+      border-radius: var(--radius-sm);
     }
-    .resend-row button:hover { text-decoration: underline; }
-    .resend-row button:disabled { opacity: 0.5; cursor: default; text-decoration: none; }
+    .auth-link-btn:hover:not(:disabled) {
+      color: var(--action-primary-hover);
+      text-decoration: underline;
+    }
+    .auth-link-btn:focus-visible {
+      outline: none;
+      box-shadow: var(--shadow-focus-ring);
+    }
+    .auth-link-btn:disabled {
+      color: var(--text-tertiary);
+      cursor: not-allowed;
+    }
+    .auth-text-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
+    .auth-text-link:hover { color: var(--text-primary); text-decoration: underline; }
 
-    .back-row {
-      margin-top: 12px;
-      font-size: 0.8125rem;
-      color: #697386;
+    /* ── Page footer ──────────────────────────────────────────────── */
+    .auth-footer {
+      margin-top: var(--space-xl);
+      font-size: var(--type-caption-size);
+      line-height: var(--type-caption-line);
+      color: var(--text-tertiary);
       text-align: center;
+      max-width: 440px;
     }
-    .back-row a { color: #697386; text-decoration: none; }
-    .back-row a:hover { color: #1a1f36; text-decoration: underline; }
-
-    .footer {
-      margin-top: 24px;
-      font-size: 0.75rem;
-      color: #a3acb9;
-      text-align: center;
-      line-height: 1.5;
-    }
-    .footer a { color: inherit; }
-
-    @media (max-width: 520px) {
-      .card { padding: 32px 20px; }
-      .otp-grid { gap: 4px; }
-      .otp-grid input { font-size: 1rem; padding: 10px 1px; }
-    }
+    .auth-footer a { color: inherit; text-decoration: underline; }
+    .auth-footer a:hover { color: var(--text-secondary); }
   </style>
 </head>
 <body>
 
-  <div class="brand">
-    <svg width="32" height="32" viewBox="0 0 36 36" aria-hidden="true">
-      <rect width="36" height="36" rx="8" fill="#FF6B4A"/>
+  <div class="auth-brand">
+    <svg width="28" height="28" viewBox="0 0 36 36" aria-hidden="true">
+      <rect width="36" height="36" rx="8" fill="#4920C4"/>
       <path d="M13 7v22M13 18c0-6 12-6 12 0v11" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>
     </svg>
-    <span class="brand__text">horizon</span>
+    <span class="auth-brand__name">Horizon</span>
   </div>
 
-  <div class="card">
-    <h1 class="card__title">Check your email</h1>
-    <p class="card__sub">
+  <main class="auth-card">
+    <h1 class="auth-card__title">Check your email</h1>
+    <p class="auth-card__sub">
       We sent a verification code to <strong id="emailDisplay"></strong>.
       Enter it below to continue.
     </p>
 
-    <div class="field">
-      <label>Verification code</label>
+    <div class="auth-field">
+      <label class="auth-label">Verification code</label>
       <div class="otp-grid" id="otpGrid" role="group" aria-label="Verification code">
         <input type="text" inputmode="text" maxlength="1" autocomplete="one-time-code" autocapitalize="characters" aria-label="Character 1">
         <input type="text" inputmode="text" maxlength="1" autocapitalize="characters" aria-label="Character 2">
@@ -220,20 +267,20 @@
       </div>
     </div>
 
-    <p class="error-msg" id="errorMsg" hidden></p>
+    <p class="auth-banner auth-banner--error" id="errorMsg" hidden></p>
 
-    <button type="button" class="btn" id="verifyBtn" disabled>Verify code</button>
+    <button type="button" class="auth-btn auth-btn--primary" id="verifyBtn" disabled>Verify code</button>
 
-    <p class="resend-row">
+    <p class="auth-meta-row">
       Didn't receive it?
-      <button type="button" id="resendBtn">Resend code</button>
+      <button type="button" class="auth-link-btn" id="resendBtn">Resend code</button>
     </p>
-    <p class="back-row">
-      <a href="/dashboard/login/" id="backLink">&larr; Use a different email</a>
+    <p class="auth-meta-row auth-meta-row--tight">
+      <a class="auth-text-link" href="/dashboard/login/" id="backLink">Use a different email</a>
     </p>
-  </div>
+  </main>
 
-  <p class="footer">
+  <p class="auth-footer">
     Access is by invitation only.
     Need help? <a href="mailto:hello@gowithhorizon.com">hello@gowithhorizon.com</a>
   </p>
@@ -268,15 +315,11 @@
     const verifyBtn = document.getElementById('verifyBtn');
     const errorMsg  = document.getElementById('errorMsg');
 
-    // Accept letters and digits only, normalise to uppercase.
     const VALID_CHAR = /^[a-zA-Z0-9]$/;
 
     function getCode() { return cells.map(c => c.value).join(''); }
     function isComplete() { return getCode().length === CODE_LEN; }
-
-    function updateVerifyState() {
-      verifyBtn.disabled = !isComplete();
-    }
+    function updateVerifyState() { verifyBtn.disabled = !isComplete(); }
 
     function showError(msg) {
       errorMsg.textContent = msg;
@@ -311,7 +354,6 @@
         clearError();
         const raw = (e.data ?? cell.value).toUpperCase();
 
-        // Full code pasted into first cell.
         if (i === 0 && raw.length === CODE_LEN && raw.split('').every(ch => VALID_CHAR.test(ch))) {
           raw.split('').forEach((ch, j) => { cells[j].value = ch; });
           cells[CODE_LEN - 1].focus();
@@ -319,7 +361,6 @@
           return;
         }
 
-        // Single character — keep only the last valid char typed.
         const ch = raw.replace(/[^A-Z0-9]/g, '').slice(-1);
         cell.value = ch;
 
@@ -346,12 +387,9 @@
       });
     });
 
-    // Auto-submit when all 8 characters are filled.
     grid.addEventListener('input', () => {
       if (isComplete()) verifyBtn.click();
     });
-
-    // ── Verify ────────────────────────────────────────────────────────────────
 
     async function verify() {
       clearError();
@@ -384,8 +422,6 @@
     }
 
     verifyBtn.addEventListener('click', verify);
-
-    // ── Resend ────────────────────────────────────────────────────────────────
 
     const resendBtn = document.getElementById('resendBtn');
     let resendCooldown = null;
