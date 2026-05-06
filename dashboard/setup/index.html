@@ -12,6 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css_new/horizon-connect-tokens.css">
   <link rel="stylesheet" href="/css_new/horizon-connect-responsive.css">
+  <link rel="stylesheet" href="/css_new/horizon-connect-components.css">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%234920C4'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
   <style>body { visibility: hidden; }</style>
 
@@ -20,17 +21,10 @@
 
     body {
       margin: 0;
-      min-height: 100vh;
-      background: var(--bg-page);
       font-family: var(--font-sans);
       font-size: var(--type-body-size);
       line-height: var(--type-body-line);
       color: var(--text-body);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: var(--space-xl) var(--gutter);
     }
 
     /* ── Brand mark ───────────────────────────────────────────────── */
@@ -38,7 +32,6 @@
       display: flex;
       align-items: center;
       gap: var(--space-sm);
-      margin-bottom: var(--space-xl);
     }
     .auth-brand__name {
       font-size: var(--type-subheading-size);
@@ -48,14 +41,10 @@
       letter-spacing: -0.01em;
     }
 
-    /* ── Card ─────────────────────────────────────────────────────── */
+    /* ── Card — auth-specific extension of .card inside .auth-layout */
     .auth-card {
       width: 100%;
       max-width: 440px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      padding: var(--space-card);
     }
     @media (min-width: 640px) /* --bp-sm */ {
       .auth-card { padding: var(--space-2xl); }
@@ -199,6 +188,8 @@
 </head>
 <body>
 
+  <div class="auth-layout">
+
   <div class="auth-brand">
     <svg width="28" height="28" viewBox="0 0 36 36" aria-hidden="true">
       <rect width="36" height="36" rx="8" fill="#4920C4"/>
@@ -207,7 +198,7 @@
     <span class="auth-brand__name">Horizon</span>
   </div>
 
-  <main class="auth-card">
+  <main class="card auth-card">
     <h1 class="auth-card__title">Set your password</h1>
     <p class="auth-card__sub">
       You're signed in. Pick a password to use for future sign-ins —
@@ -244,6 +235,8 @@
       Wrong account? <button type="button" class="auth-link-btn" id="hsSignout">Sign out</button>
     </p>
   </main>
+
+  </div><!-- /.auth-layout -->
 
   <script type="module">
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
