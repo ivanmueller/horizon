@@ -1094,9 +1094,11 @@
         clearInterval(timerHandle);
         els.timer.classList.add('co-timer--expired');
         els.timerRemaining.textContent = '00:00';
-        // Don't immediately blow away the page — the user might be mid-payment.
-        // Sections 1/2 will block submit when expired in later steps.
         document.dispatchEvent(new CustomEvent('horizon:hold-expired'));
+        var ctx = window.HORIZON_CHECKOUT || {};
+        var dest = TOUR_PATH;
+        if (ctx.hotel && ctx.hotel.code) dest += '?hotel=' + encodeURIComponent(ctx.hotel.code);
+        window.location.replace(dest);
         return;
       }
       var totalSec = Math.floor(ms / 1000);
