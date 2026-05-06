@@ -112,7 +112,6 @@
       border-radius: var(--radius-sm);
       background: var(--bg-surface);
       outline: none;
-      transition: border-color 0.15s, box-shadow 0.15s;
       text-transform: uppercase;
       -webkit-text-size-adjust: 100%;
     }
@@ -122,15 +121,7 @@
       box-shadow: var(--shadow-focus-ring);
     }
     .otp-grid input.otp--invalid {
-      border-color: var(--feedback-danger-border);
-      box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18);
-      animation: shake 0.3s ease;
-    }
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      20%      { transform: translateX(-4px); }
-      60%      { transform: translateX(4px); }
-      80%      { transform: translateX(-2px); }
+      border-color: var(--border-danger);
     }
 
     /* ── Buttons ──────────────────────────────────────────────────── */
@@ -148,7 +139,6 @@
       line-height: var(--type-label-line);
       font-weight: var(--weight-medium);
       cursor: pointer;
-      transition: background-color 0.15s, border-color 0.15s, color 0.15s;
       margin-top: var(--space-lg);
     }
     .auth-btn:focus-visible {
@@ -323,11 +313,7 @@
     function showError(msg) {
       errorMsg.textContent = msg;
       errorMsg.hidden = false;
-      cells.forEach(c => {
-        c.classList.remove('otp--invalid');
-        void c.offsetWidth;
-        c.classList.add('otp--invalid');
-      });
+      cells.forEach(c => c.classList.add('otp--invalid'));
     }
 
     function clearError() {
