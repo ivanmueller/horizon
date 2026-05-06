@@ -1,0 +1,256 @@
+/* ============================================================
+   HORIZON CONNECT — Responsive Layer v1.1
+   ============================================================
+   Add this AFTER horizon-connect-tokens.css in the import order.
+   Defines breakpoints, fluid type, container scaling, and the
+   responsive behavior rules that components reference.
+   ============================================================ */
+
+:root {
+
+  /* ========================================================
+     BREAKPOINTS — the canonical screen width thresholds
+     ========================================================
+     We define 5 breakpoints. Mobile-first: styles default to
+     mobile, then progressively enhance up. Each breakpoint
+     maps to a real device class — not arbitrary numbers.
+     ======================================================== */
+
+  --bp-sm:  640px;   /* large phones, small tablets portrait */
+  --bp-md:  768px;   /* tablets portrait, small laptops */
+  --bp-lg:  1024px;  /* laptops, tablets landscape */
+  --bp-xl:  1280px;  /* desktops, default product target */
+  --bp-2xl: 1536px;  /* wide monitors, marketing surfaces */
+
+  /* Below --bp-sm (0–639px) is "mobile" — phones in portrait. */
+  /* Above --bp-2xl (1536px+) is "ultrawide" — wide monitors. */
+
+  /* ========================================================
+     CONTAINER WIDTHS — max content width at each breakpoint
+     ========================================================
+     Content never spans the full width of large screens —
+     readability collapses past ~80 characters of text. We
+     cap container widths and centre them.
+     ======================================================== */
+
+  --container-sm:    640px;
+  --container-md:    768px;
+  --container-lg:    1024px;
+  --container-xl:    1200px;   /* product default */
+  --container-2xl:   1440px;   /* marketing default */
+  --container-prose: 720px;    /* long-form text content */
+
+  /* ========================================================
+     FLUID PAGE GUTTER — horizontal padding from screen edge
+     ========================================================
+     Mobile gets a tighter gutter so content doesn't feel
+     cramped. Desktop gets generous gutters so content
+     doesn't slam against the edge of wide monitors.
+     ======================================================== */
+
+  --gutter: 16px;   /* mobile default */
+}
+
+/* Tablet+ */
+@media (min-width: 640px) {
+  :root { --gutter: 24px; }
+}
+
+/* Laptop+ */
+@media (min-width: 1024px) {
+  :root { --gutter: 32px; }
+}
+
+/* Desktop+ */
+@media (min-width: 1280px) {
+  :root { --gutter: 48px; }
+}
+
+/* Wide monitor+ */
+@media (min-width: 1536px) {
+  :root { --gutter: 64px; }
+}
+
+/* ============================================================
+   FLUID TYPOGRAPHY — type scales smoothly across breakpoints
+   ============================================================
+   Display and heading sizes use clamp() to scale fluidly
+   between breakpoints. Body text stays static (14px) because
+   it should remain readable at every size, not shrink on
+   mobile or grow on desktop.
+   ============================================================ */
+
+:root {
+  /* Fluid heading scale — scales from min size on mobile to max on desktop */
+  /* Format: clamp(min, preferred, max) where preferred uses viewport units */
+
+  --type-display-size:    clamp(24px, 4vw + 8px, 36px);     /* 28px → fluid */
+  --type-heading-size:    clamp(20px, 2.5vw + 8px, 28px);   /* 22px → fluid */
+  --type-subheading-size: clamp(16px, 1.5vw + 8px, 20px);   /* 18px → fluid */
+
+  /* Body, label, caption stay fixed — readability matters more than scale */
+  /* (already defined in horizon-connect-tokens.css, no override here) */
+}
+
+/* ============================================================
+   RESPONSIVE SPACING — gap and padding adapt to context
+   ============================================================
+   Some spacing tokens compress on mobile, expand on desktop.
+   Component padding, section gaps, page margins all need
+   this. Tight spacing tokens (xs, sm) stay constant — they're
+   already tight and don't need to shrink further.
+   ============================================================ */
+
+:root {
+  /* These three tokens scale across breakpoints */
+  --space-section: 32px;   /* gap between major sections, mobile */
+  --space-page:    16px;   /* page-level padding, mobile */
+  --space-card:    16px;   /* card internal padding, mobile */
+}
+
+@media (min-width: 640px) {
+  :root {
+    --space-section: 40px;
+    --space-page:    24px;
+    --space-card:    20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --space-section: 56px;
+    --space-page:    32px;
+    --space-card:    24px;
+  }
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --space-section: 80px;
+    --space-page:    48px;
+    --space-card:    24px;
+  }
+}
+
+/* ============================================================
+   LAYOUT PRIMITIVES — utility classes for common patterns
+   ============================================================
+   These are the building blocks. Components compose from them
+   instead of writing custom media queries everywhere.
+   ============================================================ */
+
+/* CONTAINER — centred max-width wrapper with fluid gutter */
+.container {
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+  max-width: var(--container-xl);    /* default to product width */
+}
+.container--marketing { max-width: var(--container-2xl); }
+.container--prose     { max-width: var(--container-prose); }
+.container--full      { max-width: 100%; }
+
+/* STACK — vertical flow with consistent gap, scales with breakpoint */
+.stack       { display: flex; flex-direction: column; gap: var(--space-md); }
+.stack--sm   { gap: var(--space-sm); }
+.stack--lg   { gap: var(--space-lg); }
+.stack--xl   { gap: var(--space-xl); }
+.stack--section { gap: var(--space-section); } /* fluid */
+
+/* CLUSTER — horizontal items that wrap when there's no room */
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  align-items: center;
+}
+
+/* GRID — responsive auto-fit grid that adapts column count to width */
+.grid {
+  display: grid;
+  gap: var(--space-lg);
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+}
+.grid--narrow { grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); }
+.grid--wide   { grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr)); }
+
+/* SIDEBAR LAYOUT — sidebar + content that collapses on mobile */
+.sidebar-layout {
+  display: grid;
+  gap: var(--space-lg);
+  grid-template-columns: 1fr;          /* mobile: stack */
+}
+@media (min-width: 1024px) {
+  .sidebar-layout {
+    grid-template-columns: 240px 1fr;  /* laptop+: side by side */
+  }
+}
+@media (min-width: 1280px) {
+  .sidebar-layout {
+    grid-template-columns: 280px 1fr;
+  }
+}
+
+/* SHOW / HIDE at breakpoints — for components that change shape */
+.hide-below-md { display: none; }
+@media (min-width: 768px) { .hide-below-md { display: revert; } }
+
+.hide-below-lg { display: none; }
+@media (min-width: 1024px) { .hide-below-lg { display: revert; } }
+
+.hide-from-md { display: revert; }
+@media (min-width: 768px) { .hide-from-md { display: none; } }
+
+.hide-from-lg { display: revert; }
+@media (min-width: 1024px) { .hide-from-lg { display: none; } }
+
+/* ============================================================
+   TOUCH TARGETS — minimum hit area for interactive elements
+   ============================================================
+   Apple HIG and Material both require 44x44px minimum touch
+   targets. On mobile, every button, link, and tappable
+   element must meet this. Desktop can be tighter.
+   ============================================================ */
+
+@media (max-width: 1023px) and (pointer: coarse) {
+  button,
+  a,
+  [role="button"],
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* ============================================================
+   TABLE → CARD on mobile (utility for data tables)
+   ============================================================
+   Tables don't work on phones. This pattern collapses table
+   rows into stacked cards below the md breakpoint. Apply
+   .responsive-table to the <table>.
+   ============================================================ */
+
+@media (max-width: 767px) {
+  .responsive-table thead { display: none; }
+  .responsive-table tr {
+    display: block;
+    border: 0.5px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    margin-bottom: var(--space-sm);
+    background: var(--bg-surface);
+  }
+  .responsive-table td {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--space-xs) 0;
+    border: none;
+  }
+  .responsive-table td::before {
+    content: attr(data-label);
+    font-weight: var(--weight-medium);
+    color: var(--text-secondary);
+    font-size: var(--type-caption-size);
+  }
+}
