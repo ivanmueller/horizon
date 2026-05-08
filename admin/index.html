@@ -427,6 +427,9 @@
 
     function render() {
       const id = currentRoute();
+      // Drop the detail-page handle on every navigation; mountHotelDetail
+      // re-captures it when the route is /admin/hotels/<slug>/.
+      if (id !== 'hotel-detail') hotelDetailEls = null;
       for (const r of ROUTES) {
         // Hotel-detail is a sub-route under Hotels — keep that nav row
         // highlighted while the user is on /admin/hotels/<slug>/.
@@ -987,22 +990,242 @@
         };
       },
       'hotel-detail'() {
-        // Layout mirrors the Bookings page shell: title row + sub-tabs.
-        // Tabs are placeholders; tab bodies arrive in follow-up sprints.
+        // Stripe customer-page layout: header + metadata strip + 2-col body.
+        // Employees & Referral Codes is the live working section; the rest
+        // are scaffolded with empty states until follow-up sprints wire
+        // their data sources.
         return {
           html: `
-            <header class="bk-page__head bk-page__head--stack">
+            <header class="bk-page__head bk-page__head--stack hd-head">
               <a href="/admin/hotels/" class="bk-page__back" id="hotelDetailBack">Hotels</a>
-              <h1 class="bk-page__title" id="hotelDetailTitle">Loading…</h1>
+              <div class="hd-head__row">
+                <div class="hd-head__lead">
+                  <h1 class="bk-page__title" id="hotelDetailTitle">Loading…</h1>
+                  <p class="hd-head__sub" id="hotelDetailContact">—</p>
+                </div>
+                <div class="bk-page__actions hd-head__actions">
+                  <button type="button" class="btn btn--primary" id="hdAddEmployee">+ Add Employee</button>
+                  <button type="button" class="btn" id="hdSendEmail">Send Email</button>
+                  <button type="button" class="btn" id="hdGenerateQR">Generate QR</button>
+                  <button type="button" class="bk-iconbtn" id="hdMore" aria-label="More actions">⋯</button>
+                </div>
+              </div>
             </header>
-            <nav class="bk-tabs" aria-label="Hotel sub-navigation">
-              <button type="button" class="bk-tabs__btn bk-tabs__btn--active" data-tab="overview">Overview</button>
-              <button type="button" class="bk-tabs__btn" data-tab="links">Links &amp; QR</button>
-              <button type="button" class="bk-tabs__btn" data-tab="payouts">Payouts &amp; Banking</button>
-              <button type="button" class="bk-tabs__btn" data-tab="contacts">Contacts</button>
-              <button type="button" class="bk-tabs__btn" data-tab="agreement">Agreement &amp; Terms</button>
-              <button type="button" class="bk-tabs__btn" data-tab="activity">Activity Log</button>
-            </nav>
+
+            <section class="hd-meta" id="hotelDetailMeta" aria-label="Hotel metadata">
+              <div class="hd-meta__col">
+                <div class="hd-meta__label">Onboarded</div>
+                <div class="hd-meta__value" data-meta="onboarded">—</div>
+              </div>
+              <div class="hd-meta__col">
+                <div class="hd-meta__label">Status</div>
+                <div class="hd-meta__value" data-meta="status">—</div>
+              </div>
+              <div class="hd-meta__col">
+                <div class="hd-meta__label">Tier</div>
+                <div class="hd-meta__value" data-meta="tier">—</div>
+              </div>
+              <div class="hd-meta__col">
+                <div class="hd-meta__label">Location</div>
+                <div class="hd-meta__value" data-meta="location">—</div>
+              </div>
+            </section>
+
+            <div class="hd-body">
+              <main class="hd-main">
+
+                <section class="hd-section" id="hdEmployeesSection">
+                  <header class="hd-section__head">
+                    <h2 class="hd-section__title">Employees &amp; Referral Codes</h2>
+                    <button type="button" class="bk-iconbtn hd-section__add" id="hdEmpAdd" aria-label="Add employee">+</button>
+                  </header>
+                  <div class="hd-section__body" id="hdEmployeesBody">
+                    <div class="hd-empty">No employees yet.</div>
+                  </div>
+                </section>
+
+                <section class="hd-section">
+                  <header class="hd-section__head">
+                    <h2 class="hd-section__title">Bookings</h2>
+                    <button type="button" class="hd-section__link" disabled>View all</button>
+                  </header>
+                  <div class="hd-section__body">
+                    <div class="hd-empty">No bookings</div>
+                  </div>
+                </section>
+
+                <section class="hd-section">
+                  <header class="hd-section__head">
+                    <h2 class="hd-section__title">Referral Links</h2>
+                    <button type="button" class="hd-section__link" disabled>View all</button>
+                  </header>
+                  <div class="hd-section__body" id="hdLinksBody">
+                    <div class="hd-empty">No links</div>
+                  </div>
+                </section>
+
+                <section class="hd-section">
+                  <header class="hd-section__head">
+                    <h2 class="hd-section__title">Invoices &amp; Payouts</h2>
+                    <button type="button" class="hd-section__link" disabled>View all</button>
+                  </header>
+                  <div class="hd-section__body">
+                    <div class="hd-empty">Stripe Connect not yet configured</div>
+                  </div>
+                </section>
+
+                <section class="hd-section">
+                  <header class="hd-section__head">
+                    <h2 class="hd-section__title">Recent activity</h2>
+                  </header>
+                  <div class="hd-section__body">
+                    <div class="hd-empty">No recent activity</div>
+                  </div>
+                </section>
+
+                <section class="hd-section">
+                  <header class="hd-section__head">
+                    <h2 class="hd-section__title">Sent emails</h2>
+                  </header>
+                  <div class="hd-section__body">
+                    <div class="hd-empty">No emails sent</div>
+                  </div>
+                </section>
+
+                <section class="hd-section">
+                  <header class="hd-section__head">
+                    <h2 class="hd-section__title">Logs</h2>
+                  </header>
+                  <div class="hd-section__body">
+                    <div class="hd-empty">No API logs</div>
+                  </div>
+                </section>
+
+                <section class="hd-section">
+                  <header class="hd-section__head">
+                    <h2 class="hd-section__title">Events</h2>
+                  </header>
+                  <div class="hd-section__body">
+                    <div class="hd-empty">No audit events</div>
+                  </div>
+                </section>
+
+              </main>
+
+              <aside class="hd-side">
+
+                <section class="hd-card">
+                  <header class="hd-card__head"><h3 class="hd-card__title">Insights</h3></header>
+                  <dl class="hd-side__list" id="hdInsights">
+                    <div class="hd-side__row">
+                      <dt class="hd-side__label">Lifetime commission paid</dt>
+                      <dd class="hd-side__value hd-num">CA$0.00</dd>
+                    </div>
+                    <div class="hd-side__row">
+                      <dt class="hd-side__label">Bookings (lifetime)</dt>
+                      <dd class="hd-side__value hd-num">0</dd>
+                    </div>
+                    <div class="hd-side__row">
+                      <dt class="hd-side__label">Bookings (last 30d)</dt>
+                      <dd class="hd-side__value hd-num">0</dd>
+                    </div>
+                    <div class="hd-side__row">
+                      <dt class="hd-side__label">Active employees</dt>
+                      <dd class="hd-side__value hd-num" data-insight="active-employees">0 of 0</dd>
+                    </div>
+                    <div class="hd-side__row">
+                      <dt class="hd-side__label">Conversion rate</dt>
+                      <dd class="hd-side__value hd-num">—</dd>
+                    </div>
+                  </dl>
+                </section>
+
+                <section class="hd-card">
+                  <header class="hd-card__head">
+                    <h3 class="hd-card__title">Details</h3>
+                    <button type="button" class="hd-card__edit" id="hdDetailsEdit" aria-label="Edit details">Edit</button>
+                  </header>
+                  <dl class="hd-side__list" id="hdDetails">
+                    <div class="hd-side__row">
+                      <dt class="hd-side__label">Hotel ID</dt>
+                      <dd class="hd-side__value">
+                        <button type="button" class="hd-copy mono" data-copy="" data-detail="id">—</button>
+                      </dd>
+                    </div>
+                    <div class="hd-side__row">
+                      <dt class="hd-side__label">Onboarded</dt>
+                      <dd class="hd-side__value" data-detail="onboarded">—</dd>
+                    </div>
+                    <div class="hd-side__row">
+                      <dt class="hd-side__label">Address</dt>
+                      <dd class="hd-side__value" data-detail="address">—</dd>
+                    </div>
+                    <div class="hd-side__row">
+                      <dt class="hd-side__label">Phone</dt>
+                      <dd class="hd-side__value" data-detail="phone">—</dd>
+                    </div>
+                    <div class="hd-side__row">
+                      <dt class="hd-side__label">Primary contact</dt>
+                      <dd class="hd-side__value" data-detail="email">—</dd>
+                    </div>
+                    <div class="hd-side__row">
+                      <dt class="hd-side__label">Website</dt>
+                      <dd class="hd-side__value" data-detail="website">—</dd>
+                    </div>
+                    <div class="hd-side__row">
+                      <dt class="hd-side__label">Total rooms</dt>
+                      <dd class="hd-side__value hd-num" data-detail="rooms">—</dd>
+                    </div>
+                    <div class="hd-side__row">
+                      <dt class="hd-side__label">Commission tier</dt>
+                      <dd class="hd-side__value" data-detail="tier">—</dd>
+                    </div>
+                    <div class="hd-side__more" hidden data-more>
+                      <div class="hd-side__row">
+                        <dt class="hd-side__label">Stripe account</dt>
+                        <dd class="hd-side__value mono" data-detail="stripe">—</dd>
+                      </div>
+                      <div class="hd-side__row">
+                        <dt class="hd-side__label">Stripe status</dt>
+                        <dd class="hd-side__value" data-detail="stripeStatus">Not connected</dd>
+                      </div>
+                      <div class="hd-side__row">
+                        <dt class="hd-side__label">Next payout</dt>
+                        <dd class="hd-side__value" data-detail="nextPayout">—</dd>
+                      </div>
+                    </div>
+                    <button type="button" class="hd-side__toggle" id="hdShowMore">Show more</button>
+                  </dl>
+                </section>
+
+                <section class="hd-card">
+                  <header class="hd-card__head"><h3 class="hd-card__title">Metadata</h3></header>
+                  <dl class="hd-side__list">
+                    <div class="hd-side__row">
+                      <dt class="hd-side__label">Tags</dt>
+                      <dd class="hd-side__value muted">—</dd>
+                    </div>
+                    <div class="hd-side__row">
+                      <dt class="hd-side__label">Account owner</dt>
+                      <dd class="hd-side__value muted">—</dd>
+                    </div>
+                    <div class="hd-side__row">
+                      <dt class="hd-side__label">Created</dt>
+                      <dd class="hd-side__value" data-detail="created">—</dd>
+                    </div>
+                    <div class="hd-side__row">
+                      <dt class="hd-side__label">Last updated</dt>
+                      <dd class="hd-side__value" data-detail="updated">—</dd>
+                    </div>
+                    <div class="hd-side__row hd-side__row--block">
+                      <dt class="hd-side__label">Internal notes</dt>
+                      <dd class="hd-side__value" data-detail="notes">—</dd>
+                    </div>
+                  </dl>
+                </section>
+
+              </aside>
+            </div>
           `,
           mount: mountHotelDetail,
         };
@@ -2201,14 +2424,34 @@
     }
 
     /* ── Hotel detail page (full route, /admin/hotels/<slug>/) ──── */
-    // Drawer code (openHotelDrawer + everything below) is intentionally
-    // left in place — the create-hotel flow still uses it, and the
-    // detail-page rebuild lands feature-by-feature inside the new tabs.
+    // The detail page is a render of the same hotel objects used by the
+    // list + the drawer (single source of truth in `hotelsCache`). The
+    // header [Add Employee] button + the [+] in the Employees section
+    // both open the existing pop-out drawer (openHotelDrawer) so the
+    // employee management form, validation, and CRUD endpoints stay in
+    // one place. After any drawer-driven change, the detail page is
+    // re-rendered from the freshly-reloaded cache via
+    // refreshHotelDetailFromCache().
+    let hotelDetailEls = null; // captured in mountHotelDetail; null off-route
+
     function mountHotelDetail(container) {
       const slug = currentHotelSlug;
-      const titleEl = container.querySelector('#hotelDetailTitle');
-      const tabs    = container.querySelectorAll('.bk-tabs__btn');
-      const backEl  = container.querySelector('#hotelDetailBack');
+      const backEl = container.querySelector('#hotelDetailBack');
+
+      hotelDetailEls = {
+        container,
+        slug,
+        title:        container.querySelector('#hotelDetailTitle'),
+        contact:      container.querySelector('#hotelDetailContact'),
+        meta:         container.querySelector('#hotelDetailMeta'),
+        empBody:      container.querySelector('#hdEmployeesBody'),
+        linksBody:    container.querySelector('#hdLinksBody'),
+        details:      container.querySelector('#hdDetails'),
+        insights:     container.querySelector('#hdInsights'),
+        addBtnHead:   container.querySelector('#hdAddEmployee'),
+        addBtnSection:container.querySelector('#hdEmpAdd'),
+        showMore:     container.querySelector('#hdShowMore'),
+      };
 
       // Back link → SPA navigate (no full reload). Cmd/Ctrl-click still
       // opens in a new tab via the native href.
@@ -2218,20 +2461,34 @@
         navigate('hotels');
       });
 
-      // Sub-tab toggle is purely visual until each tab body ships.
-      tabs.forEach((btn) => {
-        btn.addEventListener('click', () => {
-          tabs.forEach((b) => b.classList.toggle('bk-tabs__btn--active', b === btn));
-        });
+      // Show-more toggle for less-used details fields.
+      hotelDetailEls.showMore.addEventListener('click', () => {
+        const more = container.querySelector('[data-more]');
+        const open = !more.hidden;
+        more.hidden = open;
+        hotelDetailEls.showMore.textContent = open ? 'Show more' : 'Show less';
       });
 
-      if (!slug) { titleEl.textContent = 'Hotel'; return; }
+      // One-click copy on any element with [data-copy].
+      container.addEventListener('click', (e) => {
+        const t = e.target.closest('[data-copy]');
+        if (!t) return;
+        const val = t.dataset.copy || t.textContent;
+        if (!val || val === '—') return;
+        navigator.clipboard && navigator.clipboard.writeText(val).catch(() => {});
+        const prev = t.textContent;
+        t.textContent = 'Copied';
+        setTimeout(() => { t.textContent = prev; }, 1100);
+      });
 
-      // Use the cache when available (lands here from the table click);
-      // fall back to a fresh fetch when the user deep-links straight to
-      // /admin/hotels/<slug>/ with an empty in-memory cache.
+      if (!slug) {
+        hotelDetailEls.title.textContent = 'Hotel';
+        return;
+      }
+
+      // Cache hit → render immediately. Otherwise fetch first.
       const cached = hotelsCache.find((h) => h.code === slug);
-      if (cached) { titleEl.textContent = cached.name; return; }
+      if (cached) { renderHotelDetail(cached); return; }
 
       fetch(BOKUN_API_BASE + '/api/admin/hotels', {
         cache: 'no-store',
@@ -2245,13 +2502,186 @@
           if (!res.ok) throw new Error((res.body && res.body.error) || 'fetch_failed');
           hotelsCache = res.body.hotels || [];
           const found = hotelsCache.find((h) => h.code === slug);
-          titleEl.textContent = found ? found.name : 'Hotel not found';
+          if (found) renderHotelDetail(found);
+          else hotelDetailEls.title.textContent = 'Hotel not found';
         })
         .catch((err) => {
           if (err && err.message === 'unauthorized') return;
           console.error('hotel detail fetch failed', err);
-          titleEl.textContent = 'Could not load hotel';
+          hotelDetailEls.title.textContent = 'Could not load hotel';
         });
+    }
+
+    // Re-render detail page using the freshest entry in hotelsCache.
+    // Safe to call from anywhere — no-ops when the user isn't on the
+    // detail route or the hotel is no longer in the cache.
+    function refreshHotelDetailFromCache() {
+      if (!hotelDetailEls || !hotelDetailEls.slug) return;
+      const hotel = hotelsCache.find((h) => h.code === hotelDetailEls.slug);
+      if (!hotel) return;
+      renderHotelDetail(hotel);
+    }
+
+    function renderHotelDetail(h) {
+      const els = hotelDetailEls;
+      if (!els) return;
+
+      // Header
+      els.title.textContent = h.name || 'Hotel';
+      els.contact.textContent = h.contact_email || h.email || (h.code ? h.code + '@—' : '—');
+
+      // Metadata strip
+      const metaSet = (key, html) => {
+        const node = els.meta.querySelector('[data-meta="' + key + '"]');
+        if (node) node.innerHTML = html;
+      };
+      metaSet('onboarded', escapeHtml(formatHumanDate((h.created_at || '').slice(0, 10)) || '—'));
+      metaSet('status',    hotelStatusPill(h.status));
+      const tierBits = [];
+      if (h.commission_pct != null)    tierBits.push(h.commission_pct + '%');
+      if (h.kickback_pool_pct != null) tierBits.push(h.kickback_pool_pct + '%');
+      const tierLabel = (h.type === 'kickback' ? 'Kickback' : h.type === 'pool' ? 'Pool' : '—')
+                      + (tierBits.length ? ' · ' + tierBits.join(' / ') : '');
+      metaSet('tier', escapeHtml(tierLabel));
+      metaSet('location', escapeHtml(h.location || '—'));
+
+      // Employees & Referral Codes — primary working section. Reads
+      // straight from h.staff (same source as the drawer) so the two
+      // views can never diverge.
+      const staff = (h.staff || []).filter((s) => s.status !== 'revoked');
+      if (!staff.length) {
+        els.empBody.innerHTML = '<div class="hd-empty">No employees yet.</div>';
+      } else {
+        const rows = staff.map((s) => {
+          const initials = (s.name || '?')
+            .split(/\s+/).filter(Boolean).slice(0, 2)
+            .map((w) => w[0].toUpperCase()).join('') || '?';
+          const statusPill = s.status === 'active'
+            ? '<span class="bk-pill bk-pill--ok">Active</span>'
+            : '<span class="bk-pill bk-pill--neutral">' + escapeHtml(s.status || '—') + '</span>';
+          return (
+            '<tr data-staff-row="' + escapeHtml(s.id) + '">' +
+              '<td class="hd-emp">' +
+                '<span class="hd-avatar" aria-hidden="true">' + escapeHtml(initials) + '</span>' +
+                '<span class="hd-emp__name">' + escapeHtml(s.name || '—') + '</span>' +
+                (s.role ? '<span class="hd-emp__role">' + escapeHtml(s.role) + '</span>' : '') +
+              '</td>' +
+              '<td><button type="button" class="hd-copy mono" data-copy="' + escapeHtml(s.tracking_code || s.code || '') + '">' +
+                  escapeHtml(s.tracking_code || s.code || '—') +
+              '</button></td>' +
+              '<td>' + statusPill + '</td>' +
+              '<td class="num hd-num">0</td>' +
+              '<td class="num hd-num">' + (s.kickback_pct != null ? escapeHtml(s.kickback_pct + '%') : '—') + '</td>' +
+              '<td class="muted">—</td>' +
+              '<td class="bk-table__kebab">' +
+                '<button type="button" class="bk-kebab" data-staff-edit-id="' + escapeHtml(s.id) + '" aria-label="Edit ' + escapeHtml(s.name || '') + '">⋯</button>' +
+              '</td>' +
+            '</tr>'
+          );
+        }).join('');
+        els.empBody.innerHTML =
+          '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
+            '<table class="bk-table">' +
+              '<thead><tr>' +
+                '<th>Employee</th><th>Referral code</th><th>Status</th>' +
+                '<th class="num">Bookings</th><th class="num">Commission</th>' +
+                '<th>Last booking</th><th></th>' +
+              '</tr></thead>' +
+              '<tbody>' + rows + '</tbody>' +
+            '</table>' +
+          '</div></div>';
+      }
+
+      // Referral Links — master hotel link + one row per active employee.
+      const baseUrl = window.location.origin;
+      const masterLink = baseUrl + '/partners/' + (h.code || '') + '/';
+      const linkRows = [
+        { code: h.default_tracking_code || h.code, url: masterLink, label: 'Master', mono: true },
+      ].concat(
+        staff.filter((s) => s.status === 'active').map((s) => ({
+          code: s.tracking_code || s.code,
+          url: masterLink + '?ref=' + encodeURIComponent(s.tracking_code || s.code || ''),
+          label: s.name,
+          mono: true,
+        }))
+      );
+      els.linksBody.innerHTML =
+        '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
+          '<table class="bk-table">' +
+            '<thead><tr><th>Code</th><th>Full URL</th>' +
+              '<th class="num">Clicks</th><th class="num">Conversions</th><th>Last clicked</th>' +
+            '</tr></thead>' +
+            '<tbody>' +
+              linkRows.map((r) =>
+                '<tr>' +
+                  '<td><button type="button" class="hd-copy mono" data-copy="' + escapeHtml(r.code || '') + '">' +
+                      escapeHtml(r.code || '—') + '</button></td>' +
+                  '<td><button type="button" class="hd-copy hd-copy--url" data-copy="' + escapeHtml(r.url) + '">' +
+                      escapeHtml(r.url) + '</button></td>' +
+                  '<td class="num hd-num">0</td>' +
+                  '<td class="num hd-num">0</td>' +
+                  '<td class="muted">—</td>' +
+                '</tr>'
+              ).join('') +
+            '</tbody>' +
+          '</table>' +
+        '</div></div>';
+
+      // Sidebar — Insights
+      const activeEmps = staff.filter((s) => s.status === 'active').length;
+      const totalEmps  = staff.length;
+      const aeNode = els.insights.querySelector('[data-insight="active-employees"]');
+      if (aeNode) aeNode.textContent = activeEmps + ' of ' + totalEmps;
+
+      // Sidebar — Details
+      const setDetail = (key, value, opts) => {
+        const node = els.details.querySelector('[data-detail="' + key + '"]');
+        if (!node) return;
+        node.textContent = value;
+        if (opts && opts.copy != null) node.dataset.copy = opts.copy;
+      };
+      setDetail('id',         h.code || '—', { copy: h.code || '' });
+      setDetail('onboarded',  formatHumanDate((h.created_at || '').slice(0, 10)) || '—');
+      setDetail('address',    h.address || '—');
+      setDetail('phone',      h.phone || '—');
+      setDetail('email',      h.contact_email || h.email || '—');
+      setDetail('website',    h.website || '—');
+      setDetail('rooms',      h.total_rooms != null ? String(h.total_rooms) : '—');
+      setDetail('tier',       tierLabel);
+      setDetail('stripe',     h.stripe_account_id || '—');
+      setDetail('stripeStatus', h.stripe_status || 'Not connected');
+      setDetail('nextPayout', formatHumanDate(h.next_payout_date) || '—');
+      setDetail('created',    formatHumanDateTime(h.created_at));
+      setDetail('updated',    formatHumanDateTime(h.updated_at || h.created_at));
+      setDetail('notes',      h.notes || '—');
+
+      // Wire Add Employee buttons → open the existing pop-out drawer.
+      // Both the header CTA and the section [+] route through the same
+      // openHotelDrawer pre-positioned to the staff "Add" form so the
+      // user lands directly on the inline employee-create form.
+      const openAddStaff = () => {
+        drawerStaffForm = 'add';
+        openHotelDrawer(h);
+        // openHotelDrawer resets drawerStaffForm before render, so set
+        // it again and re-render. (Keeps the existing API intact.)
+        drawerStaffForm = 'add';
+        renderAndWireDrawer(h);
+      };
+      els.addBtnHead.onclick    = openAddStaff;
+      els.addBtnSection.onclick = openAddStaff;
+
+      // Edit row → open the drawer with the inline edit form pre-opened
+      // for that staff record. Same data model, same submit endpoint.
+      els.empBody.querySelectorAll('[data-staff-edit-id]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.staffEditId;
+          drawerStaffForm = { editId: id };
+          openHotelDrawer(h);
+          drawerStaffForm = { editId: id };
+          renderAndWireDrawer(h);
+        });
+      });
     }
 
     function flashHotelsNotice(msg) {
@@ -2426,6 +2856,33 @@
       hotelDrawerTitle.textContent = hotel.name;
       hotelDrawerSub.textContent = hotel.code;
       renderAndWireDrawer(hotel);
+    }
+
+    // Reload /api/admin/hotels and refresh both the drawer + the
+    // hotel-detail page from the freshest cache. Used after every
+    // staff/manager CRUD op so the two views can never drift. Works
+    // whether or not the user is currently on the Hotels list route
+    // (hotelsEls may be null when deep-linking into a detail page).
+    function reloadHotelsCacheAndRefresh() {
+      const after = () => { refreshDrawerFromCache(); refreshHotelDetailFromCache(); };
+      if (hotelsEls) return loadHotels(hotelsEls).then(after);
+      return fetch(BOKUN_API_BASE + '/api/admin/hotels', {
+        cache: 'no-store',
+        headers: { Authorization: 'Bearer ' + session.access_token },
+      })
+        .then((r) => {
+          if (r.status === 401) { window.location.replace('/dashboard/login/'); throw new Error('unauthorized'); }
+          return r.json().then((b) => ({ ok: r.ok, body: b }));
+        })
+        .then((res) => {
+          if (!res.ok) throw new Error((res.body && res.body.error) || 'fetch_failed');
+          hotelsCache = res.body.hotels || [];
+          after();
+        })
+        .catch((err) => {
+          if (err && err.message === 'unauthorized') return;
+          console.error('hotels reload failed', err);
+        });
     }
 
     function renderAndWireDrawer(hotel) {
@@ -3184,7 +3641,7 @@
           drawerStaffForm = null;
           triggerRepublish();
           flashHotelsNotice('Staff added. Republishing partners.json (~30s)…');
-          if (hotelsEls) loadHotels(hotelsEls).then(refreshDrawerFromCache);
+          reloadHotelsCacheAndRefresh();
         })
         .catch((err) => {
           showInline(errEl, err.message || 'Unknown error');
@@ -3230,7 +3687,7 @@
           drawerStaffForm = null;
           triggerRepublish();
           flashHotelsNotice('Staff updated. Republishing partners.json (~30s)…');
-          if (hotelsEls) loadHotels(hotelsEls).then(refreshDrawerFromCache);
+          reloadHotelsCacheAndRefresh();
         })
         .catch((err) => {
           showInline(errEl, err.message || 'Unknown error');
@@ -3252,7 +3709,7 @@
           }
           triggerRepublish();
           flashHotelsNotice('Staff revoked. Republishing partners.json (~30s)…');
-          if (hotelsEls) loadHotels(hotelsEls).then(refreshDrawerFromCache);
+          reloadHotelsCacheAndRefresh();
         })
         .catch((err) => flashHotelsError(err.message || 'Unknown error'));
     }
@@ -3335,7 +3792,7 @@
           flashHotelsNotice(inviteMsg);
           // No republish needed — managers are an auth concern, not
           // partners.json content.
-          if (hotelsEls) loadHotels(hotelsEls).then(refreshDrawerFromCache);
+          reloadHotelsCacheAndRefresh();
         })
         .catch((err) => {
           showInline(errEl, err.message || 'Unknown error');
@@ -3375,7 +3832,7 @@
           }
           drawerManagerForm = null;
           flashHotelsNotice('Manager role updated.');
-          if (hotelsEls) loadHotels(hotelsEls).then(refreshDrawerFromCache);
+          reloadHotelsCacheAndRefresh();
         })
         .catch((err) => {
           showInline(errEl, err.message || 'Unknown error');
@@ -3400,7 +3857,7 @@
             return;
           }
           flashHotelsNotice('Manager access revoked.');
-          if (hotelsEls) loadHotels(hotelsEls).then(refreshDrawerFromCache);
+          reloadHotelsCacheAndRefresh();
         })
         .catch((err) => flashHotelsError(err.message || 'Unknown error'));
     }
