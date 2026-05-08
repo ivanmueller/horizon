@@ -2134,22 +2134,12 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 .hd-meta__value.mono { font-family: var(--font-mono); font-size: 0.95em; }
 
-/* Flag glyph inline with location label. Ships as inline SVGs (see
-   FLAG_SVGS in admin/index.html) so the glyph renders consistently
-   across platforms — Windows/Chrome falls back to bare "CA" letters
-   when given a regional-indicator emoji pair. */
+/* Flag glyph inline with location label */
 .hd-flag {
-  display: inline-flex;
-  align-items: center;
-  margin-right: 4px;
-  vertical-align: -2px;
-}
-.hd-flag__svg {
-  width: 16px;
-  height: 11px;
-  border-radius: 1px;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
-  display: block;
+  font-size: 1em;
+  margin-right: 2px;
+  display: inline-block;
+  line-height: 1;
 }
 
 /* Header subtitle in CTA mode (no contact email yet) */
