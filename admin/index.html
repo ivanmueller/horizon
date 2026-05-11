@@ -1138,25 +1138,30 @@
                 <section class="hd-card">
                   <header class="hd-card__head"><h3 class="hd-card__title">Insights</h3></header>
                   <dl class="hd-side__list" id="hdInsights">
-                    <div class="hd-side__row">
+                    <div class="hd-side__row hd-side__row--metric">
                       <dt class="hd-side__label">Lifetime commission</dt>
                       <dd class="hd-side__value hd-num" data-insight="lifetime-commission">—</dd>
+                      <span class="hd-delta" data-delta="lifetime-commission">—</span>
                     </div>
-                    <div class="hd-side__row">
+                    <div class="hd-side__row hd-side__row--metric">
                       <dt class="hd-side__label">Bookings (lifetime)</dt>
-                      <dd class="hd-side__value hd-num">0</dd>
+                      <dd class="hd-side__value hd-num" data-insight="bookings-lifetime">0</dd>
+                      <span class="hd-delta" data-delta="bookings-lifetime">—</span>
                     </div>
-                    <div class="hd-side__row">
+                    <div class="hd-side__row hd-side__row--metric">
                       <dt class="hd-side__label">Bookings (last 30d)</dt>
-                      <dd class="hd-side__value hd-num">0</dd>
+                      <dd class="hd-side__value hd-num" data-insight="bookings-30d">0</dd>
+                      <span class="hd-delta" data-delta="bookings-30d">—</span>
                     </div>
-                    <div class="hd-side__row">
+                    <div class="hd-side__row hd-side__row--metric">
                       <dt class="hd-side__label">Active employees</dt>
                       <dd class="hd-side__value hd-num" data-insight="active-employees">0 of 0</dd>
+                      <span class="hd-delta hd-delta--neutral" data-delta="active-employees">—</span>
                     </div>
-                    <div class="hd-side__row">
+                    <div class="hd-side__row hd-side__row--metric">
                       <dt class="hd-side__label">Conversion rate</dt>
-                      <dd class="hd-side__value hd-num">—</dd>
+                      <dd class="hd-side__value hd-num" data-insight="conversion-rate">—</dd>
+                      <span class="hd-delta" data-delta="conversion-rate">—</span>
                     </div>
                   </dl>
                 </section>
@@ -1200,27 +1205,61 @@
                       <dt class="hd-side__label">Total rooms</dt>
                       <dd class="hd-side__value hd-num" data-detail="rooms">—</dd>
                     </div>
-                    <div class="hd-side__more" hidden data-more>
-                      <div class="hd-side__row">
-                        <dt class="hd-side__label">Stripe account</dt>
-                        <dd class="hd-side__value">
-                          <button type="button" class="hd-copy mono" data-copy="" data-detail="stripe" title="Copy Stripe ID">
-                            <span data-detail-text>—</span>
-                            <svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                          </button>
-                        </dd>
-                      </div>
-                      <div class="hd-side__row">
-                        <dt class="hd-side__label">Stripe status</dt>
-                        <dd class="hd-side__value" data-detail="stripeStatus">Not connected</dd>
-                      </div>
-                      <div class="hd-side__row">
-                        <dt class="hd-side__label">Next payout</dt>
-                        <dd class="hd-side__value" data-detail="nextPayout">—</dd>
-                      </div>
-                    </div>
-                    <button type="button" class="hd-side__toggle" id="hdShowMore">Show more</button>
                   </dl>
+
+                  <div class="hd-split" id="hdCommissionSplit">
+                    <header class="hd-split__head">
+                      <div class="hd-split__title" data-split="tier">Tier — —</div>
+                      <button type="button" class="hd-card__edit" id="hdSplitEdit">Edit</button>
+                    </header>
+                    <div class="hd-split__bar" role="img" aria-label="Commission split">
+                      <span class="hd-split__seg hd-split__seg--op"     data-split-seg="op"     style="width:0%"></span>
+                      <span class="hd-split__seg hd-split__seg--hotel"  data-split-seg="hotel"  style="width:0%"></span>
+                      <span class="hd-split__seg hd-split__seg--platf"  data-split-seg="platf"  style="width:0%"></span>
+                    </div>
+                    <dl class="hd-split__legend">
+                      <div class="hd-split__row">
+                        <span class="hd-split__swatch hd-split__swatch--op"></span>
+                        <span class="hd-split__label">Operator</span>
+                        <span class="hd-split__pct hd-num" data-split-pct="op">—</span>
+                      </div>
+                      <div class="hd-split__row">
+                        <span class="hd-split__swatch hd-split__swatch--hotel"></span>
+                        <span class="hd-split__label">Hotel</span>
+                        <span class="hd-split__pct hd-num" data-split-pct="hotel">—</span>
+                      </div>
+                      <div class="hd-split__row">
+                        <span class="hd-split__swatch hd-split__swatch--platf"></span>
+                        <span class="hd-split__label">Horizon</span>
+                        <span class="hd-split__pct hd-num" data-split-pct="platf">—</span>
+                      </div>
+                    </dl>
+                  </div>
+                </section>
+
+                <section class="hd-card" id="hdFinancialCard">
+                  <header class="hd-card__head"><h3 class="hd-card__title">Financial</h3></header>
+                  <div class="hd-card__body" id="hdFinancialBody">
+                    <!-- Populated by renderHotelDetail: either the connected rows
+                         (status pill + account ID + payout details) or a single
+                         "Connect Stripe" CTA. -->
+                  </div>
+                </section>
+
+                <section class="hd-card" id="hdMasterRefCard">
+                  <header class="hd-card__head"><h3 class="hd-card__title">Master Referral</h3></header>
+                  <div class="hd-mref">
+                    <img class="hd-mref__qr" id="hdMasterRefQR" alt="Master referral QR code" width="88" height="88">
+                    <button type="button" class="hd-copy hd-copy--url hd-mref__url mono" id="hdMasterRefUrl" data-copy="" title="Copy referral URL">
+                      <span class="hd-trunc" data-detail-text>—</span>
+                      <svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    </button>
+                    <div class="hd-mref__actions">
+                      <button type="button" class="btn btn--sm" id="hdMasterRefDownload">Download QR</button>
+                      <button type="button" class="btn btn--sm" id="hdMasterRefEmbed">Get HTML embed</button>
+                    </div>
+                    <p class="hd-mref__help">Used when no employee code is attributed.</p>
+                  </div>
                 </section>
 
                 <section class="hd-card">
@@ -2469,9 +2508,10 @@
         linksBody:    container.querySelector('#hdLinksBody'),
         details:      container.querySelector('#hdDetails'),
         insights:     container.querySelector('#hdInsights'),
+        financial:    container.querySelector('#hdFinancialBody'),
+        split:        container.querySelector('#hdCommissionSplit'),
         addBtnHead:   container.querySelector('#hdAddEmployee'),
         addBtnSection:container.querySelector('#hdEmpAdd'),
-        showMore:     container.querySelector('#hdShowMore'),
       };
 
       // Back link → SPA navigate (no full reload). Cmd/Ctrl-click still
@@ -2482,24 +2522,21 @@
         navigate('hotels');
       });
 
-      // Show-more toggle for less-used details fields.
-      hotelDetailEls.showMore.addEventListener('click', () => {
-        const more = container.querySelector('[data-more]');
-        const open = !more.hidden;
-        more.hidden = open;
-        hotelDetailEls.showMore.textContent = open ? 'Show more' : 'Show less';
-      });
-
-      // One-click copy on any element with [data-copy].
+      // One-click copy on any element with [data-copy]. The button can
+      // have a [data-detail-text] child (used by the Hotel ID, Stripe
+      // ID, and Master Referral URL widgets so the inline copy icon
+      // survives a label swap) — feedback writes to the inner span
+      // when present, falling back to the button's textContent.
       container.addEventListener('click', (e) => {
         const t = e.target.closest('[data-copy]');
         if (!t) return;
         const val = t.dataset.copy || t.textContent;
         if (!val || val === '—') return;
         navigator.clipboard && navigator.clipboard.writeText(val).catch(() => {});
-        const prev = t.textContent;
-        t.textContent = 'Copied';
-        setTimeout(() => { t.textContent = prev; }, 1100);
+        const labelEl = t.querySelector('[data-detail-text]') || t;
+        const prev = labelEl.textContent;
+        labelEl.textContent = 'Copied';
+        setTimeout(() => { labelEl.textContent = prev; }, 1100);
       });
 
       if (!slug) {
@@ -2581,6 +2618,26 @@
       // Code-prefixed format ("CAD 12.50") — unambiguous, currency
       // agnostic, no "CA$" / "$" guessing across locales.
       return code + ' ' + value;
+    }
+
+    // Activity-row pattern for the "Recent activity" feed. Called by
+    // the future renderer once the activity stream is wired; today
+    // the section keeps its dashed empty state. Type controls the
+    // icon color (booking=accent, email=blue, payout=ok-green,
+    // other=gray); meta + time are optional.
+    function renderActivityRow(item) {
+      const type = item.type || 'other';
+      const icon = item.icon || '';
+      return (
+        '<li class="hd-activity__item">' +
+          '<span class="hd-activity__icon hd-activity__icon--' + escapeHtml(type) + '" aria-hidden="true">' + icon + '</span>' +
+          '<div class="hd-activity__text">' +
+            '<div class="hd-activity__title">' + (item.title || '') + '</div>' +
+            (item.meta ? '<div class="hd-activity__meta">' + item.meta + '</div>' : '') +
+          '</div>' +
+          '<time class="hd-activity__time">' + escapeHtml(item.time || '') + '</time>' +
+        '</li>'
+      );
     }
 
     function renderHotelDetail(h) {
@@ -2783,11 +2840,104 @@
       setDetail('email',      contactEmail || '—');
       setDetail('website',    h.website || '—');
       setDetail('rooms',      h.total_rooms != null ? String(h.total_rooms) : '—');
-      setDetail('stripe',     h.stripe_account_id || '—', { copy: h.stripe_account_id || '' });
-      setDetail('stripeStatus', h.stripe_status || 'Not connected');
-      setDetail('nextPayout', formatHumanDate(h.next_payout_date) || '—');
       setDetail('created',    formatHumanDateTime(h.created_at));
       setDetail('updated',    formatHumanDateTime(h.updated_at || h.created_at));
+
+      // Commission split inside the Details card — operator/hotel/
+      // Horizon shares. Backstop values: operator commission_pct (the
+      // share paid out of total revenue), hotel kickback_pool_pct
+      // (the slice the hotel keeps), Horizon's share is whatever
+      // remains. When either field is missing we draw the bar with
+      // zero-width segments and show "—" in the legend, but the
+      // structure is in place for when the data ships.
+      const splitEl = els.split;
+      if (splitEl) {
+        const op    = (h.commission_pct      != null) ? Number(h.commission_pct)      : null;
+        const hotel = (h.kickback_pool_pct  != null) ? Number(h.kickback_pool_pct)   : null;
+        const known = (op != null && hotel != null);
+        const platf = known ? Math.max(0, 100 - op - hotel) : null;
+        const tierName = (h.tier_name || (h.type === 'kickback' ? 'Kickback' : h.type === 'pool' ? 'Pool' : '—'));
+        const tierEl = splitEl.querySelector('[data-split="tier"]');
+        if (tierEl) tierEl.textContent = 'Tier — ' + tierName;
+        const setSeg = (k, pct) => {
+          const seg = splitEl.querySelector('[data-split-seg="' + k + '"]');
+          const lbl = splitEl.querySelector('[data-split-pct="' + k + '"]');
+          if (seg) seg.style.width = (pct == null ? 0 : pct) + '%';
+          if (lbl) lbl.textContent = (pct == null ? '—' : pct + '%');
+        };
+        setSeg('op',    op);
+        setSeg('hotel', hotel);
+        setSeg('platf', platf);
+      }
+
+      // Financial card — either Stripe-connected rows or a single
+      // "Connect Stripe" CTA. Mirrors the data the Invoices &
+      // Payouts CTA reads, so the two surfaces stay in sync.
+      if (els.financial) {
+        const stripeConnected = !!h.stripe_account_id && (h.stripe_status === 'connected' || h.stripe_status === 'active');
+        const last4 = h.payout_account_last4 || h.bank_last4 || null;
+        if (!stripeConnected) {
+          els.financial.innerHTML =
+            '<div class="hd-fin__cta">' +
+              '<button type="button" class="btn btn--primary" id="hdFinConnect">Connect Stripe</button>' +
+            '</div>';
+        } else {
+          const pending  = formatHotelMoney(h.pending_payout || 0, currency);
+          const schedule = h.payout_schedule || '—';
+          els.financial.innerHTML =
+            '<dl class="hd-side__list">' +
+              '<div class="hd-side__row"><dt class="hd-side__label">Stripe status</dt>' +
+                '<dd class="hd-side__value"><span class="bk-pill bk-pill--ok">Connected</span></dd></div>' +
+              '<div class="hd-side__row"><dt class="hd-side__label">Stripe account</dt>' +
+                '<dd class="hd-side__value">' +
+                  '<button type="button" class="hd-copy mono" data-copy="' + escapeHtml(h.stripe_account_id || '') + '" title="Copy Stripe ID">' +
+                    '<span data-detail-text>' + escapeHtml(h.stripe_account_id || '—') + '</span>' +
+                    copyIconSvg +
+                  '</button>' +
+                '</dd></div>' +
+              '<div class="hd-side__row"><dt class="hd-side__label">Pending payout</dt>' +
+                '<dd class="hd-side__value hd-num">' + escapeHtml(pending) + '</dd></div>' +
+              '<div class="hd-side__row"><dt class="hd-side__label">Next payout</dt>' +
+                '<dd class="hd-side__value">' + escapeHtml(formatHumanDate(h.next_payout_date) || '—') + '</dd></div>' +
+              '<div class="hd-side__row"><dt class="hd-side__label">Schedule</dt>' +
+                '<dd class="hd-side__value">' + escapeHtml(schedule) + '</dd></div>' +
+              '<div class="hd-side__row"><dt class="hd-side__label">Account ending</dt>' +
+                '<dd class="hd-side__value mono">' + (last4 ? '•••• ' + escapeHtml(last4) : '—') + '</dd></div>' +
+            '</dl>';
+        }
+      }
+
+      // Master Referral card — QR + canonical URL + actions. QR is
+      // server-rendered via api.qrserver.com for now; swap for a
+      // self-hosted endpoint once one exists. encodeURIComponent
+      // covers slug edge-cases (uppercase, hyphens, future unicode).
+      const masterRefBtn = els.container.querySelector('#hdMasterRefUrl');
+      const masterRefImg = els.container.querySelector('#hdMasterRefQR');
+      if (masterRefBtn) {
+        masterRefBtn.dataset.copy = masterLink;
+        masterRefBtn.querySelector('[data-detail-text]').textContent = masterLink;
+        masterRefBtn.title = masterLink;
+      }
+      if (masterRefImg) {
+        masterRefImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=176x176&margin=0&data=' +
+                          encodeURIComponent(masterLink);
+      }
+
+      // Insights deltas — placeholder dashes until aggregation data
+      // is wired up. Pattern stays in place so the renderer just
+      // swaps in real numbers later. setDelta also flips the
+      // positive class for green coloring on uplift.
+      const setDelta = (key, text, opts) => {
+        const node = els.insights.querySelector('[data-delta="' + key + '"]');
+        if (!node) return;
+        node.textContent = text;
+        node.classList.toggle('hd-delta--positive', !!(opts && opts.positive));
+      };
+      setDelta('lifetime-commission', '—');
+      setDelta('bookings-lifetime',   '—');
+      setDelta('bookings-30d',        '—');
+      setDelta('active-employees',    activeEmps + ' of ' + totalEmps + ' total');
+      setDelta('conversion-rate',     '—');
 
       // Internal notes textarea — promoted to its own main-column
       // section so it actually gets used for outreach tracking.
