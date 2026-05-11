@@ -2244,3 +2244,178 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
+
+/* ── Hotel detail page — round-3 additions ──────────── */
+
+/* Insights — metric row with delta line beneath the value. */
+.hd-side__row--metric {
+  grid-template-columns: minmax(0, 110px) minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  row-gap: 2px;
+}
+.hd-side__row--metric .hd-side__label { grid-row: 1; }
+.hd-side__row--metric .hd-side__value { grid-row: 1; }
+.hd-delta {
+  grid-column: 2;
+  grid-row: 2;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: right;
+  font-feature-settings: 'tnum' 1;
+  font-variant-numeric: tabular-nums;
+}
+.hd-delta--positive { color: #047857; } /* ok-fg analogue */
+.hd-delta--neutral  { color: var(--text-muted); }
+
+/* Commission split block inside Details card. */
+.hd-split {
+  margin-top: var(--s3);
+  padding-top: var(--s3);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+.hd-split__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+}
+.hd-split__title { font-size: var(--t-sm); font-weight: 600; color: var(--text); }
+.hd-split__bar {
+  display: flex;
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bg-sunken);
+  overflow: hidden;
+}
+.hd-split__seg { display: block; height: 100%; transition: width 120ms; }
+.hd-split__seg--op,    .hd-split__swatch--op    { background: var(--accent); }
+.hd-split__seg--hotel, .hd-split__swatch--hotel { background: #6366F1; }
+.hd-split__seg--platf, .hd-split__swatch--platf { background: #D4D4CE; }
+
+.hd-split__legend {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.hd-split__row {
+  display: grid;
+  grid-template-columns: 10px 1fr auto;
+  align-items: center;
+  gap: var(--s2);
+  font-size: var(--t-xs);
+}
+.hd-split__swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+}
+.hd-split__label { color: var(--text-muted); }
+.hd-split__pct   { color: var(--text); font-feature-settings: 'tnum' 1; }
+
+/* Financial card. */
+.hd-fin__cta { display: flex; justify-content: stretch; }
+.hd-fin__cta .btn { width: 100%; }
+
+/* Master Referral card. */
+.hd-mref {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s3);
+}
+.hd-mref__qr {
+  width: 88px;
+  height: 88px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: #fff;
+  padding: 4px;
+  display: block;
+}
+.hd-mref__url {
+  max-width: 100%;
+  width: 100%;
+  font-size: 0.8em;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.hd-mref__url:hover { background: var(--bg-subtle); }
+.hd-mref__actions {
+  display: flex;
+  gap: var(--s2);
+  width: 100%;
+}
+.hd-mref__actions .btn { flex: 1; }
+.hd-mref__help {
+  margin: 0;
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Recent activity — populated-row pattern (ready for live data). */
+.hd-activity { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.hd-activity__item {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  gap: var(--s3);
+  align-items: flex-start;
+  padding: var(--s3) var(--s2);
+  border-bottom: 1px solid var(--border);
+  transition: background 100ms;
+}
+.hd-activity__item:last-child { border-bottom: 0; }
+.hd-activity__item:hover { background: var(--bg-subtle); }
+.hd-activity__icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+}
+.hd-activity__icon svg { width: 12px; height: 12px; }
+.hd-activity__icon--booking { background: var(--accent); }
+.hd-activity__icon--email   { background: #2563EB; }
+.hd-activity__icon--payout  { background: #047857; }
+.hd-activity__icon--other,
+.hd-activity__icon--system  { background: var(--text-faint); }
+.hd-activity__text { min-width: 0; }
+.hd-activity__title {
+  font-size: var(--t-sm);
+  color: var(--text);
+  line-height: 1.4;
+}
+.hd-activity__title strong { font-weight: 600; }
+.hd-activity__title .hd-pill-mono {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--bg-sunken);
+  color: var(--text);
+}
+.hd-activity__meta {
+  margin-top: 2px;
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+}
+.hd-activity__meta .hd-pos { color: #047857; font-feature-settings: 'tnum' 1; }
+.hd-activity__time {
+  font-size: var(--t-xs);
+  color: var(--text-faint);
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
