@@ -2127,11 +2127,6 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .hd-side__toggle:hover { color: var(--accent-hover); }
 
 /* ── Hotel detail page — round 2 polish ───────────────── */
-/* 5-column metadata strip (Onboarded · Status · Tier · Currency · Location) */
-.hd-meta--5col { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-@media (max-width: 1024px) {
-  .hd-meta--5col { grid-template-columns: repeat(2, 1fr); }
-}
 .hd-meta__value.mono { font-family: var(--font-mono); font-size: 0.95em; }
 
 /* Flag glyph inline with location label */
@@ -2142,19 +2137,33 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   line-height: 1;
 }
 
-/* Header subtitle in CTA mode (no contact email yet) */
+/* Header contact subtitle — quiet secondary text in both states. With
+   an email: plain mono address + tiny copy icon. Without: a small +
+   icon + "Add primary contact". Never accent-coloured — accent on an
+   empty state reads as an error. */
 .hd-head__sub[hidden] { display: none; }
-.hd-head__sub--cta { margin: 0; font-size: var(--t-sm); }
-.hd-head__cta {
-  background: transparent;
+.hd-head__contact {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px;
+  margin: -2px -4px;
   border: 0;
-  padding: 0;
-  color: var(--accent);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
   font-size: var(--t-sm);
-  font-family: inherit;
   cursor: pointer;
 }
-.hd-head__cta:hover { color: var(--accent-hover); }
+.hd-head__contact:hover { background: var(--bg-subtle); color: var(--text); }
+.hd-head__contact .hd-copy__icon { color: var(--text-faint); }
+.hd-head__plus {
+  width: 12px;
+  height: 12px;
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
 
 /* Override tag for employee rate that differs from hotel default */
 .hd-tag {
@@ -2224,11 +2233,13 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   .hd-cta { flex-direction: column; align-items: flex-start; }
 }
 
-/* Internal notes — full-width textarea section at the bottom of
-   the main column. Stripe-style customer-notes pattern. */
+/* Internal notes — sidebar card with auto-save on blur. Textarea
+   matches the rest of the sidebar (smaller padding, sized to the
+   card width), with a tertiary "Last edited …" meta line beneath. */
+.hd-notes-wrap { display: flex; flex-direction: column; gap: 6px; }
 .hd-notes {
   width: 100%;
-  min-height: 96px;
+  min-height: 88px;
   padding: var(--s3);
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -2237,13 +2248,19 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   font: inherit;
   font-size: var(--t-sm);
   resize: vertical;
-  transition: border-color 100ms;
+  transition: border-color 100ms, opacity 100ms;
 }
 .hd-notes:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
+.hd-notes--saving { opacity: 0.6; }
+.hd-notes__meta {
+  font-size: var(--t-xs);
+  color: var(--text-faint);
+}
+.hd-notes__meta[hidden] { display: none; }
 
 /* ── Hotel detail page — round-3 additions ──────────── */
 
@@ -2338,16 +2355,38 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   padding: 4px;
   display: block;
 }
+/* Mono pill — same treatment used for referral codes in the
+   Employees table (sunken background, dark mono text, copy icon
+   on the right edge, single-line ellipsis on overflow). */
 .hd-mref__url {
+  display: flex;
   max-width: 100%;
   width: 100%;
+  margin: 0;
+  padding: 6px 10px;
+  background: var(--bg-sunken);
+  color: var(--text);
+  border: 0;
+  border-radius: 999px;
   font-size: 0.8em;
   justify-content: space-between;
-  padding: 6px 8px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
+  align-items: center;
+  gap: 6px;
 }
-.hd-mref__url:hover { background: var(--bg-subtle); }
+.hd-mref__url:hover { background: var(--neutral-bg); }
+.hd-mref__url .hd-trunc {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+.hd-mref__url .hd-copy__icon {
+  opacity: 1;
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
 .hd-mref__actions {
   display: flex;
   gap: var(--s2);
