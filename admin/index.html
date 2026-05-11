@@ -1190,20 +1190,7 @@
                       <dt class="hd-side__label">Total rooms</dt>
                       <dd class="hd-side__value hd-num" data-detail="rooms">—</dd>
                     </div>
-                    <div class="hd-side__row">
-                      <dt class="hd-side__label">Currency</dt>
-                      <dd class="hd-side__value mono" data-detail="currency">—</dd>
-                    </div>
                   </dl>
-                </section>
-
-                <section class="hd-card" id="hdNotesCard">
-                  <header class="hd-card__head"><h3 class="hd-card__title">Internal notes</h3></header>
-                  <div class="hd-notes-wrap">
-                    <textarea class="hd-notes" id="hdNotes" rows="4"
-                              placeholder="Outreach tracking, concierge contact, follow-ups…"></textarea>
-                    <div class="hd-notes__meta" id="hdNotesMeta" hidden></div>
-                  </div>
                 </section>
 
                 <section class="hd-card" id="hdFinancialCard">
@@ -1228,6 +1215,15 @@
                       <button type="button" class="btn btn--sm" id="hdMasterRefEmbed">Get HTML embed</button>
                     </div>
                     <p class="hd-mref__help">Used when no employee code is attributed.</p>
+                  </div>
+                </section>
+
+                <section class="hd-card" id="hdNotesCard">
+                  <header class="hd-card__head"><h3 class="hd-card__title">Internal notes</h3></header>
+                  <div class="hd-notes-wrap">
+                    <textarea class="hd-notes" id="hdNotes" rows="4"
+                              placeholder="Outreach tracking, concierge contact, follow-ups…"></textarea>
+                    <div class="hd-notes__meta" id="hdNotesMeta" hidden></div>
                   </div>
                 </section>
 
@@ -2731,7 +2727,7 @@
           const rate = (s.kickback_pct != null) ? Number(s.kickback_pct) : null;
           const isOverride = rate != null && hotelDefaultPct != null && rate !== hotelDefaultPct;
           const rateCell = (rate != null ? rate + '%' : '—')
-            + (isOverride ? ' <span class="hd-tag" title="Differs from hotel default">override</span>' : '');
+            + (isOverride ? ' <span class="hd-override-dot" title="Overrides hotel default" aria-label="Overrides hotel default"></span>' : '');
           const earned = formatHotelMoney(s.lifetime_commission || 0, currency);
           const refCode = s.tracking_code || s.code || '';
           return (
@@ -2865,7 +2861,6 @@
       setDetail('email',      contactEmail || '—');
       setDetail('website',    h.website || '—');
       setDetail('rooms',      h.total_rooms != null ? String(h.total_rooms) : '—');
-      setDetail('currency',   currency);
       setDetail('created',    formatHumanDateTime(h.created_at));
       setDetail('updated',    formatHumanDateTime(h.updated_at || h.created_at));
 
