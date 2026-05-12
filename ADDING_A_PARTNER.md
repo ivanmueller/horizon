@@ -21,23 +21,26 @@ whether you add staff under the hotel.
 ## How attribution actually works
 
 A guest clicks a link the hotel gave them — say
-`gowithhorizon.com/?ref=FAIRMONT_LL_JS`. The page captures that
+`gowithhorizon.com/?ref=X7K2_E_0042`. The page captures that
 `ref` through the booking flow and forwards it to the worker as
 `tracking_code` when the booking confirms. The worker matches
 that slug against `hotel_staff.tracking_code`, populates `staff_id`
 on the booking row, and Supabase becomes the source of truth for
 who gets credited.
 
-For walk-ins (`?hotel=fairmont-ll`, no employee in the URL), the
-hotel-level slug (`hotels.default_tracking_code`, e.g.
-`FAIRMONT_LL`) gets sent. It doesn't match any `hotel_staff` row,
-so `staff_id` stays null — the booking is attributed to the hotel
-pool.
+For walk-ins (`?hotel=fairmont-chateau-lake-louise`, no employee
+in the URL), the hotel-level default code
+(`hotels.default_tracking_code`, e.g. `X7K2_H`) gets sent. It
+doesn't match any `hotel_staff` row, so `staff_id` stays null —
+the booking is attributed to the hotel pool.
 
-The slugs are all you need to keep aligned. The naming convention
-in [`PARTNERS_NAMING.md`](./PARTNERS_NAMING.md) keeps that
-mechanical: the lowercase hyphenated `slug` deterministically
-becomes the UPPERCASE underscored `tracking_code`.
+You never type a tracking code by hand. The worker mints the
+hotel's 4-character `tracking_prefix` (e.g. `X7K2`) at creation
+and increments a per-hotel sequence number for each staff member,
+so codes come out as `X7K2_E_0001`, `X7K2_E_0002`, etc. See
+[`PARTNERS_NAMING.md`](./PARTNERS_NAMING.md) for the full format.
+Opaque codes mean QR codes never leak employee names and survive
+staff turnover via Short.io retargeting later.
 
 ## Workflow — pool hotel (no per-employee kickbacks)
 
@@ -47,17 +50,20 @@ becomes the UPPERCASE underscored `tracking_code`.
    top-right.
 3. Fill out the form:
 
-   | Field             | Value                                       |
-   |-------------------|---------------------------------------------|
-   | Name              | `Moraine Lake Lodge`                        |
-   | Slug              | `moraine-lodge` (locks in once saved)       |
-   | Location          | `Banff` or `Canmore`                        |
-   | Type              | **`pool`**                                  |
-   | Commission %      | `12`                                        |
-   | Kickback pool %   | (leave blank unless they split a pool)      |
-   | Tracking code     | auto-fills `MORAINE_LODGE` from the slug    |
-   | Effective date    | the date their deal starts                  |
-   | Notes             | internal-only ("Pool deal, signed via X")   |
+   | Field             | Value                                              |
+   |-------------------|----------------------------------------------------|
+   | Name              | `Moraine Lake Lodge`                               |
+   | Slug              | `moraine-lake-lodge` (locks in once saved)         |
+   | Location          | `Banff` or `Canmore`                               |
+   | Type              | **`pool`**                                         |
+   | Commission %      | `12`                                               |
+   | Kickback pool %   | (leave blank unless they split a pool)             |
+   | Effective date    | the date their deal starts                        |
+   | Notes             | internal-only ("Pool deal, signed via X")          |
+
+   The tracking prefix and default tracking code are assigned by the
+   worker on save — you'll see them in the hotel's drawer after
+   creation (e.g. prefix `X7K2`, default code `X7K2_H`).
 
 4. Hit **Create hotel**. The drawer closes and the row appears in
    the list. A green notice says *"Hotel created. Republishing
@@ -78,18 +84,22 @@ Same as pool, but pick **`kickback`** for Type. Then add staff:
 2. Scroll to **Staff (n)** → **+ Add**.
 3. Fill out:
 
-   | Field          | Value                                         |
-   |----------------|-----------------------------------------------|
-   | Name           | `Jane Smith`                                  |
-   | Slug           | `fairmont-ll-js` (`[hotelslug]-[initials]`)   |
-   | Tracking code  | auto-fills `FAIRMONT_LL_JS` from the slug     |
-   | Kickback %     | `5`                                           |
+   | Field          | Value                                                  |
+   |----------------|--------------------------------------------------------|
+   | Name           | `Jane Smith`                                           |
+   | Slug           | `fairmont-chateau-lake-louise-js` (or any unique label)|
+   | Kickback %     | `5`                                                    |
+
+   The tracking code is minted by the worker (`{hotel-prefix}_E_{seq}`,
+   e.g. `X7K2_E_0001` for the first staff member at this hotel) and
+   shown in the staff row after save. It's permanent — the QR code
+   encoded with this employee's short URL will resolve via it forever.
 
 4. Hit **Add staff**. Repeat for each concierge on the program.
 
 Each `Add staff` triggers another republish so their tracking code
 becomes live within ~60s. End-to-end: a booking tagged
-`FAIRMONT_LL_JS` (via the URL flow) lands in the `bookings` table
+`X7K2_E_0001` (via the URL flow) lands in the `bookings` table
 with `staff_id` resolved to Jane's row, and the in-dashboard
 invoice for the hotel breaks out her kickback under the kickback
 breakdown table.
@@ -156,19 +166,23 @@ the API call succeeds.
 
 ## Common mistakes
 
-- **Tracking-code mismatch.** The form auto-derives the tracking
-  code from the slug (`fairmont-ll` → `FAIRMONT_LL`). Don't override
-  it unless you have a specific reason — the convention in
-  `PARTNERS_NAMING.md` exists so attribution stays mechanical.
+- **Editing a tracking code.** You can't, and you shouldn't need
+  to. Tracking codes are minted by the worker at create time
+  (`X7K2_H` for hotels, `X7K2_E_0042` for staff) and locked
+  thereafter. The admin UI shows them as read-only. If you ever
+  needed to "rename" one, the right move is to retire the staff
+  row (Revoke) and create a new one — never to mutate an existing
+  code, because doing so would silently break any QR codes pointing
+  at it (Phase 2+).
 - **Reusing a slug.** Don't. If a hotel terminates and re-signs
   later under different terms, give it a new slug
-  (e.g. `fairmont-ll-2`). The old row stays as `terminated`.
+  (e.g. `fairmont-chateau-lake-louise-2`). The old row stays as
+  `terminated`.
 - **Editing the slug.** You can't — the form disables it after
   creation. If you really need to (typo at create time, etc.), do
-  it directly in the Supabase dashboard and rename the
-  `default_tracking_code` to match. Then run `npm run build:partners`
-  locally to regenerate, or just push any change to main to trigger
-  a CF Pages rebuild.
+  it directly in the Supabase dashboard. The tracking prefix /
+  tracking codes stay valid regardless because they're not derived
+  from the slug.
 
 ## Under the hood (for debugging)
 

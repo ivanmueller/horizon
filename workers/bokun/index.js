@@ -778,9 +778,10 @@ async function handleAdminBookingPatch(id, request, env) {
 
 const HOTEL_FIELDS =
   "id,code,name,location,type,status,effective_date,default_tracking_code," +
-  "commission_pct,kickback_pool_pct,notes,created_at,updated_at";
+  "tracking_prefix,commission_pct,kickback_pool_pct,notes,created_at,updated_at";
 const STAFF_FIELDS =
-  "id,hotel_id,code,name,tracking_code,kickback_pct,status,created_at,updated_at";
+  "id,hotel_id,code,name,tracking_code,sequence_number,kickback_pct," +
+  "status,created_at,updated_at";
 const MANAGER_FIELDS = "id,email,hotel_id,role,status,created_at,updated_at";
 
 const HOTEL_TYPES = new Set(["kickback", "pool"]);
@@ -788,9 +789,127 @@ const HOTEL_LOCATIONS = new Set(["Banff", "Canmore"]);
 const HOTEL_STATUSES = new Set(["active", "terminated"]);
 const STAFF_STATUSES = new Set(["active", "terminated"]);
 const MANAGER_STATUSES = new Set(["active", "revoked"]);
-const SLUG_RE = /^[a-z0-9-]{2,40}$/;
+// 60-char ceiling lets us hold full property names like
+// "the-rimrock-resort-hotel-banff-springs" instead of forcing
+// abbreviation. Slugs stay lowercase + hyphen + digit only.
+const SLUG_RE = /^[a-z0-9-]{2,60}$/;
 const TRACKING_CODE_RE = /^[A-Z0-9_]{2,40}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// 4-char random alphanumeric, e.g. "X7K2". Omits I, O, 0, 1 so the
+// printed prefix is never ambiguous on paper or read aloud. 32^4 ≈
+// 1M combinations — collision probability stays negligible even at
+// 10k+ hotels, and the UNIQUE constraint catches any that slip through.
+const PREFIX_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const PREFIX_LENGTH = 4;
+const TRACKING_PREFIX_RE = /^[A-HJ-NP-Z2-9]{4}$/;
+
+function generateTrackingPrefix() {
+  let s = "";
+  for (let i = 0; i < PREFIX_LENGTH; i++) {
+    s += PREFIX_ALPHABET[Math.floor(Math.random() * PREFIX_ALPHABET.length)];
+  }
+  return s;
+}
+
+// Detect Postgres unique_violation (SQLSTATE 23505) in a PostgREST error
+// body. PostgREST surfaces the code in err.body.code; older versions
+// returned only a message, so we also pattern-match the text.
+function isUniqueViolation(err, columnHint) {
+  const body = err && err.body;
+  if (!body) return false;
+  if (body.code === "23505") {
+    return columnHint ? String(body.details || body.message || "").includes(columnHint) : true;
+  }
+  const text = typeof body === "string" ? body : JSON.stringify(body);
+  if (!/duplicate key|already exists|unique/i.test(text)) return false;
+  return columnHint ? text.includes(columnHint) : true;
+}
+
+// Hotel insert wrapper. Generates a unique tracking_prefix and seeds
+// default_tracking_code from it. Retries on the (unlikely) prefix
+// collision rather than surfacing a confusing duplicate-key error to
+// the admin UI.
+async function insertHotelWithPrefix(env, row, maxAttempts = 8) {
+  let lastErr;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const prefix = generateTrackingPrefix();
+    const candidate = {
+      ...row,
+      tracking_prefix: prefix,
+      // Hotel-level default — sent as tracking_code when a guest
+      // arrives via the master link with no employee ?ref=. Worker
+      // fails the staff lookup against it (no staff row matches
+      // X7K2_H), so staff_id stays null and the booking attributes
+      // to the hotel pool. Format is consistent with X7K2_E_0042
+      // for staff so the admin UI can render both uniformly.
+      default_tracking_code: `${prefix}_H`,
+    };
+    try {
+      const inserted = await supabaseInsert(env, "hotels", [candidate], { returnRow: true });
+      return inserted[0];
+    } catch (err) {
+      lastErr = err;
+      if (isUniqueViolation(err, "tracking_prefix")) continue;
+      throw err;
+    }
+  }
+  const e = new Error(`could not allocate unique tracking_prefix after ${maxAttempts} attempts`);
+  e.cause = lastErr;
+  throw e;
+}
+
+// Staff insert wrapper. Computes the next sequence_number for the
+// hotel (max + 1) and mints the tracking_code from
+// {hotel.tracking_prefix}_E_{padded sequence}. The UNIQUE
+// (hotel_id, sequence_number) index catches concurrent inserts;
+// on collision we re-read max and try again.
+async function insertStaffWithSequence(env, row, maxAttempts = 5) {
+  const hotelRows = await supabaseSelect(
+    env,
+    `hotels?id=eq.${encodeURIComponent(row.hotel_id)}&select=tracking_prefix`,
+  );
+  if (!hotelRows.length) {
+    const e = new Error("hotel not found");
+    e.status = 404;
+    throw e;
+  }
+  const prefix = hotelRows[0].tracking_prefix;
+  if (!prefix || !TRACKING_PREFIX_RE.test(prefix)) {
+    throw new Error(`hotel ${row.hotel_id} has no valid tracking_prefix`);
+  }
+
+  let lastErr;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const maxRows = await supabaseSelect(
+      env,
+      `hotel_staff?hotel_id=eq.${encodeURIComponent(row.hotel_id)}` +
+        `&select=sequence_number&order=sequence_number.desc&limit=1`,
+    );
+    const nextSeq = (maxRows.length && maxRows[0].sequence_number ? maxRows[0].sequence_number : 0) + 1;
+    const candidate = {
+      ...row,
+      sequence_number: nextSeq,
+      tracking_code: `${prefix}_E_${String(nextSeq).padStart(4, "0")}`,
+    };
+    try {
+      const inserted = await supabaseInsert(env, "hotel_staff", [candidate], { returnRow: true });
+      return inserted[0];
+    } catch (err) {
+      lastErr = err;
+      if (
+        isUniqueViolation(err, "sequence_number") ||
+        isUniqueViolation(err, "tracking_code")
+      ) {
+        continue;
+      }
+      throw err;
+    }
+  }
+  const e = new Error(`could not allocate sequence_number for hotel ${row.hotel_id} after ${maxAttempts} attempts`);
+  e.cause = lastErr;
+  throw e;
+}
 
 async function handleAdminHotelsList(env, request) {
   const auth = await requireHorizonAdmin(request, env);
@@ -814,10 +933,10 @@ async function handleAdminHotelCreate(request, env) {
   if (v.error) return jsonResponse({ error: v.error }, 400, request);
 
   try {
-    const inserted = await supabaseInsert(env, "hotels", [v.row], { returnRow: true });
-    return jsonResponse({ hotel: normaliseHotel(inserted[0]) }, 201, request);
+    const inserted = await insertHotelWithPrefix(env, v.row);
+    return jsonResponse({ hotel: normaliseHotel(inserted) }, 201, request);
   } catch (err) {
-    if (err.body && /duplicate key|already exists/i.test(JSON.stringify(err.body))) {
+    if (isUniqueViolation(err, "code") || isUniqueViolation(err, "hotels_code_key")) {
       return jsonResponse({ error: `hotel with code "${v.row.code}" already exists` }, 409, request);
     }
     throw err;
@@ -870,10 +989,11 @@ async function handleAdminStaffCreate(request, env) {
   if (v.error) return jsonResponse({ error: v.error }, 400, request);
 
   try {
-    const inserted = await supabaseInsert(env, "hotel_staff", [v.row], { returnRow: true });
-    return jsonResponse({ staff: normaliseStaff(inserted[0]) }, 201, request);
+    const inserted = await insertStaffWithSequence(env, v.row);
+    return jsonResponse({ staff: normaliseStaff(inserted) }, 201, request);
   } catch (err) {
-    if (err.body && /duplicate key|already exists/i.test(JSON.stringify(err.body))) {
+    if (err.status === 404) return jsonResponse({ error: err.message }, 404, request);
+    if (isUniqueViolation(err, "code")) {
       return jsonResponse({ error: `staff with code "${v.row.code}" already exists` }, 409, request);
     }
     throw err;
@@ -1191,7 +1311,7 @@ function validateHotel(body, { creating }) {
   const row = {};
   if (creating) {
     const code = typeof body.code === "string" ? body.code.trim().toLowerCase() : "";
-    if (!SLUG_RE.test(code)) return { error: "code (lowercase slug, 2–40 chars [a-z0-9-]) required" };
+    if (!SLUG_RE.test(code)) return { error: "code (lowercase slug, 2–60 chars [a-z0-9-]) required" };
     row.code = code;
   }
   if (typeof body.name === "string" && body.name.trim()) {
@@ -1220,18 +1340,9 @@ function validateHotel(body, { creating }) {
   } else if (typeof body.effective_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.effective_date)) {
     row.effective_date = body.effective_date;
   }
-  if (body.default_tracking_code === null) {
-    row.default_tracking_code = null;
-  } else if (typeof body.default_tracking_code === "string") {
-    const t = body.default_tracking_code.trim().toUpperCase();
-    if (t && !TRACKING_CODE_RE.test(t)) {
-      return { error: "default_tracking_code must be UPPERCASE_WITH_UNDERSCORES" };
-    }
-    row.default_tracking_code = t || null;
-  } else if (creating) {
-    // Auto-derive from code if not supplied.
-    row.default_tracking_code = row.code.toUpperCase().replace(/-/g, "_");
-  }
+  // tracking_prefix and default_tracking_code are auto-managed at creation
+  // and locked thereafter — see insertHotelWithPrefix. Silently drop any
+  // client-supplied values so a stale admin UI can't corrupt them.
   if (typeof body.commission_pct === "number") row.commission_pct = body.commission_pct;
   else if (creating) row.commission_pct = 0;
   if (body.kickback_pool_pct === null) row.kickback_pool_pct = null;
@@ -1249,7 +1360,7 @@ function validateStaff(body, { creating }) {
     if (!UUID_RE.test(hotel_id)) return { error: "valid hotel_id required" };
     row.hotel_id = hotel_id;
     const code = typeof body.code === "string" ? body.code.trim().toLowerCase() : "";
-    if (!SLUG_RE.test(code)) return { error: "code (lowercase slug, 2–40 chars) required" };
+    if (!SLUG_RE.test(code)) return { error: "code (lowercase slug, 2–60 chars) required" };
     row.code = code;
   }
   if (typeof body.name === "string" && body.name.trim()) {
@@ -1257,17 +1368,9 @@ function validateStaff(body, { creating }) {
   } else if (creating) {
     return { error: "name required" };
   }
-  if (body.tracking_code === null) {
-    row.tracking_code = null;
-  } else if (typeof body.tracking_code === "string") {
-    const t = body.tracking_code.trim().toUpperCase();
-    if (t && !TRACKING_CODE_RE.test(t)) {
-      return { error: "tracking_code must be UPPERCASE_WITH_UNDERSCORES" };
-    }
-    row.tracking_code = t || null;
-  } else if (creating) {
-    row.tracking_code = row.code.toUpperCase().replace(/-/g, "_");
-  }
+  // tracking_code and sequence_number are auto-managed by
+  // insertStaffWithSequence and locked thereafter. Drop any
+  // client-provided values silently.
   if (typeof body.kickback_pct === "number") row.kickback_pct = body.kickback_pct;
   else if (creating) row.kickback_pct = 0;
   if (typeof body.status === "string") {

@@ -1,29 +1,33 @@
 # Referral Partner Naming Convention
 
-These rules govern how every referral partner is identified across short.io
-codes, Bokun `trackingCode`s, the `partners.json` registry, future database
-rows, and any onboarding form we build later. **Never break them.** Every
-downstream system assumes this shape.
+These rules govern how every referral partner is identified across the
+`partners.json` registry, the Supabase `hotels` + `hotel_staff` tables,
+the upcoming Short.io short-link layer, and any onboarding form we build
+later. **Never break them.** Every downstream system assumes this shape.
 
 ## Code formats
 
-| Identifier | Format | Example |
-|---|---|---|
-| Hotel default code | `[hotelcode]` — lowercase, hyphenated, short | `fairmont-ll`, `post-hotel`, `moraine-lodge` |
-| Kickback employee code | `[hotelcode]-[employeeinitials]` | `fairmont-ll-js` (Jane Smith at Fairmont Chateau Lake Louise) |
-| Bokun `trackingCode` | UPPERCASE version of the code with underscores instead of hyphens | `FAIRMONT_LL`, `FAIRMONT_LL_JS` |
+Three layers of identifier, each serving a distinct purpose:
 
-The two formats look different but map deterministically — code can convert
-one to the other automatically:
+| Identifier | Format | Example | Visibility |
+|---|---|---|---|
+| Hotel slug | Lowercase full property name, hyphenated, 2–60 chars | `fairmont-chateau-lake-louise`, `the-rimrock-resort-hotel` | Internal only |
+| Employee slug | `[hotelcode]-[employeeinitials]` or any unique label | `fairmont-chateau-lake-louise-js` | Internal only |
+| Hotel tracking prefix | Random 4-char uppercase alphanumeric, immutable | `X7K2`, `B9M4` | Internal only |
+| Hotel default tracking code | `{prefix}_H` | `X7K2_H` | Sent in `?ref=` for walk-ins |
+| Employee tracking code | `{prefix}_E_{4-digit zero-padded seq}` | `X7K2_E_0042` | Sent in `?ref=` for kickback bookings |
 
-```
-hotelcode  ⇄  trackingCode
-fairmont-ll  ⇄  FAIRMONT_LL
-fairmont-ll-js  ⇄  FAIRMONT_LL_JS
-```
+The tracking prefix is **server-generated at hotel creation** with a
+UNIQUE constraint, so collisions never happen in practice. Employee
+sequence numbers are server-incremented per-hotel. There is no
+client-side derivation any more — the worker mints these values and
+the admin UI displays them as read-only after creation.
 
-Conversion rule: `trackingCode = hotelcode.toUpperCase().replace(/-/g, "_")`
-and `hotelcode = trackingCode.toLowerCase().replace(/_/g, "-")`.
+The slug is decoupled from the tracking code on purpose: changing an
+employee's role or replacing one staff member with another can never
+require renaming the slug (it's locked), and the public-facing short
+URL (which encodes the tracking code) does not leak the employee's
+name. See `ADDING_A_PARTNER.md` for the full lifecycle.
 
 ## Reuse rule
 
