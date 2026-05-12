@@ -2446,21 +2446,24 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   line-height: 1.4;
 }
 .hd-activity__title strong { font-weight: 600; }
-.hd-activity__title .hd-pill-mono {
+/* Inline mono pill — used for referral codes inside activity titles
+   and for HTTP status codes in the Logs table. */
+.hd-pill-mono {
   display: inline-block;
   font-family: var(--font-mono);
   font-size: 0.85em;
-  padding: 1px 5px;
+  padding: 1px 6px;
   border-radius: 3px;
   background: var(--bg-sunken);
   color: var(--text);
+  white-space: nowrap;
 }
 .hd-activity__meta {
   margin-top: 2px;
   font-size: var(--t-xs);
   color: var(--text-muted);
 }
-.hd-activity__meta .hd-pos { color: #047857; font-feature-settings: 'tnum' 1; }
+.hd-pos { color: #047857; font-feature-settings: 'tnum' 1; }
 .hd-activity__time {
   font-size: var(--t-xs);
   color: var(--text-faint);
