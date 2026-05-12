@@ -1059,7 +1059,7 @@
                     <h2 class="hd-section__title">Bookings</h2>
                     <button type="button" class="hd-section__link" disabled>View all</button>
                   </header>
-                  <div class="hd-section__body">
+                  <div class="hd-section__body" id="hdBookingsBody">
                     <div class="hd-empty">No bookings</div>
                   </div>
                 </section>
@@ -1084,7 +1084,7 @@
                   <header class="hd-section__head">
                     <h2 class="hd-section__title">Recent activity</h2>
                   </header>
-                  <div class="hd-section__body">
+                  <div class="hd-section__body" id="hdActivityBody">
                     <div class="hd-empty">No recent activity</div>
                   </div>
                 </section>
@@ -1093,7 +1093,7 @@
                   <header class="hd-section__head">
                     <h2 class="hd-section__title">Sent emails</h2>
                   </header>
-                  <div class="hd-section__body">
+                  <div class="hd-section__body" id="hdEmailsBody">
                     <div class="hd-empty">No emails sent</div>
                   </div>
                 </section>
@@ -1102,7 +1102,7 @@
                   <header class="hd-section__head">
                     <h2 class="hd-section__title">Logs</h2>
                   </header>
-                  <div class="hd-section__body">
+                  <div class="hd-section__body" id="hdLogsBody">
                     <div class="hd-empty">No API logs</div>
                   </div>
                 </section>
@@ -2988,6 +2988,13 @@
       setDelta('active-employees',    activeEmps + ' of ' + totalEmps + ' total');
       setDelta('conversion-rate',     '—');
 
+      // Placeholder/demo data for the Fairmont reference hotel so the
+      // populated-state styling can be reviewed before real data is
+      // wired in. Keyed by slug so it never leaks onto other hotels.
+      if ((h.code || '') === 'fairmont-ll') {
+        populateFairmontDemoData(h, els, currency);
+      }
+
       // Internal notes — sidebar card with auto-save on blur. Posts a
       // PATCH to /api/admin/hotels/<id> (the same endpoint the drawer
       // already uses), refreshes the hotel cache, and stamps the last
@@ -3045,6 +3052,226 @@
           drawerStaffForm = { editId: id };
           renderAndWireDrawer(h);
         });
+      });
+    }
+
+    // Demo-only data for the Fairmont reference hotel. Populates the
+    // four empty sections (Bookings, Recent activity, Sent emails,
+    // Logs), overrides the click/conversion numbers in Referral
+    // Links, patches Jane Smith's stat columns, and fills in the
+    // Insights values + green trend deltas. Pure presentation — does
+    // not write to the cache or the server. Remove once the live
+    // data sources are wired.
+    function populateFairmontDemoData(h, els, currency) {
+      const fm = (n) => formatHotelMoney(n, currency);
+      const pill = (kind, label) => '<span class="bk-pill bk-pill--' + kind + '">' + escapeHtml(label) + '</span>';
+      const refPill = (code) => '<span class="hd-pill-mono">' + escapeHtml(code) + '</span>';
+
+      // ── Bookings table
+      const bookings = [
+        { id: 'HZN-2026-0142', tour: 'Lake Louise Voyageur Canoe', date: 'Jun 18, 2026', guest: 'Sarah Chen',    party: 2, ref: 'Jane Smith',  amt: 747.00,  com: 37.35, status: 'ok',  label: 'Confirmed' },
+        { id: 'HZN-2026-0138', tour: 'Lake Agnes Tea House Hike',  date: 'Jun 15, 2026', guest: 'Michael Torres',party: 3, ref: 'Jane Smith',  amt: 876.00,  com: 43.80, status: 'ok',  label: 'Confirmed' },
+        { id: 'HZN-2026-0131', tour: 'Lake Louise Voyageur Canoe', date: 'Jun 12, 2026', guest: 'Priya Sharma',  party: 1, ref: 'Master link', amt: 498.00,  com: 24.90, status: 'ok',  label: 'Confirmed' },
+        { id: 'HZN-2026-0127', tour: 'Banff Town & Gondola Day',   date: 'Jun 10, 2026', guest: "James O'Brien", party: 4, ref: 'Jane Smith',  amt: 1196.00, com: 59.80, status: 'ok',  label: 'Confirmed' },
+        { id: 'HZN-2026-0119', tour: 'Lake Louise Voyageur Canoe', date: 'Jun 6, 2026',  guest: 'Elena Volkov',  party: 2, ref: 'Jane Smith',  amt: 747.00,  com: 37.35, status: 'neutral', label: 'Refunded' },
+      ];
+      const bookingsBody = els.container.querySelector('#hdBookingsBody');
+      if (bookingsBody) {
+        const rows = bookings.map((b) =>
+          '<tr>' +
+            '<td class="mono">' + escapeHtml(b.id) + '</td>' +
+            '<td>' + escapeHtml(b.tour) + '</td>' +
+            '<td>' + escapeHtml(b.date) + '</td>' +
+            '<td>' + escapeHtml(b.guest) + ' <span class="muted">(+' + b.party + ' guest' + (b.party === 1 ? '' : 's') + ')</span></td>' +
+            '<td>' + escapeHtml(b.ref) + '</td>' +
+            '<td class="num hd-num">' + escapeHtml(fm(b.amt)) + '</td>' +
+            '<td class="num hd-num">' + escapeHtml(fm(b.com)) + '</td>' +
+            '<td>' + pill(b.status, b.label) + '</td>' +
+          '</tr>'
+        ).join('');
+        bookingsBody.innerHTML =
+          '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
+            '<table class="bk-table">' +
+              '<thead><tr>' +
+                '<th>Booking ID</th><th>Tour</th><th>Date</th><th>Guest</th>' +
+                '<th>Referred By</th><th class="num">Amount</th>' +
+                '<th class="num">Commission</th><th>Status</th>' +
+              '</tr></thead>' +
+              '<tbody>' + rows + '</tbody>' +
+            '</table>' +
+          '</div></div>';
+      }
+
+      // ── Recent activity feed
+      const bookingIcon =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+          '<path d="M20 6L9 17l-5-5"/></svg>';
+      const emailIcon =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+          '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>';
+      const payoutIcon =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+          '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>';
+      const systemIcon =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+          '<circle cx="12" cy="12" r="9"/><path d="M12 8v5l3 2"/></svg>';
+
+      const activity = [
+        {
+          type: 'booking', icon: bookingIcon,
+          title: 'Booking confirmed via <strong>Jane Smith</strong> · Lake Louise Voyageur Canoe ' + refPill('FAIRMONT_LL_JS'),
+          meta:  '3 guests · Jun 18, 2026 · <span class="hd-pos">+CA$37.35 commission</span>',
+          time:  '2h ago',
+        },
+        {
+          type: 'email', icon: emailIcon,
+          title: 'Email sent to <strong>fairmont-ll@fairmont.com</strong>',
+          meta:  '"Your June commission summary — CA$203.20 CAD"',
+          time:  '6h ago',
+        },
+        {
+          type: 'booking', icon: bookingIcon,
+          title: 'Booking confirmed via <strong>Jane Smith</strong> · Lake Agnes Tea House Hike ' + refPill('FAIRMONT_LL_JS'),
+          meta:  '4 guests · Jun 15, 2026 · <span class="hd-pos">+CA$43.80 commission</span>',
+          time:  'Yesterday',
+        },
+        {
+          type: 'other', icon: systemIcon,
+          title: 'Employee added: <strong>Jane Smith</strong> · Concierge',
+          meta:  'Referral code ' + refPill('FAIRMONT_LL_JS') + ' generated · 5% override applied',
+          time:  '3d ago',
+        },
+        {
+          type: 'payout', icon: payoutIcon,
+          title: 'Stripe Connect account pending verification',
+          meta:  'Awaiting business documents from hotel',
+          time:  '5d ago',
+        },
+        {
+          type: 'other', icon: systemIcon,
+          title: 'Hotel onboarded to Horizon Connect',
+          meta:  'Initial setup completed by <strong>Matteo</strong>',
+          time:  'Apr 28, 2026',
+        },
+      ];
+      const activityBody = els.container.querySelector('#hdActivityBody');
+      if (activityBody) {
+        activityBody.innerHTML =
+          '<ul class="hd-activity">' +
+            activity.map(renderActivityRow).join('') +
+          '</ul>';
+      }
+
+      // ── Sent emails
+      const emails = [
+        { subj: 'Your June commission summary — CA$203.20 CAD',         from: 'matteo@gowithhorizon.com',    sent: 'Jun 19, 2026, 9:12 AM' },
+        { subj: 'New booking confirmation: HZN-2026-0142',              from: 'bookings@gowithhorizon.com',  sent: 'Jun 18, 2026, 2:04 PM' },
+        { subj: 'Welcome to Horizon Connect — getting started guide',   from: 'matteo@gowithhorizon.com',    sent: 'Apr 28, 2026, 11:47 AM' },
+        { subj: 'Your referral materials are ready (QR + printable card)', from: 'matteo@gowithhorizon.com', sent: 'Apr 28, 2026, 11:52 AM' },
+      ];
+      const emailsBody = els.container.querySelector('#hdEmailsBody');
+      if (emailsBody) {
+        emailsBody.innerHTML =
+          '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
+            '<table class="bk-table">' +
+              '<thead><tr><th>Subject</th><th>From</th><th>Sent</th></tr></thead>' +
+              '<tbody>' +
+                emails.map((e) =>
+                  '<tr>' +
+                    '<td>' + escapeHtml(e.subj) + '</td>' +
+                    '<td class="muted">' + escapeHtml(e.from) + '</td>' +
+                    '<td class="muted">' + escapeHtml(e.sent) + '</td>' +
+                  '</tr>'
+                ).join('') +
+              '</tbody>' +
+            '</table>' +
+          '</div></div>';
+      }
+
+      // ── Logs
+      const logs = [
+        { ep: 'POST /v1/bookings/hzn_2026_0142',          status: '200 OK',      ts: 'Jun 18, 2026, 2:03:47 PM' },
+        { ep: 'POST /v1/referrals/track',                 status: '200 OK',      ts: 'Jun 18, 2026, 1:58:22 PM' },
+        { ep: 'GET  /v1/hotels/fairmont-ll/employees',    status: '200 OK',      ts: 'Jun 18, 2026, 11:14:08 AM' },
+        { ep: 'POST /v1/employees',                       status: '201 Created', ts: 'May 1, 2026, 4:22:15 PM' },
+        { ep: 'POST /v1/hotels',                          status: '201 Created', ts: 'Apr 28, 2026, 11:43:02 AM' },
+      ];
+      const logsBody = els.container.querySelector('#hdLogsBody');
+      if (logsBody) {
+        logsBody.innerHTML =
+          '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
+            '<table class="bk-table">' +
+              '<thead><tr><th>Endpoint</th><th>Status</th><th>Timestamp</th></tr></thead>' +
+              '<tbody>' +
+                logs.map((l) =>
+                  '<tr>' +
+                    '<td class="mono">' + escapeHtml(l.ep) + '</td>' +
+                    '<td><span class="hd-pill-mono">' + escapeHtml(l.status) + '</span></td>' +
+                    '<td class="muted">' + escapeHtml(l.ts) + '</td>' +
+                  '</tr>'
+                ).join('') +
+              '</tbody>' +
+            '</table>' +
+          '</div></div>';
+      }
+
+      // ── Insights values + green trend deltas
+      const setInsight = (k, v) => {
+        const n = els.insights.querySelector('[data-insight="' + k + '"]');
+        if (n) n.textContent = v;
+      };
+      const setDelta = (k, text, positive) => {
+        const n = els.insights.querySelector('[data-delta="' + k + '"]');
+        if (!n) return;
+        n.textContent = text;
+        n.classList.toggle('hd-delta--positive', !!positive);
+      };
+      setInsight('lifetime-commission', fm(203.20));
+      setInsight('bookings-lifetime',   '5');
+      setInsight('bookings-30d',        '5');
+      setInsight('conversion-rate',     '6.2%');
+      setDelta('lifetime-commission', '+' + fm(203.20) + ' this month', true);
+      setDelta('bookings-lifetime',   '+5 this week',     true);
+      setDelta('bookings-30d',        '+5 vs prior 30d',  true);
+      setDelta('conversion-rate',     'No comparison yet', false);
+
+      // ── Referral Links — patch the click/conversion/last-clicked
+      // cells in place. The rows themselves come from the staff
+      // renderer, so we look them up by the code in the first
+      // mono-copy cell.
+      const linkData = {
+        'FAIRMONT_LL':    { clicks: 47, conv: 1, last: 'Jun 12, 2026' },
+        'FAIRMONT_LL_JS': { clicks: 89, conv: 4, last: 'Jun 18, 2026' },
+      };
+      els.linksBody.querySelectorAll('tbody tr').forEach((tr) => {
+        const codeBtn = tr.querySelector('button.mono');
+        const code = codeBtn ? codeBtn.dataset.copy : '';
+        const data = linkData[code];
+        if (!data) return;
+        const cells = tr.querySelectorAll('td');
+        if (cells.length < 5) return;
+        cells[2].textContent = data.clicks;
+        cells[3].textContent = data.conv;
+        cells[4].textContent = data.last;
+        cells[4].classList.remove('muted');
+      });
+
+      // ── Employees — patch Jane Smith's bookings / commission /
+      // last-booking cells.
+      const empData = {
+        'FAIRMONT_LL_JS': { bookings: 4, commission: fm(165.85), last: '2h ago' },
+      };
+      els.empBody.querySelectorAll('tbody tr').forEach((tr) => {
+        const codeBtn = tr.querySelector('td:nth-child(2) button.mono');
+        const code = codeBtn ? codeBtn.dataset.copy : '';
+        const data = empData[code];
+        if (!data) return;
+        const cells = tr.querySelectorAll('td');
+        if (cells.length < 7) return;
+        cells[3].textContent = data.bookings;        // Bookings
+        cells[5].textContent = data.commission;      // Commission
+        cells[6].textContent = data.last;            // Last booking
+        cells[6].classList.remove('muted');
       });
     }
 
