@@ -2269,6 +2269,74 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   display: block;
 }
 
+/* ── Short link action column ───────────────────────────── */
+.hd-links__act-col  { width: 120px; }
+.hd-links__act-cell { white-space: nowrap; }
+.sl-act-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  height: 24px;
+  font-size: var(--t-xs);
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color var(--motion-fast) var(--motion-ease-out),
+              color           var(--motion-fast) var(--motion-ease-out),
+              border-color    var(--motion-fast) var(--motion-ease-out);
+}
+.sl-act-btn + .sl-act-btn { margin-left: 4px; }
+.sl-act-btn:hover {
+  background: var(--bg-subtle);
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+.sl-act-btn--danger { color: var(--text-muted); }
+.sl-act-btn--danger:hover {
+  background: #fff0ee;
+  color: #b91c1c;
+  border-color: #f1a29a;
+}
+.sl-act-btn--armed,
+.sl-act-btn--armed:hover {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #f1a29a;
+  font-weight: 600;
+}
+/* Inline confirm cancel link that appears next to the armed button */
+.sl-confirm { margin-left: 6px; }
+.sl-confirm__cancel {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+  cursor: pointer;
+  text-decoration: underline;
+}
+.sl-confirm__cancel:hover { color: var(--text); }
+
+/* ── Short link create/edit modals ──────────────────────── */
+.sl-edit__readonly {
+  padding: 8px 10px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: var(--t-sm);
+  color: var(--text-muted);
+  word-break: break-all;
+}
+/* drawer-form__optional — de-emphasised label suffix used by sl modals */
+.drawer-form__optional {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 0.9em;
+}
+
 /* Stripe Connect promotion CTA (replaces the quiet empty state) */
 .hd-cta {
   display: flex;
