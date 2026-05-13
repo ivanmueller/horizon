@@ -262,6 +262,109 @@
     </div>
   </div>
 
+  <!-- ── Create short link modal ───────────────────────────── -->
+  <div class="modal" id="slCreateModal" hidden>
+    <form class="modal__card" id="slCreateForm" novalidate>
+      <div class="modal__head">
+        <h2 class="modal__title">Add referral link</h2>
+        <button type="button" class="modal__close" id="slCreateClose" aria-label="Close">×</button>
+      </div>
+      <div class="alert alert--bad" id="slCreateError" hidden></div>
+
+      <div class="drawer-form__row">
+        <label class="drawer-form__label" for="slCreateType">Link type</label>
+        <select class="input" id="slCreateType">
+          <option value="campaign">Campaign / custom</option>
+          <option value="hotel">Hotel (master)</option>
+          <option value="staff">Staff member</option>
+        </select>
+        <span class="drawer-form__hint">Campaign links are for events, promos, or QR placements that need separate tracking.</span>
+      </div>
+
+      <div class="drawer-form__row" id="slCreateStaffRow" hidden>
+        <label class="drawer-form__label" for="slCreateStaff">Staff member</label>
+        <select class="input" id="slCreateStaff">
+          <option value="">— select —</option>
+        </select>
+      </div>
+
+      <div class="drawer-form__row">
+        <label class="drawer-form__label" for="slCreatePath">Short path
+          <span class="drawer-form__optional">(optional)</span></label>
+        <input class="input mono" type="text" id="slCreatePath" placeholder="e.g. fcll-summer24"
+               maxlength="80" autocomplete="off" spellcheck="false">
+        <span class="drawer-form__hint">Leave blank to auto-generate. Immutable once created — QR codes encode this path.</span>
+      </div>
+
+      <div class="drawer-form__row">
+        <label class="drawer-form__label" for="slCreateTarget">Destination URL
+          <span class="drawer-form__optional" id="slCreateTargetOptional">(optional)</span></label>
+        <input class="input" type="url" id="slCreateTarget"
+               placeholder="https://gowithhorizon.com/partners/…"
+               autocomplete="off">
+        <span class="drawer-form__hint" id="slCreateTargetHint">Leave blank for hotel/staff links — auto-derived from the tracking code.</span>
+      </div>
+
+      <div class="drawer-form__row">
+        <label class="drawer-form__label" for="slCreateLabel">Label
+          <span class="drawer-form__optional">(optional)</span></label>
+        <input class="input" type="text" id="slCreateLabel"
+               placeholder="e.g. Summer 2026 campaign" maxlength="120">
+      </div>
+
+      <div class="drawer-form__row">
+        <label class="drawer-form__label" for="slCreateNotes">Notes
+          <span class="drawer-form__optional">(optional)</span></label>
+        <textarea class="input" id="slCreateNotes" rows="2"
+                  placeholder="Internal notes…"></textarea>
+      </div>
+
+      <div class="modal__actions">
+        <button type="button" class="btn" id="slCreateCancel">Cancel</button>
+        <button type="submit" class="btn btn--primary" id="slCreateSubmit">Create link</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── Edit short link modal ─────────────────────────────── -->
+  <div class="modal" id="slEditModal" hidden>
+    <form class="modal__card" id="slEditForm" novalidate>
+      <div class="modal__head">
+        <h2 class="modal__title">Edit referral link</h2>
+        <button type="button" class="modal__close" id="slEditClose" aria-label="Close">×</button>
+      </div>
+      <div class="alert alert--bad" id="slEditError" hidden></div>
+
+      <div class="drawer-form__row">
+        <label class="drawer-form__label">Short URL</label>
+        <div class="sl-edit__readonly mono" id="slEditShortUrl">—</div>
+        <span class="drawer-form__hint">Immutable — QR codes encode this path. Only the destination can change.</span>
+      </div>
+
+      <div class="drawer-form__row">
+        <label class="drawer-form__label" for="slEditTarget">Destination URL</label>
+        <input class="input" type="url" id="slEditTarget" required autocomplete="off">
+      </div>
+
+      <div class="drawer-form__row">
+        <label class="drawer-form__label" for="slEditLabel">Label
+          <span class="drawer-form__optional">(optional)</span></label>
+        <input class="input" type="text" id="slEditLabel" maxlength="120">
+      </div>
+
+      <div class="drawer-form__row">
+        <label class="drawer-form__label" for="slEditNotes">Notes
+          <span class="drawer-form__optional">(optional)</span></label>
+        <textarea class="input" id="slEditNotes" rows="2"></textarea>
+      </div>
+
+      <div class="modal__actions">
+        <button type="button" class="btn" id="slEditCancel">Cancel</button>
+        <button type="submit" class="btn btn--primary" id="slEditSubmit">Save changes</button>
+      </div>
+    </form>
+  </div>
+
   <!-- pdfkit (browser bundle) for the in-dashboard invoice generator.
        Loaded ahead of the main module so window.PDFDocument is set
        by the time bookings render. ~600KB, internal page only. -->
@@ -1064,7 +1167,7 @@
                 <section class="hd-section">
                   <header class="hd-section__head">
                     <h2 class="hd-section__title">Referral Links</h2>
-                    <button type="button" class="hd-section__link" disabled>View all</button>
+                    <button type="button" class="bk-iconbtn hd-section__add" id="hdLinksAdd" aria-label="Add link">+</button>
                   </header>
                   <div class="hd-section__body" id="hdLinksBody">
                     <div class="hd-empty">No links</div>
@@ -1549,6 +1652,236 @@
     // Tracks the QR instance currently rendered in the Master Referral
     // card sidebar so the Download button can reference the correct URL.
     let _hotelDrawerQRUrl = null;
+
+    /* ── Short link CRUD helpers ─────────────────────────── */
+    // Module-level state for the two short link modals.
+    let _slHotelRef = null; // current hotel object (set by renderHotelDetail)
+    let _slStaffRef = null; // current staff array
+    let _slEditId   = null; // short_link UUID being edited
+
+    const slCreateModal  = document.getElementById('slCreateModal');
+    const slCreateForm   = document.getElementById('slCreateForm');
+    const slCreateError  = document.getElementById('slCreateError');
+    const slCreateType   = document.getElementById('slCreateType');
+    const slCreateStaffRow = document.getElementById('slCreateStaffRow');
+    const slCreateStaff  = document.getElementById('slCreateStaff');
+    const slCreatePath   = document.getElementById('slCreatePath');
+    const slCreateTarget = document.getElementById('slCreateTarget');
+    const slCreateTargetOptional = document.getElementById('slCreateTargetOptional');
+    const slCreateTargetHint = document.getElementById('slCreateTargetHint');
+    const slCreateLabel  = document.getElementById('slCreateLabel');
+    const slCreateNotes  = document.getElementById('slCreateNotes');
+    const slCreateSubmit = document.getElementById('slCreateSubmit');
+
+    const slEditModal  = document.getElementById('slEditModal');
+    const slEditForm   = document.getElementById('slEditForm');
+    const slEditError  = document.getElementById('slEditError');
+    const slEditShortUrl = document.getElementById('slEditShortUrl');
+    const slEditTarget = document.getElementById('slEditTarget');
+    const slEditLabel  = document.getElementById('slEditLabel');
+    const slEditNotes  = document.getElementById('slEditNotes');
+    const slEditSubmit = document.getElementById('slEditSubmit');
+
+    // Show/hide campaign-specific fields based on type selection.
+    function updateSlCreateTypeFields() {
+      const type = slCreateType.value;
+      slCreateStaffRow.hidden = (type !== 'staff');
+      const isCampaign = (type === 'campaign');
+      slCreateTargetOptional.hidden = !isCampaign;
+      slCreateTargetHint.textContent = isCampaign
+        ? 'Where this link should send visitors.'
+        : 'Leave blank — destination is derived automatically from the tracking code.';
+    }
+    slCreateType && slCreateType.addEventListener('change', updateSlCreateTypeFields);
+
+    function openSlCreate(h, staff) {
+      _slHotelRef = h;
+      _slStaffRef = staff || [];
+      slCreateForm.reset();
+      slCreateError.hidden = true;
+      slCreateSubmit.disabled = false;
+      slCreateSubmit.textContent = 'Create link';
+      // Populate staff dropdown
+      slCreateStaff.innerHTML = '<option value="">— select —</option>' +
+        _slStaffRef.filter((s) => s.status === 'active').map((s) =>
+          '<option value="' + escapeHtml(s.id) + '">' + escapeHtml(s.name) + '</option>'
+        ).join('');
+      updateSlCreateTypeFields();
+      slCreateModal.hidden = false;
+    }
+
+    function closeSlCreate() {
+      slCreateModal.hidden = true;
+    }
+
+    slCreateModal && slCreateModal.addEventListener('click', (e) => {
+      if (e.target === slCreateModal) closeSlCreate();
+    });
+    document.getElementById('slCreateClose')  && (document.getElementById('slCreateClose').onclick  = closeSlCreate);
+    document.getElementById('slCreateCancel') && (document.getElementById('slCreateCancel').onclick = closeSlCreate);
+
+    slCreateForm && slCreateForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!_slHotelRef) return;
+      slCreateError.hidden = true;
+      slCreateSubmit.disabled = true;
+      slCreateSubmit.textContent = 'Creating…';
+
+      const type = slCreateType.value;
+      const body = {
+        link_type: type,
+        hotel_id:  _slHotelRef.id,
+      };
+      if (type === 'staff') {
+        const staffId = slCreateStaff.value;
+        if (!staffId) {
+          slCreateError.textContent = 'Please select a staff member.';
+          slCreateError.hidden = false;
+          slCreateSubmit.disabled = false;
+          slCreateSubmit.textContent = 'Create link';
+          return;
+        }
+        body.staff_id = staffId;
+      }
+      const path = slCreatePath.value.trim();
+      if (path) body.short_path = path;
+      const target = slCreateTarget.value.trim();
+      if (target) body.target_url = target;
+      const label = slCreateLabel.value.trim();
+      if (label) body.label = label;
+      const notes = slCreateNotes.value.trim();
+      if (notes) body.notes = notes;
+
+      try {
+        const res = await fetch(BOKUN_API_BASE + '/api/admin/short-links', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + session.access_token,
+          },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error((data && data.error) || 'create_failed');
+        closeSlCreate();
+        reloadHotelsCacheAndRefresh();
+      } catch (err) {
+        slCreateError.textContent = err.message || 'Could not create link — please try again.';
+        slCreateError.hidden = false;
+        slCreateSubmit.disabled = false;
+        slCreateSubmit.textContent = 'Create link';
+      }
+    });
+
+    function openSlEdit(slData) {
+      _slEditId = slData.id;
+      slEditError.hidden = true;
+      slEditSubmit.disabled = false;
+      slEditSubmit.textContent = 'Save changes';
+      slEditShortUrl.textContent = slData.short_url || slData.short_path || '—';
+      slEditTarget.value = slData.target_url || '';
+      slEditLabel.value  = slData.label || '';
+      slEditNotes.value  = slData.notes || '';
+      slEditModal.hidden = false;
+    }
+
+    function closeSlEdit() {
+      slEditModal.hidden = true;
+      _slEditId = null;
+    }
+
+    slEditModal && slEditModal.addEventListener('click', (e) => {
+      if (e.target === slEditModal) closeSlEdit();
+    });
+    document.getElementById('slEditClose')  && (document.getElementById('slEditClose').onclick  = closeSlEdit);
+    document.getElementById('slEditCancel') && (document.getElementById('slEditCancel').onclick = closeSlEdit);
+
+    slEditForm && slEditForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!_slEditId) return;
+      slEditError.hidden = true;
+      slEditSubmit.disabled = true;
+      slEditSubmit.textContent = 'Saving…';
+
+      const target = slEditTarget.value.trim();
+      if (!target || !/^https?:\/\//.test(target)) {
+        slEditError.textContent = 'Destination URL must start with https://';
+        slEditError.hidden = false;
+        slEditSubmit.disabled = false;
+        slEditSubmit.textContent = 'Save changes';
+        return;
+      }
+      const body = {
+        target_url: target,
+        label:      slEditLabel.value.trim() || null,
+        notes:      slEditNotes.value.trim() || null,
+      };
+      try {
+        const res = await fetch(BOKUN_API_BASE + '/api/admin/short-links/' + encodeURIComponent(_slEditId), {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + session.access_token,
+          },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error((data && data.error) || 'update_failed');
+        closeSlEdit();
+        reloadHotelsCacheAndRefresh();
+      } catch (err) {
+        slEditError.textContent = err.message || 'Could not save changes — please try again.';
+        slEditError.hidden = false;
+        slEditSubmit.disabled = false;
+        slEditSubmit.textContent = 'Save changes';
+      }
+    });
+
+    // Inline two-step retire: first click arms the button; second confirms.
+    function resetRetireCell(cell) {
+      const original = cell.querySelector('[data-sl-retire-original]');
+      if (original) original.hidden = false;
+      const confirm = cell.querySelector('.sl-confirm');
+      if (confirm) confirm.remove();
+    }
+
+    async function retireSlLink(id, btn) {
+      const cell = btn.closest('td');
+      // If already armed, this is the confirm click.
+      if (btn.dataset.slRetireArmed) {
+        btn.disabled = true;
+        btn.textContent = 'Retiring…';
+        try {
+          const res = await fetch(BOKUN_API_BASE + '/api/admin/short-links/' + encodeURIComponent(id), {
+            method: 'DELETE',
+            headers: { Authorization: 'Bearer ' + session.access_token },
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error((data && data.error) || 'retire_failed');
+          reloadHotelsCacheAndRefresh();
+        } catch (err) {
+          if (cell) resetRetireCell(cell);
+          btn.disabled = false;
+          alert('Could not retire link: ' + err.message);
+        }
+        return;
+      }
+      // First click — arm it.
+      btn.dataset.slRetireArmed = '1';
+      btn.textContent = 'Confirm retire';
+      btn.classList.add('sl-act-btn--armed');
+      const dismiss = document.createElement('button');
+      dismiss.type = 'button';
+      dismiss.className = 'sl-confirm__cancel';
+      dismiss.textContent = 'Cancel';
+      dismiss.dataset.slRetireCancel = '1';
+      dismiss.addEventListener('click', () => resetRetireCell(cell));
+      const wrap = document.createElement('span');
+      wrap.className = 'sl-confirm';
+      wrap.appendChild(dismiss);
+      cell.appendChild(wrap);
+      btn.dataset.slRetireOriginal = '';
+    }
 
     // Preload access-request pending count for the nav badge.
     // Fire-and-forget after auth passes so it doesn't block render.
@@ -2893,21 +3226,30 @@
       }
       const linkRows = [
         {
-          code: h.default_tracking_code || h.code,
-          short: hotelShort ? hotelShort.short_url : null,
-          url: masterLink,
-          label: 'Master',
-          mono: true,
+          code:          h.default_tracking_code || h.code,
+          short:         hotelShort ? hotelShort.short_url   : null,
+          url:           masterLink,
+          label:         'Master',
+          mono:          true,
+          sl_id:         hotelShort ? hotelShort.id          : null,
+          sl_target_url: hotelShort ? hotelShort.target_url  : masterLink,
+          sl_label:      hotelShort ? (hotelShort.label || '') : '',
+          sl_notes:      hotelShort ? (hotelShort.notes || '') : '',
         },
       ].concat(
         staff.filter((s) => s.status === 'active').map((s) => {
-          const sl = staffShortByStaffId.get(s.id) || null;
+          const sl  = staffShortByStaffId.get(s.id) || null;
+          const url = masterLink + '?ref=' + encodeURIComponent(s.tracking_code || s.code || '');
           return {
-            code: s.tracking_code || s.code,
-            short: sl ? sl.short_url : null,
-            url: masterLink + '?ref=' + encodeURIComponent(s.tracking_code || s.code || ''),
-            label: s.name,
-            mono: true,
+            code:          s.tracking_code || s.code,
+            short:         sl ? sl.short_url   : null,
+            url,
+            label:         s.name,
+            mono:          true,
+            sl_id:         sl ? sl.id          : null,
+            sl_target_url: sl ? sl.target_url  : url,
+            sl_label:      sl ? (sl.label || '') : '',
+            sl_notes:      sl ? (sl.notes || '') : '',
           };
         })
       );
@@ -2927,10 +3269,11 @@
               '<col class="hd-links__num-col">' +
               '<col class="hd-links__time-col">' +
               '<col class="hd-links__qr-col">' +
+              '<col class="hd-links__act-col">' +
             '</colgroup>' +
             '<thead><tr><th>Code</th><th>Short URL</th><th>Full URL</th>' +
               '<th class="num">Clicks</th><th class="num">Conversions</th><th>Last clicked</th>' +
-              '<th>QR</th>' +
+              '<th>QR</th><th></th>' +
             '</tr></thead>' +
             '<tbody>' +
               linkRows.map((r) => {
@@ -2938,8 +3281,8 @@
                   ? '<td class="hd-links__url"><button type="button" class="hd-copy hd-copy--url" data-copy="' + escapeHtml(r.short) + '" title="' + escapeHtml(r.short) + '">' +
                       '<span class="hd-trunc mono">' + escapeHtml(r.short) + '</span>' + copyIconSvg + '</button></td>'
                   : '<td class="muted" title="No short link yet — will be auto-created once SHORT_IO_API_KEY is configured.">—</td>';
-                const qrUrl   = r.short || r.url;
-                const qrCell  = '<td class="hd-links__qr-cell">' +
+                const qrUrl  = r.short || r.url;
+                const qrCell = '<td class="hd-links__qr-cell">' +
                   '<button type="button" class="hd-qr-btn" aria-label="View QR code for ' + escapeHtml(r.label || r.code || '') + '"' +
                     ' data-qr-url="' + escapeHtml(qrUrl) + '"' +
                     ' data-qr-label="' + escapeHtml(r.label || r.code || '') + '"' +
@@ -2957,29 +3300,80 @@
                       '<rect x="12.5" y="12.5" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
                     '</svg>' +
                   '</button></td>';
+                // Actions cell — only show Edit/Retire when the row has a
+                // persisted short_link record (sl_id is set).
+                const actCell = r.sl_id
+                  ? '<td class="hd-links__act-cell">' +
+                      '<button type="button" class="sl-act-btn"' +
+                        ' data-sl-edit="1"' +
+                        ' data-sl-id="'         + escapeHtml(r.sl_id)         + '"' +
+                        ' data-sl-short-url="'  + escapeHtml(r.short || '')   + '"' +
+                        ' data-sl-target-url="' + escapeHtml(r.sl_target_url || '') + '"' +
+                        ' data-sl-label="'      + escapeHtml(r.sl_label || '') + '"' +
+                        ' data-sl-notes="'      + escapeHtml(r.sl_notes || '') + '"' +
+                        ' aria-label="Edit link">Edit</button>' +
+                      '<button type="button" class="sl-act-btn sl-act-btn--danger"' +
+                        ' data-sl-retire="1"' +
+                        ' data-sl-id="' + escapeHtml(r.sl_id) + '"' +
+                        ' aria-label="Retire link">Retire</button>' +
+                    '</td>'
+                  : '<td class="muted hd-links__act-cell">—</td>';
                 return '<tr>' +
                   '<td><button type="button" class="hd-copy mono" data-copy="' + escapeHtml(r.code || '') + '" title="Copy code">' +
                       '<span>' + escapeHtml(r.code || '—') + '</span>' + copyIconSvg + '</button></td>' +
                   shortCell +
                   '<td class="hd-links__url"><button type="button" class="hd-copy hd-copy--url" data-copy="' + escapeHtml(r.url) + '" title="' + escapeHtml(r.url) + '">' +
                       '<span class="hd-trunc">' + escapeHtml(r.url) + '</span>' + copyIconSvg + '</button></td>' +
-                  '<td class="num hd-num">0</td>' +
+                  '<td class="num hd-num" data-sl-clicks="' + escapeHtml(r.sl_id || '') + '">0</td>' +
                   '<td class="num hd-num">0</td>' +
                   '<td class="muted">—</td>' +
                   qrCell +
+                  actCell +
                 '</tr>';
               }).join('') +
             '</tbody>' +
           '</table>' +
         '</div></div>';
 
-      // Wire QR icon buttons in the Referral Links table — event
-      // delegation on the tbody so re-renders don't need re-wiring.
-      els.linksBody.addEventListener('click', (e) => {
-        const btn = e.target.closest('[data-qr-url]');
-        if (!btn) return;
-        openQRModal(btn.dataset.qrUrl, btn.dataset.qrLabel, btn.dataset.qrSub);
-      });
+      // Single delegated click handler for the entire Referral Links
+      // table (QR preview, Edit, Retire). Guard with _wired so
+      // repeated renderHotelDetail calls don't stack listeners.
+      if (!els.linksBody._wired) {
+        els.linksBody._wired = true;
+        els.linksBody.addEventListener('click', (e) => {
+          // QR preview button
+          const qrBtn = e.target.closest('[data-qr-url]');
+          if (qrBtn) {
+            openQRModal(qrBtn.dataset.qrUrl, qrBtn.dataset.qrLabel, qrBtn.dataset.qrSub);
+            return;
+          }
+          // Edit button
+          const editBtn = e.target.closest('[data-sl-edit]');
+          if (editBtn) {
+            openSlEdit({
+              id:         editBtn.dataset.slId,
+              short_url:  editBtn.dataset.slShortUrl,
+              target_url: editBtn.dataset.slTargetUrl,
+              label:      editBtn.dataset.slLabel || '',
+              notes:      editBtn.dataset.slNotes || '',
+            });
+            return;
+          }
+          // Retire — two-step inline confirm
+          const retireBtn = e.target.closest('[data-sl-retire]');
+          if (retireBtn) {
+            retireSlLink(retireBtn.dataset.slId, retireBtn);
+            return;
+          }
+          // Cancel confirm (sibling dismiss)
+          const cancelConfirm = e.target.closest('[data-sl-retire-cancel]');
+          if (cancelConfirm) {
+            const cell = cancelConfirm.closest('td');
+            if (cell) resetRetireCell(cell);
+            return;
+          }
+        });
+      }
 
       // Invoices & Payouts — promote the not-connected state into a
       // real CTA card (vs. a quiet empty state). Updates the existing
@@ -3209,6 +3603,15 @@
       };
       els.addBtnHead.onclick    = openAddStaff;
       els.addBtnSection.onclick = openAddStaff;
+
+      // + Add link button — opens Create short link modal.
+      const linksAddBtn = els.container.querySelector('#hdLinksAdd');
+      if (linksAddBtn) {
+        linksAddBtn.onclick = () => openSlCreate(h, staff);
+        // Keep module refs current so the modal handlers can use them.
+        _slHotelRef = h;
+        _slStaffRef = staff;
+      }
 
       // Edit row → open the drawer with the inline edit form pre-opened
       // for that staff record. Same data model, same submit endpoint.
