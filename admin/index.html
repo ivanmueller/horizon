@@ -1167,7 +1167,10 @@
                 <section class="hd-section">
                   <header class="hd-section__head">
                     <h2 class="hd-section__title">Referral Links</h2>
-                    <button type="button" class="bk-iconbtn hd-section__add" id="hdLinksAdd" aria-label="Add link">+</button>
+                    <div class="hd-section__head-actions">
+                      <button type="button" class="btn btn--sm" id="hdLinksSyncBtn">Sync clicks</button>
+                      <button type="button" class="bk-iconbtn hd-section__add" id="hdLinksAdd" aria-label="Add link">+</button>
+                    </div>
                   </header>
                   <div class="hd-section__body" id="hdLinksBody">
                     <div class="hd-empty">No links</div>
@@ -3231,10 +3234,12 @@
           url:           masterLink,
           label:         'Master',
           mono:          true,
-          sl_id:         hotelShort ? hotelShort.id          : null,
-          sl_target_url: hotelShort ? hotelShort.target_url  : masterLink,
-          sl_label:      hotelShort ? (hotelShort.label || '') : '',
-          sl_notes:      hotelShort ? (hotelShort.notes || '') : '',
+          sl_id:           hotelShort ? hotelShort.id                   : null,
+          sl_target_url:   hotelShort ? hotelShort.target_url           : masterLink,
+          sl_label:        hotelShort ? (hotelShort.label || '')        : '',
+          sl_notes:        hotelShort ? (hotelShort.notes || '')        : '',
+          sl_clicks:       hotelShort ? (hotelShort.click_count_cached || 0) : 0,
+          sl_last_clicked: hotelShort ? (hotelShort.last_clicked_at || null)  : null,
         },
       ].concat(
         staff.filter((s) => s.status === 'active').map((s) => {
@@ -3247,9 +3252,11 @@
             label:         s.name,
             mono:          true,
             sl_id:         sl ? sl.id          : null,
-            sl_target_url: sl ? sl.target_url  : url,
-            sl_label:      sl ? (sl.label || '') : '',
-            sl_notes:      sl ? (sl.notes || '') : '',
+            sl_target_url:   sl ? sl.target_url            : url,
+            sl_label:        sl ? (sl.label || '')         : '',
+            sl_notes:        sl ? (sl.notes || '')         : '',
+            sl_clicks:       sl ? (sl.click_count_cached || 0) : 0,
+            sl_last_clicked: sl ? (sl.last_clicked_at || null)  : null,
           };
         })
       );
@@ -3324,9 +3331,12 @@
                   shortCell +
                   '<td class="hd-links__url"><button type="button" class="hd-copy hd-copy--url" data-copy="' + escapeHtml(r.url) + '" title="' + escapeHtml(r.url) + '">' +
                       '<span class="hd-trunc">' + escapeHtml(r.url) + '</span>' + copyIconSvg + '</button></td>' +
-                  '<td class="num hd-num" data-sl-clicks="' + escapeHtml(r.sl_id || '') + '">0</td>' +
-                  '<td class="num hd-num">0</td>' +
-                  '<td class="muted">—</td>' +
+                  '<td class="num hd-num">' + (r.sl_clicks || 0) + '</td>' +
+                  '<td class="num hd-num muted">—</td>' +
+                  (r.sl_last_clicked
+                    ? '<td class="hd-num" title="' + escapeHtml(r.sl_last_clicked) + '">' +
+                        escapeHtml(formatHumanDateTime(r.sl_last_clicked)) + '</td>'
+                    : '<td class="muted">—</td>') +
                   qrCell +
                   actCell +
                 '</tr>';
@@ -3605,12 +3615,39 @@
       els.addBtnSection.onclick = openAddStaff;
 
       // + Add link button — opens Create short link modal.
-      const linksAddBtn = els.container.querySelector('#hdLinksAdd');
+      const linksAddBtn  = els.container.querySelector('#hdLinksAdd');
+      const linksSyncBtn = els.container.querySelector('#hdLinksSyncBtn');
       if (linksAddBtn) {
         linksAddBtn.onclick = () => openSlCreate(h, staff);
-        // Keep module refs current so the modal handlers can use them.
         _slHotelRef = h;
         _slStaffRef = staff;
+      }
+      if (linksSyncBtn) {
+        linksSyncBtn.onclick = async () => {
+          linksSyncBtn.disabled = true;
+          linksSyncBtn.textContent = 'Syncing…';
+          try {
+            const res = await fetch(BOKUN_API_BASE + '/api/admin/sync-clicks', {
+              method: 'POST',
+              headers: { Authorization: 'Bearer ' + session.access_token },
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error((data && data.error) || 'sync_failed');
+            linksSyncBtn.textContent = 'Synced ✓';
+            // Reload the table to show fresh counts.
+            reloadHotelsCacheAndRefresh();
+          } catch (err) {
+            linksSyncBtn.textContent = 'Sync failed';
+            console.error('sync-clicks failed', err);
+          } finally {
+            setTimeout(() => {
+              if (linksSyncBtn) {
+                linksSyncBtn.disabled = false;
+                linksSyncBtn.textContent = 'Sync clicks';
+              }
+            }, 3000);
+          }
+        };
       }
 
       // Edit row → open the drawer with the inline edit form pre-opened

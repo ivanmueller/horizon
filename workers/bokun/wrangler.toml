@@ -2,6 +2,13 @@ name               = "horizon-bokun"
 main               = "index.js"
 compatibility_date = "2024-09-23"
 
+# Cron trigger — sync Short.io click counts into short_links.click_count_cached.
+# Runs hourly. The handler is `export default { scheduled(...) }` in index.js.
+# Test locally: wrangler dev --test-scheduled (then curl http://localhost:8787/__scheduled)
+# Trigger manually from the admin UI: POST /api/admin/sync-clicks.
+[triggers]
+crons = ["0 * * * *"]
+
 # Vars (committed):
 [vars]
 BOKUN_API_BASE = "https://api.bokun.io"
