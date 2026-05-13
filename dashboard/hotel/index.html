@@ -338,6 +338,102 @@
       .hd-range { justify-content: center; }
       .hd-kpi__value { font-size: var(--text-2xl); }
     }
+
+    /* ── Referral Links section ──────────────────────────────────────── */
+    .hd-links-section {
+      max-width: 1200px;
+      margin: var(--space-8) auto 0;
+      padding: 0 var(--space-4);
+    }
+    .hd-links-header { margin-bottom: var(--space-5); }
+    .hd-links-header h2 {
+      font-family: var(--font-display);
+      font-size: var(--text-xl);
+      font-weight: 700;
+      color: var(--near-black);
+      margin: 0 0 4px;
+    }
+    .hd-links-header p {
+      margin: 0;
+      font-size: var(--text-sm);
+      color: var(--mid-gray);
+    }
+    .hd-links-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: var(--space-4);
+    }
+    .hd-link-card {
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+    .hd-link-card__qr {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .hd-link-card__qr canvas {
+      border-radius: 8px;
+      display: block;
+    }
+    .hd-link-card__body { display: flex; flex-direction: column; gap: 6px; }
+    .hd-link-card__label {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--near-black);
+    }
+    .hd-link-card__url {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--warm-white-alt);
+      border: none;
+      border-radius: var(--radius-full);
+      padding: 5px 10px;
+      cursor: pointer;
+      font: inherit;
+      font-size: var(--text-xs);
+      color: var(--near-black);
+      text-align: left;
+      min-width: 0;
+    }
+    .hd-link-card__url:hover { background: #e8e4df; }
+    .hd-link-card__url-text {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .hd-link-card__copy-icon { width: 12px; height: 12px; flex-shrink: 0; color: var(--mid-gray); }
+    .hd-link-card__meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-2);
+    }
+    .hd-link-card__clicks { font-size: var(--text-xs); color: var(--mid-gray); }
+    .hd-link-card__dl {
+      background: none;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-full);
+      padding: 3px 10px;
+      font: inherit;
+      font-size: var(--text-xs);
+      color: var(--mid-gray);
+      cursor: pointer;
+    }
+    .hd-link-card__dl:hover { background: var(--warm-white-alt); color: var(--near-black); }
+    .hd-section__head-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
   </style>
 </head>
 <body>
@@ -437,8 +533,19 @@
         Bookings will appear here as soon as guests book through your QR code or referral link.
       </div>
     </section>
+
+    <section class="hd-links-section" id="hdLinksSection" hidden>
+      <div class="hd-links-header">
+        <h2>Referral links</h2>
+        <p>Share these short URLs or QR codes with guests. Scans and bookings are tracked automatically.</p>
+      </div>
+      <div class="hd-links-grid" id="hdLinksGrid">
+        <!-- Populated by loadReferralLinks() -->
+      </div>
+    </section>
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
   <script type="module">
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 
@@ -589,6 +696,7 @@
             }
             els.headerActions.hidden = false;
             loadBookings();
+            loadReferralLinks();
           }
         }
       } catch (err) {
@@ -794,6 +902,119 @@
         return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) {
           return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m];
         });
+      }
+
+      // ── Referral Links ────────────────────────────────────────────
+      var HORIZON_LOGO_URI = 'data:image/svg+xml,' +
+        encodeURIComponent(
+          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36">' +
+          '<rect width="36" height="36" rx="8" fill="#FF6B4A"/>' +
+          '<path d="M13 7v22M13 18c0-6 12-6 12 0v11"' +
+          ' stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>' +
+          '</svg>'
+        );
+
+      function makePartnerQRInstance(url, size) {
+        if (typeof QRCodeStyling === 'undefined') return null;
+        return new QRCodeStyling({
+          width: size, height: size, type: 'canvas',
+          data: url, image: HORIZON_LOGO_URI,
+          dotsOptions: { color: '#4920C4', type: 'rounded' },
+          cornersSquareOptions: { type: 'extra-rounded', color: '#4920C4' },
+          cornersDotOptions: { type: 'dot', color: '#4920C4' },
+          backgroundOptions: { color: '#ffffff' },
+          imageOptions: { crossOrigin: 'anonymous', margin: 4, imageSize: 0.28 },
+        });
+      }
+
+      function downloadPartnerQR(url, filename) {
+        var qr = makePartnerQRInstance(url, 1024);
+        if (!qr) { alert('QR library not loaded — please try again in a moment.'); return; }
+        qr.download({ name: filename || 'horizon-qr', extension: 'png' });
+      }
+
+      function linkDisplayLabel(link) {
+        if (link.label) return link.label;
+        if (link.link_type === 'hotel') return 'Hotel link';
+        if (link.link_type === 'staff') {
+          var name = link.staff_member && link.staff_member.name;
+          return name ? name + "'s link" : 'Staff link';
+        }
+        return 'Campaign link';
+      }
+
+      function loadReferralLinks() {
+        var section = document.getElementById('hdLinksSection');
+        var grid    = document.getElementById('hdLinksGrid');
+        if (!section || !grid) return;
+
+        fetch(BOKUN_API_BASE + '/api/dashboard/hotel-links?hotel=' + encodeURIComponent(hotelSlug), {
+          cache: 'no-store',
+          headers: { Authorization: 'Bearer ' + session.access_token },
+        })
+          .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
+          .then(function (res) {
+            if (!res.ok) throw new Error((res.body && res.body.error) || 'fetch_failed');
+            var links = res.body.short_links || [];
+            if (!links.length) return; // section stays hidden when no links yet
+            grid.innerHTML = '';
+            links.forEach(function (link) {
+              var card = document.createElement('div');
+              card.className = 'hd-link-card';
+              var label   = linkDisplayLabel(link);
+              var url     = link.short_url || link.target_url || '';
+              var clicks  = link.click_count_cached || 0;
+              var slug    = url.replace(/^https?:\/\/[^/]+\//, '').replace(/[^a-z0-9-]/gi, '-');
+
+              // QR canvas container
+              var qrWrap = document.createElement('div');
+              qrWrap.className = 'hd-link-card__qr';
+              var qrInst = makePartnerQRInstance(url, 160);
+              if (qrInst) qrInst.append(qrWrap);
+
+              // Card body
+              var body = document.createElement('div');
+              body.className = 'hd-link-card__body';
+              body.innerHTML =
+                '<div class="hd-link-card__label">' + escapeHtml(label) + '</div>' +
+                '<button type="button" class="hd-link-card__url hd-copy-url" data-copy="' + escapeHtml(url) + '" title="Copy link">' +
+                  '<span class="hd-link-card__url-text">' + escapeHtml(url) + '</span>' +
+                  '<svg class="hd-link-card__copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
+                '</button>' +
+                '<div class="hd-link-card__meta">' +
+                  '<span class="hd-link-card__clicks">' + clicks + ' scan' + (clicks === 1 ? '' : 's') + '</span>' +
+                  '<button type="button" class="hd-link-card__dl" data-dl-url="' + escapeHtml(url) + '" data-dl-name="horizon-qr-' + escapeHtml(slug) + '">Download QR</button>' +
+                '</div>';
+
+              card.appendChild(qrWrap);
+              card.appendChild(body);
+              grid.appendChild(card);
+            });
+
+            // Wire copy buttons
+            grid.querySelectorAll('.hd-copy-url').forEach(function (btn) {
+              btn.addEventListener('click', function () {
+                var txt = btn.dataset.copy;
+                if (!txt) return;
+                navigator.clipboard.writeText(txt).then(function () {
+                  var orig = btn.querySelector('.hd-link-card__url-text');
+                  if (orig) { orig.textContent = 'Copied!'; setTimeout(function () { orig.textContent = txt; }, 1500); }
+                }).catch(function () {});
+              });
+            });
+            // Wire download buttons
+            grid.querySelectorAll('[data-dl-url]').forEach(function (btn) {
+              btn.addEventListener('click', function () {
+                downloadPartnerQR(btn.dataset.dlUrl, btn.dataset.dlName);
+              });
+            });
+
+            section.hidden = false;
+          })
+          .catch(function (err) {
+            // Non-fatal: links section simply stays hidden on error.
+            console.warn('hotel-links fetch failed', err);
+          });
       }
   </script>
 </body>

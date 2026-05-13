@@ -108,6 +108,12 @@ const TTL_BOOKING = 15 * 60; // 15min — checkout spot-hold window
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default {
+  // Cron trigger — runs hourly (configured in wrangler.toml under
+  // [triggers].crons). Syncs Short.io click counts into short_links.
+  async scheduled(_event, env, ctx) {
+    ctx.waitUntil(syncClickCounts(env));
+  },
+
   async fetch(request, env) {
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: corsHeaders(request) });
@@ -186,6 +192,14 @@ export default {
       if (
         request.method === "GET" &&
         segs[0] === "api" &&
+        segs[1] === "dashboard" &&
+        segs[2] === "hotel-links"
+      ) {
+        return await handleDashboardHotelLinks(url, env, request);
+      }
+      if (
+        request.method === "GET" &&
+        segs[0] === "api" &&
         segs[1] === "admin" &&
         segs[2] === "summary"
       ) {
@@ -241,6 +255,16 @@ export default {
         segs[2] === "republish"
       ) {
         return await handleAdminRepublish(request, env);
+      }
+
+      // ── Click-count sync (manual trigger) ───────────────────────
+      if (
+        request.method === "POST" &&
+        segs[0] === "api" &&
+        segs[1] === "admin" &&
+        segs[2] === "sync-clicks"
+      ) {
+        return await handleAdminSyncClicks(request, env);
       }
 
       // ── Auth helpers (login page ↔ worker) ──────────────────────
@@ -1539,6 +1563,120 @@ async function handleAdminShortLinkRetire(id, request, env) {
     return jsonResponse({ error: "short_link not found" }, 404, request);
   }
   return jsonResponse({ short_link: normaliseShortLink(updated[0]) }, 200, request);
+}
+
+// ── Short.io click-count sync ──────────────────────────────────────────────
+// Fetches total click counts from Short.io for every active short_link and
+// writes them back to short_links.click_count_cached + last_clicked_at.
+// Called by the scheduled cron (hourly) and by POST /api/admin/sync-clicks.
+// Short.io rate limit: ~100 req/min — we process sequentially with no sleep
+// since even 500 links takes well under 60s at Short.io's typical latency.
+async function syncClickCounts(env) {
+  if (!isShortIoConfigured(env)) {
+    return { skipped: true, reason: "SHORT_IO_API_KEY not configured" };
+  }
+
+  // Fetch all active links (id + short_io_id only — we don't need full rows).
+  let links;
+  try {
+    links = await supabaseSelect(
+      env,
+      "short_links?status=eq.active&select=id,short_io_id&order=created_at.asc",
+    );
+  } catch (err) {
+    console.error("syncClickCounts: failed to fetch short_links:", err.message);
+    return { synced: 0, errors: 1, error: err.message };
+  }
+
+  let synced = 0;
+  let errors = 0;
+
+  for (const link of links) {
+    try {
+      const stats = await getLinkStats(env, link.short_io_id, "total");
+      const clickCount = (stats && typeof stats.totalClicks === "number")
+        ? stats.totalClicks
+        : 0;
+      const lastClicked = (stats && stats.lastClickDate) ? stats.lastClickDate : null;
+      await supabaseUpdate(
+        env,
+        `short_links?id=eq.${encodeURIComponent(link.id)}`,
+        {
+          click_count_cached: clickCount,
+          ...(lastClicked ? { last_clicked_at: lastClicked } : {}),
+          updated_at: new Date().toISOString(),
+        },
+      );
+      synced++;
+    } catch (err) {
+      console.error(`syncClickCounts: link ${link.id} failed:`, err.message);
+      errors++;
+    }
+  }
+
+  return { synced, errors, total: links.length };
+}
+
+// POST /api/admin/sync-clicks
+// Manually triggers the same click-count sync the cron runs hourly.
+// Returns { synced, errors, total } so the admin can see progress.
+async function handleAdminSyncClicks(request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const result = await syncClickCounts(env);
+  return jsonResponse(result, 200, request);
+}
+
+// GET /api/dashboard/hotel-links?hotel=<slug>
+// Returns active short_links for a hotel so the partner dashboard can
+// display referral links + click counts. Auth: same hotel-manager
+// guard as /api/dashboard/bookings (horizon admin OR hotel_users member).
+async function handleDashboardHotelLinks(url, env, request) {
+  const auth = await requireAuthenticated(request, env);
+  if (auth.error) return auth.error;
+  const userEmail = String(auth.claims.email || "").trim();
+  if (!userEmail) {
+    return jsonResponse({ error: "jwt missing email claim" }, 401, request);
+  }
+
+  const hotel = (url.searchParams.get("hotel") || "").trim().toLowerCase();
+  if (!hotel || !/^[a-z0-9-]{2,60}$/.test(hotel)) {
+    return jsonResponse({ error: "hotel slug required" }, 400, request);
+  }
+
+  const hotelRows = await supabaseSelect(
+    env,
+    `hotels?code=eq.${encodeURIComponent(hotel)}&select=id,code,name`,
+  );
+  if (!hotelRows.length) {
+    return jsonResponse({ error: `unknown hotel: ${hotel}` }, 404, request);
+  }
+  const h = hotelRows[0];
+
+  // Auth: admin or assigned hotel_user
+  const adminRows = await supabaseSelect(
+    env,
+    `horizon_admins?email=ilike.${encodeURIComponent(userEmail)}&status=eq.active&select=id`,
+  );
+  if (!adminRows.length) {
+    const assignRows = await supabaseSelect(
+      env,
+      `hotel_users?email=ilike.${encodeURIComponent(userEmail)}&hotel_id=eq.${h.id}&status=eq.active&select=id`,
+    );
+    if (!assignRows.length) {
+      return jsonResponse({ error: "forbidden" }, 403, request);
+    }
+  }
+
+  const fields =
+    "id,short_url,short_path,target_url,label,link_type," +
+    "staff_id,click_count_cached,last_clicked_at," +
+    "staff_member:hotel_staff(name)";
+  const links = await supabaseSelect(
+    env,
+    `short_links?hotel_id=eq.${h.id}&status=eq.active&select=${fields}&order=created_at.asc`,
+  );
+  return jsonResponse({ short_links: links }, 200, request);
 }
 
 // Triggers a Cloudflare Pages rebuild via the deploy hook URL stored

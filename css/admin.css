@@ -1987,6 +1987,12 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   justify-content: space-between;
   gap: var(--s3);
 }
+/* Wrapper when there are multiple right-side controls (Sync + Add) */
+.hd-section__head-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
 .hd-section__title {
   font-size: 1rem;
   font-weight: 600;
