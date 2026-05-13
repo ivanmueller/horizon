@@ -246,10 +246,27 @@
     </form>
   </div>
 
+  <!-- ── QR code preview modal ─────────────────────────────── -->
+  <div class="modal" id="qrModal" hidden>
+    <div class="modal__card qr-modal__card">
+      <div class="modal__head">
+        <h2 class="modal__title" id="qrModalTitle">QR Code</h2>
+        <button type="button" class="modal__close" id="qrModalClose" aria-label="Close">×</button>
+      </div>
+      <p class="modal__sub" id="qrModalSub"></p>
+      <div class="qr-modal__canvas" id="qrModalContainer"></div>
+      <div class="modal__actions">
+        <button type="button" class="btn" id="qrModalCancel">Close</button>
+        <button type="button" class="btn btn--primary" id="qrModalDownload">Download PNG</button>
+      </div>
+    </div>
+  </div>
+
   <!-- pdfkit (browser bundle) for the in-dashboard invoice generator.
        Loaded ahead of the main module so window.PDFDocument is set
        by the time bookings render. ~600KB, internal page only. -->
   <script src="https://unpkg.com/pdfkit@0.15.0/js/pdfkit.standalone.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
 
   <!-- Minimal blob-stream replacement. The npm `blob-stream` package
        is published as Node CommonJS and won't load via a CDN <script>.
@@ -1205,7 +1222,7 @@
                 <section class="hd-card" id="hdMasterRefCard">
                   <header class="hd-card__head"><h3 class="hd-card__title">Master Referral</h3></header>
                   <div class="hd-mref">
-                    <img class="hd-mref__qr" id="hdMasterRefQR" alt="Master referral QR code" width="88" height="88">
+                    <div class="hd-mref__qr" id="hdMasterRefQR" role="img" aria-label="Master referral QR code"></div>
                     <button type="button" class="hd-copy hd-copy--url hd-mref__url mono" id="hdMasterRefUrl" data-copy="" title="Copy referral URL">
                       <span class="hd-trunc" data-detail-text>—</span>
                       <svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
@@ -1441,6 +1458,97 @@
 
     /* ── Bookings route ──────────────────────────────────── */
     const BOKUN_API_BASE = 'https://horizon-bokun.ivan-mueller02.workers.dev';
+
+    /* ── QR code helpers ─────────────────────────────────── */
+    // Horizon "H" mark as a URL-safe SVG data URI — used as the centre
+    // image in every branded QR code.
+    const HORIZON_LOGO_URI = 'data:image/svg+xml,' +
+      encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36">' +
+        '<rect width="36" height="36" rx="8" fill="#FF6B4A"/>' +
+        '<path d="M13 7v22M13 18c0-6 12-6 12 0v11"' +
+        ' stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>' +
+        '</svg>'
+      );
+
+    // Returns a configured QRCodeStyling instance. Does NOT append to DOM —
+    // call .append(el) yourself, or call .download() directly for headless use.
+    function makeQRInstance(url, size) {
+      if (typeof QRCodeStyling === 'undefined') return null;
+      return new QRCodeStyling({
+        width:  size,
+        height: size,
+        type:   'canvas',
+        data:   url,
+        image:  HORIZON_LOGO_URI,
+        dotsOptions: {
+          color: '#4920C4',
+          type:  'rounded',
+        },
+        cornersSquareOptions: {
+          type:  'extra-rounded',
+          color: '#4920C4',
+        },
+        cornersDotOptions: {
+          type:  'dot',
+          color: '#4920C4',
+        },
+        backgroundOptions: { color: '#ffffff' },
+        imageOptions: {
+          crossOrigin: 'anonymous',
+          margin:      4,
+          imageSize:   0.28,
+        },
+      });
+    }
+
+    // Downloads a fresh high-resolution (1024px) PNG. Works without
+    // a visible canvas — qr-code-styling renders off-screen.
+    function downloadQRPng(url, filename) {
+      const qr = makeQRInstance(url, 1024);
+      if (!qr) { alert('QR library not loaded yet — please wait a moment and try again.'); return; }
+      qr.download({ name: filename || 'horizon-qr', extension: 'png' });
+    }
+
+    // QR modal — singleton; re-used for every row click.
+    let _qrModalInstance = null;
+    const qrModal         = document.getElementById('qrModal');
+    const qrModalTitle    = document.getElementById('qrModalTitle');
+    const qrModalSub      = document.getElementById('qrModalSub');
+    const qrModalContainer = document.getElementById('qrModalContainer');
+    const qrModalDownload  = document.getElementById('qrModalDownload');
+    const qrModalClose     = document.getElementById('qrModalClose');
+    const qrModalCancel    = document.getElementById('qrModalCancel');
+
+    function openQRModal(url, title, subtitle) {
+      qrModalTitle.textContent    = title    || 'QR Code';
+      qrModalSub.textContent      = subtitle || url;
+      qrModalSub.hidden           = !subtitle && !url;
+      qrModalContainer.innerHTML  = '';
+      _qrModalInstance            = makeQRInstance(url, 240);
+      if (_qrModalInstance) _qrModalInstance.append(qrModalContainer);
+      qrModalDownload.onclick = () => {
+        const slug = (title || 'horizon-qr').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        downloadQRPng(url, 'horizon-qr-' + slug);
+      };
+      qrModal.hidden = false;
+    }
+
+    function closeQRModal() {
+      qrModal.hidden  = true;
+      _qrModalInstance = null;
+      qrModalContainer.innerHTML = '';
+    }
+
+    if (qrModalClose)  qrModalClose.onclick  = closeQRModal;
+    if (qrModalCancel) qrModalCancel.onclick  = closeQRModal;
+    qrModal && qrModal.addEventListener('click', (e) => {
+      if (e.target === qrModal) closeQRModal();
+    });
+
+    // Tracks the QR instance currently rendered in the Master Referral
+    // card sidebar so the Download button can reference the correct URL.
+    let _hotelDrawerQRUrl = null;
 
     // Preload access-request pending count for the nav badge.
     // Fire-and-forget after auth passes so it doesn't block render.
@@ -2818,9 +2926,11 @@
               '<col class="hd-links__num-col">' +
               '<col class="hd-links__num-col">' +
               '<col class="hd-links__time-col">' +
+              '<col class="hd-links__qr-col">' +
             '</colgroup>' +
             '<thead><tr><th>Code</th><th>Short URL</th><th>Full URL</th>' +
               '<th class="num">Clicks</th><th class="num">Conversions</th><th>Last clicked</th>' +
+              '<th>QR</th>' +
             '</tr></thead>' +
             '<tbody>' +
               linkRows.map((r) => {
@@ -2828,6 +2938,25 @@
                   ? '<td class="hd-links__url"><button type="button" class="hd-copy hd-copy--url" data-copy="' + escapeHtml(r.short) + '" title="' + escapeHtml(r.short) + '">' +
                       '<span class="hd-trunc mono">' + escapeHtml(r.short) + '</span>' + copyIconSvg + '</button></td>'
                   : '<td class="muted" title="No short link yet — will be auto-created once SHORT_IO_API_KEY is configured.">—</td>';
+                const qrUrl   = r.short || r.url;
+                const qrCell  = '<td class="hd-links__qr-cell">' +
+                  '<button type="button" class="hd-qr-btn" aria-label="View QR code for ' + escapeHtml(r.label || r.code || '') + '"' +
+                    ' data-qr-url="' + escapeHtml(qrUrl) + '"' +
+                    ' data-qr-label="' + escapeHtml(r.label || r.code || '') + '"' +
+                    ' data-qr-sub="' + escapeHtml(qrUrl) + '">' +
+                    '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">' +
+                      '<rect x="1" y="1" width="5" height="5" rx="0.5"/>' +
+                      '<rect x="1" y="10" width="5" height="5" rx="0.5"/>' +
+                      '<rect x="10" y="1" width="5" height="5" rx="0.5"/>' +
+                      '<rect x="3" y="3" width="1" height="1" fill="currentColor" stroke="none"/>' +
+                      '<rect x="3" y="12" width="1" height="1" fill="currentColor" stroke="none"/>' +
+                      '<rect x="12" y="3" width="1" height="1" fill="currentColor" stroke="none"/>' +
+                      '<rect x="10" y="10" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
+                      '<rect x="12.5" y="10" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
+                      '<rect x="10" y="12.5" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
+                      '<rect x="12.5" y="12.5" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
+                    '</svg>' +
+                  '</button></td>';
                 return '<tr>' +
                   '<td><button type="button" class="hd-copy mono" data-copy="' + escapeHtml(r.code || '') + '" title="Copy code">' +
                       '<span>' + escapeHtml(r.code || '—') + '</span>' + copyIconSvg + '</button></td>' +
@@ -2837,11 +2966,20 @@
                   '<td class="num hd-num">0</td>' +
                   '<td class="num hd-num">0</td>' +
                   '<td class="muted">—</td>' +
+                  qrCell +
                 '</tr>';
               }).join('') +
             '</tbody>' +
           '</table>' +
         '</div></div>';
+
+      // Wire QR icon buttons in the Referral Links table — event
+      // delegation on the tbody so re-renders don't need re-wiring.
+      els.linksBody.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-qr-url]');
+        if (!btn) return;
+        openQRModal(btn.dataset.qrUrl, btn.dataset.qrLabel, btn.dataset.qrSub);
+      });
 
       // Invoices & Payouts — promote the not-connected state into a
       // real CTA card (vs. a quiet empty state). Updates the existing
@@ -2983,20 +3121,24 @@
         els.financial.innerHTML = bodyTop + splitHtml;
       }
 
-      // Master Referral card — QR + canonical URL + actions. QR is
-      // server-rendered via api.qrserver.com for now; swap for a
-      // self-hosted endpoint once one exists. encodeURIComponent
-      // covers slug edge-cases (uppercase, hyphens, future unicode).
-      const masterRefBtn = els.container.querySelector('#hdMasterRefUrl');
-      const masterRefImg = els.container.querySelector('#hdMasterRefQR');
+      // Master Referral card — QR + canonical URL + actions.
+      const masterRefBtn  = els.container.querySelector('#hdMasterRefUrl');
+      const masterRefQREl = els.container.querySelector('#hdMasterRefQR');
+      const masterDlBtn   = els.container.querySelector('#hdMasterRefDownload');
       if (masterRefBtn) {
         masterRefBtn.dataset.copy = masterLink;
         masterRefBtn.querySelector('[data-detail-text]').textContent = masterLink;
         masterRefBtn.title = masterLink;
       }
-      if (masterRefImg) {
-        masterRefImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=176x176&margin=0&data=' +
-                          encodeURIComponent(masterLink);
+      if (masterRefQREl) {
+        masterRefQREl.innerHTML = '';
+        const qrInst = makeQRInstance(masterLink, 176);
+        if (qrInst) qrInst.append(masterRefQREl);
+      }
+      _hotelDrawerQRUrl = masterLink;
+      if (masterDlBtn) {
+        masterDlBtn.onclick = () =>
+          downloadQRPng(masterLink, 'horizon-qr-' + (h.code || 'hotel'));
       }
 
       // Insights deltas — placeholder dashes until aggregation data
