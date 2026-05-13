@@ -9,6 +9,17 @@ BOKUN_API_BASE = "https://api.bokun.io"
 # secret put SUPABASE_SERVICE_KEY` (see below). Replace this with your
 # project URL from Supabase → Settings → API → Project URL.
 SUPABASE_URL   = "https://lxdltzrntphnkhsniwin.supabase.co"
+# Public site origin — used when minting Short.io target URLs at
+# hotel/staff creation. Override per-environment if you ever spin up
+# a staging deployment that needs to point at a different origin.
+PUBLIC_SITE_BASE = "https://gowithhorizon.com"
+# Branded short domain. Must be added in the Short.io dashboard and
+# CNAME'd in DNS before short links can resolve under it. Until then,
+# leave SHORT_IO_API_KEY unset and the worker silently skips Short.io
+# calls — hotel/staff creation still succeeds, only the short_links
+# row is omitted (admins can create one retroactively via the
+# /api/admin/short-links POST endpoint once Short.io is wired up).
+SHORT_IO_DOMAIN = "link.gowithhorizon.com"
 
 # Secrets (NOT committed; set via CLI from inside workers/bokun/):
 #   wrangler secret put BOKUN_ACCESS_KEY      # Bokun HMAC signing
@@ -16,6 +27,10 @@ SUPABASE_URL   = "https://lxdltzrntphnkhsniwin.supabase.co"
 #   wrangler secret put STRIPE_SECRET_KEY     # sk_test_... (then sk_live_... for prod)
 #   wrangler secret put SUPABASE_SERVICE_KEY  # Supabase service_role; bypasses RLS
 #   wrangler secret put CF_PAGES_DEPLOY_HOOK  # CF Pages webhook URL for /api/admin/republish
+#   wrangler secret put SHORT_IO_API_KEY      # Short.io API key — generate at
+#                                              #   Short.io → Integrations → API
+#                                              # Worker silently no-ops short
+#                                              # link creation until this is set.
 #
 # Auth gates (both partner + admin) verify Supabase Auth JWTs against
 # the public JWKS at $SUPABASE_URL/auth/v1/.well-known/jwks.json — no

@@ -2766,21 +2766,42 @@
       }
 
       // Referral Links — master hotel link + one row per active
-      // employee. Code is the most important field (it's what the QR
-      // encodes) so it gets a fixed-width column and stays pinned;
-      // the URL column truncates with ellipsis and a hover title for
-      // the full string.
+      // employee. Short URL (Short.io, encoded in the QR) is the
+      // canonical artifact; the long URL is shown as a secondary
+      // column for debugging / fallback. Click counts come from
+      // Short.io's stats API once the Phase 5 cron sync lands.
       const baseUrl = window.location.origin;
       const masterLink = baseUrl + '/partners/' + (h.code || '') + '/';
+      // Index short_links by hotel-level + staff_id for O(1) lookup
+      // while rendering rows. The worker embeds them on the hotels
+      // list (handleAdminHotelsList) so no extra round-trip here.
+      const shortLinks = Array.isArray(h.short_links) ? h.short_links : [];
+      const hotelShort = shortLinks.find(
+        (l) => l.status === 'active' && l.link_type === 'hotel' && !l.staff_id
+      ) || null;
+      const staffShortByStaffId = new Map();
+      for (const l of shortLinks) {
+        if (l.status === 'active' && l.staff_id) staffShortByStaffId.set(l.staff_id, l);
+      }
       const linkRows = [
-        { code: h.default_tracking_code || h.code, url: masterLink, label: 'Master', mono: true },
-      ].concat(
-        staff.filter((s) => s.status === 'active').map((s) => ({
-          code: s.tracking_code || s.code,
-          url: masterLink + '?ref=' + encodeURIComponent(s.tracking_code || s.code || ''),
-          label: s.name,
+        {
+          code: h.default_tracking_code || h.code,
+          short: hotelShort ? hotelShort.short_url : null,
+          url: masterLink,
+          label: 'Master',
           mono: true,
-        }))
+        },
+      ].concat(
+        staff.filter((s) => s.status === 'active').map((s) => {
+          const sl = staffShortByStaffId.get(s.id) || null;
+          return {
+            code: s.tracking_code || s.code,
+            short: sl ? sl.short_url : null,
+            url: masterLink + '?ref=' + encodeURIComponent(s.tracking_code || s.code || ''),
+            label: s.name,
+            mono: true,
+          };
+        })
       );
       const copyIconSvg =
         '<svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
@@ -2793,25 +2814,31 @@
             '<colgroup>' +
               '<col class="hd-links__code-col">' +
               '<col class="hd-links__url-col">' +
+              '<col class="hd-links__url-col">' +
               '<col class="hd-links__num-col">' +
               '<col class="hd-links__num-col">' +
               '<col class="hd-links__time-col">' +
             '</colgroup>' +
-            '<thead><tr><th>Code</th><th>Full URL</th>' +
+            '<thead><tr><th>Code</th><th>Short URL</th><th>Full URL</th>' +
               '<th class="num">Clicks</th><th class="num">Conversions</th><th>Last clicked</th>' +
             '</tr></thead>' +
             '<tbody>' +
-              linkRows.map((r) =>
-                '<tr>' +
+              linkRows.map((r) => {
+                const shortCell = r.short
+                  ? '<td class="hd-links__url"><button type="button" class="hd-copy hd-copy--url" data-copy="' + escapeHtml(r.short) + '" title="' + escapeHtml(r.short) + '">' +
+                      '<span class="hd-trunc mono">' + escapeHtml(r.short) + '</span>' + copyIconSvg + '</button></td>'
+                  : '<td class="muted" title="No short link yet — will be auto-created once SHORT_IO_API_KEY is configured.">—</td>';
+                return '<tr>' +
                   '<td><button type="button" class="hd-copy mono" data-copy="' + escapeHtml(r.code || '') + '" title="Copy code">' +
                       '<span>' + escapeHtml(r.code || '—') + '</span>' + copyIconSvg + '</button></td>' +
+                  shortCell +
                   '<td class="hd-links__url"><button type="button" class="hd-copy hd-copy--url" data-copy="' + escapeHtml(r.url) + '" title="' + escapeHtml(r.url) + '">' +
                       '<span class="hd-trunc">' + escapeHtml(r.url) + '</span>' + copyIconSvg + '</button></td>' +
                   '<td class="num hd-num">0</td>' +
                   '<td class="num hd-num">0</td>' +
                   '<td class="muted">—</td>' +
-                '</tr>'
-              ).join('') +
+                '</tr>';
+              }).join('') +
             '</tbody>' +
           '</table>' +
         '</div></div>';
