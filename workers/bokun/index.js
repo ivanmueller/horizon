@@ -90,6 +90,13 @@
 
 import { bokunFetch } from "./bokun-auth.js";
 import { supabaseRequest, supabaseSelect, supabaseInsert, supabaseUpdate } from "./supabase.js";
+import {
+  createShortLink,
+  updateShortLink,
+  isShortIoConfigured,
+  trackingCodeToShortPath,
+  ShortIoError,
+} from "./short-io.js";
 
 const ALLOWED_ORIGIN = "https://gowithhorizon.com";
 const CURRENCY = "CAD";
@@ -198,8 +205,12 @@ export default {
       if (segs[0] === "api" && segs[1] === "admin" && segs[2] === "hotels") {
         if (request.method === "GET" && !segs[3])  return await handleAdminHotelsList(env, request);
         if (request.method === "POST" && !segs[3]) return await handleAdminHotelCreate(request, env);
-        if (request.method === "PATCH" && segs[3]) return await handleAdminHotelUpdate(segs[3], request, env);
-        if (request.method === "DELETE" && segs[3]) return await handleAdminHotelTerminate(segs[3], request, env);
+        if (request.method === "PATCH" && segs[3] && !segs[4]) return await handleAdminHotelUpdate(segs[3], request, env);
+        if (request.method === "DELETE" && segs[3] && !segs[4]) return await handleAdminHotelTerminate(segs[3], request, env);
+        // GET /api/admin/hotels/:id/short-links
+        if (request.method === "GET" && segs[3] && segs[4] === "short-links") {
+          return await handleAdminHotelShortLinksList(segs[3], request, env);
+        }
       }
 
       // ── Hotel staff CRUD ────────────────────────────────────────
@@ -207,6 +218,13 @@ export default {
         if (request.method === "POST" && !segs[3]) return await handleAdminStaffCreate(request, env);
         if (request.method === "PATCH" && segs[3]) return await handleAdminStaffUpdate(segs[3], request, env);
         if (request.method === "DELETE" && segs[3]) return await handleAdminStaffTerminate(segs[3], request, env);
+      }
+
+      // ── Short.io short_links CRUD ───────────────────────────────
+      if (segs[0] === "api" && segs[1] === "admin" && segs[2] === "short-links") {
+        if (request.method === "POST" && !segs[3]) return await handleAdminShortLinkCreate(request, env);
+        if (request.method === "PATCH" && segs[3]) return await handleAdminShortLinkUpdate(segs[3], request, env);
+        if (request.method === "DELETE" && segs[3]) return await handleAdminShortLinkRetire(segs[3], request, env);
       }
 
       // ── Hotel managers (hotel_users) — invite + revoke ──────────
@@ -826,6 +844,94 @@ function isUniqueViolation(err, columnHint) {
   return columnHint ? text.includes(columnHint) : true;
 }
 
+// Mint a Short.io short link and persist the mirror row in
+// short_links. Best-effort by default: a Short.io failure logs and
+// returns null rather than throwing, so the parent hotel/staff
+// creation succeeds even when Short.io is unreachable or unconfigured.
+// Set `throwOnError: true` for the admin POST endpoint where the
+// caller explicitly asked to create a short link and a failure is
+// the actionable outcome.
+async function mintShortLinkAndRecord(env, params, { throwOnError = false } = {}) {
+  const {
+    shortPath,
+    targetUrl,
+    title,
+    linkType,
+    hotelId = null,
+    staffId = null,
+    label = null,
+    notes = null,
+  } = params;
+
+  if (!isShortIoConfigured(env)) {
+    if (throwOnError) {
+      throw new ShortIoError(500, null, "SHORT_IO_API_KEY not configured on the worker");
+    }
+    return null;
+  }
+
+  let created;
+  try {
+    created = await createShortLink(env, {
+      path: shortPath,
+      originalURL: targetUrl,
+      title: title || label || null,
+    });
+  } catch (err) {
+    if (throwOnError) throw err;
+    console.warn(
+      `Short.io createShortLink failed for ${linkType} ${hotelId || staffId}: ${err.message}`,
+    );
+    return null;
+  }
+
+  // Short.io returns { id, shortURL, path, originalURL, ... }. Persist
+  // those alongside our metadata so we can call update/delete later
+  // without re-querying Short.io.
+  try {
+    const inserted = await supabaseInsert(
+      env,
+      "short_links",
+      [
+        {
+          short_io_id: created.id,
+          domain: env.SHORT_IO_DOMAIN || "link.gowithhorizon.com",
+          short_path: created.path || shortPath,
+          target_url: created.originalURL || targetUrl,
+          link_type: linkType,
+          hotel_id: hotelId,
+          staff_id: staffId,
+          label,
+          notes,
+        },
+      ],
+      { returnRow: true },
+    );
+    return inserted[0];
+  } catch (err) {
+    // Short.io created the link but Supabase rejected the row. We
+    // surface this either way — silent failure here means a
+    // dangling Short.io link with no DB record, which is a
+    // reconciliation headache. Worth a loud log.
+    console.error(
+      `Short.io link ${created.id} created but short_links insert failed: ${err.message}`,
+    );
+    if (throwOnError) throw err;
+    return null;
+  }
+}
+
+// Build the long URL a short link should redirect to. Hotel master:
+// /partners/<slug>/. Staff: append ?ref=<tracking_code> so the
+// checkout flow attributes the booking to the employee.
+function hotelTargetUrl(env, hotelCode) {
+  const base = (env.PUBLIC_SITE_BASE || "https://gowithhorizon.com").replace(/\/$/, "");
+  return `${base}/partners/${encodeURIComponent(hotelCode)}/`;
+}
+function staffTargetUrl(env, hotelCode, trackingCode) {
+  return `${hotelTargetUrl(env, hotelCode)}?ref=${encodeURIComponent(trackingCode)}`;
+}
+
 // Hotel insert wrapper. Generates a unique tracking_prefix and seeds
 // default_tracking_code from it. Retries on the (unlikely) prefix
 // collision rather than surfacing a confusing duplicate-key error to
@@ -847,7 +953,21 @@ async function insertHotelWithPrefix(env, row, maxAttempts = 8) {
     };
     try {
       const inserted = await supabaseInsert(env, "hotels", [candidate], { returnRow: true });
-      return inserted[0];
+      const hotel = inserted[0];
+      // Auto-mint the hotel's master short link. Best-effort: a
+      // Short.io failure (network, rate limit, missing API key)
+      // does not roll back the hotel row. Admins can create the
+      // short link retroactively via the /api/admin/short-links
+      // POST endpoint once Short.io is wired up.
+      await mintShortLinkAndRecord(env, {
+        shortPath: hotel.code,
+        targetUrl: hotelTargetUrl(env, hotel.code),
+        title: `${hotel.name} — master`,
+        linkType: "hotel",
+        hotelId: hotel.id,
+        label: "Master — hotel default",
+      });
+      return hotel;
     } catch (err) {
       lastErr = err;
       if (isUniqueViolation(err, "tracking_prefix")) continue;
@@ -894,7 +1014,29 @@ async function insertStaffWithSequence(env, row, maxAttempts = 5) {
     };
     try {
       const inserted = await supabaseInsert(env, "hotel_staff", [candidate], { returnRow: true });
-      return inserted[0];
+      const staff = inserted[0];
+      // Look up the hotel's code to construct the long URL (the
+      // tracking_prefix is on the hotel row, but the URL needs the
+      // slug). One extra round-trip per create — acceptable cost
+      // for the operational simplicity of not bubbling the code
+      // through the parent calls.
+      const hotelRows = await supabaseSelect(
+        env,
+        `hotels?id=eq.${encodeURIComponent(row.hotel_id)}&select=code,name`,
+      );
+      const hotel = hotelRows[0];
+      if (hotel) {
+        await mintShortLinkAndRecord(env, {
+          shortPath: trackingCodeToShortPath(staff.tracking_code),
+          targetUrl: staffTargetUrl(env, hotel.code, staff.tracking_code),
+          title: `${hotel.name} — ${staff.name}`,
+          linkType: "staff",
+          hotelId: row.hotel_id,
+          staffId: staff.id,
+          label: staff.name,
+        });
+      }
+      return staff;
     } catch (err) {
       lastErr = err;
       if (
@@ -918,7 +1060,8 @@ async function handleAdminHotelsList(env, request) {
   const select =
     HOTEL_FIELDS +
     `,staff:hotel_staff(${STAFF_FIELDS})` +
-    `,managers:hotel_users(${MANAGER_FIELDS})`;
+    `,managers:hotel_users(${MANAGER_FIELDS})` +
+    `,short_links:short_links(${SHORT_LINK_FIELDS})`;
   const rows = await supabaseSelect(env, `hotels?select=${select}&order=code.asc`);
   return jsonResponse({ hotels: rows.map(normaliseHotel) }, 200, request);
 }
@@ -1125,6 +1268,277 @@ async function handleAdminHotelUserUpdate(id, request, env) {
     return jsonResponse({ error: "hotel-user not found" }, 404, request);
   }
   return jsonResponse({ manager: updated[0] }, 200, request);
+}
+
+// ── Short.io short_links — admin CRUD ─────────────────────────────────────
+// Auto-created rows arrive via insertHotelWithPrefix /
+// insertStaffWithSequence. These endpoints let admins:
+//   • list every short link for a hotel (including staff links)
+//   • create additional short links (extra QRs for the same hotel,
+//     campaign-specific destinations, retroactive creation when
+//     Short.io was offline at hotel/staff create time)
+//   • re-target a link's destination (the operation that protects
+//     every printed QR — change where it goes without changing what
+//     it encodes)
+//   • soft-retire a link (status='retired', Short.io redirect stays
+//     alive so any QR codes already in circulation keep resolving)
+
+const SHORT_LINK_FIELDS =
+  "id,short_io_id,domain,short_path,short_url,target_url,link_type," +
+  "hotel_id,staff_id,label,notes,status,click_count_cached," +
+  "last_clicked_at,created_at,updated_at";
+const SHORT_LINK_TYPES = new Set(["hotel", "staff", "campaign"]);
+const SHORT_LINK_STATUSES = new Set(["active", "retired"]);
+// Short.io path constraints — alphanumeric plus the common
+// separators. Conservative; tighten if you find Short.io rejecting
+// edge cases.
+const SHORT_PATH_RE = /^[a-zA-Z0-9._-]{1,80}$/;
+
+function normaliseShortLink(s) {
+  return s;
+}
+
+// GET /api/admin/hotels/:id/short-links
+//
+// Returns every short_link attributable to this hotel — including
+// staff-level links for any employee of the hotel. PostgREST doesn't
+// support subqueries inside `or=()`, so we do two reads and merge in
+// JS rather than building a database view.
+async function handleAdminHotelShortLinksList(hotelId, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(hotelId)) return jsonResponse({ error: "invalid hotel id" }, 400, request);
+
+  const [byHotel, staffRows] = await Promise.all([
+    supabaseSelect(env, `short_links?hotel_id=eq.${hotelId}&select=${SHORT_LINK_FIELDS}&order=created_at.asc`),
+    supabaseSelect(env, `hotel_staff?hotel_id=eq.${hotelId}&select=id`),
+  ]);
+  let byStaff = [];
+  if (staffRows.length) {
+    const staffIds = staffRows.map((s) => s.id).join(",");
+    byStaff = await supabaseSelect(
+      env,
+      `short_links?staff_id=in.(${staffIds})&select=${SHORT_LINK_FIELDS}&order=created_at.asc`,
+    );
+  }
+  // De-dupe — a staff link also has hotel_id set, so the two
+  // queries can return overlapping rows.
+  const seen = new Set();
+  const out = [];
+  for (const r of [...byHotel, ...byStaff]) {
+    if (seen.has(r.id)) continue;
+    seen.add(r.id);
+    out.push(normaliseShortLink(r));
+  }
+  return jsonResponse({ short_links: out }, 200, request);
+}
+
+// POST /api/admin/short-links
+// Body: { link_type, hotel_id?, staff_id?, short_path?, target_url?,
+//         label?, notes? }
+// If short_path is omitted we derive one (slug for hotel, opaque code
+// for staff). If target_url is omitted we derive one too. Either way
+// the admin can override — useful for campaign links.
+async function handleAdminShortLinkCreate(request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+
+  const linkType = typeof body.link_type === "string" ? body.link_type : "";
+  if (!SHORT_LINK_TYPES.has(linkType)) {
+    return jsonResponse({ error: "link_type must be hotel, staff, or campaign" }, 400, request);
+  }
+  const hotelId = typeof body.hotel_id === "string" ? body.hotel_id.trim() : null;
+  const staffId = typeof body.staff_id === "string" ? body.staff_id.trim() : null;
+  if (hotelId && !UUID_RE.test(hotelId)) {
+    return jsonResponse({ error: "hotel_id must be a uuid" }, 400, request);
+  }
+  if (staffId && !UUID_RE.test(staffId)) {
+    return jsonResponse({ error: "staff_id must be a uuid" }, 400, request);
+  }
+  if (linkType === "hotel" && !hotelId) {
+    return jsonResponse({ error: "hotel link_type requires hotel_id" }, 400, request);
+  }
+  if (linkType === "staff" && (!staffId || !hotelId)) {
+    return jsonResponse({ error: "staff link_type requires both staff_id and hotel_id" }, 400, request);
+  }
+
+  // Resolve hotel + staff rows when present so we can build a
+  // sensible default short_path + target_url and reject IDs that
+  // don't belong to each other.
+  let hotelRow = null;
+  let staffRow = null;
+  if (hotelId) {
+    const rows = await supabaseSelect(
+      env,
+      `hotels?id=eq.${hotelId}&select=id,code,name,tracking_prefix,default_tracking_code`,
+    );
+    if (!rows.length) return jsonResponse({ error: "hotel not found" }, 404, request);
+    hotelRow = rows[0];
+  }
+  if (staffId) {
+    const rows = await supabaseSelect(
+      env,
+      `hotel_staff?id=eq.${staffId}&select=id,hotel_id,name,tracking_code`,
+    );
+    if (!rows.length) return jsonResponse({ error: "staff not found" }, 404, request);
+    staffRow = rows[0];
+    if (hotelId && staffRow.hotel_id !== hotelId) {
+      return jsonResponse({ error: "staff_id does not belong to hotel_id" }, 400, request);
+    }
+  }
+
+  // Derive defaults — overridable by request body.
+  let shortPath = typeof body.short_path === "string" ? body.short_path.trim() : "";
+  if (!shortPath) {
+    if (linkType === "staff" && staffRow) {
+      shortPath = trackingCodeToShortPath(staffRow.tracking_code) || "";
+    } else if (linkType === "hotel" && hotelRow) {
+      shortPath = hotelRow.code;
+    }
+  }
+  if (!shortPath || !SHORT_PATH_RE.test(shortPath)) {
+    return jsonResponse(
+      { error: "short_path missing or invalid (1–80 chars, [a-zA-Z0-9._-])" },
+      400,
+      request,
+    );
+  }
+
+  let targetUrl = typeof body.target_url === "string" ? body.target_url.trim() : "";
+  if (!targetUrl) {
+    if (linkType === "staff" && hotelRow && staffRow) {
+      targetUrl = staffTargetUrl(env, hotelRow.code, staffRow.tracking_code);
+    } else if (linkType === "hotel" && hotelRow) {
+      targetUrl = hotelTargetUrl(env, hotelRow.code);
+    }
+  }
+  if (!targetUrl || !/^https?:\/\//.test(targetUrl)) {
+    return jsonResponse({ error: "target_url missing or not http(s)" }, 400, request);
+  }
+
+  const label = typeof body.label === "string" ? body.label.trim() : null;
+  const notes = typeof body.notes === "string" ? body.notes.trim() : null;
+
+  try {
+    const inserted = await mintShortLinkAndRecord(
+      env,
+      {
+        shortPath,
+        targetUrl,
+        title: label,
+        linkType,
+        hotelId,
+        staffId,
+        label,
+        notes,
+      },
+      { throwOnError: true },
+    );
+    return jsonResponse({ short_link: normaliseShortLink(inserted) }, 201, request);
+  } catch (err) {
+    if (err instanceof ShortIoError) {
+      const status = err.status === 401 ? 502 : err.status >= 400 && err.status < 600 ? err.status : 502;
+      return jsonResponse({ error: `Short.io: ${err.message}` }, status, request);
+    }
+    if (isUniqueViolation(err, "short_path") || isUniqueViolation(err, "short_io_id")) {
+      return jsonResponse({ error: "short_path already in use" }, 409, request);
+    }
+    throw err;
+  }
+}
+
+// PATCH /api/admin/short-links/:id
+// Body: { target_url?, label?, notes? }
+// short_path is intentionally NOT editable here — once a QR encodes
+// a short URL, the path is immutable forever. Only the destination
+// and admin-facing metadata can change.
+async function handleAdminShortLinkUpdate(id, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(id)) return jsonResponse({ error: "invalid short_link id" }, 400, request);
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+
+  // Load the row so we know its short_io_id for the Short.io call.
+  const rows = await supabaseSelect(
+    env,
+    `short_links?id=eq.${encodeURIComponent(id)}&select=${SHORT_LINK_FIELDS}`,
+  );
+  if (!rows.length) return jsonResponse({ error: "short_link not found" }, 404, request);
+  const existing = rows[0];
+
+  const patch = {};
+  const shortIoPatch = {};
+  if (typeof body.target_url === "string") {
+    const t = body.target_url.trim();
+    if (!t || !/^https?:\/\//.test(t)) {
+      return jsonResponse({ error: "target_url must be http(s)" }, 400, request);
+    }
+    patch.target_url = t;
+    shortIoPatch.originalURL = t;
+  }
+  if (body.label === null) patch.label = null;
+  else if (typeof body.label === "string") {
+    patch.label = body.label.trim();
+    shortIoPatch.title = patch.label || null;
+  }
+  if (body.notes === null) patch.notes = null;
+  else if (typeof body.notes === "string") patch.notes = body.notes.trim();
+  if (typeof body.status === "string") {
+    if (!SHORT_LINK_STATUSES.has(body.status)) {
+      return jsonResponse({ error: "status must be active or retired" }, 400, request);
+    }
+    patch.status = body.status;
+  }
+  if (!Object.keys(patch).length) {
+    return jsonResponse({ error: "no editable fields in body" }, 400, request);
+  }
+
+  // Push the destination/title change to Short.io BEFORE we update
+  // Supabase. If Short.io fails we don't want a Supabase row that
+  // claims a different destination than the live redirect.
+  if (Object.keys(shortIoPatch).length) {
+    try {
+      await updateShortLink(env, existing.short_io_id, shortIoPatch);
+    } catch (err) {
+      const status = err instanceof ShortIoError && err.status >= 400 && err.status < 600
+        ? err.status
+        : 502;
+      return jsonResponse({ error: `Short.io: ${err.message}` }, status, request);
+    }
+  }
+
+  const updated = await supabaseUpdate(
+    env,
+    `short_links?id=eq.${encodeURIComponent(id)}`,
+    patch,
+    { returnRow: true },
+  );
+  return jsonResponse({ short_link: normaliseShortLink(updated[0]) }, 200, request);
+}
+
+// DELETE /api/admin/short-links/:id
+// Soft-retire only. The Short.io redirect stays alive forever so any
+// printed QR codes keep resolving — they just point to whatever
+// target_url the row currently has. Use the PATCH endpoint to
+// re-target before retiring if you want a different destination.
+async function handleAdminShortLinkRetire(id, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(id)) return jsonResponse({ error: "invalid short_link id" }, 400, request);
+
+  const updated = await supabaseUpdate(
+    env,
+    `short_links?id=eq.${encodeURIComponent(id)}`,
+    { status: "retired" },
+    { returnRow: true },
+  );
+  if (!Array.isArray(updated) || !updated.length) {
+    return jsonResponse({ error: "short_link not found" }, 404, request);
+  }
+  return jsonResponse({ short_link: normaliseShortLink(updated[0]) }, 200, request);
 }
 
 // Triggers a Cloudflare Pages rebuild via the deploy hook URL stored
@@ -1388,6 +1802,7 @@ function normaliseHotel(h) {
     kickback_pool_pct: h.kickback_pool_pct != null ? Number(h.kickback_pool_pct) : null,
     staff:    Array.isArray(h.staff)    ? h.staff.map(normaliseStaff)    : [],
     managers: Array.isArray(h.managers) ? h.managers                     : [],
+    short_links: Array.isArray(h.short_links) ? h.short_links             : [],
   };
 }
 
