@@ -2599,3 +2599,120 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   flex-shrink: 0;
   padding-top: 2px;
 }
+
+/* ── Short Links global page (Phase 6) ────────────────────────── */
+
+/* 3 label-only filter cards (All / Active / Retired).
+   Width is set to let them sit flush with the toolbar below. */
+.bk-statcards--shortlinks {
+  display: flex;
+  justify-content: flex-start;
+  gap: 6px;
+}
+.bk-statcards--shortlinks .bk-statcard {
+  width: 120px;
+  height: 46px;
+  padding: 0 var(--s4);
+  justify-content: flex-start;
+  text-align: left;
+}
+
+/* Search input with leading magnifier icon */
+.slg-search-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.slg-search__icon {
+  position: absolute;
+  left: 9px;
+  width: 14px;
+  height: 14px;
+  color: var(--text-faint);
+  pointer-events: none;
+  flex-shrink: 0;
+}
+.slg-search {
+  width: 240px;
+  padding: 7px 10px 7px 30px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg);
+  font: inherit;
+  font-size: var(--t-sm);
+  color: var(--text);
+  transition: border-color var(--t-fast), box-shadow var(--t-fast);
+}
+.slg-search:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.slg-search::placeholder { color: var(--text-faint); }
+
+/* Bulk-action bar — appears between toolbar and table when ≥1 row
+   selected. Soft tinted row that reads as a continuation of the
+   table head rather than a separate card. */
+.slg-bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  padding: 8px var(--s4);
+  background: #ecf1f6;
+  border: 1px solid #d4dee9;
+  border-radius: var(--r-md);
+  margin-bottom: var(--s3);
+}
+.slg-bulk-bar__count {
+  font-size: var(--t-sm);
+  font-weight: 500;
+  color: #35455a;
+  flex: 1;
+}
+.slg-bulk-bar__actions {
+  display: flex;
+  gap: var(--s2);
+}
+
+/* Short Links table modifier */
+.bk-table--shortlinks thead th { border-top: 0; }
+.bk-table--shortlinks tbody td { font-weight: 400; }
+
+/* Short URL cell — monospace, truncates to fit the column.
+   Max-width keeps the table from blowing out at 1280px content. */
+.slg-url-cell {
+  max-width: 200px;
+}
+.slg-url-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: var(--t-xs);
+  color: var(--accent);
+}
+
+/* Destination column — muted mono, truncated */
+.slg-dest-cell {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* "Load more" inline button in the table footer */
+.slg-load-more {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: var(--t-sm);
+  font-weight: 500;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color var(--t-fast);
+}
+.slg-load-more:hover { color: var(--accent-hover); }
