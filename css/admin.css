@@ -3059,3 +3059,62 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
     gap: 2px;
   }
 }
+
+/* ── Hotel detail page header: identity block ────────────────
+   Avatar (square with rounded corners + initial) sits left of the
+   title; the Hotel ID pill sits directly under the title. The
+   pair anchors the page visually so an admin can recognize the
+   property at a glance even with the drawer scrolled. */
+.hd-head__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  min-width: 0;
+  flex: 1;
+}
+.hd-head__avatar {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  background: #1a2c44;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  font-family: 'Times New Roman', Georgia, serif;
+  user-select: none;
+}
+.hd-head__id {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s1);
+  padding: 2px 8px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: var(--t-xs);
+  color: #50617a;
+  cursor: pointer;
+  align-self: flex-start;
+  margin-top: 2px;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+.hd-head__id:hover {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+  color: #1a2c44;
+}
+.hd-head__qr-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+}
+.hd-head__qr-icon { flex-shrink: 0; }
+.hd-head__qr-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
