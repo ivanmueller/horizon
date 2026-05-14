@@ -811,6 +811,7 @@ async function handleAdminBookingPatch(id, request, env) {
     return jsonResponse({ error: "booking not found" }, 404, request);
   }
 
+  logMutation(request, auth.claims, "update", "booking", id, { status });
   return jsonResponse({ ok: true, booking: updated[0] }, 200, request);
 }
 
@@ -871,8 +872,10 @@ function isUniqueViolation(err, columnHint) {
 
 // Mint a Short.io short link and persist the mirror row in
 // short_links. Best-effort by default: a Short.io failure logs and
-// returns null rather than throwing, so the parent hotel/staff
-// creation succeeds even when Short.io is unreachable or unconfigured.
+// returns { link: null, error: <msg> } rather than throwing, so the
+// parent hotel/staff creation succeeds even when Short.io is
+// unreachable or unconfigured. Callers must surface the error to
+// the admin so a silent miss is recoverable.
 // Set `throwOnError: true` for the admin POST endpoint where the
 // caller explicitly asked to create a short link and a failure is
 // the actionable outcome.
@@ -892,7 +895,7 @@ async function mintShortLinkAndRecord(env, params, { throwOnError = false } = {}
     if (throwOnError) {
       throw new ShortIoError(500, null, "SHORT_IO_API_KEY not configured on the worker");
     }
-    return null;
+    return { link: null, error: "SHORT_IO_API_KEY not configured" };
   }
 
   let created;
@@ -907,7 +910,7 @@ async function mintShortLinkAndRecord(env, params, { throwOnError = false } = {}
     console.warn(
       `Short.io createShortLink failed for ${linkType} ${hotelId || staffId}: ${err.message}`,
     );
-    return null;
+    return { link: null, error: `Short.io createShortLink failed: ${err.message}` };
   }
 
   // Short.io returns { id, shortURL, path, originalURL, ... }. Persist
@@ -932,7 +935,7 @@ async function mintShortLinkAndRecord(env, params, { throwOnError = false } = {}
       ],
       { returnRow: true },
     );
-    return inserted[0];
+    return { link: inserted[0], error: null };
   } catch (err) {
     // Short.io created the link but Supabase rejected the row. We
     // surface this either way — silent failure here means a
@@ -942,7 +945,10 @@ async function mintShortLinkAndRecord(env, params, { throwOnError = false } = {}
       `Short.io link ${created.id} created but short_links insert failed: ${err.message}`,
     );
     if (throwOnError) throw err;
-    return null;
+    return {
+      link: null,
+      error: `Short.io link ${created.id} minted but DB row insert failed: ${err.message}`,
+    };
   }
 }
 
@@ -981,10 +987,10 @@ async function insertHotelWithPrefix(env, row, maxAttempts = 8) {
       const hotel = inserted[0];
       // Auto-mint the hotel's master short link. Best-effort: a
       // Short.io failure (network, rate limit, missing API key)
-      // does not roll back the hotel row. Admins can create the
-      // short link retroactively via the /api/admin/short-links
-      // POST endpoint once Short.io is wired up.
-      await mintShortLinkAndRecord(env, {
+      // does not roll back the hotel row. The error message is
+      // bubbled out so the POST handler can surface it to the
+      // admin — silent loss would leave a hotel with no QR.
+      const { error: shortLinkWarning } = await mintShortLinkAndRecord(env, {
         shortPath: hotel.code,
         targetUrl: hotelTargetUrl(env, hotel.code),
         title: `${hotel.name} — master`,
@@ -992,7 +998,7 @@ async function insertHotelWithPrefix(env, row, maxAttempts = 8) {
         hotelId: hotel.id,
         label: "Master — hotel default",
       });
-      return hotel;
+      return { hotel, shortLinkWarning };
     } catch (err) {
       lastErr = err;
       if (isUniqueViolation(err, "tracking_prefix")) continue;
@@ -1050,8 +1056,9 @@ async function insertStaffWithSequence(env, row, maxAttempts = 5) {
         `hotels?id=eq.${encodeURIComponent(row.hotel_id)}&select=code,name`,
       );
       const hotel = hotelRows[0];
+      let shortLinkWarning = null;
       if (hotel) {
-        await mintShortLinkAndRecord(env, {
+        ({ error: shortLinkWarning } = await mintShortLinkAndRecord(env, {
           shortPath: trackingCodeToShortPath(staff.tracking_code),
           targetUrl: staffTargetUrl(env, hotel.code, staff.tracking_code),
           title: `${hotel.name} — ${staff.name}`,
@@ -1059,9 +1066,11 @@ async function insertStaffWithSequence(env, row, maxAttempts = 5) {
           hotelId: row.hotel_id,
           staffId: staff.id,
           label: staff.name,
-        });
+        }));
+      } else {
+        shortLinkWarning = "hotel row missing — short link not minted";
       }
-      return staff;
+      return { staff, shortLinkWarning };
     } catch (err) {
       lastErr = err;
       if (
@@ -1101,8 +1110,13 @@ async function handleAdminHotelCreate(request, env) {
   if (v.error) return jsonResponse({ error: v.error }, 400, request);
 
   try {
-    const inserted = await insertHotelWithPrefix(env, v.row);
-    return jsonResponse({ hotel: normaliseHotel(inserted) }, 201, request);
+    const { hotel, shortLinkWarning } = await insertHotelWithPrefix(env, v.row);
+    logMutation(request, auth.claims, "create", "hotel", hotel.id, {
+      code: hotel.code, name: hotel.name,
+    });
+    const payload = { hotel: normaliseHotel(hotel) };
+    if (shortLinkWarning) payload.short_link_warning = shortLinkWarning;
+    return jsonResponse(payload, 201, request);
   } catch (err) {
     if (isUniqueViolation(err, "code") || isUniqueViolation(err, "hotels_code_key")) {
       return jsonResponse({ error: `hotel with code "${v.row.code}" already exists` }, 409, request);
@@ -1129,6 +1143,7 @@ async function handleAdminHotelUpdate(id, request, env) {
   if (!Array.isArray(updated) || !updated.length) {
     return jsonResponse({ error: "hotel not found" }, 404, request);
   }
+  logMutation(request, auth.claims, "update", "hotel", id, { fields: Object.keys(v.row) });
   return jsonResponse({ hotel: normaliseHotel(updated[0]) }, 200, request);
 }
 
@@ -1144,6 +1159,7 @@ async function handleAdminHotelTerminate(id, request, env) {
   if (!Array.isArray(updated) || !updated.length) {
     return jsonResponse({ error: "hotel not found" }, 404, request);
   }
+  logMutation(request, auth.claims, "terminate", "hotel", id);
   return jsonResponse({ hotel: normaliseHotel(updated[0]) }, 200, request);
 }
 
@@ -1157,8 +1173,13 @@ async function handleAdminStaffCreate(request, env) {
   if (v.error) return jsonResponse({ error: v.error }, 400, request);
 
   try {
-    const inserted = await insertStaffWithSequence(env, v.row);
-    return jsonResponse({ staff: normaliseStaff(inserted) }, 201, request);
+    const { staff, shortLinkWarning } = await insertStaffWithSequence(env, v.row);
+    logMutation(request, auth.claims, "create", "staff", staff.id, {
+      hotel_id: v.row.hotel_id, tracking_code: staff.tracking_code, name: staff.name,
+    });
+    const payload = { staff: normaliseStaff(staff) };
+    if (shortLinkWarning) payload.short_link_warning = shortLinkWarning;
+    return jsonResponse(payload, 201, request);
   } catch (err) {
     if (err.status === 404) return jsonResponse({ error: err.message }, 404, request);
     if (isUniqueViolation(err, "code")) {
@@ -1186,6 +1207,7 @@ async function handleAdminStaffUpdate(id, request, env) {
   if (!Array.isArray(updated) || !updated.length) {
     return jsonResponse({ error: "staff not found" }, 404, request);
   }
+  logMutation(request, auth.claims, "update", "staff", id, { fields: Object.keys(v.row) });
   return jsonResponse({ staff: normaliseStaff(updated[0]) }, 200, request);
 }
 
@@ -1201,6 +1223,7 @@ async function handleAdminStaffTerminate(id, request, env) {
   if (!Array.isArray(updated) || !updated.length) {
     return jsonResponse({ error: "staff not found" }, 404, request);
   }
+  logMutation(request, auth.claims, "terminate", "staff", id);
   return jsonResponse({ staff: normaliseStaff(updated[0]) }, 200, request);
 }
 
@@ -1223,6 +1246,9 @@ async function handleAdminHotelUserCreate(request, env) {
       { returnRow: true },
     );
     const invite_sent = await sendManagerInvite(env, email);
+    logMutation(request, auth.claims, "create", "hotel_user", inserted[0].id, {
+      hotel_id, email, role,
+    });
     return jsonResponse({ manager: inserted[0], invite_sent }, 201, request);
   } catch (err) {
     if (err.body && /duplicate key|unique/i.test(JSON.stringify(err.body))) {
@@ -1292,6 +1318,7 @@ async function handleAdminHotelUserUpdate(id, request, env) {
   if (!Array.isArray(updated) || !updated.length) {
     return jsonResponse({ error: "hotel-user not found" }, 404, request);
   }
+  logMutation(request, auth.claims, "update", "hotel_user", id, { fields: Object.keys(patch) });
   return jsonResponse({ manager: updated[0] }, 200, request);
 }
 
@@ -1447,7 +1474,7 @@ async function handleAdminShortLinkCreate(request, env) {
   const notes = typeof body.notes === "string" ? body.notes.trim() : null;
 
   try {
-    const inserted = await mintShortLinkAndRecord(
+    const { link } = await mintShortLinkAndRecord(
       env,
       {
         shortPath,
@@ -1461,7 +1488,10 @@ async function handleAdminShortLinkCreate(request, env) {
       },
       { throwOnError: true },
     );
-    return jsonResponse({ short_link: normaliseShortLink(inserted) }, 201, request);
+    logMutation(request, auth.claims, "create", "short_link", link?.id, {
+      link_type: linkType, hotel_id: hotelId, staff_id: staffId, short_path: shortPath,
+    });
+    return jsonResponse({ short_link: normaliseShortLink(link) }, 201, request);
   } catch (err) {
     if (err instanceof ShortIoError) {
       const status = err.status === 401 ? 502 : err.status >= 400 && err.status < 600 ? err.status : 502;
@@ -1541,6 +1571,7 @@ async function handleAdminShortLinkUpdate(id, request, env) {
     patch,
     { returnRow: true },
   );
+  logMutation(request, auth.claims, "update", "short_link", id, { fields: Object.keys(patch) });
   return jsonResponse({ short_link: normaliseShortLink(updated[0]) }, 200, request);
 }
 
@@ -1563,6 +1594,7 @@ async function handleAdminShortLinkRetire(id, request, env) {
   if (!Array.isArray(updated) || !updated.length) {
     return jsonResponse({ error: "short_link not found" }, 404, request);
   }
+  logMutation(request, auth.claims, "retire", "short_link", id);
   return jsonResponse({ short_link: normaliseShortLink(updated[0]) }, 200, request);
 }
 
@@ -1725,6 +1757,9 @@ async function handleAdminSyncClicks(request, env) {
   const auth = await requireHorizonAdmin(request, env);
   if (auth.error) return auth.error;
   const result = await syncClickCounts(env);
+  logMutation(request, auth.claims, "sync_clicks", "short_link", null, {
+    synced: result?.synced, errors: result?.errors, total: result?.total,
+  });
   return jsonResponse(result, 200, request);
 }
 
@@ -1805,6 +1840,7 @@ async function handleAdminRepublish(request, env) {
       502, request,
     );
   }
+  logMutation(request, auth.claims, "republish", "partners_json", null);
   return jsonResponse({ ok: true, triggered_at: new Date().toISOString() }, 200, request);
 }
 
@@ -1955,6 +1991,7 @@ async function handleAdminAccessRequestReview(id, request, env) {
   if (!Array.isArray(updated) || !updated.length) {
     return jsonResponse({ error: "access request not found" }, 404, request);
   }
+  logMutation(request, auth.claims, "review", "access_request", id, { decision: status });
   return jsonResponse({ ok: true, request: updated[0] }, 200, request);
 }
 
@@ -2327,6 +2364,26 @@ function jsonResponse(data, status, request) {
       ...corsHeaders(request),
     },
   });
+}
+
+// One-line structured log of every admin mutation. Captured by
+// Cloudflare's tail logs (retained ~3 days on the paid plan, longer
+// with Logpush). Cheap pre-launch substitute for a real audit_log
+// table — enough to answer "who changed X" if a dispute lands.
+// Replace with the audit_log table from Phase 8 once it exists.
+function logMutation(request, claims, action, entityType, entityId, extra) {
+  const entry = {
+    audit:       true,
+    at:          new Date().toISOString(),
+    request_id:  request?.headers?.get("cf-ray") || null,
+    actor_email: claims?.email || null,
+    actor_sub:   claims?.sub   || null,
+    action,
+    entity_type: entityType,
+    entity_id:   entityId || null,
+  };
+  if (extra && typeof extra === "object") Object.assign(entry, extra);
+  console.log("MUTATION", JSON.stringify(entry));
 }
 
 function corsHeaders(request) {
