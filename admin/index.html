@@ -3965,10 +3965,13 @@
       });
     }
 
-    function flashHotelsNotice(msg) {
+    function flashHotelsNotice(msg, opts) {
       if (!hotelsEls || !hotelsEls.notice) return;
       hotelsEls.notice.textContent = msg;
       hotelsEls.notice.hidden = false;
+      // Sticky notices stay until the next notice replaces them — used
+      // for warnings the admin needs time to read and act on.
+      if (opts && opts.persist) return;
       setTimeout(() => { if (hotelsEls && hotelsEls.notice) hotelsEls.notice.hidden = true; }, 5000);
     }
 
@@ -4677,7 +4680,16 @@
           // new hotel in the list immediately from the local refresh.
           triggerRepublish();
           closeHotelDrawer();
-          flashHotelsNotice('Hotel created. Republishing partners.json (~30s)…');
+          const warn = res.body && res.body.short_link_warning;
+          if (warn) {
+            flashHotelsNotice(
+              'Hotel created, but the master short link failed to mint: ' + warn +
+              ' Retry from the Short Links page once Short.io recovers.',
+              { persist: true },
+            );
+          } else {
+            flashHotelsNotice('Hotel created. Republishing partners.json (~30s)…');
+          }
           if (hotelsEls) loadHotels(hotelsEls);
         })
         .catch((err) => {
@@ -4905,7 +4917,16 @@
           }
           drawerStaffForm = null;
           triggerRepublish();
-          flashHotelsNotice('Staff added. Republishing partners.json (~30s)…');
+          const warn = res.body && res.body.short_link_warning;
+          if (warn) {
+            flashHotelsNotice(
+              'Staff added, but the personal short link failed to mint: ' + warn +
+              ' Retry from the Short Links page once Short.io recovers.',
+              { persist: true },
+            );
+          } else {
+            flashHotelsNotice('Staff added. Republishing partners.json (~30s)…');
+          }
           reloadHotelsCacheAndRefresh();
         })
         .catch((err) => {
