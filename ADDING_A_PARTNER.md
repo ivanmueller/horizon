@@ -87,7 +87,6 @@ Same as pool, but pick **`kickback`** for Type. Then add staff:
    | Field          | Value                                                  |
    |----------------|--------------------------------------------------------|
    | Name           | `Jane Smith`                                           |
-   | Slug           | `fairmont-chateau-lake-louise-js` (or any unique label)|
    | Kickback %     | `5`                                                    |
 
    The tracking code is minted by the worker (`{hotel-prefix}_E_{seq}`,
@@ -118,7 +117,8 @@ identity for `/partners/<slug>/` and the `?hotel=<slug>` query
 parameter — changing it would break old QR codes / printed
 materials).
 
-For staff, click **Edit** on any row — same restriction on slug.
+For staff, click **Edit** on any row — only Name and Kickback % are
+editable; tracking codes are permanent.
 
 Saves trigger a republish automatically. The list refreshes
 immediately so you can see the new values; partners.json catches
@@ -138,9 +138,10 @@ invoices are preserved.
 their row in the Staff table. Confirm. Same soft-delete behaviour.
 
 Either action is reversible — terminated hotels expose a
-**Reinstate** button in the same Danger zone, and revoked staff
-can be re-added with the same slug (the worker enforces the unique
-constraint only on `status='active'`).
+**Reinstate** button in the same Danger zone. Revoked staff stay
+on the row with their original tracking code; if a person needs
+to come back, simply reinstate via the API or re-add them as a
+new staff member (they'll get a fresh sequence number).
 
 ## Inviting a manager (hotel-side dashboard access)
 

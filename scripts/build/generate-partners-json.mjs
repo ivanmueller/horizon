@@ -64,18 +64,17 @@ async function main() {
     "id,code,name,location,type,status,effective_date," +
     "default_tracking_code,commission_pct,kickback_pool_pct,notes";
   const staffFields =
-    "hotel_id,code,name,tracking_code,kickback_pct,status";
+    "hotel_id,name,tracking_code,kickback_pct,status";
 
   const [hotels, staff] = await Promise.all([
     rest(`/hotels?select=${hotelFields}&order=code.asc`),
-    rest(`/hotel_staff?select=${staffFields}&order=code.asc`),
+    rest(`/hotel_staff?select=${staffFields}&order=tracking_code.asc`),
   ]);
 
   const staffByHotel = new Map();
   for (const s of staff) {
     const list = staffByHotel.get(s.hotel_id) || [];
     list.push({
-      code:          s.code,
       name:          s.name,
       tracking_code: s.tracking_code,
       kickback_pct:  num(s.kickback_pct),
