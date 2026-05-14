@@ -238,6 +238,7 @@ export default {
       if (segs[0] === "api" && segs[1] === "admin" && segs[2] === "short-links") {
         if (request.method === "GET"  && !segs[3]) return await handleAdminGlobalShortLinks(url, env, request);
         if (request.method === "POST" && !segs[3]) return await handleAdminShortLinkCreate(request, env);
+        if (request.method === "GET"  && segs[3] && segs[4] === "audit") return await handleAdminShortLinkAuditList(segs[3], request, env);
         if (request.method === "PATCH" && segs[3]) return await handleAdminShortLinkUpdate(segs[3], request, env);
         if (request.method === "DELETE" && segs[3]) return await handleAdminShortLinkRetire(segs[3], request, env);
       }
@@ -1568,6 +1569,7 @@ async function handleAdminShortLinkUpdate(id, request, env) {
     { returnRow: true },
   );
   logMutation(request, auth.claims, "update", "short_link", id, { fields: Object.keys(patch) });
+  await recordShortLinkAudit(env, auth.claims, id, existing, patch);
   return jsonResponse({ short_link: normaliseShortLink(updated[0]) }, 200, request);
 }
 
@@ -1581,6 +1583,15 @@ async function handleAdminShortLinkRetire(id, request, env) {
   if (auth.error) return auth.error;
   if (!UUID_RE.test(id)) return jsonResponse({ error: "invalid short_link id" }, 400, request);
 
+  // Load the existing row so the audit log can capture the prior
+  // status. Skip if already retired so we don't churn idempotent
+  // double-clicks into noise audit rows.
+  const existing = await supabaseSelect(
+    env,
+    `short_links?id=eq.${encodeURIComponent(id)}&select=id,status`,
+  );
+  if (!existing.length) return jsonResponse({ error: "short_link not found" }, 404, request);
+
   const updated = await supabaseUpdate(
     env,
     `short_links?id=eq.${encodeURIComponent(id)}`,
@@ -1591,7 +1602,25 @@ async function handleAdminShortLinkRetire(id, request, env) {
     return jsonResponse({ error: "short_link not found" }, 404, request);
   }
   logMutation(request, auth.claims, "retire", "short_link", id);
+  await recordShortLinkAudit(env, auth.claims, id, existing[0], { status: "retired" });
   return jsonResponse({ short_link: normaliseShortLink(updated[0]) }, 200, request);
+}
+
+// GET /api/admin/short-links/:id/audit
+// Returns the change history for a single short_link, newest first.
+// Used by the Edit modal to surface a "what changed and when" log.
+async function handleAdminShortLinkAuditList(id, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(id)) return jsonResponse({ error: "invalid short_link id" }, 400, request);
+
+  const rows = await supabaseSelect(
+    env,
+    `short_link_audit?short_link_id=eq.${encodeURIComponent(id)}` +
+      `&select=id,field,old_value,new_value,actor_email,created_at` +
+      `&order=created_at.desc&limit=200`,
+  );
+  return jsonResponse({ entries: rows || [] }, 200, request);
 }
 
 // ── Short.io click-count sync ──────────────────────────────────────────────
@@ -2364,6 +2393,40 @@ function jsonResponse(data, status, request) {
 // with Logpush). Cheap pre-launch substitute for a real audit_log
 // table — enough to answer "who changed X" if a dispute lands.
 // Replace with the audit_log table from Phase 8 once it exists.
+// Append-only audit log for short_link mutations. Writes one row per
+// field that actually changed so the Edit modal can render a clean
+// timeline. Fire-and-forget — the mutation itself has already
+// succeeded by the time we get here, so an audit-insert failure must
+// not roll the change back.
+async function recordShortLinkAudit(env, claims, shortLinkId, oldRow, newPatch) {
+  if (!shortLinkId || !oldRow || !newPatch) return;
+  const FIELDS = ["target_url", "label", "notes", "status"];
+  const rows = [];
+  for (const field of FIELDS) {
+    if (!Object.prototype.hasOwnProperty.call(newPatch, field)) continue;
+    const before = oldRow[field] ?? null;
+    const after  = newPatch[field] ?? null;
+    if (before === after) continue;
+    rows.push({
+      short_link_id: shortLinkId,
+      actor_email:   claims?.email || null,
+      actor_sub:     claims?.sub   || null,
+      field,
+      old_value:     before === null ? null : String(before),
+      new_value:     after  === null ? null : String(after),
+    });
+  }
+  if (!rows.length) return;
+  try {
+    await supabaseInsert(env, "short_link_audit", rows);
+  } catch (err) {
+    console.error("AUDIT_INSERT_FAILED", JSON.stringify({
+      short_link_id: shortLinkId,
+      error: err && err.message,
+    }));
+  }
+}
+
 function logMutation(request, claims, action, entityType, entityId, extra) {
   const entry = {
     audit:       true,

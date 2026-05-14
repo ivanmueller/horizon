@@ -358,6 +358,16 @@
         <textarea class="input" id="slEditNotes" rows="2"></textarea>
       </div>
 
+      <!-- Change history — every retarget, label/notes edit, and
+           status flip is logged in short_link_audit and rendered
+           here newest-first. -->
+      <details class="sl-edit__history" id="slEditHistoryWrap">
+        <summary class="sl-edit__history-summary">Change history</summary>
+        <div class="sl-edit__history-body" id="slEditHistoryBody">
+          <div class="muted">Loading…</div>
+        </div>
+      </details>
+
       <div class="modal__actions">
         <button type="button" class="btn" id="slEditCancel">Cancel</button>
         <button type="submit" class="btn btn--primary" id="slEditSubmit">Save changes</button>
@@ -365,25 +375,22 @@
     </form>
   </div>
 
-  <!-- ── Retire confirmation modal ─────────────────────────────
-       Reusable for single + bulk retire. Caller sets the title,
-       body, and confirm-click handler via openRetireModal(). -->
-  <div class="modal" id="slRetireModal" hidden>
+  <!-- ── Generic danger confirmation modal ────────────────────
+       Reusable for any destructive admin action (retire link,
+       terminate hotel, revoke staff, revoke manager access).
+       Caller passes title, body, confirm label, and async
+       handler via openDangerModal(). -->
+  <div class="modal" id="dangerModal" hidden>
     <div class="modal__card">
       <div class="modal__head">
-        <h2 class="modal__title" id="slRetireTitle">Retire link</h2>
-        <button type="button" class="modal__close" id="slRetireClose" aria-label="Close">×</button>
+        <h2 class="modal__title" id="dangerTitle">Confirm</h2>
+        <button type="button" class="modal__close" id="dangerClose" aria-label="Close">×</button>
       </div>
-      <div class="alert alert--bad" id="slRetireError" hidden></div>
-      <p class="modal__body" id="slRetireBody">
-        Retiring a link stops attribution on new clicks. The Short.io
-        redirect stays live so printed QR codes keep scanning to the
-        same destination — guests won't see a broken link.
-        You can reinstate from the link's Edit screen later.
-      </p>
+      <div class="alert alert--bad" id="dangerError" hidden></div>
+      <p class="modal__body" id="dangerBody"></p>
       <div class="modal__actions">
-        <button type="button" class="btn" id="slRetireCancel">Cancel</button>
-        <button type="button" class="btn btn--danger" id="slRetireConfirm">Retire</button>
+        <button type="button" class="btn" id="dangerCancel">Cancel</button>
+        <button type="button" class="btn btn--danger" id="dangerConfirm">Confirm</button>
       </div>
     </div>
   </div>
@@ -393,6 +400,8 @@
        by the time bookings render. ~600KB, internal page only. -->
   <script src="https://unpkg.com/pdfkit@0.15.0/js/pdfkit.standalone.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
+  <!-- JSZip for bulk QR ZIP export (Download all QRs per hotel). -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 
   <!-- Minimal blob-stream replacement. The npm `blob-stream` package
        is published as Node CommonJS and won't load via a CDN <script>.
@@ -956,7 +965,6 @@
                       <th class="bk-table__check"><input type="checkbox" id="slgCheckAll" aria-label="Select all"></th>
                       <th>Short URL</th>
                       <th>Type</th>
-                      <th>Hotel</th>
                       <th>Staff</th>
                       <th>Destination</th>
                       <th>Label</th>
@@ -968,7 +976,7 @@
                     </tr>
                   </thead>
                   <tbody id="slgBody">
-                    <tr><td colspan="12" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>
+                    <tr><td colspan="11" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>
                   </tbody>
                 </table>
               </div>
@@ -1433,15 +1441,88 @@
                   <header class="hd-card__head"><h3 class="hd-card__title">Master Referral</h3></header>
                   <div class="hd-mref">
                     <div class="hd-mref__qr" id="hdMasterRefQR" role="img" aria-label="Master referral QR code"></div>
-                    <button type="button" class="hd-copy hd-copy--url hd-mref__url mono" id="hdMasterRefUrl" data-copy="" title="Copy referral URL">
+                    <!-- Primary surface: the short URL. This is the
+                         only artifact that ever goes on printed
+                         materials. The long-form URL is collapsed
+                         under a details disclosure for debugging. -->
+                    <button type="button" class="hd-copy hd-copy--url hd-mref__url mono" id="hdMasterRefUrl" data-copy="" title="Copy short URL">
                       <span class="hd-trunc" data-detail-text>—</span>
                       <svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                     </button>
                     <div class="hd-mref__actions">
                       <button type="button" class="btn btn--sm" id="hdMasterRefDownload">Download QR</button>
-                      <button type="button" class="btn btn--sm" id="hdMasterRefEmbed">Get HTML embed</button>
+                      <button type="button" class="btn btn--sm" id="hdMasterRefBulk">Download all QRs</button>
                     </div>
+                    <details class="hd-mref__details">
+                      <summary class="hd-mref__details-summary">Show long URL (debug)</summary>
+                      <button type="button" class="hd-copy hd-copy--url hd-mref__longurl mono" id="hdMasterRefLongUrl" data-copy="" title="Copy long URL">
+                        <span class="hd-trunc" data-long-text>—</span>
+                        <svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      </button>
+                    </details>
                     <p class="hd-mref__help">Used when no employee code is attributed.</p>
+                  </div>
+                </section>
+
+                <!-- ── Referral Link Anatomy ────────────────────────────
+                     Shows the structure of this hotel's tracking codes
+                     and short paths, with the immutable parts visibly
+                     marked in danger-red. Surfaces what cannot be
+                     changed without invalidating printed QR codes. -->
+                <section class="hd-card" id="hdAnatomyCard">
+                  <header class="hd-card__head">
+                    <h3 class="hd-card__title">Referral link anatomy</h3>
+                  </header>
+                  <div class="hd-anatomy">
+                    <p class="hd-anatomy__intro">
+                      Every part shown in <span class="hd-anatomy__locked-pill">red</span>
+                      is permanent. Changing any of it would invalidate
+                      printed QR codes and break attribution.
+                    </p>
+
+                    <div class="hd-anatomy__block">
+                      <div class="hd-anatomy__label">Hotel prefix</div>
+                      <div class="hd-anatomy__value mono" id="hdAnatomyPrefix">—</div>
+                      <div class="hd-anatomy__hint">
+                        4-character random alphanumeric, generated at
+                        creation. Roots every code this hotel will ever
+                        issue.
+                      </div>
+                    </div>
+
+                    <div class="hd-anatomy__block">
+                      <div class="hd-anatomy__label">Hotel master code</div>
+                      <div class="hd-anatomy__value mono" id="hdAnatomyHotelCode">—</div>
+                      <div class="hd-anatomy__hint">
+                        Used on walk-in / hotel-pool bookings when no
+                        employee is attributed.
+                      </div>
+                    </div>
+
+                    <div class="hd-anatomy__block">
+                      <div class="hd-anatomy__label">Employee code pattern</div>
+                      <div class="hd-anatomy__value mono" id="hdAnatomyStaffPattern">—</div>
+                      <div class="hd-anatomy__hint">
+                        Each employee gets an auto-incremented sequence
+                        number. Codes are never re-used when staff leave.
+                      </div>
+                    </div>
+
+                    <div class="hd-anatomy__block">
+                      <div class="hd-anatomy__label">Short URL pattern</div>
+                      <div class="hd-anatomy__value mono" id="hdAnatomyShortUrl">—</div>
+                      <div class="hd-anatomy__hint">
+                        What goes on every QR code. The destination
+                        behind it can be retargeted, but the slug itself
+                        is locked once minted.
+                      </div>
+                    </div>
+
+                    <div class="hd-anatomy__warning">
+                      <strong>Do not edit</strong> any of the above
+                      values directly in the database. Treat them as
+                      printed-material commitments.
+                    </div>
                   </div>
                 </section>
 
@@ -1720,6 +1801,42 @@
       qr.download({ name: filename || 'horizon-qr', extension: 'png' });
     }
 
+    // Bulk QR ZIP — generates a 1024px PNG for each {slug, url} pair
+    // and bundles them into a single ZIP for one-click download.
+    // Used by the "Download all QRs" button on a hotel's drawer.
+    async function bulkDownloadHotelQRs(hotel, exports) {
+      if (!Array.isArray(exports) || !exports.length) return;
+      if (typeof JSZip === 'undefined') {
+        alert('ZIP library not loaded yet — please wait a moment and try again.');
+        return;
+      }
+      const btn = document.getElementById('hdMasterRefBulk');
+      const originalLabel = btn ? btn.textContent : '';
+      if (btn) { btn.disabled = true; btn.textContent = 'Preparing…'; }
+      try {
+        const zip = new JSZip();
+        for (const item of exports) {
+          const qr = makeQRInstance(item.url, 1024);
+          if (!qr) throw new Error('QR library failed to initialise.');
+          const blob = await qr.getRawData('png');
+          if (!blob) throw new Error('QR render returned no data.');
+          zip.file('horizon-qr-' + item.slug + '.png', blob);
+        }
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        const a = document.createElement('a');
+        a.href     = URL.createObjectURL(zipBlob);
+        a.download = 'horizon-qrs-' + (hotel.code || 'hotel') + '.zip';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+      } catch (err) {
+        alert('Could not build ZIP: ' + (err.message || err));
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = originalLabel || 'Download all QRs'; }
+      }
+    }
+
     // QR modal — singleton; re-used for every row click.
     let _qrModalInstance = null;
     const qrModal         = document.getElementById('qrModal');
@@ -1760,55 +1877,60 @@
     // card sidebar so the Download button can reference the correct URL.
     let _hotelDrawerQRUrl = null;
 
-    /* ── Retire confirmation modal ──────────────────────────
-       Singleton — caller passes a title, message, and onConfirm
-       handler. Modal handles its own loading/error state so the
-       caller's button doesn't need to. */
-    const slRetireModal   = document.getElementById('slRetireModal');
-    const slRetireTitle   = document.getElementById('slRetireTitle');
-    const slRetireBody    = document.getElementById('slRetireBody');
-    const slRetireError   = document.getElementById('slRetireError');
-    const slRetireConfirm = document.getElementById('slRetireConfirm');
-    const slRetireCancel  = document.getElementById('slRetireCancel');
-    const slRetireClose   = document.getElementById('slRetireClose');
-    let _slRetireHandler  = null;
+    /* ── Generic danger confirmation modal ──────────────────
+       Singleton — caller passes title, body, confirm label, and
+       async onConfirm handler. Modal owns loading + error state. */
+    const dangerModal   = document.getElementById('dangerModal');
+    const dangerTitle   = document.getElementById('dangerTitle');
+    const dangerBody    = document.getElementById('dangerBody');
+    const dangerError   = document.getElementById('dangerError');
+    const dangerConfirm = document.getElementById('dangerConfirm');
+    const dangerCancel  = document.getElementById('dangerCancel');
+    const dangerClose   = document.getElementById('dangerClose');
+    let _dangerHandler  = null;
+    let _dangerLabel    = 'Confirm';
 
-    function openRetireModal({ title, body, confirmLabel, onConfirm }) {
-      slRetireTitle.textContent = title || 'Retire link';
-      if (body) slRetireBody.textContent = body;
-      slRetireConfirm.textContent = confirmLabel || 'Retire';
-      slRetireConfirm.disabled    = false;
-      slRetireError.hidden = true;
-      _slRetireHandler = onConfirm;
-      slRetireModal.hidden = false;
+    function openDangerModal({ title, body, confirmLabel, busyLabel, onConfirm }) {
+      dangerTitle.textContent = title || 'Confirm';
+      dangerBody.textContent  = body  || '';
+      _dangerLabel            = confirmLabel || 'Confirm';
+      dangerConfirm.textContent = _dangerLabel;
+      dangerConfirm.disabled    = false;
+      dangerConfirm.dataset.busyLabel = busyLabel || (_dangerLabel + '…');
+      dangerError.hidden = true;
+      _dangerHandler = onConfirm;
+      dangerModal.hidden = false;
     }
 
-    function closeRetireModal() {
-      slRetireModal.hidden = true;
-      slRetireError.hidden = true;
-      _slRetireHandler = null;
+    function closeDangerModal() {
+      dangerModal.hidden = true;
+      dangerError.hidden = true;
+      _dangerHandler     = null;
     }
 
-    slRetireConfirm.addEventListener('click', async () => {
-      if (!_slRetireHandler) return closeRetireModal();
-      slRetireConfirm.disabled    = true;
-      slRetireConfirm.textContent = 'Retiring…';
-      slRetireError.hidden        = true;
+    dangerConfirm.addEventListener('click', async () => {
+      if (!_dangerHandler) return closeDangerModal();
+      dangerConfirm.disabled    = true;
+      dangerConfirm.textContent = dangerConfirm.dataset.busyLabel || (_dangerLabel + '…');
+      dangerError.hidden        = true;
       try {
-        await _slRetireHandler();
-        closeRetireModal();
+        await _dangerHandler();
+        closeDangerModal();
       } catch (err) {
-        slRetireError.textContent   = err.message || 'Could not retire.';
-        slRetireError.hidden        = false;
-        slRetireConfirm.disabled    = false;
-        slRetireConfirm.textContent = 'Retire';
+        dangerError.textContent   = err.message || 'Action failed.';
+        dangerError.hidden        = false;
+        dangerConfirm.disabled    = false;
+        dangerConfirm.textContent = _dangerLabel;
       }
     });
-    slRetireCancel.addEventListener('click', closeRetireModal);
-    slRetireClose.addEventListener('click', closeRetireModal);
-    slRetireModal.addEventListener('click', (e) => {
-      if (e.target === slRetireModal) closeRetireModal();
+    dangerCancel.addEventListener('click', closeDangerModal);
+    dangerClose.addEventListener('click', closeDangerModal);
+    dangerModal.addEventListener('click', (e) => {
+      if (e.target === dangerModal) closeDangerModal();
     });
+
+    // Back-compat alias — the bulk-retire flow already uses this name.
+    const openRetireModal = openDangerModal;
 
     /* ── Short link CRUD helpers ─────────────────────────── */
     // Module-level state for the two short link modals.
@@ -1939,7 +2061,57 @@
       slEditTarget.value = slData.target_url || '';
       slEditLabel.value  = slData.label || '';
       slEditNotes.value  = slData.notes || '';
+      const histWrap = document.getElementById('slEditHistoryWrap');
+      if (histWrap) histWrap.open = false; // collapsed by default
+      loadSlEditHistory(slData.id);
       slEditModal.hidden = false;
+    }
+
+    // Fetches and renders the audit history for the link being edited.
+    // Fire-and-forget — errors render inline so they don't block the
+    // form. Renders one row per change with field name, old → new,
+    // actor email, and relative time.
+    async function loadSlEditHistory(linkId) {
+      const body = document.getElementById('slEditHistoryBody');
+      if (!body) return;
+      body.innerHTML = '<div class="muted">Loading…</div>';
+      try {
+        const res = await fetch(BOKUN_API_BASE + '/api/admin/short-links/' + encodeURIComponent(linkId) + '/audit', {
+          headers: { Authorization: 'Bearer ' + session.access_token },
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error((data && data.error) || 'load_failed');
+        const entries = data.entries || [];
+        if (!entries.length) {
+          body.innerHTML = '<div class="muted">No changes recorded yet. Future edits will appear here.</div>';
+          return;
+        }
+        body.innerHTML = entries.map((entry) => {
+          const when  = formatHumanDateTime(entry.created_at);
+          const actor = entry.actor_email || 'system';
+          const fieldLabel = entry.field === 'target_url' ? 'destination'
+                          : entry.field === 'status'      ? 'status'
+                          : entry.field;
+          const fromTxt = entry.old_value === null ? '∅' : entry.old_value;
+          const toTxt   = entry.new_value === null ? '∅' : entry.new_value;
+          return (
+            '<div class="sl-edit__history-row">' +
+              '<div class="sl-edit__history-meta">' +
+                '<span class="sl-edit__history-when">' + escapeHtml(when) + '</span>' +
+                '<span class="sl-edit__history-actor">' + escapeHtml(actor) + '</span>' +
+                '<span class="sl-edit__history-field">' + escapeHtml(fieldLabel) + '</span>' +
+              '</div>' +
+              '<div class="sl-edit__history-diff mono">' +
+                '<span class="sl-edit__history-from">' + escapeHtml(fromTxt) + '</span>' +
+                '<span class="sl-edit__history-arrow">→</span>' +
+                '<span class="sl-edit__history-to">' + escapeHtml(toTxt) + '</span>' +
+              '</div>' +
+            '</div>'
+          );
+        }).join('');
+      } catch (err) {
+        body.innerHTML = '<div class="alert alert--bad">Could not load history: ' + escapeHtml(err.message || 'unknown error') + '</div>';
+      }
     }
 
     function closeSlEdit() {
@@ -3684,18 +3856,27 @@
         els.financial.innerHTML = bodyTop + splitHtml;
       }
 
-      // Master Referral card — QR + canonical URL + actions.
-      // QR encodes the short URL (the only thing that ever goes on
-      // printed material). The copy/display still surfaces the long URL
-      // for admin inspection — it's never on the QR itself.
-      const masterRefBtn  = els.container.querySelector('#hdMasterRefUrl');
-      const masterRefQREl = els.container.querySelector('#hdMasterRefQR');
-      const masterDlBtn   = els.container.querySelector('#hdMasterRefDownload');
-      const masterShortUrl = hotelShort ? hotelShort.short_url : null;
+      // Master Referral card.
+      // Primary surface: the short URL — the only artifact that ever
+      // goes on printed material. The long URL is collapsed under a
+      // disclosure for debugging only.
+      const masterRefBtn      = els.container.querySelector('#hdMasterRefUrl');
+      const masterRefLongBtn  = els.container.querySelector('#hdMasterRefLongUrl');
+      const masterRefQREl     = els.container.querySelector('#hdMasterRefQR');
+      const masterDlBtn       = els.container.querySelector('#hdMasterRefDownload');
+      const masterBulkBtn     = els.container.querySelector('#hdMasterRefBulk');
+      const masterShortUrl    = hotelShort ? hotelShort.short_url : null;
       if (masterRefBtn) {
-        masterRefBtn.dataset.copy = masterLink;
-        masterRefBtn.querySelector('[data-detail-text]').textContent = masterLink;
-        masterRefBtn.title = masterLink;
+        const display = masterShortUrl || 'No short link yet';
+        masterRefBtn.dataset.copy = masterShortUrl || '';
+        masterRefBtn.querySelector('[data-detail-text]').textContent = display;
+        masterRefBtn.title    = display;
+        masterRefBtn.disabled = !masterShortUrl;
+      }
+      if (masterRefLongBtn) {
+        masterRefLongBtn.dataset.copy = masterLink;
+        masterRefLongBtn.querySelector('[data-long-text]').textContent = masterLink;
+        masterRefLongBtn.title = masterLink;
       }
       if (masterRefQREl) {
         masterRefQREl.innerHTML = '';
@@ -3705,7 +3886,7 @@
         } else {
           masterRefQREl.innerHTML =
             '<div class="hd-mref__qr-empty" title="No short link yet — QR will appear once one is minted.">' +
-              '<span class="muted">No short link yet</span>' +
+              '<span>No short link yet</span>' +
             '</div>';
         }
       }
@@ -3717,6 +3898,65 @@
           downloadQRPng(masterShortUrl, 'horizon-qr-' + (h.code || 'hotel'));
         };
       }
+      if (masterBulkBtn) {
+        // Gathers every active short link for this hotel + its staff
+        // and zips a PNG for each. Skips rows with no short URL.
+        const activeStaff = (h.staff || []).filter((s) => s.status === 'active');
+        const exports = [];
+        if (hotelShort && hotelShort.short_url) {
+          exports.push({
+            slug: (h.code || 'hotel') + '__master',
+            url:  hotelShort.short_url,
+          });
+        }
+        for (const s of activeStaff) {
+          const sl = staffShortByStaffId.get(s.id);
+          if (!sl || !sl.short_url) continue;
+          const safeName = (s.name || s.tracking_code || s.id)
+            .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+          exports.push({
+            slug: (h.code || 'hotel') + '__' + (safeName || s.id),
+            url:  sl.short_url,
+          });
+        }
+        masterBulkBtn.disabled = exports.length === 0;
+        masterBulkBtn.title    = exports.length === 0
+          ? 'No short links available yet for this hotel.'
+          : 'Download a ZIP containing PNG QR codes for the hotel and every active employee.';
+        masterBulkBtn.onclick = () => bulkDownloadHotelQRs(h, exports);
+      }
+
+      // Referral link anatomy — wraps every immutable segment of the
+      // tracking codes in a danger-red highlight span so the admin sees
+      // at a glance what cannot be changed. Reads tracking_prefix +
+      // default_tracking_code straight from the hotel record.
+      const lockedSpan = (txt) =>
+        '<span class="hd-anatomy__locked">' + escapeHtml(txt) + '</span>';
+      const prefix    = h.tracking_prefix || '';
+      const hotelCode = h.default_tracking_code || (prefix ? prefix + '_H' : '');
+      const sampleSeq = '0042';
+      const staffPattern = prefix
+        ? lockedSpan(prefix) + lockedSpan('_E_') +
+          '<span class="hd-anatomy__seq">NNNN</span>' +
+          '<span class="hd-anatomy__hint-inline">  (e.g. ' +
+            escapeHtml(prefix + '_E_' + sampleSeq) + ')</span>'
+        : '—';
+      const shortUrlPattern = prefix
+        ? '<span class="hd-anatomy__faint">link.gowithhorizon.com/</span>' +
+          lockedSpan(prefix.toLowerCase()) +
+          lockedSpan('-') +
+          '<span class="hd-anatomy__seq">eNNNN</span>'
+        : '—';
+      const setAnatomy = (id, html) => {
+        const n = els.container.querySelector('#' + id);
+        if (n) n.innerHTML = html;
+      };
+      setAnatomy('hdAnatomyPrefix',       prefix ? lockedSpan(prefix) : '—');
+      setAnatomy('hdAnatomyHotelCode',    hotelCode
+        ? lockedSpan(prefix) + lockedSpan('_H')
+        : '—');
+      setAnatomy('hdAnatomyStaffPattern', staffPattern);
+      setAnatomy('hdAnatomyShortUrl',     shortUrlPattern);
 
       // Insights deltas — placeholder dashes until aggregation data
       // is wired up. Pattern stays in place so the renderer just
@@ -4280,8 +4520,13 @@
       const terminateBtn = hotelDrawerBody.querySelector('#heTerminate');
       if (terminateBtn) {
         terminateBtn.addEventListener('click', () => {
-          if (!confirm(`Terminate "${hotel.name}"?\n\nNew bookings will stop earning commission. Existing bookings + invoices are preserved. You can reinstate later.`)) return;
-          setHotelStatus(hotel, 'terminate');
+          openDangerModal({
+            title:        `Terminate "${hotel.name}"?`,
+            body:         'New bookings will stop earning commission. Existing bookings and invoices are preserved, and tracking codes stay associated with their historical bookings. You can reinstate this hotel later from the same drawer.',
+            confirmLabel: 'Terminate hotel',
+            busyLabel:    'Terminating…',
+            onConfirm:    () => setHotelStatus(hotel, 'terminate'),
+          });
         });
       }
       const reinstateBtn = hotelDrawerBody.querySelector('#heReinstate');
@@ -4309,10 +4554,15 @@
       hotelDrawerBody.querySelectorAll('[data-staff-revoke]').forEach((btn) => {
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
-          const staffId = btn.dataset.staffRevoke;
+          const staffId   = btn.dataset.staffRevoke;
           const staffName = btn.dataset.staffName || 'this staff member';
-          if (!confirm(`Revoke ${staffName}?\n\nFuture bookings under their tracking code will stop earning kickback. Past bookings are preserved.`)) return;
-          revokeStaff(hotel, staffId);
+          openDangerModal({
+            title:        `Revoke ${staffName}?`,
+            body:         "Future bookings under their tracking code stop earning kickback. Past bookings remain attributed to them so historical reporting and invoices stay accurate.",
+            confirmLabel: 'Revoke staff',
+            busyLabel:    'Revoking…',
+            onConfirm:    () => revokeStaff(hotel, staffId),
+          });
         });
       });
       // ── Managers section
@@ -4334,9 +4584,14 @@
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
           const managerId = btn.dataset.managerRevoke;
-          const email = btn.dataset.managerEmail || 'this manager';
-          if (!confirm(`Revoke access for ${email}?\n\nThey lose access to /dashboard/hotel/ immediately. You can re-invite later if needed.`)) return;
-          revokeManager(hotel, managerId);
+          const email     = btn.dataset.managerEmail || 'this manager';
+          openDangerModal({
+            title:        `Revoke access for ${email}?`,
+            body:         'They lose access to /dashboard/hotel/ immediately. You can re-invite the same email later — past activity stays attached to their account.',
+            confirmLabel: 'Revoke access',
+            busyLabel:    'Revoking…',
+            onConfirm:    () => revokeManager(hotel, managerId),
+          });
         });
       });
       const managerForm = hotelDrawerBody.querySelector('#hmForm');
@@ -4868,9 +5123,10 @@
         });
     }
 
-    function setHotelStatus(hotel, action) {
+    async function setHotelStatus(hotel, action) {
       // action: 'terminate' → DELETE (worker flips status to 'terminated')
       //         'active'    → PATCH { status: 'active' } (reinstate)
+      // Throws on failure so the danger modal can surface the error.
       const isTerminate = action === 'terminate';
       const opts = isTerminate
         ? { method: 'DELETE' }
@@ -4883,27 +5139,19 @@
         { Authorization: 'Bearer ' + session.access_token },
         opts.headers || {},
       );
-
-      fetch(BOKUN_API_BASE + '/api/admin/hotels/' + encodeURIComponent(hotel.id), opts)
-        .then((r) => r.json().then((b) => ({ ok: r.ok, status: r.status, body: b })))
-        .then((res) => {
-          if (!res.ok) {
-            const msg = (res.body && res.body.error) || ('Action failed (HTTP ' + res.status + ').');
-            flashHotelsError(msg);
-            return;
-          }
-          triggerRepublish();
-          flashHotelsNotice(
-            isTerminate
-              ? `"${hotel.name}" terminated. Republishing partners.json (~30s)…`
-              : `"${hotel.name}" reinstated. Republishing partners.json (~30s)…`,
-          );
-          closeHotelDrawer();
-          if (hotelsEls) loadHotels(hotelsEls);
-        })
-        .catch((err) => {
-          flashHotelsError(err && err.message || 'Unknown error');
-        });
+      const res = await fetch(BOKUN_API_BASE + '/api/admin/hotels/' + encodeURIComponent(hotel.id), opts);
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error((body && body.error) || ('Action failed (HTTP ' + res.status + ').'));
+      }
+      triggerRepublish();
+      flashHotelsNotice(
+        isTerminate
+          ? `"${hotel.name}" terminated. Republishing partners.json (~30s)…`
+          : `"${hotel.name}" reinstated. Republishing partners.json (~30s)…`,
+      );
+      closeHotelDrawer();
+      if (hotelsEls) loadHotels(hotelsEls);
     }
     function flashHotelsError(msg) {
       if (!hotelsEls || !hotelsEls.error) return;
@@ -5055,22 +5303,18 @@
         });
     }
 
-    function revokeStaff(hotel, staffId) {
-      fetch(BOKUN_API_BASE + '/api/admin/staff/' + encodeURIComponent(staffId), {
+    async function revokeStaff(hotel, staffId) {
+      const res = await fetch(BOKUN_API_BASE + '/api/admin/staff/' + encodeURIComponent(staffId), {
         method: 'DELETE',
         headers: { Authorization: 'Bearer ' + session.access_token },
-      })
-        .then((r) => r.json().then((b) => ({ ok: r.ok, status: r.status, body: b })))
-        .then((res) => {
-          if (!res.ok) {
-            flashHotelsError((res.body && res.body.error) || 'Revoke failed (HTTP ' + res.status + ').');
-            return;
-          }
-          triggerRepublish();
-          flashHotelsNotice('Staff revoked. Republishing partners.json (~30s)…');
-          reloadHotelsCacheAndRefresh();
-        })
-        .catch((err) => flashHotelsError(err.message || 'Unknown error'));
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error((body && body.error) || 'Revoke failed (HTTP ' + res.status + ').');
+      }
+      triggerRepublish();
+      flashHotelsNotice('Staff revoked. Republishing partners.json (~30s)…');
+      reloadHotelsCacheAndRefresh();
     }
 
     // ── Manager (hotel_users) sub-form (invite or edit role)
@@ -5200,25 +5444,21 @@
         });
     }
 
-    function revokeManager(hotel, managerId) {
-      fetch(BOKUN_API_BASE + '/api/admin/hotel-users/' + encodeURIComponent(managerId), {
+    async function revokeManager(hotel, managerId) {
+      const res = await fetch(BOKUN_API_BASE + '/api/admin/hotel-users/' + encodeURIComponent(managerId), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           Authorization: 'Bearer ' + session.access_token,
         },
         body: JSON.stringify({ status: 'revoked' }),
-      })
-        .then((r) => r.json().then((b) => ({ ok: r.ok, status: r.status, body: b })))
-        .then((res) => {
-          if (!res.ok) {
-            flashHotelsError((res.body && res.body.error) || 'Revoke failed (HTTP ' + res.status + ').');
-            return;
-          }
-          flashHotelsNotice('Manager access revoked.');
-          reloadHotelsCacheAndRefresh();
-        })
-        .catch((err) => flashHotelsError(err.message || 'Unknown error'));
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error((body && body.error) || 'Revoke failed (HTTP ' + res.status + ').');
+      }
+      flashHotelsNotice('Manager access revoked.');
+      reloadHotelsCacheAndRefresh();
     }
 
     /* ── Period / range / formatting helpers ─────────────── */
@@ -5317,6 +5557,9 @@
       let slgLinks       = [];
       let slgSelected    = new Set();
       let slgSearchTimer = null;
+      // Groups expanded by the user. Search ignores this — when a
+      // query is set, every group with at least one match is open.
+      let slgExpanded    = new Set();
 
       const e = {
         statcards:  document.getElementById('slgStatcards'),
@@ -5344,7 +5587,7 @@
       async function loadSlg(reset) {
         if (reset) { slgCursor = null; slgLinks = []; slgSelected.clear(); updateBulkBar(); }
         e.error.hidden = true;
-        if (reset) e.body.innerHTML = '<tr><td colspan="12" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>';
+        if (reset) e.body.innerHTML = '<tr><td colspan="11" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>';
         const params = new URLSearchParams({ limit: '50' });
         if (slgStatus && slgStatus !== 'all') params.set('status', slgStatus);
         if (slgType)   params.set('type',     slgType);
@@ -5363,68 +5606,123 @@
         } catch (err) {
           e.error.textContent = 'Could not load links: ' + err.message;
           e.error.hidden = false;
-          if (reset) e.body.innerHTML = '<tr><td colspan="12" class="bk-empty"><div class="bk-empty__title">Failed to load</div></td></tr>';
+          if (reset) e.body.innerHTML = '<tr><td colspan="11" class="bk-empty"><div class="bk-empty__title">Failed to load</div></td></tr>';
         }
+      }
+
+      // Renders one link row (the body of a group). Pulled out of the
+      // grouped renderer so the same template stays single-source.
+      function renderLinkRow(l, groupKey) {
+        const staff      = (l.staff_member && l.staff_member.name) || null;
+        const typePill   = slgPill(l.link_type);
+        const statusPill = l.status === 'active'
+          ? '<span class="bk-pill bk-pill--ok">Active</span>'
+          : '<span class="bk-pill bk-pill--neutral">Retired</span>';
+        const dest       = (l.target_url || '').replace(/^https?:\/\//, '');
+        const created    = formatHumanDate((l.created_at || '').slice(0, 10));
+        const lastScan   = l.last_clicked_at ? formatHumanDateTime(l.last_clicked_at) : '—';
+        const checked    = slgSelected.has(l.id);
+        return (
+          '<tr class="slg-row slg-row--child" data-slg-id="' + escapeHtml(l.id) +
+            '" data-slg-group="' + escapeHtml(groupKey) + '">' +
+          '<td class="bk-table__check" data-slg-check="1" style="cursor:default">' +
+            '<input type="checkbox" data-slg-id="' + escapeHtml(l.id) + '"' + (checked ? ' checked' : '') + ' aria-label="Select link">' +
+          '</td>' +
+          '<td class="slg-url-cell">' +
+            '<button type="button" class="hd-copy hd-copy--url" data-copy="' + escapeHtml(l.short_url || l.short_path || '') + '">' +
+              '<span class="mono slg-url-text">' + escapeHtml(l.short_url || l.short_path || '—') + '</span>' +
+              copyIconSvg +
+            '</button>' +
+          '</td>' +
+          '<td>' + typePill + '</td>' +
+          '<td class="bk-table__muted">' + escapeHtml(l.link_type === 'staff' && staff ? staff : '—') + '</td>' +
+          '<td class="slg-dest-cell bk-table__muted"><span class="mono" style="font-size:0.8em">' + escapeHtml(dest) + '</span></td>' +
+          '<td>' + escapeHtml(l.label || '—') + '</td>' +
+          '<td class="num">' + (l.click_count_cached || 0) + '</td>' +
+          '<td class="bk-table__muted">' + escapeHtml(lastScan) + '</td>' +
+          '<td>' + statusPill + '</td>' +
+          '<td class="bk-table__muted">' + escapeHtml(created) + '</td>' +
+          '<td class="bk-table__kebab">' +
+            (l.short_url
+              ? '<button type="button" class="bk-kebab" data-slg-qr="' + escapeHtml(l.id) + '" aria-label="View QR">' +
+                  '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">' +
+                    '<rect x="1" y="1" width="5" height="5" rx="0.5"/>' +
+                    '<rect x="1" y="10" width="5" height="5" rx="0.5"/>' +
+                    '<rect x="10" y="1" width="5" height="5" rx="0.5"/>' +
+                    '<rect x="3" y="3" width="1" height="1" fill="currentColor" stroke="none"/>' +
+                    '<rect x="3" y="12" width="1" height="1" fill="currentColor" stroke="none"/>' +
+                    '<rect x="12" y="3" width="1" height="1" fill="currentColor" stroke="none"/>' +
+                    '<rect x="10" y="10" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
+                    '<rect x="12.5" y="10" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
+                    '<rect x="10" y="12.5" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
+                    '<rect x="12.5" y="12.5" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
+                  '</svg>' +
+                '</button>'
+              : '') +
+            '<button type="button" class="bk-kebab" data-slg-edit="' + escapeHtml(l.id) + '" aria-label="Edit">⋯</button>' +
+          '</td>' +
+          '</tr>'
+        );
       }
 
       function renderRows(links) {
         if (!links.length) {
-          e.body.innerHTML = '<tr><td colspan="12" class="bk-empty"><div class="bk-empty__title">No links found</div><p class="bk-empty__body">Try adjusting the search or filters.</p></td></tr>';
+          e.body.innerHTML = '<tr><td colspan="11" class="bk-empty"><div class="bk-empty__title">No links found</div><p class="bk-empty__body">Try adjusting the search or filters.</p></td></tr>';
           return;
         }
-        e.body.innerHTML = links.map((l) => {
-          const hotel      = (l.hotel        && l.hotel.name)        || '—';
-          const staff      = (l.staff_member && l.staff_member.name) || null;
-          const typePill   = slgPill(l.link_type);
-          const statusPill = l.status === 'active'
-            ? '<span class="bk-pill bk-pill--ok">Active</span>'
-            : '<span class="bk-pill bk-pill--neutral">Retired</span>';
-          const dest       = (l.target_url || '').replace(/^https?:\/\//, '');
-          const created    = formatHumanDate((l.created_at || '').slice(0, 10));
-          const lastScan   = l.last_clicked_at ? formatHumanDateTime(l.last_clicked_at) : '—';
-          const checked    = slgSelected.has(l.id);
-          return (
-            '<tr class="slg-row" data-slg-id="' + escapeHtml(l.id) + '">' +
-            '<td class="bk-table__check" data-slg-check="1" style="cursor:default">' +
-              '<input type="checkbox" data-slg-id="' + escapeHtml(l.id) + '"' + (checked ? ' checked' : '') + ' aria-label="Select link">' +
-            '</td>' +
-            '<td class="slg-url-cell">' +
-              '<button type="button" class="hd-copy hd-copy--url" data-copy="' + escapeHtml(l.short_url || l.short_path || '') + '">' +
-                '<span class="mono slg-url-text">' + escapeHtml(l.short_url || l.short_path || '—') + '</span>' +
-                copyIconSvg +
-              '</button>' +
-            '</td>' +
-            '<td>' + typePill + '</td>' +
-            '<td class="bk-table__muted">' + escapeHtml(hotel) + '</td>' +
-            '<td class="bk-table__muted">' + escapeHtml(l.link_type === 'staff' && staff ? staff : '—') + '</td>' +
-            '<td class="slg-dest-cell bk-table__muted"><span class="mono" style="font-size:0.8em">' + escapeHtml(dest) + '</span></td>' +
-            '<td>' + escapeHtml(l.label || '—') + '</td>' +
-            '<td class="num">' + (l.click_count_cached || 0) + '</td>' +
-            '<td class="bk-table__muted">' + escapeHtml(lastScan) + '</td>' +
-            '<td>' + statusPill + '</td>' +
-            '<td class="bk-table__muted">' + escapeHtml(created) + '</td>' +
-            '<td class="bk-table__kebab">' +
-              (l.short_url
-                ? '<button type="button" class="bk-kebab" data-slg-qr="' + escapeHtml(l.id) + '" aria-label="View QR">' +
-                    '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">' +
-                      '<rect x="1" y="1" width="5" height="5" rx="0.5"/>' +
-                      '<rect x="1" y="10" width="5" height="5" rx="0.5"/>' +
-                      '<rect x="10" y="1" width="5" height="5" rx="0.5"/>' +
-                      '<rect x="3" y="3" width="1" height="1" fill="currentColor" stroke="none"/>' +
-                      '<rect x="3" y="12" width="1" height="1" fill="currentColor" stroke="none"/>' +
-                      '<rect x="12" y="3" width="1" height="1" fill="currentColor" stroke="none"/>' +
-                      '<rect x="10" y="10" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
-                      '<rect x="12.5" y="10" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
-                      '<rect x="10" y="12.5" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
-                      '<rect x="12.5" y="12.5" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
-                    '</svg>' +
-                  '</button>'
-                : '') +
-              '<button type="button" class="bk-kebab" data-slg-edit="' + escapeHtml(l.id) + '" aria-label="Edit">⋯</button>' +
-            '</td>' +
-            '</tr>'
-          );
+        // Group links by hotel_id. Orphans (campaign links with no
+        // hotel) fall into the "__no_hotel" bucket. Sort groups
+        // alphabetically by hotel name; orphan bucket goes last.
+        const groups = new Map();
+        for (const l of links) {
+          const key  = (l.hotel && l.hotel.id) || '__no_hotel';
+          const name = (l.hotel && l.hotel.name) || 'Unassigned (no hotel)';
+          if (!groups.has(key)) {
+            groups.set(key, { key, name, links: [], clicks: 0, lastScan: null, active: 0, retired: 0 });
+          }
+          const g = groups.get(key);
+          g.links.push(l);
+          g.clicks += Number(l.click_count_cached || 0);
+          if (l.status === 'active')  g.active  += 1;
+          if (l.status === 'retired') g.retired += 1;
+          const ts = l.last_clicked_at ? new Date(l.last_clicked_at).getTime() : 0;
+          if (ts && (!g.lastScan || ts > g.lastScan)) g.lastScan = ts;
+        }
+        const sortedGroups = Array.from(groups.values()).sort((a, b) => {
+          if (a.key === '__no_hotel') return  1;
+          if (b.key === '__no_hotel') return -1;
+          return a.name.localeCompare(b.name);
+        });
+        // When a search query is active, force every group with
+        // matches to be open so results aren't hidden behind a
+        // collapsed header.
+        const forceOpen = !!slgQ;
+        const html = sortedGroups.map((g) => {
+          const isOpen = forceOpen || slgExpanded.has(g.key);
+          const lastScanHtml = g.lastScan
+            ? formatHumanDateTime(new Date(g.lastScan).toISOString())
+            : '—';
+          const header =
+            '<tr class="slg-row slg-row--group" data-slg-group-toggle="' + escapeHtml(g.key) + '">' +
+              '<td colspan="11" class="slg-group__cell">' +
+                '<div class="slg-group">' +
+                  '<span class="slg-group__chev' + (isOpen ? ' slg-group__chev--open' : '') + '" aria-hidden="true">▶</span>' +
+                  '<span class="slg-group__name">' + escapeHtml(g.name) + '</span>' +
+                  '<span class="slg-group__meta">' +
+                    g.links.length + ' link' + (g.links.length === 1 ? '' : 's') +
+                    (g.retired ? ' &middot; ' + g.retired + ' retired' : '') +
+                  '</span>' +
+                  '<span class="slg-group__meta slg-group__meta--num">' +
+                    g.clicks + ' scan' + (g.clicks === 1 ? '' : 's') +
+                  '</span>' +
+                  '<span class="slg-group__meta">last: ' + escapeHtml(lastScanHtml) + '</span>' +
+                '</div>' +
+              '</td>' +
+            '</tr>';
+          if (!isOpen) return header;
+          return header + g.links.map((l) => renderLinkRow(l, g.key)).join('');
         }).join('');
+        e.body.innerHTML = html;
       }
 
       function slgPill(type) {
@@ -5512,6 +5810,15 @@
 
       // ── Table body delegation ─────────────────────────────
       e.body.addEventListener('click', (ev) => {
+        // Group header → toggle expand/collapse.
+        const groupRow = ev.target.closest('[data-slg-group-toggle]');
+        if (groupRow) {
+          const key = groupRow.dataset.slgGroupToggle;
+          if (slgExpanded.has(key)) slgExpanded.delete(key);
+          else                       slgExpanded.add(key);
+          renderRows(slgLinks);
+          return;
+        }
         // Checkbox cell — only toggle the checkbox, don't open edit.
         if (ev.target.closest('[data-slg-check]')) {
           const cb = ev.target.closest('input[type="checkbox"][data-slg-id]');

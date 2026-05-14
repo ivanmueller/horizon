@@ -2717,3 +2717,222 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   transition: color var(--t-fast);
 }
 .slg-load-more:hover { color: var(--accent-hover); }
+
+/* ── Referral Link Anatomy panel ─────────────────────────────
+   Sits in the right sidebar of the hotel detail drawer. Every
+   immutable segment of the tracking codes is wrapped in a
+   danger-red highlight so the admin sees at a glance what
+   can't be changed without invalidating printed QR codes. */
+.hd-anatomy {
+  padding: var(--s4);
+  display: grid;
+  gap: var(--s4);
+}
+.hd-anatomy__intro {
+  font-size: var(--t-sm);
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+.hd-anatomy__block {
+  display: grid;
+  gap: var(--s1);
+}
+.hd-anatomy__label {
+  font-size: var(--t-xs);
+  font-weight: 500;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.hd-anatomy__value {
+  font-size: var(--t-base);
+  line-height: 1.5;
+  word-break: break-all;
+}
+.hd-anatomy__hint {
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+.hd-anatomy__hint-inline {
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+.hd-anatomy__faint {
+  color: var(--text-faint);
+}
+.hd-anatomy__seq {
+  background: var(--warn-bg);
+  color: var(--warn-fg);
+  border: 1px solid var(--warn-border);
+  border-radius: 3px;
+  padding: 0 4px;
+}
+/* The headline visual — every locked segment gets a red pill so
+   admins literally cannot miss what's immutable. */
+.hd-anatomy__locked {
+  background: var(--bad-bg);
+  color: var(--bad-fg);
+  border: 1px solid var(--bad-border);
+  border-radius: 3px;
+  padding: 0 4px;
+  font-weight: 500;
+}
+.hd-anatomy__locked-pill {
+  background: var(--bad-bg);
+  color: var(--bad-fg);
+  border: 1px solid var(--bad-border);
+  border-radius: 3px;
+  padding: 0 6px;
+  font-weight: 500;
+  font-size: 0.85em;
+}
+.hd-anatomy__warning {
+  background: var(--bad-bg);
+  color: var(--bad-fg);
+  border: 1px solid var(--bad-border);
+  border-left: 3px solid var(--bad-fg);
+  border-radius: 4px;
+  padding: var(--s3);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+}
+
+/* Master Referral card: "no short link yet" placeholder for the
+   QR area when Short.io was down at create-time. */
+.hd-mref__qr-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 176px;
+  height: 176px;
+  background: var(--warn-bg);
+  border: 1px dashed var(--warn-border);
+  border-radius: 4px;
+  font-size: var(--t-sm);
+  color: var(--warn-fg);
+  text-align: center;
+  padding: var(--s3);
+}
+
+/* ── Short Links Ops Hub: grouped-by-hotel rows ───────────────
+   Top-level rows are hotel headers; child .slg-row--child rows
+   are individual links shown when the header is expanded. */
+.slg-row--group {
+  background: var(--bg-muted, #f8fafb);
+  cursor: pointer;
+  user-select: none;
+}
+.slg-row--group:hover {
+  background: var(--bg-hover, #f1f5f9);
+}
+.slg-group__cell {
+  padding: var(--s2) var(--s3);
+}
+.slg-group {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  flex-wrap: wrap;
+}
+.slg-group__chev {
+  display: inline-block;
+  width: 16px;
+  text-align: center;
+  font-size: 0.7em;
+  color: var(--text-muted);
+  transition: transform var(--t-fast);
+}
+.slg-group__chev--open {
+  transform: rotate(90deg);
+}
+.slg-group__name {
+  font-weight: 500;
+  font-size: var(--t-base);
+  color: var(--text-primary, #1a2c44);
+}
+.slg-group__meta {
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+}
+.slg-group__meta--num {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+/* Child rows get a subtle left padding-indent on the first cell
+   to make the hierarchy obvious. */
+.slg-row--child > td:first-child {
+  padding-left: var(--s4);
+}
+
+/* ── Short-link Edit modal: change history ───────────────────
+   Audit log rendered inside the Edit modal. Collapsed by default
+   so the form stays compact for the common case of just editing
+   the destination. */
+.sl-edit__history {
+  margin-top: var(--s4);
+  padding-top: var(--s3);
+  border-top: 1px solid var(--bad-border, #e5e7eb);
+}
+.sl-edit__history-summary {
+  cursor: pointer;
+  font-size: var(--t-sm);
+  font-weight: 500;
+  color: var(--text-primary, #1a2c44);
+  user-select: none;
+  padding: var(--s2) 0;
+}
+.sl-edit__history-summary:hover { color: var(--accent); }
+.sl-edit__history-body {
+  margin-top: var(--s3);
+  max-height: 280px;
+  overflow-y: auto;
+  display: grid;
+  gap: var(--s3);
+}
+.sl-edit__history-row {
+  padding: var(--s2) var(--s3);
+  background: var(--bg-muted, #f8fafb);
+  border-radius: 4px;
+  border-left: 2px solid var(--accent, #4920C4);
+  display: grid;
+  gap: var(--s1);
+}
+.sl-edit__history-meta {
+  display: flex;
+  gap: var(--s3);
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+.sl-edit__history-when   { font-variant-numeric: tabular-nums; }
+.sl-edit__history-actor  { color: var(--text-primary, #1a2c44); }
+.sl-edit__history-field  {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+.sl-edit__history-diff {
+  display: flex;
+  gap: var(--s2);
+  align-items: center;
+  font-size: var(--t-xs);
+  flex-wrap: wrap;
+  line-height: 1.4;
+  word-break: break-all;
+}
+.sl-edit__history-from {
+  color: var(--bad-fg);
+  text-decoration: line-through;
+  text-decoration-color: var(--bad-border);
+}
+.sl-edit__history-to {
+  color: var(--good-fg, #166534);
+  font-weight: 500;
+}
+.sl-edit__history-arrow {
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
