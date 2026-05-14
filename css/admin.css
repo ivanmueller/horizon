@@ -2663,6 +2663,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   border-radius: var(--r-md);
   margin-bottom: var(--s3);
 }
+.slg-bulk-bar[hidden] { display: none; }
 .slg-bulk-bar__count {
   font-size: var(--t-sm);
   font-weight: 500;

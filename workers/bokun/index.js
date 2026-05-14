@@ -1640,14 +1640,16 @@ async function handleAdminGlobalShortLinks(url, env, request) {
   const after   = params.get("after");
   const limit   = Math.min(Math.max(1, parseInt(params.get("limit") || "50", 10)), 100);
 
+  // Match the rest of the codebase: do separate queries and merge in
+  // JS rather than using PostgREST resource embeds. Keeps the SQL
+  // surface predictable and matches handleAdminHotelShortLinksList.
   const fields = [
     "id", "short_url", "short_path", "target_url", "label", "notes",
-    "link_type", "status", "click_count_cached", "last_clicked_at", "created_at",
-    "hotel:hotels(id,name,slug)",
-    "staff_member:hotel_staff(id,name)",
+    "link_type", "status", "click_count_cached", "last_clicked_at",
+    "created_at", "hotel_id", "staff_id",
   ].join(",");
 
-  let qs = `short_links?select=${encodeURIComponent(fields)}&order=created_at.desc,id.desc&limit=${limit + 1}`;
+  let qs = `short_links?select=${fields}&order=created_at.desc,id.desc&limit=${limit + 1}`;
 
   if (status === "active" || status === "retired") {
     qs += `&status=eq.${status}`;
@@ -1681,7 +1683,26 @@ async function handleAdminGlobalShortLinks(url, env, request) {
 
   const rows    = await supabaseSelect(env, qs);
   const hasMore = rows.length > limit;
-  const links   = hasMore ? rows.slice(0, limit) : rows;
+  const baseLinks = hasMore ? rows.slice(0, limit) : rows;
+
+  // Hydrate hotel + staff names in two batched queries.
+  const hotelIds = [...new Set(baseLinks.map((r) => r.hotel_id).filter(Boolean))];
+  const staffIds = [...new Set(baseLinks.map((r) => r.staff_id).filter(Boolean))];
+  const [hotels, staff] = await Promise.all([
+    hotelIds.length
+      ? supabaseSelect(env, `hotels?id=in.(${hotelIds.join(",")})&select=id,name,slug`)
+      : Promise.resolve([]),
+    staffIds.length
+      ? supabaseSelect(env, `hotel_staff?id=in.(${staffIds.join(",")})&select=id,name`)
+      : Promise.resolve([]),
+  ]);
+  const hotelById = new Map(hotels.map((h) => [h.id, h]));
+  const staffById = new Map(staff.map((s) => [s.id, s]));
+  const links = baseLinks.map((r) => ({
+    ...r,
+    hotel:         r.hotel_id ? hotelById.get(r.hotel_id) || null : null,
+    staff_member:  r.staff_id ? staffById.get(r.staff_id) || null : null,
+  }));
 
   let nextCursor = null;
   if (hasMore && links.length > 0) {
