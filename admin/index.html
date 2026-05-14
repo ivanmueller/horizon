@@ -955,7 +955,6 @@
                       <th class="bk-table__check"><input type="checkbox" id="slgCheckAll" aria-label="Select all"></th>
                       <th>Short URL</th>
                       <th>Type</th>
-                      <th>Hotel</th>
                       <th>Staff</th>
                       <th>Destination</th>
                       <th>Label</th>
@@ -967,7 +966,7 @@
                     </tr>
                   </thead>
                   <tbody id="slgBody">
-                    <tr><td colspan="12" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>
+                    <tr><td colspan="11" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>
                   </tbody>
                 </table>
               </div>
@@ -5498,6 +5497,9 @@
       let slgLinks       = [];
       let slgSelected    = new Set();
       let slgSearchTimer = null;
+      // Groups expanded by the user. Search ignores this — when a
+      // query is set, every group with at least one match is open.
+      let slgExpanded    = new Set();
 
       const e = {
         statcards:  document.getElementById('slgStatcards'),
@@ -5525,7 +5527,7 @@
       async function loadSlg(reset) {
         if (reset) { slgCursor = null; slgLinks = []; slgSelected.clear(); updateBulkBar(); }
         e.error.hidden = true;
-        if (reset) e.body.innerHTML = '<tr><td colspan="12" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>';
+        if (reset) e.body.innerHTML = '<tr><td colspan="11" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>';
         const params = new URLSearchParams({ limit: '50' });
         if (slgStatus && slgStatus !== 'all') params.set('status', slgStatus);
         if (slgType)   params.set('type',     slgType);
@@ -5544,68 +5546,123 @@
         } catch (err) {
           e.error.textContent = 'Could not load links: ' + err.message;
           e.error.hidden = false;
-          if (reset) e.body.innerHTML = '<tr><td colspan="12" class="bk-empty"><div class="bk-empty__title">Failed to load</div></td></tr>';
+          if (reset) e.body.innerHTML = '<tr><td colspan="11" class="bk-empty"><div class="bk-empty__title">Failed to load</div></td></tr>';
         }
+      }
+
+      // Renders one link row (the body of a group). Pulled out of the
+      // grouped renderer so the same template stays single-source.
+      function renderLinkRow(l, groupKey) {
+        const staff      = (l.staff_member && l.staff_member.name) || null;
+        const typePill   = slgPill(l.link_type);
+        const statusPill = l.status === 'active'
+          ? '<span class="bk-pill bk-pill--ok">Active</span>'
+          : '<span class="bk-pill bk-pill--neutral">Retired</span>';
+        const dest       = (l.target_url || '').replace(/^https?:\/\//, '');
+        const created    = formatHumanDate((l.created_at || '').slice(0, 10));
+        const lastScan   = l.last_clicked_at ? formatHumanDateTime(l.last_clicked_at) : '—';
+        const checked    = slgSelected.has(l.id);
+        return (
+          '<tr class="slg-row slg-row--child" data-slg-id="' + escapeHtml(l.id) +
+            '" data-slg-group="' + escapeHtml(groupKey) + '">' +
+          '<td class="bk-table__check" data-slg-check="1" style="cursor:default">' +
+            '<input type="checkbox" data-slg-id="' + escapeHtml(l.id) + '"' + (checked ? ' checked' : '') + ' aria-label="Select link">' +
+          '</td>' +
+          '<td class="slg-url-cell">' +
+            '<button type="button" class="hd-copy hd-copy--url" data-copy="' + escapeHtml(l.short_url || l.short_path || '') + '">' +
+              '<span class="mono slg-url-text">' + escapeHtml(l.short_url || l.short_path || '—') + '</span>' +
+              copyIconSvg +
+            '</button>' +
+          '</td>' +
+          '<td>' + typePill + '</td>' +
+          '<td class="bk-table__muted">' + escapeHtml(l.link_type === 'staff' && staff ? staff : '—') + '</td>' +
+          '<td class="slg-dest-cell bk-table__muted"><span class="mono" style="font-size:0.8em">' + escapeHtml(dest) + '</span></td>' +
+          '<td>' + escapeHtml(l.label || '—') + '</td>' +
+          '<td class="num">' + (l.click_count_cached || 0) + '</td>' +
+          '<td class="bk-table__muted">' + escapeHtml(lastScan) + '</td>' +
+          '<td>' + statusPill + '</td>' +
+          '<td class="bk-table__muted">' + escapeHtml(created) + '</td>' +
+          '<td class="bk-table__kebab">' +
+            (l.short_url
+              ? '<button type="button" class="bk-kebab" data-slg-qr="' + escapeHtml(l.id) + '" aria-label="View QR">' +
+                  '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">' +
+                    '<rect x="1" y="1" width="5" height="5" rx="0.5"/>' +
+                    '<rect x="1" y="10" width="5" height="5" rx="0.5"/>' +
+                    '<rect x="10" y="1" width="5" height="5" rx="0.5"/>' +
+                    '<rect x="3" y="3" width="1" height="1" fill="currentColor" stroke="none"/>' +
+                    '<rect x="3" y="12" width="1" height="1" fill="currentColor" stroke="none"/>' +
+                    '<rect x="12" y="3" width="1" height="1" fill="currentColor" stroke="none"/>' +
+                    '<rect x="10" y="10" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
+                    '<rect x="12.5" y="10" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
+                    '<rect x="10" y="12.5" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
+                    '<rect x="12.5" y="12.5" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
+                  '</svg>' +
+                '</button>'
+              : '') +
+            '<button type="button" class="bk-kebab" data-slg-edit="' + escapeHtml(l.id) + '" aria-label="Edit">⋯</button>' +
+          '</td>' +
+          '</tr>'
+        );
       }
 
       function renderRows(links) {
         if (!links.length) {
-          e.body.innerHTML = '<tr><td colspan="12" class="bk-empty"><div class="bk-empty__title">No links found</div><p class="bk-empty__body">Try adjusting the search or filters.</p></td></tr>';
+          e.body.innerHTML = '<tr><td colspan="11" class="bk-empty"><div class="bk-empty__title">No links found</div><p class="bk-empty__body">Try adjusting the search or filters.</p></td></tr>';
           return;
         }
-        e.body.innerHTML = links.map((l) => {
-          const hotel      = (l.hotel        && l.hotel.name)        || '—';
-          const staff      = (l.staff_member && l.staff_member.name) || null;
-          const typePill   = slgPill(l.link_type);
-          const statusPill = l.status === 'active'
-            ? '<span class="bk-pill bk-pill--ok">Active</span>'
-            : '<span class="bk-pill bk-pill--neutral">Retired</span>';
-          const dest       = (l.target_url || '').replace(/^https?:\/\//, '');
-          const created    = formatHumanDate((l.created_at || '').slice(0, 10));
-          const lastScan   = l.last_clicked_at ? formatHumanDateTime(l.last_clicked_at) : '—';
-          const checked    = slgSelected.has(l.id);
-          return (
-            '<tr class="slg-row" data-slg-id="' + escapeHtml(l.id) + '">' +
-            '<td class="bk-table__check" data-slg-check="1" style="cursor:default">' +
-              '<input type="checkbox" data-slg-id="' + escapeHtml(l.id) + '"' + (checked ? ' checked' : '') + ' aria-label="Select link">' +
-            '</td>' +
-            '<td class="slg-url-cell">' +
-              '<button type="button" class="hd-copy hd-copy--url" data-copy="' + escapeHtml(l.short_url || l.short_path || '') + '">' +
-                '<span class="mono slg-url-text">' + escapeHtml(l.short_url || l.short_path || '—') + '</span>' +
-                copyIconSvg +
-              '</button>' +
-            '</td>' +
-            '<td>' + typePill + '</td>' +
-            '<td class="bk-table__muted">' + escapeHtml(hotel) + '</td>' +
-            '<td class="bk-table__muted">' + escapeHtml(l.link_type === 'staff' && staff ? staff : '—') + '</td>' +
-            '<td class="slg-dest-cell bk-table__muted"><span class="mono" style="font-size:0.8em">' + escapeHtml(dest) + '</span></td>' +
-            '<td>' + escapeHtml(l.label || '—') + '</td>' +
-            '<td class="num">' + (l.click_count_cached || 0) + '</td>' +
-            '<td class="bk-table__muted">' + escapeHtml(lastScan) + '</td>' +
-            '<td>' + statusPill + '</td>' +
-            '<td class="bk-table__muted">' + escapeHtml(created) + '</td>' +
-            '<td class="bk-table__kebab">' +
-              (l.short_url
-                ? '<button type="button" class="bk-kebab" data-slg-qr="' + escapeHtml(l.id) + '" aria-label="View QR">' +
-                    '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">' +
-                      '<rect x="1" y="1" width="5" height="5" rx="0.5"/>' +
-                      '<rect x="1" y="10" width="5" height="5" rx="0.5"/>' +
-                      '<rect x="10" y="1" width="5" height="5" rx="0.5"/>' +
-                      '<rect x="3" y="3" width="1" height="1" fill="currentColor" stroke="none"/>' +
-                      '<rect x="3" y="12" width="1" height="1" fill="currentColor" stroke="none"/>' +
-                      '<rect x="12" y="3" width="1" height="1" fill="currentColor" stroke="none"/>' +
-                      '<rect x="10" y="10" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
-                      '<rect x="12.5" y="10" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
-                      '<rect x="10" y="12.5" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
-                      '<rect x="12.5" y="12.5" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
-                    '</svg>' +
-                  '</button>'
-                : '') +
-              '<button type="button" class="bk-kebab" data-slg-edit="' + escapeHtml(l.id) + '" aria-label="Edit">⋯</button>' +
-            '</td>' +
-            '</tr>'
-          );
+        // Group links by hotel_id. Orphans (campaign links with no
+        // hotel) fall into the "__no_hotel" bucket. Sort groups
+        // alphabetically by hotel name; orphan bucket goes last.
+        const groups = new Map();
+        for (const l of links) {
+          const key  = (l.hotel && l.hotel.id) || '__no_hotel';
+          const name = (l.hotel && l.hotel.name) || 'Unassigned (no hotel)';
+          if (!groups.has(key)) {
+            groups.set(key, { key, name, links: [], clicks: 0, lastScan: null, active: 0, retired: 0 });
+          }
+          const g = groups.get(key);
+          g.links.push(l);
+          g.clicks += Number(l.click_count_cached || 0);
+          if (l.status === 'active')  g.active  += 1;
+          if (l.status === 'retired') g.retired += 1;
+          const ts = l.last_clicked_at ? new Date(l.last_clicked_at).getTime() : 0;
+          if (ts && (!g.lastScan || ts > g.lastScan)) g.lastScan = ts;
+        }
+        const sortedGroups = Array.from(groups.values()).sort((a, b) => {
+          if (a.key === '__no_hotel') return  1;
+          if (b.key === '__no_hotel') return -1;
+          return a.name.localeCompare(b.name);
+        });
+        // When a search query is active, force every group with
+        // matches to be open so results aren't hidden behind a
+        // collapsed header.
+        const forceOpen = !!slgQ;
+        const html = sortedGroups.map((g) => {
+          const isOpen = forceOpen || slgExpanded.has(g.key);
+          const lastScanHtml = g.lastScan
+            ? formatHumanDateTime(new Date(g.lastScan).toISOString())
+            : '—';
+          const header =
+            '<tr class="slg-row slg-row--group" data-slg-group-toggle="' + escapeHtml(g.key) + '">' +
+              '<td colspan="11" class="slg-group__cell">' +
+                '<div class="slg-group">' +
+                  '<span class="slg-group__chev' + (isOpen ? ' slg-group__chev--open' : '') + '" aria-hidden="true">▶</span>' +
+                  '<span class="slg-group__name">' + escapeHtml(g.name) + '</span>' +
+                  '<span class="slg-group__meta">' +
+                    g.links.length + ' link' + (g.links.length === 1 ? '' : 's') +
+                    (g.retired ? ' &middot; ' + g.retired + ' retired' : '') +
+                  '</span>' +
+                  '<span class="slg-group__meta slg-group__meta--num">' +
+                    g.clicks + ' scan' + (g.clicks === 1 ? '' : 's') +
+                  '</span>' +
+                  '<span class="slg-group__meta">last: ' + escapeHtml(lastScanHtml) + '</span>' +
+                '</div>' +
+              '</td>' +
+            '</tr>';
+          if (!isOpen) return header;
+          return header + g.links.map((l) => renderLinkRow(l, g.key)).join('');
         }).join('');
+        e.body.innerHTML = html;
       }
 
       function slgPill(type) {
@@ -5693,6 +5750,15 @@
 
       // ── Table body delegation ─────────────────────────────
       e.body.addEventListener('click', (ev) => {
+        // Group header → toggle expand/collapse.
+        const groupRow = ev.target.closest('[data-slg-group-toggle]');
+        if (groupRow) {
+          const key = groupRow.dataset.slgGroupToggle;
+          if (slgExpanded.has(key)) slgExpanded.delete(key);
+          else                       slgExpanded.add(key);
+          renderRows(slgLinks);
+          return;
+        }
         // Checkbox cell — only toggle the checkbox, don't open edit.
         if (ev.target.closest('[data-slg-check]')) {
           const cb = ev.target.closest('input[type="checkbox"][data-slg-id]');

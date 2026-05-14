@@ -2816,3 +2816,53 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   text-align: center;
   padding: var(--s3);
 }
+
+/* ── Short Links Ops Hub: grouped-by-hotel rows ───────────────
+   Top-level rows are hotel headers; child .slg-row--child rows
+   are individual links shown when the header is expanded. */
+.slg-row--group {
+  background: var(--bg-muted, #f8fafb);
+  cursor: pointer;
+  user-select: none;
+}
+.slg-row--group:hover {
+  background: var(--bg-hover, #f1f5f9);
+}
+.slg-group__cell {
+  padding: var(--s2) var(--s3);
+}
+.slg-group {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  flex-wrap: wrap;
+}
+.slg-group__chev {
+  display: inline-block;
+  width: 16px;
+  text-align: center;
+  font-size: 0.7em;
+  color: var(--text-muted);
+  transition: transform var(--t-fast);
+}
+.slg-group__chev--open {
+  transform: rotate(90deg);
+}
+.slg-group__name {
+  font-weight: 500;
+  font-size: var(--t-base);
+  color: var(--text-primary, #1a2c44);
+}
+.slg-group__meta {
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+}
+.slg-group__meta--num {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+/* Child rows get a subtle left padding-indent on the first cell
+   to make the hierarchy obvious. */
+.slg-row--child > td:first-child {
+  padding-left: var(--s4);
+}
