@@ -358,6 +358,16 @@
         <textarea class="input" id="slEditNotes" rows="2"></textarea>
       </div>
 
+      <!-- Change history — every retarget, label/notes edit, and
+           status flip is logged in short_link_audit and rendered
+           here newest-first. -->
+      <details class="sl-edit__history" id="slEditHistoryWrap">
+        <summary class="sl-edit__history-summary">Change history</summary>
+        <div class="sl-edit__history-body" id="slEditHistoryBody">
+          <div class="muted">Loading…</div>
+        </div>
+      </details>
+
       <div class="modal__actions">
         <button type="button" class="btn" id="slEditCancel">Cancel</button>
         <button type="submit" class="btn btn--primary" id="slEditSubmit">Save changes</button>
@@ -2051,7 +2061,57 @@
       slEditTarget.value = slData.target_url || '';
       slEditLabel.value  = slData.label || '';
       slEditNotes.value  = slData.notes || '';
+      const histWrap = document.getElementById('slEditHistoryWrap');
+      if (histWrap) histWrap.open = false; // collapsed by default
+      loadSlEditHistory(slData.id);
       slEditModal.hidden = false;
+    }
+
+    // Fetches and renders the audit history for the link being edited.
+    // Fire-and-forget — errors render inline so they don't block the
+    // form. Renders one row per change with field name, old → new,
+    // actor email, and relative time.
+    async function loadSlEditHistory(linkId) {
+      const body = document.getElementById('slEditHistoryBody');
+      if (!body) return;
+      body.innerHTML = '<div class="muted">Loading…</div>';
+      try {
+        const res = await fetch(BOKUN_API_BASE + '/api/admin/short-links/' + encodeURIComponent(linkId) + '/audit', {
+          headers: { Authorization: 'Bearer ' + session.access_token },
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error((data && data.error) || 'load_failed');
+        const entries = data.entries || [];
+        if (!entries.length) {
+          body.innerHTML = '<div class="muted">No changes recorded yet. Future edits will appear here.</div>';
+          return;
+        }
+        body.innerHTML = entries.map((entry) => {
+          const when  = formatHumanDateTime(entry.created_at);
+          const actor = entry.actor_email || 'system';
+          const fieldLabel = entry.field === 'target_url' ? 'destination'
+                          : entry.field === 'status'      ? 'status'
+                          : entry.field;
+          const fromTxt = entry.old_value === null ? '∅' : entry.old_value;
+          const toTxt   = entry.new_value === null ? '∅' : entry.new_value;
+          return (
+            '<div class="sl-edit__history-row">' +
+              '<div class="sl-edit__history-meta">' +
+                '<span class="sl-edit__history-when">' + escapeHtml(when) + '</span>' +
+                '<span class="sl-edit__history-actor">' + escapeHtml(actor) + '</span>' +
+                '<span class="sl-edit__history-field">' + escapeHtml(fieldLabel) + '</span>' +
+              '</div>' +
+              '<div class="sl-edit__history-diff mono">' +
+                '<span class="sl-edit__history-from">' + escapeHtml(fromTxt) + '</span>' +
+                '<span class="sl-edit__history-arrow">→</span>' +
+                '<span class="sl-edit__history-to">' + escapeHtml(toTxt) + '</span>' +
+              '</div>' +
+            '</div>'
+          );
+        }).join('');
+      } catch (err) {
+        body.innerHTML = '<div class="alert alert--bad">Could not load history: ' + escapeHtml(err.message || 'unknown error') + '</div>';
+      }
     }
 
     function closeSlEdit() {
