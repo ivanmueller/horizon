@@ -365,6 +365,29 @@
     </form>
   </div>
 
+  <!-- ── Retire confirmation modal ─────────────────────────────
+       Reusable for single + bulk retire. Caller sets the title,
+       body, and confirm-click handler via openRetireModal(). -->
+  <div class="modal" id="slRetireModal" hidden>
+    <div class="modal__card">
+      <div class="modal__head">
+        <h2 class="modal__title" id="slRetireTitle">Retire link</h2>
+        <button type="button" class="modal__close" id="slRetireClose" aria-label="Close">×</button>
+      </div>
+      <div class="alert alert--bad" id="slRetireError" hidden></div>
+      <p class="modal__body" id="slRetireBody">
+        Retiring a link stops attribution on new clicks. The Short.io
+        redirect stays live so printed QR codes keep scanning to the
+        same destination — guests won't see a broken link.
+        You can reinstate from the link's Edit screen later.
+      </p>
+      <div class="modal__actions">
+        <button type="button" class="btn" id="slRetireCancel">Cancel</button>
+        <button type="button" class="btn btn--danger" id="slRetireConfirm">Retire</button>
+      </div>
+    </div>
+  </div>
+
   <!-- pdfkit (browser bundle) for the in-dashboard invoice generator.
        Loaded ahead of the main module so window.PDFDocument is set
        by the time bookings render. ~600KB, internal page only. -->
@@ -1736,6 +1759,56 @@
     // Tracks the QR instance currently rendered in the Master Referral
     // card sidebar so the Download button can reference the correct URL.
     let _hotelDrawerQRUrl = null;
+
+    /* ── Retire confirmation modal ──────────────────────────
+       Singleton — caller passes a title, message, and onConfirm
+       handler. Modal handles its own loading/error state so the
+       caller's button doesn't need to. */
+    const slRetireModal   = document.getElementById('slRetireModal');
+    const slRetireTitle   = document.getElementById('slRetireTitle');
+    const slRetireBody    = document.getElementById('slRetireBody');
+    const slRetireError   = document.getElementById('slRetireError');
+    const slRetireConfirm = document.getElementById('slRetireConfirm');
+    const slRetireCancel  = document.getElementById('slRetireCancel');
+    const slRetireClose   = document.getElementById('slRetireClose');
+    let _slRetireHandler  = null;
+
+    function openRetireModal({ title, body, confirmLabel, onConfirm }) {
+      slRetireTitle.textContent = title || 'Retire link';
+      if (body) slRetireBody.textContent = body;
+      slRetireConfirm.textContent = confirmLabel || 'Retire';
+      slRetireConfirm.disabled    = false;
+      slRetireError.hidden = true;
+      _slRetireHandler = onConfirm;
+      slRetireModal.hidden = false;
+    }
+
+    function closeRetireModal() {
+      slRetireModal.hidden = true;
+      slRetireError.hidden = true;
+      _slRetireHandler = null;
+    }
+
+    slRetireConfirm.addEventListener('click', async () => {
+      if (!_slRetireHandler) return closeRetireModal();
+      slRetireConfirm.disabled    = true;
+      slRetireConfirm.textContent = 'Retiring…';
+      slRetireError.hidden        = true;
+      try {
+        await _slRetireHandler();
+        closeRetireModal();
+      } catch (err) {
+        slRetireError.textContent   = err.message || 'Could not retire.';
+        slRetireError.hidden        = false;
+        slRetireConfirm.disabled    = false;
+        slRetireConfirm.textContent = 'Retire';
+      }
+    });
+    slRetireCancel.addEventListener('click', closeRetireModal);
+    slRetireClose.addEventListener('click', closeRetireModal);
+    slRetireModal.addEventListener('click', (e) => {
+      if (e.target === slRetireModal) closeRetireModal();
+    });
 
     /* ── Short link CRUD helpers ─────────────────────────── */
     // Module-level state for the two short link modals.
@@ -3369,25 +3442,30 @@
                   ? '<td class="hd-links__url"><button type="button" class="hd-copy hd-copy--url" data-copy="' + escapeHtml(r.short) + '" title="' + escapeHtml(r.short) + '">' +
                       '<span class="hd-trunc mono">' + escapeHtml(r.short) + '</span>' + copyIconSvg + '</button></td>'
                   : '<td class="muted" title="No short link yet — will be auto-created once SHORT_IO_API_KEY is configured.">—</td>';
-                const qrUrl  = r.short || r.url;
-                const qrCell = '<td class="hd-links__qr-cell">' +
-                  '<button type="button" class="hd-qr-btn" aria-label="View QR code for ' + escapeHtml(r.label || r.code || '') + '"' +
-                    ' data-qr-url="' + escapeHtml(qrUrl) + '"' +
-                    ' data-qr-label="' + escapeHtml(r.label || r.code || '') + '"' +
-                    ' data-qr-sub="' + escapeHtml(qrUrl) + '">' +
-                    '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">' +
-                      '<rect x="1" y="1" width="5" height="5" rx="0.5"/>' +
-                      '<rect x="1" y="10" width="5" height="5" rx="0.5"/>' +
-                      '<rect x="10" y="1" width="5" height="5" rx="0.5"/>' +
-                      '<rect x="3" y="3" width="1" height="1" fill="currentColor" stroke="none"/>' +
-                      '<rect x="3" y="12" width="1" height="1" fill="currentColor" stroke="none"/>' +
-                      '<rect x="12" y="3" width="1" height="1" fill="currentColor" stroke="none"/>' +
-                      '<rect x="10" y="10" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
-                      '<rect x="12.5" y="10" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
-                      '<rect x="10" y="12.5" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
-                      '<rect x="12.5" y="12.5" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
-                    '</svg>' +
-                  '</button></td>';
+                // QR encodes the short URL only. If no short link exists
+                // yet (Short.io was down at creation), suppress the QR
+                // entirely — printing a QR against the long URL would
+                // defeat the retarget-safety the architecture provides.
+                const qrCell = r.short
+                  ? '<td class="hd-links__qr-cell">' +
+                    '<button type="button" class="hd-qr-btn" aria-label="View QR code for ' + escapeHtml(r.label || r.code || '') + '"' +
+                      ' data-qr-url="' + escapeHtml(r.short) + '"' +
+                      ' data-qr-label="' + escapeHtml(r.label || r.code || '') + '"' +
+                      ' data-qr-sub="' + escapeHtml(r.short) + '">' +
+                      '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">' +
+                        '<rect x="1" y="1" width="5" height="5" rx="0.5"/>' +
+                        '<rect x="1" y="10" width="5" height="5" rx="0.5"/>' +
+                        '<rect x="10" y="1" width="5" height="5" rx="0.5"/>' +
+                        '<rect x="3" y="3" width="1" height="1" fill="currentColor" stroke="none"/>' +
+                        '<rect x="3" y="12" width="1" height="1" fill="currentColor" stroke="none"/>' +
+                        '<rect x="12" y="3" width="1" height="1" fill="currentColor" stroke="none"/>' +
+                        '<rect x="10" y="10" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
+                        '<rect x="12.5" y="10" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
+                        '<rect x="10" y="12.5" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
+                        '<rect x="12.5" y="12.5" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
+                      '</svg>' +
+                    '</button></td>'
+                  : '<td class="muted hd-links__qr-cell" title="No short link yet — QR will be available once a link is minted.">—</td>';
                 // Actions cell — only show Edit/Retire when the row has a
                 // persisted short_link record (sl_id is set).
                 const actCell = r.sl_id
@@ -3607,9 +3685,13 @@
       }
 
       // Master Referral card — QR + canonical URL + actions.
+      // QR encodes the short URL (the only thing that ever goes on
+      // printed material). The copy/display still surfaces the long URL
+      // for admin inspection — it's never on the QR itself.
       const masterRefBtn  = els.container.querySelector('#hdMasterRefUrl');
       const masterRefQREl = els.container.querySelector('#hdMasterRefQR');
       const masterDlBtn   = els.container.querySelector('#hdMasterRefDownload');
+      const masterShortUrl = hotelShort ? hotelShort.short_url : null;
       if (masterRefBtn) {
         masterRefBtn.dataset.copy = masterLink;
         masterRefBtn.querySelector('[data-detail-text]').textContent = masterLink;
@@ -3617,13 +3699,23 @@
       }
       if (masterRefQREl) {
         masterRefQREl.innerHTML = '';
-        const qrInst = makeQRInstance(masterLink, 176);
-        if (qrInst) qrInst.append(masterRefQREl);
+        if (masterShortUrl) {
+          const qrInst = makeQRInstance(masterShortUrl, 176);
+          if (qrInst) qrInst.append(masterRefQREl);
+        } else {
+          masterRefQREl.innerHTML =
+            '<div class="hd-mref__qr-empty" title="No short link yet — QR will appear once one is minted.">' +
+              '<span class="muted">No short link yet</span>' +
+            '</div>';
+        }
       }
-      _hotelDrawerQRUrl = masterLink;
+      _hotelDrawerQRUrl = masterShortUrl;
       if (masterDlBtn) {
-        masterDlBtn.onclick = () =>
-          downloadQRPng(masterLink, 'horizon-qr-' + (h.code || 'hotel'));
+        masterDlBtn.disabled = !masterShortUrl;
+        masterDlBtn.onclick = () => {
+          if (!masterShortUrl) return;
+          downloadQRPng(masterShortUrl, 'horizon-qr-' + (h.code || 'hotel'));
+        };
       }
 
       // Insights deltas — placeholder dashes until aggregation data
@@ -5312,6 +5404,22 @@
             '<td>' + statusPill + '</td>' +
             '<td class="bk-table__muted">' + escapeHtml(created) + '</td>' +
             '<td class="bk-table__kebab">' +
+              (l.short_url
+                ? '<button type="button" class="bk-kebab" data-slg-qr="' + escapeHtml(l.id) + '" aria-label="View QR">' +
+                    '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">' +
+                      '<rect x="1" y="1" width="5" height="5" rx="0.5"/>' +
+                      '<rect x="1" y="10" width="5" height="5" rx="0.5"/>' +
+                      '<rect x="10" y="1" width="5" height="5" rx="0.5"/>' +
+                      '<rect x="3" y="3" width="1" height="1" fill="currentColor" stroke="none"/>' +
+                      '<rect x="3" y="12" width="1" height="1" fill="currentColor" stroke="none"/>' +
+                      '<rect x="12" y="3" width="1" height="1" fill="currentColor" stroke="none"/>' +
+                      '<rect x="10" y="10" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
+                      '<rect x="12.5" y="10" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
+                      '<rect x="10" y="12.5" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
+                      '<rect x="12.5" y="12.5" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
+                    '</svg>' +
+                  '</button>'
+                : '') +
               '<button type="button" class="bk-kebab" data-slg-edit="' + escapeHtml(l.id) + '" aria-label="Edit">⋯</button>' +
             '</td>' +
             '</tr>'
@@ -5413,6 +5521,21 @@
         }
         // Copy button — let the existing hd-copy delegation handle it.
         if (ev.target.closest('[data-copy]')) return;
+        // QR button.
+        const qrBtn = ev.target.closest('[data-slg-qr]');
+        if (qrBtn) {
+          ev.stopPropagation();
+          const link = slgLinks.find((l) => l.id === qrBtn.dataset.slgQr);
+          if (link && link.short_url) {
+            const title = (link.hotel && link.hotel.name)
+              ? (link.staff_member && link.staff_member.name
+                  ? link.hotel.name + ' — ' + link.staff_member.name
+                  : link.hotel.name)
+              : (link.label || link.short_url);
+            openQRModal(link.short_url, title, link.short_url);
+          }
+          return;
+        }
         // Kebab edit button.
         const editBtn = ev.target.closest('[data-slg-edit]');
         if (editBtn) {
@@ -5430,24 +5553,32 @@
       });
 
       // ── Bulk retire ───────────────────────────────────────
-      e.bulkRetire.addEventListener('click', async () => {
+      e.bulkRetire.addEventListener('click', () => {
         const ids = Array.from(slgSelected);
         if (!ids.length) return;
-        if (!confirm('Retire ' + ids.length + ' link' + (ids.length === 1 ? '' : 's') + '?\n\nThe Short.io redirects stay alive so printed QR codes keep scanning.')) return;
-        e.bulkRetire.disabled = true; e.bulkRetire.textContent = 'Retiring…';
-        let errors = 0;
-        for (const id of ids) {
-          try {
-            const r = await fetch(BOKUN_API_BASE + '/api/admin/short-links/' + encodeURIComponent(id), {
-              method: 'DELETE', headers: { Authorization: 'Bearer ' + session.access_token },
-            });
-            if (!r.ok) errors++;
-          } catch { errors++; }
-        }
-        e.bulkRetire.disabled = false; e.bulkRetire.textContent = 'Retire selected';
-        slgSelected.clear(); updateBulkBar();
-        if (errors) alert(errors + ' link(s) could not be retired.');
-        loadSlg(true);
+        const n = ids.length;
+        openRetireModal({
+          title:        'Retire ' + n + ' link' + (n === 1 ? '' : 's') + '?',
+          body:         'Attribution on new clicks stops for the selected link' +
+                        (n === 1 ? '' : 's') + '. The Short.io redirects stay live ' +
+                        'so printed QR codes keep scanning. You can reinstate any ' +
+                        'retired link from its Edit screen.',
+          confirmLabel: 'Retire ' + n + ' link' + (n === 1 ? '' : 's'),
+          onConfirm: async () => {
+            let errors = 0;
+            for (const id of ids) {
+              try {
+                const r = await fetch(BOKUN_API_BASE + '/api/admin/short-links/' + encodeURIComponent(id), {
+                  method: 'DELETE', headers: { Authorization: 'Bearer ' + session.access_token },
+                });
+                if (!r.ok) errors++;
+              } catch { errors++; }
+            }
+            slgSelected.clear(); updateBulkBar();
+            await loadSlg(true);
+            if (errors) throw new Error(errors + ' link' + (errors === 1 ? '' : 's') + ' failed to retire.');
+          },
+        });
       });
 
       // ── Bulk export CSV ───────────────────────────────────
