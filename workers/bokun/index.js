@@ -1632,85 +1632,99 @@ async function handleAdminGlobalShortLinks(url, env, request) {
   const auth = await requireHorizonAdmin(request, env);
   if (auth.error) return auth.error;
 
-  const params  = url.searchParams;
-  const status  = params.get("status");
-  const type    = params.get("type");
-  const hotelId = params.get("hotel_id");
-  const q       = (params.get("q") || "").trim();
-  const after   = params.get("after");
-  const limit   = Math.min(Math.max(1, parseInt(params.get("limit") || "50", 10)), 100);
+  try {
+    const params  = url.searchParams;
+    const status  = params.get("status");
+    const type    = params.get("type");
+    const hotelId = params.get("hotel_id");
+    const q       = (params.get("q") || "").trim();
+    const after   = params.get("after");
+    const limit   = Math.min(Math.max(1, parseInt(params.get("limit") || "50", 10)), 100);
 
-  // Match the rest of the codebase: do separate queries and merge in
-  // JS rather than using PostgREST resource embeds. Keeps the SQL
-  // surface predictable and matches handleAdminHotelShortLinksList.
-  const fields = [
-    "id", "short_url", "short_path", "target_url", "label", "notes",
-    "link_type", "status", "click_count_cached", "last_clicked_at",
-    "created_at", "hotel_id", "staff_id",
-  ].join(",");
+    // Match the rest of the codebase: do separate queries and merge in
+    // JS rather than using PostgREST resource embeds. Keeps the SQL
+    // surface predictable and matches handleAdminHotelShortLinksList.
+    const fields = [
+      "id", "short_url", "short_path", "target_url", "label", "notes",
+      "link_type", "status", "click_count_cached", "last_clicked_at",
+      "created_at", "hotel_id", "staff_id",
+    ].join(",");
 
-  let qs = `short_links?select=${fields}&order=created_at.desc,id.desc&limit=${limit + 1}`;
+    let qs = `short_links?select=${fields}&order=created_at.desc,id.desc&limit=${limit + 1}`;
 
-  if (status === "active" || status === "retired") {
-    qs += `&status=eq.${status}`;
+    if (status === "active" || status === "retired") {
+      qs += `&status=eq.${status}`;
+    }
+    if (type === "hotel" || type === "staff" || type === "campaign") {
+      qs += `&link_type=eq.${type}`;
+    }
+    if (hotelId) {
+      qs += `&hotel_id=eq.${encodeURIComponent(hotelId)}`;
+    }
+    if (q) {
+      const safe = q.replace(/[%_]/g, "\\$&");
+      qs +=
+        `&or=(short_path.ilike.*${encodeURIComponent(safe)}*` +
+        `,label.ilike.*${encodeURIComponent(safe)}*` +
+        `,notes.ilike.*${encodeURIComponent(safe)}*)`;
+    }
+    if (after) {
+      try {
+        const decoded  = atob(after);
+        const pipe     = decoded.lastIndexOf("|");
+        const cursorTs = decoded.slice(0, pipe);
+        const cursorId = decoded.slice(pipe + 1);
+        if (cursorTs && cursorId) {
+          qs +=
+            `&or=(created_at.lt.${encodeURIComponent(cursorTs)}` +
+            `,and(created_at.eq.${encodeURIComponent(cursorTs)},id.lt.${encodeURIComponent(cursorId)}))`;
+        }
+      } catch { /* ignore malformed cursor */ }
+    }
+
+    const rows    = await supabaseSelect(env, qs);
+    const hasMore = rows.length > limit;
+    const baseLinks = hasMore ? rows.slice(0, limit) : rows;
+
+    // Hydrate hotel + staff names in two batched queries.
+    const hotelIds = [...new Set(baseLinks.map((r) => r.hotel_id).filter(Boolean))];
+    const staffIds = [...new Set(baseLinks.map((r) => r.staff_id).filter(Boolean))];
+    const [hotels, staff] = await Promise.all([
+      hotelIds.length
+        ? supabaseSelect(env, `hotels?id=in.(${hotelIds.join(",")})&select=id,name,slug`)
+        : Promise.resolve([]),
+      staffIds.length
+        ? supabaseSelect(env, `hotel_staff?id=in.(${staffIds.join(",")})&select=id,name`)
+        : Promise.resolve([]),
+    ]);
+    const hotelById = new Map(hotels.map((h) => [h.id, h]));
+    const staffById = new Map(staff.map((s) => [s.id, s]));
+    const links = baseLinks.map((r) => ({
+      ...r,
+      hotel:         r.hotel_id ? hotelById.get(r.hotel_id) || null : null,
+      staff_member:  r.staff_id ? staffById.get(r.staff_id) || null : null,
+    }));
+
+    let nextCursor = null;
+    if (hasMore && links.length > 0) {
+      const last = links[links.length - 1];
+      nextCursor = btoa(`${last.created_at}|${last.id}`);
+    }
+
+    return jsonResponse({ links, next_cursor: nextCursor }, 200, request);
+  } catch (err) {
+    console.error("handleAdminGlobalShortLinks error:", err.stack || err);
+    return jsonResponse(
+      {
+        error: "Failed to load links",
+        detail: err.message || String(err),
+        supabase_status: err.status || null,
+        supabase_body:   err.body   || null,
+      },
+      err.status && err.status >= 400 && err.status < 600 ? err.status : 500,
+      request,
+    );
   }
-  if (type === "hotel" || type === "staff" || type === "campaign") {
-    qs += `&link_type=eq.${type}`;
-  }
-  if (hotelId) {
-    qs += `&hotel_id=eq.${encodeURIComponent(hotelId)}`;
-  }
-  if (q) {
-    const safe = q.replace(/[%_]/g, "\\$&");
-    qs +=
-      `&or=(short_path.ilike.*${encodeURIComponent(safe)}*` +
-      `,label.ilike.*${encodeURIComponent(safe)}*` +
-      `,notes.ilike.*${encodeURIComponent(safe)}*)`;
-  }
-  if (after) {
-    try {
-      const decoded  = atob(after);
-      const pipe     = decoded.lastIndexOf("|");
-      const cursorTs = decoded.slice(0, pipe);
-      const cursorId = decoded.slice(pipe + 1);
-      if (cursorTs && cursorId) {
-        qs +=
-          `&or=(created_at.lt.${encodeURIComponent(cursorTs)}` +
-          `,and(created_at.eq.${encodeURIComponent(cursorTs)},id.lt.${encodeURIComponent(cursorId)}))`;
-      }
-    } catch { /* ignore malformed cursor */ }
-  }
-
-  const rows    = await supabaseSelect(env, qs);
-  const hasMore = rows.length > limit;
-  const baseLinks = hasMore ? rows.slice(0, limit) : rows;
-
-  // Hydrate hotel + staff names in two batched queries.
-  const hotelIds = [...new Set(baseLinks.map((r) => r.hotel_id).filter(Boolean))];
-  const staffIds = [...new Set(baseLinks.map((r) => r.staff_id).filter(Boolean))];
-  const [hotels, staff] = await Promise.all([
-    hotelIds.length
-      ? supabaseSelect(env, `hotels?id=in.(${hotelIds.join(",")})&select=id,name,slug`)
-      : Promise.resolve([]),
-    staffIds.length
-      ? supabaseSelect(env, `hotel_staff?id=in.(${staffIds.join(",")})&select=id,name`)
-      : Promise.resolve([]),
-  ]);
-  const hotelById = new Map(hotels.map((h) => [h.id, h]));
-  const staffById = new Map(staff.map((s) => [s.id, s]));
-  const links = baseLinks.map((r) => ({
-    ...r,
-    hotel:         r.hotel_id ? hotelById.get(r.hotel_id) || null : null,
-    staff_member:  r.staff_id ? staffById.get(r.staff_id) || null : null,
-  }));
-
-  let nextCursor = null;
-  if (hasMore && links.length > 0) {
-    const last = links[links.length - 1];
-    nextCursor = btoa(`${last.created_at}|${last.id}`);
-  }
-
-  return jsonResponse({ links, next_cursor: nextCursor }, 200, request);
 }
 
 // POST /api/admin/sync-clicks
