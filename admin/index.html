@@ -5260,7 +5260,17 @@
             headers: { Authorization: 'Bearer ' + session.access_token },
           });
           const data = await res.json();
-          if (!res.ok) throw new Error((data && data.error) || 'load_failed');
+          if (!res.ok) {
+            const parts = [];
+            if (data && data.error)  parts.push(data.error);
+            if (data && data.detail) parts.push('detail=' + data.detail);
+            if (data && data.supabase_status) parts.push('pg_status=' + data.supabase_status);
+            if (data && data.supabase_body) {
+              const body = typeof data.supabase_body === 'string' ? data.supabase_body : JSON.stringify(data.supabase_body);
+              parts.push('pg_body=' + body);
+            }
+            throw new Error(parts.length ? parts.join(' | ') : 'load_failed');
+          }
           slgLinks   = reset ? (data.links || []) : slgLinks.concat(data.links || []);
           slgCursor  = data.next_cursor || null;
           renderRows(slgLinks);
