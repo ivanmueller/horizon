@@ -1691,7 +1691,7 @@ async function handleAdminGlobalShortLinks(url, env, request) {
     const staffIds = [...new Set(baseLinks.map((r) => r.staff_id).filter(Boolean))];
     const [hotels, staff] = await Promise.all([
       hotelIds.length
-        ? supabaseSelect(env, `hotels?id=in.(${hotelIds.join(",")})&select=id,name,slug`)
+        ? supabaseSelect(env, `hotels?id=in.(${hotelIds.join(",")})&select=id,name`)
         : Promise.resolve([]),
       staffIds.length
         ? supabaseSelect(env, `hotel_staff?id=in.(${staffIds.join(",")})&select=id,name`)
