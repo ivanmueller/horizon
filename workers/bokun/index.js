@@ -236,6 +236,7 @@ export default {
 
       // ── Short.io short_links CRUD ───────────────────────────────
       if (segs[0] === "api" && segs[1] === "admin" && segs[2] === "short-links") {
+        if (request.method === "GET"  && !segs[3]) return await handleAdminGlobalShortLinks(url, env, request);
         if (request.method === "POST" && !segs[3]) return await handleAdminShortLinkCreate(request, env);
         if (request.method === "PATCH" && segs[3]) return await handleAdminShortLinkUpdate(segs[3], request, env);
         if (request.method === "DELETE" && segs[3]) return await handleAdminShortLinkRetire(segs[3], request, env);
@@ -1615,6 +1616,80 @@ async function syncClickCounts(env) {
   }
 
   return { synced, errors, total: links.length };
+}
+
+// GET /api/admin/short-links
+// Global paginated list of all short_links with optional filters.
+// Query params:
+//   status    — 'active' | 'retired'  (omit for all)
+//   type      — 'hotel' | 'staff' | 'campaign'
+//   hotel_id  — UUID
+//   q         — full-text search across short_path, label, notes
+//   after     — opaque cursor (base64 of "created_at|id") for next page
+//   limit     — max rows per page (default 50, max 100)
+// Returns { links: [...], next_cursor: string|null }
+async function handleAdminGlobalShortLinks(url, env, request) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+
+  const params  = url.searchParams;
+  const status  = params.get("status");
+  const type    = params.get("type");
+  const hotelId = params.get("hotel_id");
+  const q       = (params.get("q") || "").trim();
+  const after   = params.get("after");
+  const limit   = Math.min(Math.max(1, parseInt(params.get("limit") || "50", 10)), 100);
+
+  const fields = [
+    "id", "short_url", "short_path", "target_url", "label", "notes",
+    "link_type", "status", "click_count_cached", "last_clicked_at", "created_at",
+    "hotel:hotels(id,name,slug)",
+    "staff_member:hotel_staff(id,name)",
+  ].join(",");
+
+  let qs = `short_links?select=${encodeURIComponent(fields)}&order=created_at.desc,id.desc&limit=${limit + 1}`;
+
+  if (status === "active" || status === "retired") {
+    qs += `&status=eq.${status}`;
+  }
+  if (type === "hotel" || type === "staff" || type === "campaign") {
+    qs += `&link_type=eq.${type}`;
+  }
+  if (hotelId) {
+    qs += `&hotel_id=eq.${encodeURIComponent(hotelId)}`;
+  }
+  if (q) {
+    const safe = q.replace(/[%_]/g, "\\$&");
+    qs +=
+      `&or=(short_path.ilike.*${encodeURIComponent(safe)}*` +
+      `,label.ilike.*${encodeURIComponent(safe)}*` +
+      `,notes.ilike.*${encodeURIComponent(safe)}*)`;
+  }
+  if (after) {
+    try {
+      const decoded  = atob(after);
+      const pipe     = decoded.lastIndexOf("|");
+      const cursorTs = decoded.slice(0, pipe);
+      const cursorId = decoded.slice(pipe + 1);
+      if (cursorTs && cursorId) {
+        qs +=
+          `&or=(created_at.lt.${encodeURIComponent(cursorTs)}` +
+          `,and(created_at.eq.${encodeURIComponent(cursorTs)},id.lt.${encodeURIComponent(cursorId)}))`;
+      }
+    } catch { /* ignore malformed cursor */ }
+  }
+
+  const rows    = await supabaseSelect(env, qs);
+  const hasMore = rows.length > limit;
+  const links   = hasMore ? rows.slice(0, limit) : rows;
+
+  let nextCursor = null;
+  if (hasMore && links.length > 0) {
+    const last = links[links.length - 1];
+    nextCursor = btoa(`${last.created_at}|${last.id}`);
+  }
+
+  return jsonResponse({ links, next_cursor: nextCursor }, 200, request);
 }
 
 // POST /api/admin/sync-clicks

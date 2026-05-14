@@ -460,6 +460,7 @@
       { id: 'home',            label: 'Home',            group: 'main',    icon: iconHome },
       { id: 'bookings',        label: 'Bookings',        group: 'main',    icon: iconBookings },
       { id: 'hotels',          label: 'Hotels',          group: 'main',    icon: iconHotels },
+      { id: 'short-links',    label: 'Short Links',    group: 'main',    icon: iconLink },
       { id: 'access-requests', label: 'Access Requests', group: 'main',    icon: iconInbox, badge: 'arNavBadge' },
       { id: 'tours',           label: 'Tour catalog',    group: 'main',    icon: iconCompass },
       { id: 'payments',        label: 'Payments',        group: 'finance', icon: iconCard },
@@ -872,6 +873,86 @@
             </div>
           `,
           mount: mountHotels,
+        };
+      },
+      'short-links'() {
+        return {
+          html: `
+            <header class="bk-page__head bk-page__head--md">
+              <h1 class="bk-page__title">Short Links</h1>
+              <div class="bk-page__actions">
+                <button type="button" class="bk-iconbtn" id="slgSyncBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                  Sync clicks
+                </button>
+                <button type="button" class="bk-iconbtn" id="slgExport">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Export CSV
+                </button>
+              </div>
+            </header>
+
+            <div class="bk-statcards bk-statcards--shortlinks" id="slgStatcards" role="group" aria-label="Link status filter">
+              <button type="button" class="bk-statcard bk-statcard--label-only bk-statcard--active" data-slg-status="all">
+                <div class="bk-statcard__label">All</div>
+              </button>
+              <button type="button" class="bk-statcard bk-statcard--label-only" data-slg-status="active">
+                <div class="bk-statcard__label">Active</div>
+              </button>
+              <button type="button" class="bk-statcard bk-statcard--label-only" data-slg-status="retired">
+                <div class="bk-statcard__label">Retired</div>
+              </button>
+            </div>
+
+            <div class="bk-toolbar">
+              <div class="bk-filters">
+                <div class="slg-search-wrap">
+                  <svg class="slg-search__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input type="search" class="slg-search" id="slgSearch" placeholder="Search paths, labels, notes…" autocomplete="off">
+                </div>
+                <button type="button" class="bk-chip" id="slgTypeChip"><span class="bk-chip__plus">+</span> Type</button>
+              </div>
+            </div>
+
+            <div class="slg-bulk-bar" id="slgBulkBar" hidden>
+              <span class="slg-bulk-bar__count" id="slgBulkCount">0 selected</span>
+              <div class="slg-bulk-bar__actions">
+                <button type="button" class="btn btn--sm btn--danger" id="slgBulkRetire">Retire selected</button>
+                <button type="button" class="btn btn--sm" id="slgBulkExport">Export selected CSV</button>
+                <button type="button" class="btn btn--sm btn--ghost" id="slgBulkCancel">Clear</button>
+              </div>
+            </div>
+
+            <div class="alert alert--bad" id="slgError" hidden></div>
+
+            <div class="bk-table-wrap">
+              <div class="bk-table-scroll">
+                <table class="bk-table bk-table--shortlinks" id="slgTable">
+                  <thead>
+                    <tr>
+                      <th class="bk-table__check"><input type="checkbox" id="slgCheckAll" aria-label="Select all"></th>
+                      <th>Short URL</th>
+                      <th>Type</th>
+                      <th>Hotel</th>
+                      <th>Staff</th>
+                      <th>Destination</th>
+                      <th>Label</th>
+                      <th class="num">Scans</th>
+                      <th>Last scanned</th>
+                      <th>Status</th>
+                      <th>Created</th>
+                      <th class="bk-table__kebab"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="slgBody">
+                    <tr><td colspan="12" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="bk-table__footer" id="slgFooter">—</div>
+            </div>
+          `,
+          mount: mountShortLinks,
         };
       },
       tours() {
@@ -5125,10 +5206,290 @@
     function iconCard()     { return svg('<rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>'); }
     function iconReceipt()  { return svg('<path d="M4 2v20l3-2 3 2 3-2 3 2 3-2 1 2V2H4z"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/>'); }
     function iconFile()     { return svg('<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/>'); }
+    function iconLink()     { return svg('<path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>'); }
 
     function escapeHtml(s) {
       return String(s == null ? '' : s).replace(/[&<>"']/g, (m) =>
         ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+    }
+
+    /* ── Global Short Links page ─────────────────────────── */
+    function mountShortLinks() {
+      let slgStatus      = 'all';
+      let slgType        = null;
+      let slgQ           = '';
+      let slgCursor      = null;
+      let slgLinks       = [];
+      let slgSelected    = new Set();
+      let slgSearchTimer = null;
+
+      const e = {
+        statcards:  document.getElementById('slgStatcards'),
+        search:     document.getElementById('slgSearch'),
+        typeChip:   document.getElementById('slgTypeChip'),
+        body:       document.getElementById('slgBody'),
+        footer:     document.getElementById('slgFooter'),
+        error:      document.getElementById('slgError'),
+        checkAll:   document.getElementById('slgCheckAll'),
+        bulkBar:    document.getElementById('slgBulkBar'),
+        bulkCount:  document.getElementById('slgBulkCount'),
+        bulkRetire: document.getElementById('slgBulkRetire'),
+        bulkExport: document.getElementById('slgBulkExport'),
+        bulkCancel: document.getElementById('slgBulkCancel'),
+        export:     document.getElementById('slgExport'),
+        syncBtn:    document.getElementById('slgSyncBtn'),
+      };
+
+      const copyIconSvg =
+        '<svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+          '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>' +
+          '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>' +
+        '</svg>';
+
+      async function loadSlg(reset) {
+        if (reset) { slgCursor = null; slgLinks = []; slgSelected.clear(); updateBulkBar(); }
+        e.error.hidden = true;
+        if (reset) e.body.innerHTML = '<tr><td colspan="12" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>';
+        const params = new URLSearchParams({ limit: '50' });
+        if (slgStatus && slgStatus !== 'all') params.set('status', slgStatus);
+        if (slgType)   params.set('type',     slgType);
+        if (slgQ)      params.set('q',        slgQ);
+        if (slgCursor) params.set('after',    slgCursor);
+        try {
+          const res  = await fetch(BOKUN_API_BASE + '/api/admin/short-links?' + params.toString(), {
+            headers: { Authorization: 'Bearer ' + session.access_token },
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error((data && data.error) || 'load_failed');
+          slgLinks   = reset ? (data.links || []) : slgLinks.concat(data.links || []);
+          slgCursor  = data.next_cursor || null;
+          renderRows(slgLinks);
+          updateFooter(slgLinks.length, slgCursor);
+        } catch (err) {
+          e.error.textContent = 'Could not load links: ' + err.message;
+          e.error.hidden = false;
+          if (reset) e.body.innerHTML = '<tr><td colspan="12" class="bk-empty"><div class="bk-empty__title">Failed to load</div></td></tr>';
+        }
+      }
+
+      function renderRows(links) {
+        if (!links.length) {
+          e.body.innerHTML = '<tr><td colspan="12" class="bk-empty"><div class="bk-empty__title">No links found</div><p class="bk-empty__body">Try adjusting the search or filters.</p></td></tr>';
+          return;
+        }
+        e.body.innerHTML = links.map((l) => {
+          const hotel      = (l.hotel        && l.hotel.name)        || '—';
+          const staff      = (l.staff_member && l.staff_member.name) || null;
+          const typePill   = slgPill(l.link_type);
+          const statusPill = l.status === 'active'
+            ? '<span class="bk-pill bk-pill--ok">Active</span>'
+            : '<span class="bk-pill bk-pill--neutral">Retired</span>';
+          const dest       = (l.target_url || '').replace(/^https?:\/\//, '');
+          const created    = formatHumanDate((l.created_at || '').slice(0, 10));
+          const lastScan   = l.last_clicked_at ? formatHumanDateTime(l.last_clicked_at) : '—';
+          const checked    = slgSelected.has(l.id);
+          return (
+            '<tr class="slg-row" data-slg-id="' + escapeHtml(l.id) + '">' +
+            '<td class="bk-table__check" data-slg-check="1" style="cursor:default">' +
+              '<input type="checkbox" data-slg-id="' + escapeHtml(l.id) + '"' + (checked ? ' checked' : '') + ' aria-label="Select link">' +
+            '</td>' +
+            '<td class="slg-url-cell">' +
+              '<button type="button" class="hd-copy hd-copy--url" data-copy="' + escapeHtml(l.short_url || l.short_path || '') + '">' +
+                '<span class="mono slg-url-text">' + escapeHtml(l.short_url || l.short_path || '—') + '</span>' +
+                copyIconSvg +
+              '</button>' +
+            '</td>' +
+            '<td>' + typePill + '</td>' +
+            '<td class="bk-table__muted">' + escapeHtml(hotel) + '</td>' +
+            '<td class="bk-table__muted">' + escapeHtml(l.link_type === 'staff' && staff ? staff : '—') + '</td>' +
+            '<td class="slg-dest-cell bk-table__muted"><span class="mono" style="font-size:0.8em">' + escapeHtml(dest) + '</span></td>' +
+            '<td>' + escapeHtml(l.label || '—') + '</td>' +
+            '<td class="num">' + (l.click_count_cached || 0) + '</td>' +
+            '<td class="bk-table__muted">' + escapeHtml(lastScan) + '</td>' +
+            '<td>' + statusPill + '</td>' +
+            '<td class="bk-table__muted">' + escapeHtml(created) + '</td>' +
+            '<td class="bk-table__kebab">' +
+              '<button type="button" class="bk-kebab" data-slg-edit="' + escapeHtml(l.id) + '" aria-label="Edit">⋯</button>' +
+            '</td>' +
+            '</tr>'
+          );
+        }).join('');
+      }
+
+      function slgPill(type) {
+        if (type === 'hotel')    return '<span class="bk-pill bk-pill--ok">Hotel</span>';
+        if (type === 'staff')    return '<span class="bk-pill bk-pill--neutral">Staff</span>';
+        if (type === 'campaign') return '<span class="bk-pill" style="background:#f5f3ff;border-color:#c4b5fd;color:#5b21b6;border:1px solid">Campaign</span>';
+        return '<span class="bk-pill bk-pill--neutral">' + escapeHtml(type || '—') + '</span>';
+      }
+
+      function updateFooter(count, cursor) {
+        let html = count + ' link' + (count === 1 ? '' : 's');
+        if (cursor) html += ' &mdash; <button type="button" class="slg-load-more" id="slgLoadMore">Load more</button>';
+        e.footer.innerHTML = html;
+        const btn = document.getElementById('slgLoadMore');
+        if (btn) btn.addEventListener('click', () => loadSlg(false));
+      }
+
+      function updateBulkBar() {
+        const n = slgSelected.size;
+        e.bulkBar.hidden = (n === 0);
+        e.bulkCount.textContent = n + ' selected';
+      }
+
+      function exportCsv(links) {
+        const cols = ['Short URL','Short Path','Type','Hotel','Staff','Destination','Label','Notes','Scans','Last Scanned','Status','Created'];
+        const rows = [cols].concat(links.map((l) => [
+          l.short_url || '', l.short_path || '', l.link_type || '',
+          (l.hotel && l.hotel.name) || '', (l.staff_member && l.staff_member.name) || '',
+          l.target_url || '', l.label || '', l.notes || '',
+          l.click_count_cached || 0, l.last_clicked_at || '',
+          l.status || '', l.created_at || '',
+        ]));
+        const csv  = rows.map((r) => r.map((v) => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const a    = document.createElement('a');
+        a.href     = URL.createObjectURL(blob);
+        a.download = 'horizon-short-links-' + new Date().toISOString().slice(0, 10) + '.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+
+      // ── Stat card filter ──────────────────────────────────
+      e.statcards.addEventListener('click', (ev) => {
+        const card = ev.target.closest('[data-slg-status]');
+        if (!card) return;
+        slgStatus = card.dataset.slgStatus;
+        e.statcards.querySelectorAll('.bk-statcard').forEach((c) =>
+          c.classList.toggle('bk-statcard--active', c.dataset.slgStatus === slgStatus));
+        loadSlg(true);
+      });
+
+      // ── Search ────────────────────────────────────────────
+      e.search.addEventListener('input', () => {
+        clearTimeout(slgSearchTimer);
+        slgSearchTimer = setTimeout(() => { slgQ = e.search.value.trim(); loadSlg(true); }, 300);
+      });
+
+      // ── Type chip cycle: null → hotel → staff → campaign → null ──
+      e.typeChip.addEventListener('click', () => {
+        const cycle = [null, 'hotel', 'staff', 'campaign'];
+        slgType = cycle[(cycle.indexOf(slgType) + 1) % cycle.length];
+        if (slgType) {
+          e.typeChip.classList.add('bk-chip--active');
+          e.typeChip.innerHTML =
+            '<span class="bk-chip__close" aria-hidden="true">×</span>' +
+            ' <span class="bk-chip__text">Type</span>' +
+            '<span class="bk-chip__sep">|</span>' +
+            '<span class="bk-chip__value">' + escapeHtml(slgType) + '</span>';
+        } else {
+          e.typeChip.classList.remove('bk-chip--active');
+          e.typeChip.innerHTML = '<span class="bk-chip__plus">+</span> Type';
+        }
+        loadSlg(true);
+      });
+
+      // ── Select-all checkbox ───────────────────────────────
+      e.checkAll.addEventListener('change', () => {
+        const checked = e.checkAll.checked;
+        e.body.querySelectorAll('input[type="checkbox"][data-slg-id]').forEach((cb) => {
+          cb.checked = checked;
+          checked ? slgSelected.add(cb.dataset.slgId) : slgSelected.delete(cb.dataset.slgId);
+        });
+        updateBulkBar();
+      });
+
+      // ── Table body delegation ─────────────────────────────
+      e.body.addEventListener('click', (ev) => {
+        // Checkbox cell — only toggle the checkbox, don't open edit.
+        if (ev.target.closest('[data-slg-check]')) {
+          const cb = ev.target.closest('input[type="checkbox"][data-slg-id]');
+          if (cb) { cb.checked ? slgSelected.add(cb.dataset.slgId) : slgSelected.delete(cb.dataset.slgId); updateBulkBar(); }
+          ev.stopPropagation();
+          return;
+        }
+        // Copy button — let the existing hd-copy delegation handle it.
+        if (ev.target.closest('[data-copy]')) return;
+        // Kebab edit button.
+        const editBtn = ev.target.closest('[data-slg-edit]');
+        if (editBtn) {
+          ev.stopPropagation();
+          const link = slgLinks.find((l) => l.id === editBtn.dataset.slgEdit);
+          if (link) openSlEdit({ id: link.id, short_url: link.short_url, target_url: link.target_url, label: link.label, notes: link.notes });
+          return;
+        }
+        // Row click → edit.
+        const row = ev.target.closest('[data-slg-id]');
+        if (row && !ev.target.closest('button')) {
+          const link = slgLinks.find((l) => l.id === row.dataset.slgId);
+          if (link) openSlEdit({ id: link.id, short_url: link.short_url, target_url: link.target_url, label: link.label, notes: link.notes });
+        }
+      });
+
+      // ── Bulk retire ───────────────────────────────────────
+      e.bulkRetire.addEventListener('click', async () => {
+        const ids = Array.from(slgSelected);
+        if (!ids.length) return;
+        if (!confirm('Retire ' + ids.length + ' link' + (ids.length === 1 ? '' : 's') + '?\n\nThe Short.io redirects stay alive so printed QR codes keep scanning.')) return;
+        e.bulkRetire.disabled = true; e.bulkRetire.textContent = 'Retiring…';
+        let errors = 0;
+        for (const id of ids) {
+          try {
+            const r = await fetch(BOKUN_API_BASE + '/api/admin/short-links/' + encodeURIComponent(id), {
+              method: 'DELETE', headers: { Authorization: 'Bearer ' + session.access_token },
+            });
+            if (!r.ok) errors++;
+          } catch { errors++; }
+        }
+        e.bulkRetire.disabled = false; e.bulkRetire.textContent = 'Retire selected';
+        slgSelected.clear(); updateBulkBar();
+        if (errors) alert(errors + ' link(s) could not be retired.');
+        loadSlg(true);
+      });
+
+      // ── Bulk export CSV ───────────────────────────────────
+      e.bulkExport.addEventListener('click', () => {
+        const sel = new Set(slgSelected);
+        exportCsv(slgLinks.filter((l) => sel.has(l.id)));
+      });
+
+      // ── Export all CSV ────────────────────────────────────
+      e.export.addEventListener('click', () => exportCsv(slgLinks));
+
+      // ── Clear selection ───────────────────────────────────
+      e.bulkCancel.addEventListener('click', () => {
+        slgSelected.clear();
+        e.body.querySelectorAll('input[type="checkbox"]').forEach((cb) => { cb.checked = false; });
+        e.checkAll.checked = false;
+        updateBulkBar();
+      });
+
+      // ── Sync clicks button ────────────────────────────────
+      e.syncBtn.addEventListener('click', async () => {
+        e.syncBtn.disabled = true; e.syncBtn.textContent = 'Syncing…';
+        try {
+          const res  = await fetch(BOKUN_API_BASE + '/api/admin/sync-clicks', {
+            method: 'POST', headers: { Authorization: 'Bearer ' + session.access_token },
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error((data && data.error) || 'sync_failed');
+          loadSlg(true);
+        } catch (err) {
+          alert('Sync failed: ' + err.message);
+        } finally {
+          e.syncBtn.disabled = false; e.syncBtn.textContent = 'Sync clicks';
+        }
+      });
+
+      // Reload the global list whenever the edit modal closes so edits
+      // and saves reflect immediately without a manual page refresh.
+      const editModal = document.getElementById('slEditModal');
+      if (editModal) {
+        new MutationObserver(() => { if (editModal.hidden) loadSlg(true); })
+          .observe(editModal, { attributes: true, attributeFilter: ['hidden'] });
+      }
+
+      loadSlg(true);
     }
 
     /* ── Initial render — last thing in the script so every const
