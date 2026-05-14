@@ -12,7 +12,6 @@ Three layers of identifier, each serving a distinct purpose:
 | Identifier | Format | Example | Visibility |
 |---|---|---|---|
 | Hotel slug | Lowercase full property name, hyphenated, 2–60 chars | `fairmont-chateau-lake-louise`, `the-rimrock-resort-hotel` | Internal only |
-| Employee slug | `[hotelcode]-[employeeinitials]` or any unique label | `fairmont-chateau-lake-louise-js` | Internal only |
 | Hotel tracking prefix | Random 4-char uppercase alphanumeric, immutable | `X7K2`, `B9M4` | Internal only |
 | Hotel default tracking code | `{prefix}_H` | `X7K2_H` | Sent in `?ref=` for walk-ins |
 | Employee tracking code | `{prefix}_E_{4-digit zero-padded seq}` | `X7K2_E_0042` | Sent in `?ref=` for kickback bookings |
@@ -23,11 +22,10 @@ sequence numbers are server-incremented per-hotel. There is no
 client-side derivation any more — the worker mints these values and
 the admin UI displays them as read-only after creation.
 
-The slug is decoupled from the tracking code on purpose: changing an
-employee's role or replacing one staff member with another can never
-require renaming the slug (it's locked), and the public-facing short
-URL (which encodes the tracking code) does not leak the employee's
-name. See `ADDING_A_PARTNER.md` for the full lifecycle.
+Employees have no separate slug: `hotel_staff.id` (uuid) is the
+internal stable reference and `tracking_code` is the canonical
+human-readable identifier shown in the admin UI and encoded in
+short URLs. See `ADDING_A_PARTNER.md` for the full lifecycle.
 
 ## Reuse rule
 
@@ -63,9 +61,8 @@ worker round-trip; admins never edit it directly.
       "kickback_pool_pct": null,
       "employees": [
         {
-          "code": "fairmont-ll-js",
           "name": "Jane Smith",
-          "tracking_code": "FAIRMONT_LL_JS",
+          "tracking_code": "X7K2_E_0042",
           "kickback_pct": 5,
           "status": "active"
         }

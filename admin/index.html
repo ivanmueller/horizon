@@ -3254,7 +3254,7 @@
           const rateCell = (rate != null ? rate + '%' : '—')
             + (isOverride ? ' <span class="hd-override-dot" title="Overrides hotel default" aria-label="Overrides hotel default"></span>' : '');
           const earned = formatHotelMoney(s.lifetime_commission || 0, currency);
-          const refCode = s.tracking_code || s.code || '';
+          const refCode = s.tracking_code || '';
           return (
             '<tr data-staff-row="' + escapeHtml(s.id) + '">' +
               '<td class="hd-emp">' +
@@ -3325,9 +3325,9 @@
       ].concat(
         staff.filter((s) => s.status === 'active').map((s) => {
           const sl  = staffShortByStaffId.get(s.id) || null;
-          const url = masterLink + '?ref=' + encodeURIComponent(s.tracking_code || s.code || '');
+          const url = masterLink + '?ref=' + encodeURIComponent(s.tracking_code || '');
           return {
-            code:          s.tracking_code || s.code,
+            code:          s.tracking_code,
             short:         sl ? sl.short_url   : null,
             url,
             label:         s.name,
@@ -4447,13 +4447,12 @@
           ${staff.length
             ? `<table class="table">
                  <thead><tr>
-                   <th>Name</th><th>Slug</th><th>Tracking</th>
+                   <th>Name</th><th>Tracking</th>
                    <th class="num">Kickback</th><th class="row-actions__col"></th>
                  </tr></thead>
                  <tbody>${staff.map((s) => `
                    <tr ${drawerStaffForm && drawerStaffForm.editId === s.id ? 'class="row--selected"' : ''}>
                      <td>${escapeHtml(s.name)}</td>
-                     <td class="mono faint">${escapeHtml(s.code)}</td>
                      <td class="mono">${escapeHtml(s.tracking_code || '—')}</td>
                      <td class="num">${s.kickback_pct != null ? s.kickback_pct + '%' : '—'}</td>
                      <td class="row-actions">
@@ -4847,19 +4846,7 @@
               <input class="input" id="hsName" type="text" required maxlength="120"
                      value="${isAdd ? '' : escapeHtml(staff.name)}"
                      placeholder="Jane Smith">
-            </label>
-            <label class="drawer-form__row">
-              <span class="drawer-form__label">Slug ${isAdd
-                ? '<span class="drawer-form__req">required · permanent</span>'
-                : '<span class="drawer-form__req">permanent</span>'}</span>
-              <input class="input" id="hsCode" type="text"
-                     ${isAdd ? 'required' : 'disabled'}
-                     autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
-                     pattern="[a-z0-9-]{2,60}" maxlength="60"
-                     value="${isAdd ? '' : escapeHtml(staff.code)}"
-                     placeholder="jane-smith"
-                     style="font-family: var(--font-mono); font-size: 0.9em;">
-              ${isAdd ? '<span class="drawer-form__hint">Internal identifier only. The tracking code (used in QR codes) is auto-assigned.</span>' : ''}
+              ${isAdd ? '<span class="drawer-form__hint">The tracking code (used in QR codes) is auto-assigned on creation.</span>' : ''}
             </label>
             ${trackingRow}
             <label class="drawer-form__row">
@@ -4882,18 +4869,14 @@
       const saveBtn = form.querySelector('#hsSave');
       errEl.hidden = true;
 
-      const code     = form.querySelector('#hsCode').value.trim().toLowerCase();
       const name     = form.querySelector('#hsName').value.trim();
       const kickback = form.querySelector('#hsKickback').value.trim();
 
-      if (!/^[a-z0-9-]{2,60}$/.test(code)) {
-        return showInline(errEl, 'Slug must be 2–60 lowercase letters, digits, or hyphens.');
-      }
       if (!name) return showInline(errEl, 'Name is required.');
 
       // tracking_code is minted by the worker (hotel.tracking_prefix
       // + per-hotel sequence). Don't send it from the client.
-      const body = { hotel_id: hotel.id, code, name };
+      const body = { hotel_id: hotel.id, name };
       if (kickback !== '') body.kickback_pct = Number(kickback);
 
       saveBtn.disabled = true;
@@ -4911,8 +4894,7 @@
         .then((res) => {
           if (!res.ok) {
             const msg = (res.body && res.body.error) ||
-              (res.status === 409 ? 'A staff member with this slug already exists for this hotel.' :
-                                    'Could not add staff (HTTP ' + res.status + ').');
+                        'Could not add staff (HTTP ' + res.status + ').';
             throw new Error(msg);
           }
           drawerStaffForm = null;

@@ -581,7 +581,7 @@ async function handleDashboardBookings(url, env, request) {
     "id,booking_id,confirmation_code,tour_id,tour_title,date,time," +
     "adults,youth,infants,amount,currency,lead_name,lead_email," +
     "status,created_at,updated_at," +
-    "staff:hotel_staff(id,code,name,tracking_code,kickback_pct)";
+    "staff:hotel_staff(id,name,tracking_code,kickback_pct)";
   let q =
     `bookings?hotel_id=eq.${h.id}` +
     `&select=${fields}` +
@@ -657,7 +657,7 @@ async function handleAdminSummary(url, env, request) {
     "id,confirmation_code,date,time,adults,youth,infants,amount,currency," +
     "tour_title,tour_id,lead_name,created_at,status," +
     "hotel:hotels(id,code,name,location,type,commission_pct,kickback_pool_pct)," +
-    "staff:hotel_staff(id,code,name,tracking_code,kickback_pct)";
+    "staff:hotel_staff(id,name,tracking_code,kickback_pct)";
   const q =
     `bookings?status=eq.confirmed` +
     `&created_at=gte.${encodeURIComponent(fromTs)}` +
@@ -703,17 +703,17 @@ async function handleAdminSummary(url, env, request) {
     if (r.staff) {
       const kPct = r.staff.kickback_pct != null ? Number(r.staff.kickback_pct) : 0;
       const kAmt = (amount * kPct) / 100;
-      let s = h._staffMap.get(r.staff.code);
+      let s = h._staffMap.get(r.staff.id);
       if (!s) {
         s = {
-          staff_code:    r.staff.code,
+          staff_id:      r.staff.id,
           staff_name:    r.staff.name,
           kickback_pct:  kPct,
           bookings:      0,
           revenue:       0,
           kickback_owed: 0,
         };
-        h._staffMap.set(r.staff.code, s);
+        h._staffMap.set(r.staff.id, s);
       }
       s.bookings += 1;
       s.revenue += amount;
@@ -824,7 +824,7 @@ const HOTEL_FIELDS =
   "id,code,name,location,type,status,effective_date,default_tracking_code," +
   "tracking_prefix,commission_pct,kickback_pool_pct,notes,created_at,updated_at";
 const STAFF_FIELDS =
-  "id,hotel_id,code,name,tracking_code,sequence_number,kickback_pct," +
+  "id,hotel_id,name,tracking_code,sequence_number,kickback_pct," +
   "status,created_at,updated_at";
 const MANAGER_FIELDS = "id,email,hotel_id,role,status,created_at,updated_at";
 
@@ -1182,9 +1182,6 @@ async function handleAdminStaffCreate(request, env) {
     return jsonResponse(payload, 201, request);
   } catch (err) {
     if (err.status === 404) return jsonResponse({ error: err.message }, 404, request);
-    if (isUniqueViolation(err, "code")) {
-      return jsonResponse({ error: `staff with code "${v.row.code}" already exists` }, 409, request);
-    }
     throw err;
   }
 }
@@ -1198,7 +1195,6 @@ async function handleAdminStaffUpdate(id, request, env) {
 
   const v = validateStaff(body, { creating: false });
   if (v.error) return jsonResponse({ error: v.error }, 400, request);
-  delete v.row.code;     // slug is identity
   delete v.row.hotel_id; // can't reassign staff to a different hotel
 
   const updated = await supabaseUpdate(
@@ -2049,9 +2045,6 @@ function validateStaff(body, { creating }) {
     const hotel_id = typeof body.hotel_id === "string" ? body.hotel_id.trim() : "";
     if (!UUID_RE.test(hotel_id)) return { error: "valid hotel_id required" };
     row.hotel_id = hotel_id;
-    const code = typeof body.code === "string" ? body.code.trim().toLowerCase() : "";
-    if (!SLUG_RE.test(code)) return { error: "code (lowercase slug, 2–60 chars) required" };
-    row.code = code;
   }
   if (typeof body.name === "string" && body.name.trim()) {
     row.name = body.name.trim();

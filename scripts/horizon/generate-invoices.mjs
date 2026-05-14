@@ -103,7 +103,7 @@ async function generateForHotel(hotel, range, outDir) {
   const fields =
     "id,confirmation_code,date,time,adults,youth,infants,amount,currency," +
     "tour_title,tour_id,lead_name,created_at," +
-    "staff:hotel_staff(id,code,name,tracking_code,kickback_pct)";
+    "staff:hotel_staff(id,name,tracking_code,kickback_pct)";
   const q =
     `/bookings?status=eq.confirmed&hotel_id=eq.${hotel.id}` +
     `&created_at=gte.${range.from}T00:00:00.000Z` +
