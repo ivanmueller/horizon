@@ -1237,12 +1237,7 @@
                   <div class="hd-head__avatar" id="hotelDetailAvatar" aria-hidden="true">—</div>
                   <div class="hd-head__lead">
                     <h1 class="bk-page__title" id="hotelDetailTitle">Loading…</h1>
-                    <!-- Hotel ID pill — the immutable tracking prefix, the
-                         single stable identifier for this hotel across
-                         the platform. Click to copy. -->
-                    <button type="button" class="hd-head__id mono" id="hotelDetailIdPill" data-copy="" title="Copy Hotel ID" hidden>
-                      <span data-id-text>—</span>
-                    </button>
+                    <p class="hd-head__sub" id="hotelDetailContact" hidden></p>
                   </div>
                 </div>
                 <div class="bk-page__actions hd-head__actions">
@@ -1277,13 +1272,13 @@
                 <div class="hd-meta__label">Status</div>
                 <div class="hd-meta__value" data-meta="status">—</div>
               </div>
-              <div class="hd-meta__col">
-                <div class="hd-meta__label">Tier</div>
+              <div class="hd-meta__col hd-meta__col--wide">
+                <div class="hd-meta__label">Commission tier</div>
                 <div class="hd-meta__value" data-meta="tier">—</div>
               </div>
               <div class="hd-meta__col">
-                <div class="hd-meta__label">Location</div>
-                <div class="hd-meta__value" data-meta="location">—</div>
+                <div class="hd-meta__label">Lifetime commission</div>
+                <div class="hd-meta__value hd-num" data-meta="lifetime_commission">—</div>
               </div>
             </section>
 
@@ -3210,7 +3205,7 @@
         slug,
         title:        container.querySelector('#hotelDetailTitle'),
         avatar:       container.querySelector('#hotelDetailAvatar'),
-        idPill:       container.querySelector('#hotelDetailIdPill'),
+        contact:      container.querySelector('#hotelDetailContact'),
         qrBtn:        container.querySelector('#hdQRBtn'),
         meta:         container.querySelector('#hotelDetailMeta'),
         empBody:      container.querySelector('#hdEmployeesBody'),
@@ -3410,16 +3405,31 @@
         els.avatar.textContent = first;
       }
 
-      // Hotel ID pill — the immutable tracking_prefix. Click to copy.
-      // Hidden until the prefix is loaded so we never flash a "—".
-      if (els.idPill) {
-        const prefix = h.tracking_prefix || '';
-        if (prefix) {
-          els.idPill.dataset.copy = prefix;
-          els.idPill.querySelector('[data-id-text]').textContent = prefix;
-          els.idPill.hidden = false;
+      // Primary contact line under the title. With an email: plain
+      // mono address + a tiny copy icon. Without: "Add primary
+      // contact" with a small inline + icon.
+      const contactEmail = h.contact_email || h.email || '';
+      const plusIcon =
+        '<svg class="hd-head__plus" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">' +
+          '<line x1="8" y1="3.5" x2="8" y2="12.5"/><line x1="3.5" y1="8" x2="12.5" y2="8"/>' +
+        '</svg>';
+      const copyIcon16 =
+        '<svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+          '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>' +
+          '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>' +
+        '</svg>';
+      if (els.contact) {
+        els.contact.hidden = false;
+        if (contactEmail) {
+          els.contact.innerHTML =
+            '<button type="button" class="hd-head__contact hd-copy" data-copy="' + escapeHtml(contactEmail) + '" title="Copy email">' +
+              '<span data-detail-text>' + escapeHtml(contactEmail) + '</span>' + copyIcon16 +
+            '</button>';
         } else {
-          els.idPill.hidden = true;
+          els.contact.innerHTML =
+            '<button type="button" class="hd-head__contact hd-head__contact--add" id="hdAddContact">' +
+              plusIcon + '<span>Add primary contact</span>' +
+            '</button>';
         }
       }
 
@@ -3430,20 +3440,48 @@
       };
       metaSet('onboarded', escapeHtml(formatHumanDate((h.created_at || '').slice(0, 10)) || '—'));
       metaSet('status',    hotelStatusPill(h.status));
-      const tierBits = [];
-      if (h.commission_pct != null)    tierBits.push(h.commission_pct + '%');
-      if (h.kickback_pool_pct != null) tierBits.push(h.kickback_pool_pct + '%');
-      const tierLabel = (h.type === 'kickback' ? 'Kickback' : h.type === 'pool' ? 'Pool' : '—')
-                      + (tierBits.length ? ' · ' + tierBits.join(' / ') : '');
-      metaSet('tier', escapeHtml(tierLabel));
       const currency = hotelCurrency(h);
-      const flag = flagFor(hotelCountry(h));
-      const region = hotelRegion(h);
-      const locTextRaw = h.location || '—';
-      const locTail    = region ? ', ' + region : '';
-      const locInner   = (flag ? '<span class="hd-flag" aria-hidden="true">' + flag + '</span> ' : '')
-                       + escapeHtml(locTextRaw + locTail);
-      metaSet('location', locInner);
+
+      // Commission tier: tier label + stacked bar showing the cut
+      // each party takes. Two segments today (Hotel + Horizon Tours)
+      // since the schema only has commission_pct. A future
+      // platform_fee_pct column would add a third (Horizon) segment.
+      const tierName  = h.type === 'kickback' ? 'Kickback'
+                      : h.type === 'pool'     ? 'Pool'
+                      : '—';
+      const hotelCut  = h.commission_pct != null ? Number(h.commission_pct) : null;
+      const opCut     = hotelCut != null ? Math.max(0, 100 - hotelCut) : null;
+      const segHotel  = hotelCut != null ? hotelCut : 0;
+      const segOp     = opCut    != null ? opCut    : 0;
+      const tierBar =
+        '<div class="hd-tierbar">' +
+          '<div class="hd-tierbar__head">' +
+            '<span class="hd-tierbar__name">' + escapeHtml(tierName) + '</span>' +
+          '</div>' +
+          '<div class="hd-tierbar__bar" role="img" aria-label="Commission split">' +
+            '<span class="hd-tierbar__seg hd-tierbar__seg--op" style="width:' + segOp + '%"></span>' +
+            '<span class="hd-tierbar__seg hd-tierbar__seg--hotel" style="width:' + segHotel + '%"></span>' +
+          '</div>' +
+          '<div class="hd-tierbar__legend">' +
+            '<span class="hd-tierbar__row">' +
+              '<span class="hd-tierbar__swatch hd-tierbar__swatch--op"></span>' +
+              '<span class="hd-tierbar__label">Horizon Tours</span>' +
+              '<span class="hd-tierbar__pct hd-num">' + (opCut    != null ? opCut    + '%' : '—') + '</span>' +
+            '</span>' +
+            '<span class="hd-tierbar__row">' +
+              '<span class="hd-tierbar__swatch hd-tierbar__swatch--hotel"></span>' +
+              '<span class="hd-tierbar__label">Hotel</span>' +
+              '<span class="hd-tierbar__pct hd-num">' + (hotelCut != null ? hotelCut + '%' : '—') + '</span>' +
+            '</span>' +
+          '</div>' +
+        '</div>';
+      metaSet('tier', tierBar);
+
+      // Lifetime commission — same value the Insights card surfaces.
+      // Stays as a placeholder dash until real aggregation lands;
+      // the populated state is exercised today by the Fairmont demo
+      // data block below (populateFairmontDemoData).
+      metaSet('lifetime_commission', escapeHtml(formatHotelMoney(h.lifetime_commission || 0, currency)));
 
       // Employees & Referral Codes — primary working section. Reads
       // straight from h.staff (same source as the drawer) so the two
@@ -4108,6 +4146,11 @@
       setInsight('bookings-lifetime',   '5');
       setInsight('bookings-30d',        '5');
       setInsight('conversion-rate',     '6.2%');
+
+      // Mirror the demo lifetime commission into the meta strip so
+      // the page header reflects the same headline number.
+      const metaLc = els.meta && els.meta.querySelector('[data-meta="lifetime_commission"]');
+      if (metaLc) metaLc.textContent = fm(203.20);
 
       // ── Referral Links — patch the click/conversion/last-clicked
       // cells in place. The rows themselves come from the staff
