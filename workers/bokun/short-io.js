@@ -17,6 +17,7 @@
 
 const SHORT_IO_BASE = "https://api.short.io/links";
 const SHORT_IO_STATS = "https://statistics.short.io/statistics/link";
+const SHORT_IO_TIMEOUT_MS = 5000;
 
 // Returns true when the worker has the secret configured. Callers
 // use this to decide whether to attempt API calls at all — until the
@@ -37,6 +38,29 @@ function headers(env) {
     // Short.io expects the raw key; no Bearer prefix.
     Authorization: env.SHORT_IO_API_KEY,
   };
+}
+
+// Wraps fetch with a hard 5-second timeout via AbortController.
+// Without this, a Short.io latency spike would hold the worker request
+// open until Cloudflare's 30-second wall-clock limit kills it, which
+// manifests as a hanging admin UI with no error feedback.
+async function shortIoFetch(url, options) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), SHORT_IO_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (err) {
+    if (err.name === "AbortError") {
+      throw new ShortIoError(
+        408,
+        null,
+        `Short.io request timed out after ${SHORT_IO_TIMEOUT_MS}ms (${url})`,
+      );
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // Throws ShortIoError on non-2xx. Caller decides whether to surface
@@ -91,7 +115,7 @@ export async function createShortLink(env, { path, originalURL, title }) {
     path,
   };
   if (title) body.title = title;
-  const res = await fetch(SHORT_IO_BASE, {
+  const res = await shortIoFetch(SHORT_IO_BASE, {
     method: "POST",
     headers: headers(env),
     body: JSON.stringify(body),
@@ -106,7 +130,7 @@ export async function updateShortLink(env, shortIoId, patch) {
   if (!isShortIoConfigured(env)) {
     throw new ShortIoError(500, null, "SHORT_IO_API_KEY not configured");
   }
-  const res = await fetch(`${SHORT_IO_BASE}/${encodeURIComponent(shortIoId)}`, {
+  const res = await shortIoFetch(`${SHORT_IO_BASE}/${encodeURIComponent(shortIoId)}`, {
     method: "POST",
     headers: headers(env),
     body: JSON.stringify(patch),
@@ -122,7 +146,7 @@ export async function deleteShortLink(env, shortIoId) {
   if (!isShortIoConfigured(env)) {
     throw new ShortIoError(500, null, "SHORT_IO_API_KEY not configured");
   }
-  const res = await fetch(`${SHORT_IO_BASE}/${encodeURIComponent(shortIoId)}`, {
+  const res = await shortIoFetch(`${SHORT_IO_BASE}/${encodeURIComponent(shortIoId)}`, {
     method: "DELETE",
     headers: headers(env),
   });
@@ -135,7 +159,7 @@ export async function getLinkStats(env, shortIoId, period = "total") {
   if (!isShortIoConfigured(env)) {
     throw new ShortIoError(500, null, "SHORT_IO_API_KEY not configured");
   }
-  const res = await fetch(
+  const res = await shortIoFetch(
     `${SHORT_IO_STATS}/${encodeURIComponent(shortIoId)}?period=${encodeURIComponent(period)}`,
     { method: "GET", headers: headers(env) },
   );
