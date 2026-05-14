@@ -27,6 +27,36 @@ internal stable reference and `tracking_code` is the canonical
 human-readable identifier shown in the admin UI and encoded in
 short URLs. See `ADDING_A_PARTNER.md` for the full lifecycle.
 
+## Short paths are derived from tracking codes, never from slugs
+
+The short-URL path component (e.g. `x7k2-h` in
+`link.gowithhorizon.com/x7k2-h`) is **always** derived from the
+tracking code via `trackingCodeToShortPath()`. Hotel masters get
+`{prefix}-h`, staff get `{prefix}-eNNNN`. Both follow the same
+format so every short URL on the platform looks consistent
+regardless of property name, brand, or hotel slug.
+
+The hotel slug (`hotels.code`, e.g. `fairmont-chateau-lake-louise`)
+appears **only** in the long URL path `/partners/<slug>/`. It never
+appears in a short URL or QR code. This decoupling means:
+
+- Slugs can be ugly without leaking onto printed material
+  (`hotel-test-2` lives at long-URL only; its short URL is
+  `link.gowithhorizon.com/x7k2-h`).
+- QR payloads stay short and uniformly-sized regardless of how
+  long a hotel's name is, so scan reliability doesn't degrade for
+  long-named properties.
+- Guests inspecting URLs from a screenshot can't tell which hotel
+  another guest is staying at — tracking-code paths are opaque.
+- Long-URL slug formats can evolve (vanity paths, regional
+  variants) without invalidating any printed short URL.
+
+The single exception is **manual campaign-link creation**, where
+an admin can supply a custom `short_path` via the create-link
+modal. That path is theirs to choose and isn't derived from a
+tracking code — it's a deliberate opt-out for marketing surfaces
+that want a vanity slug.
+
 ## Reuse rule
 
 **Hotel codes never get reused.** If a hotel terminates, the code retires
