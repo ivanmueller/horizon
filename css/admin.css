@@ -1968,7 +1968,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 
 .hd-body {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 2fr) minmax(0, 0.75fr);
   gap: var(--s6);
   align-items: flex-start;
 }
@@ -2935,4 +2935,127 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .sl-edit__history-arrow {
   color: var(--text-faint);
   flex-shrink: 0;
+}
+
+/* ── Hotel detail drawer: full-width Hero strip ──────────────
+   Sits above the hd-body grid. QR on the left, the short URL +
+   actions + locked-identifier pills on the right. This is the
+   most important visual surface on the drawer — the QR is the
+   actual printed artifact, the codes beside it are what makes
+   attribution work. */
+.hd-hero {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--s6);
+  align-items: start;
+  padding: var(--s5);
+  margin-bottom: var(--s6);
+  background: #ffffff;
+  border: 1px solid var(--line, #e5e7eb);
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.hd-hero__qr-col {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hd-hero__qr {
+  width: 192px;
+  height: 192px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hd-hero__qr canvas,
+.hd-hero__qr svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+.hd-hero__info-col {
+  display: grid;
+  gap: var(--s3);
+  min-width: 0;
+}
+.hd-hero__heading {
+  display: grid;
+  gap: 2px;
+}
+.hd-hero__title {
+  font-size: var(--t-lg);
+  font-weight: 600;
+  margin: 0;
+  color: #1a2c44;
+}
+.hd-hero__sub {
+  font-size: var(--t-sm);
+  color: #50617a;
+  margin: 0;
+}
+.hd-hero__url {
+  font-size: var(--t-base);
+  width: 100%;
+}
+.hd-hero__actions {
+  display: flex;
+  gap: var(--s2);
+  flex-wrap: wrap;
+}
+.hd-hero__codes {
+  display: grid;
+  gap: var(--s2);
+  margin: var(--s2) 0 0;
+  padding: var(--s3) 0 0;
+  border-top: 1px solid var(--line, #e5e7eb);
+}
+.hd-hero__code-row {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  align-items: center;
+  gap: var(--s3);
+}
+.hd-hero__code-label {
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #50617a;
+  font-weight: 500;
+}
+.hd-hero__code-value {
+  font-size: var(--t-base);
+  line-height: 1.4;
+  word-break: break-all;
+}
+.hd-hero__details {
+  margin-top: var(--s2);
+}
+.hd-hero__details-summary {
+  cursor: pointer;
+  font-size: var(--t-xs);
+  color: #50617a;
+  user-select: none;
+  padding: var(--s1) 0;
+}
+.hd-hero__details-summary:hover { color: #1a2c44; }
+.hd-hero__longurl {
+  margin-top: var(--s2);
+  font-size: var(--t-xs);
+  width: 100%;
+  color: #50617a;
+}
+
+/* Stack the hero columns on narrower viewports so the QR doesn't
+   force horizontal scroll on tablet widths. */
+@media (max-width: 720px) {
+  .hd-hero {
+    grid-template-columns: 1fr;
+  }
+  .hd-hero__qr-col {
+    justify-content: flex-start;
+  }
+  .hd-hero__code-row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
 }

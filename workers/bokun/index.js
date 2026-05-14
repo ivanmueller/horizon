@@ -823,7 +823,8 @@ async function handleAdminBookingPatch(id, request, env) {
 
 const HOTEL_FIELDS =
   "id,code,name,location,type,status,effective_date,default_tracking_code," +
-  "tracking_prefix,commission_pct,kickback_pool_pct,notes,created_at,updated_at";
+  "tracking_prefix,commission_pct,kickback_pool_pct,notes,created_at,updated_at," +
+  "contract_start_date,property_type,star_rating,region";
 const STAFF_FIELDS =
   "id,hotel_id,name,tracking_code,sequence_number,kickback_pct," +
   "status,created_at,updated_at";
@@ -2064,6 +2065,31 @@ function validateHotel(body, { creating }) {
   else if (typeof body.kickback_pool_pct === "number") row.kickback_pool_pct = body.kickback_pool_pct;
   if (body.notes === null) row.notes = null;
   else if (typeof body.notes === "string") row.notes = body.notes;
+  // Onboarding metadata — all nullable, all admin-editable. The
+  // database CHECK on star_rating enforces 1..5, so we let invalid
+  // values bubble up as a 5xx rather than silently sanitise.
+  if (body.contract_start_date === null) row.contract_start_date = null;
+  else if (typeof body.contract_start_date === "string" &&
+           /^\d{4}-\d{2}-\d{2}$/.test(body.contract_start_date)) {
+    row.contract_start_date = body.contract_start_date;
+  }
+  if (body.property_type === null) row.property_type = null;
+  else if (typeof body.property_type === "string") {
+    const t = body.property_type.trim();
+    row.property_type = t || null;
+  }
+  if (body.star_rating === null) row.star_rating = null;
+  else if (typeof body.star_rating === "number") {
+    if (!Number.isInteger(body.star_rating) || body.star_rating < 1 || body.star_rating > 5) {
+      return { error: "star_rating must be an integer between 1 and 5" };
+    }
+    row.star_rating = body.star_rating;
+  }
+  if (body.region === null) row.region = null;
+  else if (typeof body.region === "string") {
+    const r = body.region.trim();
+    row.region = r || null;
+  }
 
   return { row };
 }
