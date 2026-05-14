@@ -2717,3 +2717,102 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   transition: color var(--t-fast);
 }
 .slg-load-more:hover { color: var(--accent-hover); }
+
+/* ── Referral Link Anatomy panel ─────────────────────────────
+   Sits in the right sidebar of the hotel detail drawer. Every
+   immutable segment of the tracking codes is wrapped in a
+   danger-red highlight so the admin sees at a glance what
+   can't be changed without invalidating printed QR codes. */
+.hd-anatomy {
+  padding: var(--s4);
+  display: grid;
+  gap: var(--s4);
+}
+.hd-anatomy__intro {
+  font-size: var(--t-sm);
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+.hd-anatomy__block {
+  display: grid;
+  gap: var(--s1);
+}
+.hd-anatomy__label {
+  font-size: var(--t-xs);
+  font-weight: 500;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.hd-anatomy__value {
+  font-size: var(--t-base);
+  line-height: 1.5;
+  word-break: break-all;
+}
+.hd-anatomy__hint {
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+.hd-anatomy__hint-inline {
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+.hd-anatomy__faint {
+  color: var(--text-faint);
+}
+.hd-anatomy__seq {
+  background: var(--warn-bg);
+  color: var(--warn-fg);
+  border: 1px solid var(--warn-border);
+  border-radius: 3px;
+  padding: 0 4px;
+}
+/* The headline visual — every locked segment gets a red pill so
+   admins literally cannot miss what's immutable. */
+.hd-anatomy__locked {
+  background: var(--bad-bg);
+  color: var(--bad-fg);
+  border: 1px solid var(--bad-border);
+  border-radius: 3px;
+  padding: 0 4px;
+  font-weight: 500;
+}
+.hd-anatomy__locked-pill {
+  background: var(--bad-bg);
+  color: var(--bad-fg);
+  border: 1px solid var(--bad-border);
+  border-radius: 3px;
+  padding: 0 6px;
+  font-weight: 500;
+  font-size: 0.85em;
+}
+.hd-anatomy__warning {
+  background: var(--bad-bg);
+  color: var(--bad-fg);
+  border: 1px solid var(--bad-border);
+  border-left: 3px solid var(--bad-fg);
+  border-radius: 4px;
+  padding: var(--s3);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+}
+
+/* Master Referral card: "no short link yet" placeholder for the
+   QR area when Short.io was down at create-time. */
+.hd-mref__qr-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 176px;
+  height: 176px;
+  background: var(--warn-bg);
+  border: 1px dashed var(--warn-border);
+  border-radius: 4px;
+  font-size: var(--t-sm);
+  color: var(--warn-fg);
+  text-align: center;
+  padding: var(--s3);
+}
