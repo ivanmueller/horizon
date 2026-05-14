@@ -1263,6 +1263,61 @@
               </div>
             </section>
 
+            <!-- ── Hero strip ──────────────────────────────────────
+                 Full-width referral hub: QR (left), short URL +
+                 download actions, and the immutable parts of this
+                 hotel's referral codes shown in danger-red. This is
+                 the most important visual element in the drawer —
+                 sits above everything else so it dominates above
+                 the fold. -->
+            <section class="hd-hero" id="hdHero" aria-labelledby="hdHeroTitle">
+              <div class="hd-hero__qr-col">
+                <div class="hd-hero__qr" id="hdHeroQR" role="img" aria-label="Hotel master referral QR code"></div>
+              </div>
+              <div class="hd-hero__info-col">
+                <div class="hd-hero__heading">
+                  <h2 class="hd-hero__title" id="hdHeroTitle">Master referral link</h2>
+                  <p class="hd-hero__sub">Used on walk-in / hotel-pool bookings when no employee is attributed.</p>
+                </div>
+
+                <button type="button" class="hd-copy hd-copy--url hd-hero__url mono" id="hdHeroShortUrl" data-copy="" title="Copy short URL">
+                  <span class="hd-trunc" data-hero-short>—</span>
+                  <svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+
+                <div class="hd-hero__actions">
+                  <button type="button" class="btn btn--sm" id="hdHeroDownloadQR">Download QR</button>
+                  <button type="button" class="btn btn--sm" id="hdHeroBulkQR">Download all QRs (ZIP)</button>
+                </div>
+
+                <!-- The locked identifiers for this hotel. Red pills
+                     mean "cannot be changed without invalidating
+                     printed QR codes." -->
+                <dl class="hd-hero__codes">
+                  <div class="hd-hero__code-row">
+                    <dt class="hd-hero__code-label">Hotel ID</dt>
+                    <dd class="hd-hero__code-value mono" id="hdHeroPrefix">—</dd>
+                  </div>
+                  <div class="hd-hero__code-row">
+                    <dt class="hd-hero__code-label">Master code</dt>
+                    <dd class="hd-hero__code-value mono" id="hdHeroMasterCode">—</dd>
+                  </div>
+                  <div class="hd-hero__code-row">
+                    <dt class="hd-hero__code-label">Employee code pattern</dt>
+                    <dd class="hd-hero__code-value mono" id="hdHeroStaffPattern">—</dd>
+                  </div>
+                </dl>
+
+                <details class="hd-hero__details">
+                  <summary class="hd-hero__details-summary">Show long URL (debug)</summary>
+                  <button type="button" class="hd-copy hd-copy--url hd-hero__longurl mono" id="hdHeroLongUrl" data-copy="" title="Copy long URL">
+                    <span class="hd-trunc" data-hero-long>—</span>
+                    <svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </details>
+              </div>
+            </section>
+
             <div class="hd-body">
               <main class="hd-main">
 
@@ -1361,27 +1416,22 @@
                     <div class="hd-side__row hd-side__row--metric">
                       <dt class="hd-side__label">Lifetime commission</dt>
                       <dd class="hd-side__value hd-num" data-insight="lifetime-commission">—</dd>
-                      <span class="hd-delta" data-delta="lifetime-commission">—</span>
                     </div>
                     <div class="hd-side__row hd-side__row--metric">
                       <dt class="hd-side__label">Bookings (lifetime)</dt>
                       <dd class="hd-side__value hd-num" data-insight="bookings-lifetime">0</dd>
-                      <span class="hd-delta" data-delta="bookings-lifetime">—</span>
                     </div>
                     <div class="hd-side__row hd-side__row--metric">
                       <dt class="hd-side__label">Bookings (last 30d)</dt>
                       <dd class="hd-side__value hd-num" data-insight="bookings-30d">0</dd>
-                      <span class="hd-delta" data-delta="bookings-30d">—</span>
                     </div>
                     <div class="hd-side__row hd-side__row--metric">
                       <dt class="hd-side__label">Active employees</dt>
                       <dd class="hd-side__value hd-num" data-insight="active-employees">0 of 0</dd>
-                      <span class="hd-delta hd-delta--neutral" data-delta="active-employees">—</span>
                     </div>
                     <div class="hd-side__row hd-side__row--metric">
                       <dt class="hd-side__label">Conversion rate</dt>
                       <dd class="hd-side__value hd-num" data-insight="conversion-rate">—</dd>
-                      <span class="hd-delta" data-delta="conversion-rate">—</span>
                     </div>
                   </dl>
                 </section>
@@ -1406,124 +1456,22 @@
                       <dd class="hd-side__value" data-detail="onboarded">—</dd>
                     </div>
                     <div class="hd-side__row">
-                      <dt class="hd-side__label">Address</dt>
-                      <dd class="hd-side__value" data-detail="address">—</dd>
+                      <dt class="hd-side__label">Contract start</dt>
+                      <dd class="hd-side__value" data-detail="contract_start_date">—</dd>
                     </div>
                     <div class="hd-side__row">
-                      <dt class="hd-side__label">Phone</dt>
-                      <dd class="hd-side__value" data-detail="phone">—</dd>
+                      <dt class="hd-side__label">Property type</dt>
+                      <dd class="hd-side__value" data-detail="property_type">—</dd>
                     </div>
                     <div class="hd-side__row">
-                      <dt class="hd-side__label">Primary contact</dt>
-                      <dd class="hd-side__value" data-detail="email">—</dd>
+                      <dt class="hd-side__label">Star rating</dt>
+                      <dd class="hd-side__value" data-detail="star_rating">—</dd>
                     </div>
                     <div class="hd-side__row">
-                      <dt class="hd-side__label">Website</dt>
-                      <dd class="hd-side__value" data-detail="website">—</dd>
-                    </div>
-                    <div class="hd-side__row">
-                      <dt class="hd-side__label">Total rooms</dt>
-                      <dd class="hd-side__value hd-num" data-detail="rooms">—</dd>
+                      <dt class="hd-side__label">Region</dt>
+                      <dd class="hd-side__value" data-detail="region">—</dd>
                     </div>
                   </dl>
-                </section>
-
-                <section class="hd-card" id="hdFinancialCard">
-                  <header class="hd-card__head"><h3 class="hd-card__title">Financial</h3></header>
-                  <div class="hd-card__body" id="hdFinancialBody">
-                    <!-- Populated by renderHotelDetail: Stripe status row, then either
-                         connected rows or a Connect Stripe CTA, then the tier split
-                         (tier name + Edit link + bar + legend). -->
-                  </div>
-                </section>
-
-                <section class="hd-card" id="hdMasterRefCard">
-                  <header class="hd-card__head"><h3 class="hd-card__title">Master Referral</h3></header>
-                  <div class="hd-mref">
-                    <div class="hd-mref__qr" id="hdMasterRefQR" role="img" aria-label="Master referral QR code"></div>
-                    <!-- Primary surface: the short URL. This is the
-                         only artifact that ever goes on printed
-                         materials. The long-form URL is collapsed
-                         under a details disclosure for debugging. -->
-                    <button type="button" class="hd-copy hd-copy--url hd-mref__url mono" id="hdMasterRefUrl" data-copy="" title="Copy short URL">
-                      <span class="hd-trunc" data-detail-text>—</span>
-                      <svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                    </button>
-                    <div class="hd-mref__actions">
-                      <button type="button" class="btn btn--sm" id="hdMasterRefDownload">Download QR</button>
-                      <button type="button" class="btn btn--sm" id="hdMasterRefBulk">Download all QRs</button>
-                    </div>
-                    <details class="hd-mref__details">
-                      <summary class="hd-mref__details-summary">Show long URL (debug)</summary>
-                      <button type="button" class="hd-copy hd-copy--url hd-mref__longurl mono" id="hdMasterRefLongUrl" data-copy="" title="Copy long URL">
-                        <span class="hd-trunc" data-long-text>—</span>
-                        <svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                      </button>
-                    </details>
-                    <p class="hd-mref__help">Used when no employee code is attributed.</p>
-                  </div>
-                </section>
-
-                <!-- ── Referral Link Anatomy ────────────────────────────
-                     Shows the structure of this hotel's tracking codes
-                     and short paths, with the immutable parts visibly
-                     marked in danger-red. Surfaces what cannot be
-                     changed without invalidating printed QR codes. -->
-                <section class="hd-card" id="hdAnatomyCard">
-                  <header class="hd-card__head">
-                    <h3 class="hd-card__title">Referral link anatomy</h3>
-                  </header>
-                  <div class="hd-anatomy">
-                    <p class="hd-anatomy__intro">
-                      Every part shown in <span class="hd-anatomy__locked-pill">red</span>
-                      is permanent. Changing any of it would invalidate
-                      printed QR codes and break attribution.
-                    </p>
-
-                    <div class="hd-anatomy__block">
-                      <div class="hd-anatomy__label">Hotel prefix</div>
-                      <div class="hd-anatomy__value mono" id="hdAnatomyPrefix">—</div>
-                      <div class="hd-anatomy__hint">
-                        4-character random alphanumeric, generated at
-                        creation. Roots every code this hotel will ever
-                        issue.
-                      </div>
-                    </div>
-
-                    <div class="hd-anatomy__block">
-                      <div class="hd-anatomy__label">Hotel master code</div>
-                      <div class="hd-anatomy__value mono" id="hdAnatomyHotelCode">—</div>
-                      <div class="hd-anatomy__hint">
-                        Used on walk-in / hotel-pool bookings when no
-                        employee is attributed.
-                      </div>
-                    </div>
-
-                    <div class="hd-anatomy__block">
-                      <div class="hd-anatomy__label">Employee code pattern</div>
-                      <div class="hd-anatomy__value mono" id="hdAnatomyStaffPattern">—</div>
-                      <div class="hd-anatomy__hint">
-                        Each employee gets an auto-incremented sequence
-                        number. Codes are never re-used when staff leave.
-                      </div>
-                    </div>
-
-                    <div class="hd-anatomy__block">
-                      <div class="hd-anatomy__label">Short URL pattern</div>
-                      <div class="hd-anatomy__value mono" id="hdAnatomyShortUrl">—</div>
-                      <div class="hd-anatomy__hint">
-                        What goes on every QR code. The destination
-                        behind it can be retargeted, but the slug itself
-                        is locked once minted.
-                      </div>
-                    </div>
-
-                    <div class="hd-anatomy__warning">
-                      <strong>Do not edit</strong> any of the above
-                      values directly in the database. Treat them as
-                      printed-material commitments.
-                    </div>
-                  </div>
                 </section>
 
                 <section class="hd-card" id="hdNotesCard">
@@ -3243,7 +3191,6 @@
         linksBody:    container.querySelector('#hdLinksBody'),
         details:      container.querySelector('#hdDetails'),
         insights:     container.querySelector('#hdInsights'),
-        financial:    container.querySelector('#hdFinancialBody'),
         notes:        container.querySelector('#hdNotes'),
         notesMeta:    container.querySelector('#hdNotesMeta'),
         addBtnHead:   container.querySelector('#hdAddEmployee'),
@@ -3754,153 +3701,66 @@
         textNode.textContent = value;
         if (opts && opts.copy != null) node.dataset.copy = opts.copy;
       };
-      setDetail('id',         h.code || '—', { copy: h.code || '' });
-      setDetail('onboarded',  formatHumanDate((h.created_at || '').slice(0, 10)) || '—');
-      setDetail('address',    h.address || '—');
-      setDetail('phone',      h.phone || '—');
-      setDetail('email',      contactEmail || '—');
-      setDetail('website',    h.website || '—');
-      setDetail('rooms',      h.total_rooms != null ? String(h.total_rooms) : '—');
-      setDetail('created',    formatHumanDateTime(h.created_at));
-      setDetail('updated',    formatHumanDateTime(h.updated_at || h.created_at));
+      setDetail('id',                  h.code || '—', { copy: h.code || '' });
+      setDetail('onboarded',           formatHumanDate((h.created_at || '').slice(0, 10)) || '—');
+      setDetail('contract_start_date', formatHumanDate(h.contract_start_date) || '—');
+      setDetail('property_type',       formatPropertyType(h.property_type) || '—');
+      setDetail('star_rating',         h.star_rating != null ? ('★'.repeat(h.star_rating) + '☆'.repeat(5 - h.star_rating)) : '—');
+      setDetail('region',              h.region || '—');
+      setDetail('created',             formatHumanDateTime(h.created_at));
+      setDetail('updated',             formatHumanDateTime(h.updated_at || h.created_at));
 
-      // Financial card — single consolidated home for Stripe status,
-      // payout details, and the commission tier split. When Stripe
-      // isn't connected, the top half collapses to a Connect CTA;
-      // the tier split renders below regardless so the operator
-      // share is visible day one.
-      if (els.financial) {
-        const stripeConnected = !!h.stripe_account_id && (h.stripe_status === 'connected' || h.stripe_status === 'active');
-        const last4 = h.payout_account_last4 || h.bank_last4 || null;
+      // ── Hero panel ────────────────────────────────────────
+      // Full-width referral hub above the main grid. Combines QR,
+      // primary short URL, download actions, and the immutable
+      // identifier pills that used to live in the old Anatomy card.
+      const heroShortBtn   = els.container.querySelector('#hdHeroShortUrl');
+      const heroLongBtn    = els.container.querySelector('#hdHeroLongUrl');
+      const heroQREl       = els.container.querySelector('#hdHeroQR');
+      const heroDlBtn      = els.container.querySelector('#hdHeroDownloadQR');
+      const heroBulkBtn    = els.container.querySelector('#hdHeroBulkQR');
+      const heroPrefix     = els.container.querySelector('#hdHeroPrefix');
+      const heroMasterCode = els.container.querySelector('#hdHeroMasterCode');
+      const heroPattern    = els.container.querySelector('#hdHeroStaffPattern');
+      const masterShortUrl = hotelShort ? hotelShort.short_url : null;
+      const prefix         = h.tracking_prefix || '';
 
-        const statusPill = stripeConnected
-          ? '<span class="bk-pill bk-pill--ok">Connected</span>'
-          : '<span class="bk-pill bk-pill--neutral">Not connected</span>';
+      const lockedSpan = (txt) =>
+        '<span class="hd-anatomy__locked">' + escapeHtml(txt) + '</span>';
 
-        const statusRow =
-          '<dl class="hd-side__list">' +
-            '<div class="hd-side__row"><dt class="hd-side__label">Stripe status</dt>' +
-              '<dd class="hd-side__value">' + statusPill + '</dd></div>' +
-          '</dl>';
-
-        let bodyTop;
-        if (!stripeConnected) {
-          bodyTop = statusRow +
-            '<div class="hd-fin__cta">' +
-              '<button type="button" class="btn btn--primary" id="hdFinConnect">Connect Stripe</button>' +
-            '</div>';
-        } else {
-          const pending  = formatHotelMoney(h.pending_payout || 0, currency);
-          const schedule = h.payout_schedule || '—';
-          bodyTop =
-            '<dl class="hd-side__list">' +
-              '<div class="hd-side__row"><dt class="hd-side__label">Stripe status</dt>' +
-                '<dd class="hd-side__value">' + statusPill + '</dd></div>' +
-              '<div class="hd-side__row"><dt class="hd-side__label">Stripe account</dt>' +
-                '<dd class="hd-side__value">' +
-                  '<button type="button" class="hd-copy mono" data-copy="' + escapeHtml(h.stripe_account_id || '') + '" title="Copy Stripe ID">' +
-                    '<span data-detail-text>' + escapeHtml(h.stripe_account_id || '—') + '</span>' +
-                    copyIconSvg +
-                  '</button>' +
-                '</dd></div>' +
-              '<div class="hd-side__row"><dt class="hd-side__label">Pending payout</dt>' +
-                '<dd class="hd-side__value hd-num">' + escapeHtml(pending) + '</dd></div>' +
-              '<div class="hd-side__row"><dt class="hd-side__label">Next payout</dt>' +
-                '<dd class="hd-side__value">' + escapeHtml(formatHumanDate(h.next_payout_date) || '—') + '</dd></div>' +
-              '<div class="hd-side__row"><dt class="hd-side__label">Schedule</dt>' +
-                '<dd class="hd-side__value">' + escapeHtml(schedule) + '</dd></div>' +
-              '<div class="hd-side__row"><dt class="hd-side__label">Account ending</dt>' +
-                '<dd class="hd-side__value mono">' + (last4 ? '•••• ' + escapeHtml(last4) : '—') + '</dd></div>' +
-            '</dl>';
-        }
-
-        // Tier split — operator commission_pct (their share of total
-        // revenue), hotel kickback_pool_pct (the slice the hotel
-        // keeps), Horizon's share is the residual. Zero-width
-        // segments + "—" legend values when either field is missing.
-        const op    = (h.commission_pct     != null) ? Number(h.commission_pct)     : null;
-        const hotelPct = (h.kickback_pool_pct != null) ? Number(h.kickback_pool_pct) : null;
-        const platf = (op != null && hotelPct != null) ? Math.max(0, 100 - op - hotelPct) : null;
-        const tierName = (h.tier_name || (h.type === 'kickback' ? 'Kickback' : h.type === 'pool' ? 'Pool' : '—'));
-        const pctText = (v) => (v == null ? '—' : v + '%');
-        const splitHtml =
-          '<div class="hd-split">' +
-            '<header class="hd-split__head">' +
-              '<div class="hd-split__title">Tier — ' + escapeHtml(tierName) + '</div>' +
-              '<button type="button" class="hd-card__edit" id="hdSplitEdit">Edit</button>' +
-            '</header>' +
-            '<div class="hd-split__bar" role="img" aria-label="Commission split">' +
-              '<span class="hd-split__seg hd-split__seg--op"    style="width:' + (op       == null ? 0 : op)       + '%"></span>' +
-              '<span class="hd-split__seg hd-split__seg--hotel" style="width:' + (hotelPct == null ? 0 : hotelPct) + '%"></span>' +
-              '<span class="hd-split__seg hd-split__seg--platf" style="width:' + (platf    == null ? 0 : platf)    + '%"></span>' +
-            '</div>' +
-            '<dl class="hd-split__legend">' +
-              '<div class="hd-split__row">' +
-                '<span class="hd-split__swatch hd-split__swatch--op"></span>' +
-                '<span class="hd-split__label">Operator</span>' +
-                '<span class="hd-split__pct hd-num">' + pctText(op) + '</span>' +
-              '</div>' +
-              '<div class="hd-split__row">' +
-                '<span class="hd-split__swatch hd-split__swatch--hotel"></span>' +
-                '<span class="hd-split__label">Hotel</span>' +
-                '<span class="hd-split__pct hd-num">' + pctText(hotelPct) + '</span>' +
-              '</div>' +
-              '<div class="hd-split__row">' +
-                '<span class="hd-split__swatch hd-split__swatch--platf"></span>' +
-                '<span class="hd-split__label">Horizon</span>' +
-                '<span class="hd-split__pct hd-num">' + pctText(platf) + '</span>' +
-              '</div>' +
-            '</dl>' +
-          '</div>';
-
-        els.financial.innerHTML = bodyTop + splitHtml;
-      }
-
-      // Master Referral card.
-      // Primary surface: the short URL — the only artifact that ever
-      // goes on printed material. The long URL is collapsed under a
-      // disclosure for debugging only.
-      const masterRefBtn      = els.container.querySelector('#hdMasterRefUrl');
-      const masterRefLongBtn  = els.container.querySelector('#hdMasterRefLongUrl');
-      const masterRefQREl     = els.container.querySelector('#hdMasterRefQR');
-      const masterDlBtn       = els.container.querySelector('#hdMasterRefDownload');
-      const masterBulkBtn     = els.container.querySelector('#hdMasterRefBulk');
-      const masterShortUrl    = hotelShort ? hotelShort.short_url : null;
-      if (masterRefBtn) {
+      if (heroShortBtn) {
         const display = masterShortUrl || 'No short link yet';
-        masterRefBtn.dataset.copy = masterShortUrl || '';
-        masterRefBtn.querySelector('[data-detail-text]').textContent = display;
-        masterRefBtn.title    = display;
-        masterRefBtn.disabled = !masterShortUrl;
+        heroShortBtn.dataset.copy = masterShortUrl || '';
+        heroShortBtn.querySelector('[data-hero-short]').textContent = display;
+        heroShortBtn.title    = display;
+        heroShortBtn.disabled = !masterShortUrl;
       }
-      if (masterRefLongBtn) {
-        masterRefLongBtn.dataset.copy = masterLink;
-        masterRefLongBtn.querySelector('[data-long-text]').textContent = masterLink;
-        masterRefLongBtn.title = masterLink;
+      if (heroLongBtn) {
+        heroLongBtn.dataset.copy = masterLink;
+        heroLongBtn.querySelector('[data-hero-long]').textContent = masterLink;
+        heroLongBtn.title = masterLink;
       }
-      if (masterRefQREl) {
-        masterRefQREl.innerHTML = '';
+      if (heroQREl) {
+        heroQREl.innerHTML = '';
         if (masterShortUrl) {
-          const qrInst = makeQRInstance(masterShortUrl, 176);
-          if (qrInst) qrInst.append(masterRefQREl);
+          const qrInst = makeQRInstance(masterShortUrl, 192);
+          if (qrInst) qrInst.append(heroQREl);
         } else {
-          masterRefQREl.innerHTML =
+          heroQREl.innerHTML =
             '<div class="hd-mref__qr-empty" title="No short link yet — QR will appear once one is minted.">' +
               '<span>No short link yet</span>' +
             '</div>';
         }
       }
       _hotelDrawerQRUrl = masterShortUrl;
-      if (masterDlBtn) {
-        masterDlBtn.disabled = !masterShortUrl;
-        masterDlBtn.onclick = () => {
+      if (heroDlBtn) {
+        heroDlBtn.disabled = !masterShortUrl;
+        heroDlBtn.onclick = () => {
           if (!masterShortUrl) return;
           downloadQRPng(masterShortUrl, 'horizon-qr-' + (h.code || 'hotel'));
         };
       }
-      if (masterBulkBtn) {
-        // Gathers every active short link for this hotel + its staff
-        // and zips a PNG for each. Skips rows with no short URL.
+      if (heroBulkBtn) {
         const activeStaff = (h.staff || []).filter((s) => s.status === 'active');
         const exports = [];
         if (hotelShort && hotelShort.short_url) {
@@ -3919,60 +3779,23 @@
             url:  sl.short_url,
           });
         }
-        masterBulkBtn.disabled = exports.length === 0;
-        masterBulkBtn.title    = exports.length === 0
+        heroBulkBtn.disabled = exports.length === 0;
+        heroBulkBtn.title    = exports.length === 0
           ? 'No short links available yet for this hotel.'
           : 'Download a ZIP containing PNG QR codes for the hotel and every active employee.';
-        masterBulkBtn.onclick = () => bulkDownloadHotelQRs(h, exports);
+        heroBulkBtn.onclick = () => bulkDownloadHotelQRs(h, exports);
       }
 
-      // Referral link anatomy — wraps every immutable segment of the
-      // tracking codes in a danger-red highlight span so the admin sees
-      // at a glance what cannot be changed. Reads tracking_prefix +
-      // default_tracking_code straight from the hotel record.
-      const lockedSpan = (txt) =>
-        '<span class="hd-anatomy__locked">' + escapeHtml(txt) + '</span>';
-      const prefix    = h.tracking_prefix || '';
-      const hotelCode = h.default_tracking_code || (prefix ? prefix + '_H' : '');
-      const sampleSeq = '0042';
-      const staffPattern = prefix
+      // Locked-identifier pills. Each red span signals an immutable
+      // value — changing it would break printed QR codes.
+      if (heroPrefix)     heroPrefix.innerHTML     = prefix ? lockedSpan(prefix) : '—';
+      if (heroMasterCode) heroMasterCode.innerHTML = prefix ? (lockedSpan(prefix) + lockedSpan('_H')) : '—';
+      if (heroPattern)    heroPattern.innerHTML    = prefix
         ? lockedSpan(prefix) + lockedSpan('_E_') +
           '<span class="hd-anatomy__seq">NNNN</span>' +
           '<span class="hd-anatomy__hint-inline">  (e.g. ' +
-            escapeHtml(prefix + '_E_' + sampleSeq) + ')</span>'
+            escapeHtml(prefix + '_E_0042') + ')</span>'
         : '—';
-      const shortUrlPattern = prefix
-        ? '<span class="hd-anatomy__faint">link.gowithhorizon.com/</span>' +
-          lockedSpan(prefix.toLowerCase()) +
-          lockedSpan('-') +
-          '<span class="hd-anatomy__seq">eNNNN</span>'
-        : '—';
-      const setAnatomy = (id, html) => {
-        const n = els.container.querySelector('#' + id);
-        if (n) n.innerHTML = html;
-      };
-      setAnatomy('hdAnatomyPrefix',       prefix ? lockedSpan(prefix) : '—');
-      setAnatomy('hdAnatomyHotelCode',    hotelCode
-        ? lockedSpan(prefix) + lockedSpan('_H')
-        : '—');
-      setAnatomy('hdAnatomyStaffPattern', staffPattern);
-      setAnatomy('hdAnatomyShortUrl',     shortUrlPattern);
-
-      // Insights deltas — placeholder dashes until aggregation data
-      // is wired up. Pattern stays in place so the renderer just
-      // swaps in real numbers later. setDelta also flips the
-      // positive class for green coloring on uplift.
-      const setDelta = (key, text, opts) => {
-        const node = els.insights.querySelector('[data-delta="' + key + '"]');
-        if (!node) return;
-        node.textContent = text;
-        node.classList.toggle('hd-delta--positive', !!(opts && opts.positive));
-      };
-      setDelta('lifetime-commission', '—');
-      setDelta('bookings-lifetime',   '—');
-      setDelta('bookings-30d',        '—');
-      setDelta('active-employees',    activeEmps + ' of ' + totalEmps + ' total');
-      setDelta('conversion-rate',     '—');
 
       // Placeholder/demo data for the Fairmont reference hotel so the
       // populated-state styling can be reviewed before real data is
@@ -4237,25 +4060,15 @@
           '</div></div>';
       }
 
-      // ── Insights values + green trend deltas
+      // ── Insights values (deltas removed)
       const setInsight = (k, v) => {
         const n = els.insights.querySelector('[data-insight="' + k + '"]');
         if (n) n.textContent = v;
-      };
-      const setDelta = (k, text, positive) => {
-        const n = els.insights.querySelector('[data-delta="' + k + '"]');
-        if (!n) return;
-        n.textContent = text;
-        n.classList.toggle('hd-delta--positive', !!positive);
       };
       setInsight('lifetime-commission', fm(203.20));
       setInsight('bookings-lifetime',   '5');
       setInsight('bookings-30d',        '5');
       setInsight('conversion-rate',     '6.2%');
-      setDelta('lifetime-commission', '+' + fm(203.20) + ' this month', true);
-      setDelta('bookings-lifetime',   '+5 this week',     true);
-      setDelta('bookings-30d',        '+5 vs prior 30d',  true);
-      setDelta('conversion-rate',     'No comparison yet', false);
 
       // ── Referral Links — patch the click/conversion/last-clicked
       // cells in place. The rows themselves come from the staff
@@ -4759,10 +4572,50 @@
                 </label>
               </div>
 
+              <div class="drawer-form__pair">
+                <label class="drawer-form__row">
+                  <span class="drawer-form__label">Effective date</span>
+                  <input class="input" id="heEffective" type="date"
+                         value="${escapeHtml(h.effective_date || '')}">
+                </label>
+                <label class="drawer-form__row">
+                  <span class="drawer-form__label">Contract start date</span>
+                  <input class="input" id="heContractStart" type="date"
+                         value="${escapeHtml(h.contract_start_date || '')}">
+                </label>
+              </div>
+
+              <div class="drawer-form__pair">
+                <label class="drawer-form__row">
+                  <span class="drawer-form__label">Property type</span>
+                  <select class="input" id="hePropertyType">
+                    <option value=""          ${!h.property_type                  ? 'selected' : ''}>—</option>
+                    <option value="resort"    ${h.property_type === 'resort'      ? 'selected' : ''}>Resort</option>
+                    <option value="boutique"  ${h.property_type === 'boutique'    ? 'selected' : ''}>Boutique</option>
+                    <option value="lodge"     ${h.property_type === 'lodge'       ? 'selected' : ''}>Lodge</option>
+                    <option value="urban"     ${h.property_type === 'urban'       ? 'selected' : ''}>Urban</option>
+                    <option value="bed_and_breakfast" ${h.property_type === 'bed_and_breakfast' ? 'selected' : ''}>Bed &amp; breakfast</option>
+                    <option value="hostel"    ${h.property_type === 'hostel'      ? 'selected' : ''}>Hostel</option>
+                  </select>
+                </label>
+                <label class="drawer-form__row">
+                  <span class="drawer-form__label">Star rating</span>
+                  <select class="input" id="heStarRating">
+                    <option value=""  ${h.star_rating == null ? 'selected' : ''}>—</option>
+                    <option value="1" ${h.star_rating === 1   ? 'selected' : ''}>1</option>
+                    <option value="2" ${h.star_rating === 2   ? 'selected' : ''}>2</option>
+                    <option value="3" ${h.star_rating === 3   ? 'selected' : ''}>3</option>
+                    <option value="4" ${h.star_rating === 4   ? 'selected' : ''}>4</option>
+                    <option value="5" ${h.star_rating === 5   ? 'selected' : ''}>5</option>
+                  </select>
+                </label>
+              </div>
+
               <label class="drawer-form__row">
-                <span class="drawer-form__label">Effective date</span>
-                <input class="input" id="heEffective" type="date"
-                       value="${escapeHtml(h.effective_date || '')}">
+                <span class="drawer-form__label">Region</span>
+                <input class="input" id="heRegion" type="text" maxlength="80"
+                       value="${escapeHtml(h.region || '')}"
+                       placeholder="e.g. Canadian Rockies">
               </label>
 
               <label class="drawer-form__row">
@@ -5068,13 +4921,17 @@
       errEl.hidden = true;
       successEl.hidden = true;
 
-      const name      = form.querySelector('#heName').value.trim();
-      const location  = form.querySelector('#heLocation').value;
-      const type      = form.querySelector('#heType').value;
-      const commission = form.querySelector('#heCommission').value.trim();
-      const pool      = form.querySelector('#hePool').value.trim();
-      const effective = form.querySelector('#heEffective').value.trim();
-      const notes     = form.querySelector('#heNotes').value;
+      const name         = form.querySelector('#heName').value.trim();
+      const location     = form.querySelector('#heLocation').value;
+      const type         = form.querySelector('#heType').value;
+      const commission   = form.querySelector('#heCommission').value.trim();
+      const pool         = form.querySelector('#hePool').value.trim();
+      const effective    = form.querySelector('#heEffective').value.trim();
+      const contractStart = form.querySelector('#heContractStart').value.trim();
+      const propertyType = form.querySelector('#hePropertyType').value;
+      const starRating   = form.querySelector('#heStarRating').value;
+      const region       = form.querySelector('#heRegion').value.trim();
+      const notes        = form.querySelector('#heNotes').value;
 
       if (!name) return showInline(errEl, 'Name is required.');
       if (!location) return showInline(errEl, 'Pick a location.');
@@ -5084,10 +4941,14 @@
       // are auto-managed and locked — the worker silently strips them
       // even if they ever leak into a request body.
       const body = { name, location, type };
-      body.commission_pct    = commission !== '' ? Number(commission) : 0;
-      body.kickback_pool_pct = pool !== '' ? Number(pool) : null;
-      body.effective_date    = effective || null;
-      body.notes             = notes ? notes : null;
+      body.commission_pct      = commission !== '' ? Number(commission) : 0;
+      body.kickback_pool_pct   = pool !== '' ? Number(pool) : null;
+      body.effective_date      = effective || null;
+      body.contract_start_date = contractStart || null;
+      body.property_type       = propertyType || null;
+      body.star_rating         = starRating ? Number(starRating) : null;
+      body.region              = region || null;
+      body.notes               = notes ? notes : null;
 
       saveBtn.disabled = true;
       saveBtn.textContent = 'Saving…';
@@ -5517,6 +5378,16 @@
       const p = s.split('-').map(Number);
       const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
       return months[p[1] - 1] + ' ' + p[2] + ', ' + p[0];
+    }
+    // Maps the snake_case property_type enum stored in the DB to a
+    // human-readable label for display.
+    function formatPropertyType(t) {
+      if (!t) return '';
+      const map = {
+        resort: 'Resort', boutique: 'Boutique', lodge: 'Lodge',
+        urban: 'Urban', bed_and_breakfast: 'Bed & breakfast', hostel: 'Hostel',
+      };
+      return map[t] || t;
     }
     function formatHumanDateTime(iso) {
       if (!iso) return '—';
