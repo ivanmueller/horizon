@@ -1272,8 +1272,8 @@
                 <div class="hd-meta__label">Status</div>
                 <div class="hd-meta__value" data-meta="status">—</div>
               </div>
-              <div class="hd-meta__col hd-meta__col--wide">
-                <div class="hd-meta__label">Commission tier</div>
+              <div class="hd-meta__col">
+                <div class="hd-meta__label">Tier</div>
                 <div class="hd-meta__value" data-meta="tier">—</div>
               </div>
               <div class="hd-meta__col">
@@ -3442,40 +3442,16 @@
       metaSet('status',    hotelStatusPill(h.status));
       const currency = hotelCurrency(h);
 
-      // Commission tier: tier label + stacked bar showing the cut
-      // each party takes. Two segments today (Hotel + Horizon Tours)
-      // since the schema only has commission_pct. A future
-      // platform_fee_pct column would add a third (Horizon) segment.
-      const tierName  = h.type === 'kickback' ? 'Kickback'
-                      : h.type === 'pool'     ? 'Pool'
-                      : '—';
-      const hotelCut  = h.commission_pct != null ? Number(h.commission_pct) : null;
-      const opCut     = hotelCut != null ? Math.max(0, 100 - hotelCut) : null;
-      const segHotel  = hotelCut != null ? hotelCut : 0;
-      const segOp     = opCut    != null ? opCut    : 0;
-      const tierBar =
-        '<div class="hd-tierbar">' +
-          '<div class="hd-tierbar__head">' +
-            '<span class="hd-tierbar__name">' + escapeHtml(tierName) + '</span>' +
-          '</div>' +
-          '<div class="hd-tierbar__bar" role="img" aria-label="Commission split">' +
-            '<span class="hd-tierbar__seg hd-tierbar__seg--op" style="width:' + segOp + '%"></span>' +
-            '<span class="hd-tierbar__seg hd-tierbar__seg--hotel" style="width:' + segHotel + '%"></span>' +
-          '</div>' +
-          '<div class="hd-tierbar__legend">' +
-            '<span class="hd-tierbar__row">' +
-              '<span class="hd-tierbar__swatch hd-tierbar__swatch--op"></span>' +
-              '<span class="hd-tierbar__label">Horizon Tours</span>' +
-              '<span class="hd-tierbar__pct hd-num">' + (opCut    != null ? opCut    + '%' : '—') + '</span>' +
-            '</span>' +
-            '<span class="hd-tierbar__row">' +
-              '<span class="hd-tierbar__swatch hd-tierbar__swatch--hotel"></span>' +
-              '<span class="hd-tierbar__label">Hotel</span>' +
-              '<span class="hd-tierbar__pct hd-num">' + (hotelCut != null ? hotelCut + '%' : '—') + '</span>' +
-            '</span>' +
-          '</div>' +
-        '</div>';
-      metaSet('tier', tierBar);
+      // Tier: type label + the hotel's commission cut. The schema
+      // only stores commission_pct (and kickback_pool_pct for pool
+      // hotels), so that's what we surface — no derived "Horizon
+      // Tours" or platform percentages.
+      const tierBits = [];
+      if (h.commission_pct != null)    tierBits.push(h.commission_pct + '%');
+      if (h.kickback_pool_pct != null) tierBits.push(h.kickback_pool_pct + '%');
+      const tierLabel = (h.type === 'kickback' ? 'Kickback' : h.type === 'pool' ? 'Pool' : '—')
+                      + (tierBits.length ? ' · ' + tierBits.join(' / ') : '');
+      metaSet('tier', escapeHtml(tierLabel));
 
       // Lifetime commission — same value the Insights card surfaces.
       // Stays as a placeholder dash until real aggregation lands;
