@@ -992,8 +992,12 @@ async function insertHotelWithPrefix(env, row, maxAttempts = 8) {
       // does not roll back the hotel row. The error message is
       // bubbled out so the POST handler can surface it to the
       // admin — silent loss would leave a hotel with no QR.
+      // The short path is derived from the tracking code, not the
+      // hotel slug, so every short URL on the platform follows the
+      // same {prefix}-h / {prefix}-eNNNN format. Slugs live in the
+      // long URL only — see PARTNERS_NAMING.md.
       const { error: shortLinkWarning } = await mintShortLinkAndRecord(env, {
-        shortPath: hotel.code,
+        shortPath: trackingCodeToShortPath(hotel.default_tracking_code),
         targetUrl: hotelTargetUrl(env, hotel.code),
         title: `${hotel.name} — master`,
         linkType: "hotel",
@@ -1440,12 +1444,16 @@ async function handleAdminShortLinkCreate(request, env) {
   }
 
   // Derive defaults — overridable by request body.
+  // Both hotel and staff short paths come from the tracking code so
+  // every short URL on the platform follows the same {prefix}-h /
+  // {prefix}-eNNNN format. Slugs live in the long URL only — see
+  // PARTNERS_NAMING.md.
   let shortPath = typeof body.short_path === "string" ? body.short_path.trim() : "";
   if (!shortPath) {
     if (linkType === "staff" && staffRow) {
       shortPath = trackingCodeToShortPath(staffRow.tracking_code) || "";
     } else if (linkType === "hotel" && hotelRow) {
-      shortPath = hotelRow.code;
+      shortPath = trackingCodeToShortPath(hotelRow.default_tracking_code) || "";
     }
   }
   if (!shortPath || !SHORT_PATH_RE.test(shortPath)) {
