@@ -1714,16 +1714,7 @@ async function handleAdminGlobalShortLinks(url, env, request) {
     return jsonResponse({ links, next_cursor: nextCursor }, 200, request);
   } catch (err) {
     console.error("handleAdminGlobalShortLinks error:", err.stack || err);
-    return jsonResponse(
-      {
-        error: "Failed to load links",
-        detail: err.message || String(err),
-        supabase_status: err.status || null,
-        supabase_body:   err.body   || null,
-      },
-      err.status && err.status >= 400 && err.status < 600 ? err.status : 500,
-      request,
-    );
+    return jsonResponse({ error: "Failed to load links" }, 500, request);
   }
 }
 
