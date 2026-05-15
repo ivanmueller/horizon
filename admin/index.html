@@ -1484,6 +1484,52 @@
                   <button type="button" class="hd-side__toggle" id="hdDetailsToggle" aria-expanded="false" aria-controls="hdDetailsMore">Show more</button>
                 </section>
 
+                <!-- ── Commission structure ───────────────────────────
+                     Visualises how a booking's revenue gets split
+                     between the tour operator (Horizon Tours), the
+                     hotel, and the Horizon platform. Numbers come
+                     from h.commission_pct + h.platform_fee_pct; the
+                     operator share is the residual. -->
+                <section class="hd-card" id="hdCommissionCard">
+                  <header class="hd-card__head">
+                    <h3 class="hd-card__title">Commission structure</h3>
+                    <button type="button" class="hd-card__edit" id="hdCommissionEdit" aria-label="Edit commission" title="Edit commission">
+                      <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M11.5 2.5l2 2-7 7H4.5v-2l7-7z"/>
+                        <path d="M10.5 3.5l2 2"/>
+                      </svg>
+                    </button>
+                  </header>
+                  <div class="hd-comm">
+                    <div class="hd-comm__head">
+                      <div class="hd-comm__tier" id="hdCommTier">—</div>
+                      <div class="hd-comm__sub" id="hdCommSub">—</div>
+                    </div>
+                    <div class="hd-comm__bar" role="img" aria-label="Commission split">
+                      <span class="hd-comm__seg hd-comm__seg--op"       id="hdCommSegOp"></span>
+                      <span class="hd-comm__seg hd-comm__seg--hotel"    id="hdCommSegHotel"></span>
+                      <span class="hd-comm__seg hd-comm__seg--platform" id="hdCommSegPlatform"></span>
+                    </div>
+                    <dl class="hd-comm__legend">
+                      <div class="hd-comm__row">
+                        <span class="hd-comm__swatch hd-comm__swatch--op"></span>
+                        <span class="hd-comm__label">Tour operator</span>
+                        <span class="hd-comm__pct hd-num" id="hdCommPctOp">—</span>
+                      </div>
+                      <div class="hd-comm__row">
+                        <span class="hd-comm__swatch hd-comm__swatch--hotel"></span>
+                        <span class="hd-comm__label">Hotel</span>
+                        <span class="hd-comm__pct hd-num" id="hdCommPctHotel">—</span>
+                      </div>
+                      <div class="hd-comm__row">
+                        <span class="hd-comm__swatch hd-comm__swatch--platform"></span>
+                        <span class="hd-comm__label">Horizon</span>
+                        <span class="hd-comm__pct hd-num" id="hdCommPctPlatform">—</span>
+                      </div>
+                    </dl>
+                  </div>
+                </section>
+
                 <section class="hd-card" id="hdNotesCard">
                   <header class="hd-card__head"><h3 class="hd-card__title">Internal notes</h3></header>
                   <div class="hd-notes-wrap">
@@ -3734,6 +3780,40 @@
       setDetail('created',             formatHumanDateTime(h.created_at));
       setDetail('updated',             formatHumanDateTime(h.updated_at || h.created_at));
 
+      // ── Commission structure card ────────────────────────
+      // Three segments: tour operator (residual), hotel
+      // (commission_pct), Horizon platform (platform_fee_pct).
+      // The bar widths can be zero if a value is missing — bar
+      // background fills the gap so the card never looks empty.
+      const hotelPct     = h.commission_pct  != null ? Number(h.commission_pct)  : null;
+      const platformPct  = h.platform_fee_pct != null ? Number(h.platform_fee_pct) : null;
+      const opPct        = (hotelPct != null && platformPct != null)
+                            ? Math.max(0, 100 - hotelPct - platformPct)
+                            : null;
+      const pctText = (v) => (v == null ? '—' : (Math.round(v * 100) / 100) + '%');
+      const tierLabelEl  = els.container.querySelector('#hdCommTier');
+      const tierSubEl    = els.container.querySelector('#hdCommSub');
+      const segOpEl      = els.container.querySelector('#hdCommSegOp');
+      const segHotelEl   = els.container.querySelector('#hdCommSegHotel');
+      const segPlatfEl   = els.container.querySelector('#hdCommSegPlatform');
+      const pctOpEl      = els.container.querySelector('#hdCommPctOp');
+      const pctHotelEl   = els.container.querySelector('#hdCommPctHotel');
+      const pctPlatfEl   = els.container.querySelector('#hdCommPctPlatform');
+      const tierName     = h.type === 'kickback' ? 'Kickback'
+                         : h.type === 'pool'     ? 'Pool'
+                         : '—';
+      const tierSub      = h.type === 'kickback' ? 'Per-employee kickback'
+                         : h.type === 'pool'     ? 'Hotel-wide pool'
+                         : '';
+      if (tierLabelEl) tierLabelEl.textContent = tierName;
+      if (tierSubEl)   tierSubEl.textContent   = tierSub;
+      if (segOpEl)    segOpEl.style.width    = (opPct       || 0) + '%';
+      if (segHotelEl) segHotelEl.style.width = (hotelPct    || 0) + '%';
+      if (segPlatfEl) segPlatfEl.style.width = (platformPct || 0) + '%';
+      if (pctOpEl)    pctOpEl.textContent    = pctText(opPct);
+      if (pctHotelEl) pctHotelEl.textContent = pctText(hotelPct);
+      if (pctPlatfEl) pctPlatfEl.textContent = pctText(platformPct);
+
       // "Show more" disclosure — toggles the secondary block of
       // Details fields (URL slug, contract start, property type,
       // star rating, region). State is local to this render only;
@@ -4568,17 +4648,24 @@
 
               <div class="drawer-form__pair">
                 <label class="drawer-form__row">
-                  <span class="drawer-form__label">Commission %</span>
+                  <span class="drawer-form__label">Commission % <span class="drawer-form__req">hotel cut</span></span>
                   <input class="input" id="heCommission" type="number" min="0" max="100" step="0.1"
                          value="${h.commission_pct != null ? h.commission_pct : ''}">
                 </label>
                 <label class="drawer-form__row">
-                  <span class="drawer-form__label">Kickback pool %</span>
-                  <input class="input" id="hePool" type="number" min="0" max="100" step="0.1"
-                         value="${h.kickback_pool_pct != null ? h.kickback_pool_pct : ''}"
-                         placeholder="(optional)">
+                  <span class="drawer-form__label">Platform fee % <span class="drawer-form__req">Horizon cut</span></span>
+                  <input class="input" id="hePlatformFee" type="number" min="0" max="100" step="0.1"
+                         value="${h.platform_fee_pct != null ? h.platform_fee_pct : ''}"
+                         placeholder="5">
                 </label>
               </div>
+
+              <label class="drawer-form__row">
+                <span class="drawer-form__label">Kickback pool %</span>
+                <input class="input" id="hePool" type="number" min="0" max="100" step="0.1"
+                       value="${h.kickback_pool_pct != null ? h.kickback_pool_pct : ''}"
+                       placeholder="(only for pool-type hotels)">
+              </label>
 
               <div class="drawer-form__pair">
                 <label class="drawer-form__row">
@@ -4986,6 +5073,7 @@
       const location     = form.querySelector('#heLocation').value;
       const type         = form.querySelector('#heType').value;
       const commission   = form.querySelector('#heCommission').value.trim();
+      const platformFee  = form.querySelector('#hePlatformFee').value.trim();
       const pool         = form.querySelector('#hePool').value.trim();
       const effective    = form.querySelector('#heEffective').value.trim();
       const contractStart = form.querySelector('#heContractStart').value.trim();
@@ -5008,6 +5096,7 @@
       // even if they ever leak into a request body.
       const body = { name, location, type };
       body.commission_pct        = commission !== '' ? Number(commission) : 0;
+      body.platform_fee_pct      = platformFee !== '' ? Number(platformFee) : null;
       body.kickback_pool_pct     = pool !== '' ? Number(pool) : null;
       body.effective_date        = effective || null;
       body.contract_start_date   = contractStart || null;
