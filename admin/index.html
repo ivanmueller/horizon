@@ -1237,11 +1237,10 @@
                   <div class="hd-head__avatar" id="hotelDetailAvatar" aria-hidden="true">—</div>
                   <div class="hd-head__lead">
                     <h1 class="bk-page__title" id="hotelDetailTitle">Loading…</h1>
-                    <!-- Status pill + master referral URL inline on
-                         the sub-row beneath the title. Supabase-style
-                         URL + Copy dropdown. -->
+                    <!-- Master referral URL + Copy dropdown inline
+                         on the sub-row beneath the title (Supabase
+                         project-header pattern). -->
                     <div class="hd-head__sub" id="hotelDetailSubRow">
-                      <span class="hd-head__status" id="hotelDetailStatus" hidden></span>
                       <div class="hd-refurl" id="hotelDetailRefUrl" hidden>
                         <a class="hd-refurl__link mono" id="hdRefUrlLink" href="#" target="_blank" rel="noopener noreferrer">—</a>
                         <div class="hd-refurl__copywrap">
@@ -1250,11 +1249,15 @@
                             <svg class="hd-refurl__chev" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
                           </button>
                           <div class="hd-refurl__menu" id="hdRefUrlMenu" hidden role="menu">
-                            <button type="button" class="hd-refurl__item" data-copy="" id="hdRefUrlCopyItem" role="menuitem">
+                            <button type="button" class="hd-refurl__item hd-refurl__item--copy" id="hdRefUrlCopyItem" role="menuitem">
                               <svg class="hd-refurl__ico" viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4l1-1a2.5 2.5 0 013.5 3.5l-1 1M9 12l-1 1A2.5 2.5 0 014.5 9.5l1-1"/></svg>
                               <span class="hd-refurl__itxt">
-                                <span class="hd-refurl__ititle"><span data-detail-text>Master referral URL</span></span>
+                                <span class="hd-refurl__ititle">Master referral URL</span>
                                 <span class="hd-refurl__isub" id="hdRefUrlMenuUrl">—</span>
+                              </span>
+                              <span class="hd-refurl__act" aria-hidden="true">
+                                <svg class="hd-refurl__copyico" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M3 10.5H2.5A1.5 1.5 0 011 9V3a1.5 1.5 0 011.5-1.5h6A1.5 1.5 0 0110 3v.5"/></svg>
+                                <svg class="hd-refurl__checkico" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.5 3.5L13 4.5"/></svg>
                               </span>
                             </button>
                             <button type="button" class="hd-refurl__item" id="hdRefUrlZipItem" role="menuitem">
@@ -3269,7 +3272,6 @@
         title:        container.querySelector('#hotelDetailTitle'),
         avatar:       container.querySelector('#hotelDetailAvatar'),
         refUrl:       container.querySelector('#hotelDetailRefUrl'),
-        status:       container.querySelector('#hotelDetailStatus'),
         empBody:      container.querySelector('#hdEmployeesBody'),
         linksBody:    container.querySelector('#hdLinksBody'),
         details:      container.querySelector('#hdDetails'),
@@ -3462,14 +3464,6 @@
       // populated later, in the Referral links section, where
       // hotelShort / masterShortUrl are already resolved.
 
-      // Status pill — sits inline next to the master referral URL on the
-      // sub-row beneath the title. The full metadata strip (onboarded,
-      // tier, lifetime commission, etc.) is gone — those values live
-      // in the Insights + Details sidebar cards now.
-      if (els.status) {
-        els.status.innerHTML = hotelStatusPill(h.status);
-        els.status.hidden    = !h.status;
-      }
       const currency = hotelCurrency(h);
 
       // Employees & Referral Codes — primary working section. Reads
@@ -3927,12 +3921,12 @@
           wrap.hidden = false;
           linkEl.textContent = masterShortUrl.replace(/^https?:\/\//, '');
           linkEl.href        = masterShortUrl;
-          copyItem.dataset.copy = masterShortUrl;   // global [data-copy] handler copies it
-          menuUrl.textContent   = masterShortUrl;
+          menuUrl.textContent = masterShortUrl;
 
           const closeMenu = () => {
             menuEl.hidden = true;
             copyBtn.setAttribute('aria-expanded', 'false');
+            copyItem.classList.remove('is-copied');
           };
           const openMenu = () => {
             menuEl.hidden = false;
@@ -3952,8 +3946,19 @@
           document.addEventListener('keydown', (ev) => {
             if (ev.key === 'Escape' && !menuEl.hidden) closeMenu();
           });
-          // Copy item closes the menu after the global handler copies.
-          copyItem.addEventListener('click', () => setTimeout(closeMenu, 1200));
+          // Copy item: clipboard write + checkmark swap. Menu stays
+          // open so the admin sees the confirmation (Supabase does
+          // the same). stopPropagation keeps the outside-click
+          // close handler from firing on this same click.
+          copyItem.onclick = (ev) => {
+            ev.stopPropagation();
+            if (navigator.clipboard) {
+              navigator.clipboard.writeText(masterShortUrl).catch(() => {});
+            }
+            copyItem.classList.add('is-copied');
+            clearTimeout(copyItem._t);
+            copyItem._t = setTimeout(() => copyItem.classList.remove('is-copied'), 1800);
+          };
           zipItem.disabled = qrExports.length === 0;
           zipItem.onclick = () => { bulkDownloadHotelQRs(h, qrExports); closeMenu(); };
           pngBtn.onclick = () => downloadQRPng(masterShortUrl, 'horizon-qr-' + (h.code || 'hotel'));
