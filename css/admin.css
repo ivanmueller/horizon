@@ -2135,6 +2135,11 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   align-self: flex-start;
 }
 .hd-side__toggle:hover { color: var(--accent-hover); }
+.hd-side__link {
+  color: var(--accent);
+  text-decoration: none;
+}
+.hd-side__link:hover { text-decoration: underline; }
 
 /* Flag glyph inline with location label */
 .hd-flag {
