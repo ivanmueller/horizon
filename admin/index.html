@@ -1429,6 +1429,7 @@
                     </button>
                   </header>
                   <dl class="hd-side__list" id="hdDetails">
+                    <!-- Always-visible essentials. -->
                     <div class="hd-side__row">
                       <dt class="hd-side__label">Hotel ID</dt>
                       <dd class="hd-side__value">
@@ -1439,35 +1440,56 @@
                       </dd>
                     </div>
                     <div class="hd-side__row">
-                      <dt class="hd-side__label">URL slug</dt>
-                      <dd class="hd-side__value">
-                        <button type="button" class="hd-copy hd-copy--id mono" data-copy="" data-detail="slug" title="Copy URL slug">
-                          <span data-detail-text>—</span>
-                          <svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                        </button>
-                      </dd>
+                      <dt class="hd-side__label">Address</dt>
+                      <dd class="hd-side__value" data-detail="address">—</dd>
+                    </div>
+                    <div class="hd-side__row">
+                      <dt class="hd-side__label">Phone</dt>
+                      <dd class="hd-side__value" data-detail="phone">—</dd>
+                    </div>
+                    <div class="hd-side__row">
+                      <dt class="hd-side__label">Primary contact</dt>
+                      <dd class="hd-side__value" data-detail="primary_contact">—</dd>
+                    </div>
+                    <div class="hd-side__row">
+                      <dt class="hd-side__label">Website</dt>
+                      <dd class="hd-side__value" data-detail="website">—</dd>
                     </div>
                     <div class="hd-side__row">
                       <dt class="hd-side__label">Onboarded</dt>
                       <dd class="hd-side__value" data-detail="onboarded">—</dd>
                     </div>
-                    <div class="hd-side__row">
-                      <dt class="hd-side__label">Contract start</dt>
-                      <dd class="hd-side__value" data-detail="contract_start_date">—</dd>
-                    </div>
-                    <div class="hd-side__row">
-                      <dt class="hd-side__label">Property type</dt>
-                      <dd class="hd-side__value" data-detail="property_type">—</dd>
-                    </div>
-                    <div class="hd-side__row">
-                      <dt class="hd-side__label">Star rating</dt>
-                      <dd class="hd-side__value" data-detail="star_rating">—</dd>
-                    </div>
-                    <div class="hd-side__row">
-                      <dt class="hd-side__label">Region</dt>
-                      <dd class="hd-side__value" data-detail="region">—</dd>
+
+                    <!-- Secondary fields, hidden until "Show more". -->
+                    <div class="hd-side__more" id="hdDetailsMore" hidden>
+                      <div class="hd-side__row">
+                        <dt class="hd-side__label">URL slug</dt>
+                        <dd class="hd-side__value">
+                          <button type="button" class="hd-copy hd-copy--id mono" data-copy="" data-detail="slug" title="Copy URL slug">
+                            <span data-detail-text>—</span>
+                            <svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                          </button>
+                        </dd>
+                      </div>
+                      <div class="hd-side__row">
+                        <dt class="hd-side__label">Contract start</dt>
+                        <dd class="hd-side__value" data-detail="contract_start_date">—</dd>
+                      </div>
+                      <div class="hd-side__row">
+                        <dt class="hd-side__label">Property type</dt>
+                        <dd class="hd-side__value" data-detail="property_type">—</dd>
+                      </div>
+                      <div class="hd-side__row">
+                        <dt class="hd-side__label">Star rating</dt>
+                        <dd class="hd-side__value" data-detail="star_rating">—</dd>
+                      </div>
+                      <div class="hd-side__row">
+                        <dt class="hd-side__label">Region</dt>
+                        <dd class="hd-side__value" data-detail="region">—</dd>
+                      </div>
                     </div>
                   </dl>
+                  <button type="button" class="hd-side__toggle" id="hdDetailsToggle" aria-expanded="false" aria-controls="hdDetailsMore">Show more</button>
                 </section>
 
                 <section class="hd-card" id="hdNotesCard">
@@ -3695,6 +3717,33 @@
       };
       setDetail('id',                  h.tracking_prefix || '—', { copy: h.tracking_prefix || '' });
       setDetail('slug',                h.code || '—',            { copy: h.code || '' });
+      // Address can wrap to multiple lines — render with <br> if it
+      // came in as multi-line text. Plain escapeHtml otherwise.
+      const addressNode = els.details.querySelector('[data-detail="address"]');
+      if (addressNode) {
+        if (h.address) {
+          addressNode.innerHTML = escapeHtml(h.address).replace(/\n/g, '<br>');
+        } else {
+          addressNode.textContent = '—';
+        }
+      }
+      setDetail('phone',               h.phone || '—');
+      // Primary contact: name · email, gracefully degrades.
+      const contactBits = [];
+      if (h.primary_contact_name)  contactBits.push(h.primary_contact_name);
+      if (h.primary_contact_email) contactBits.push(h.primary_contact_email);
+      setDetail('primary_contact',     contactBits.length ? contactBits.join(' · ') : '—');
+      // Website renders as a link if present.
+      const websiteNode = els.details.querySelector('[data-detail="website"]');
+      if (websiteNode) {
+        if (h.website) {
+          const href = /^https?:\/\//.test(h.website) ? h.website : 'https://' + h.website;
+          const display = h.website.replace(/^https?:\/\//, '');
+          websiteNode.innerHTML = '<a class="hd-side__link" href="' + escapeHtml(href) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(display) + '</a>';
+        } else {
+          websiteNode.textContent = '—';
+        }
+      }
       setDetail('onboarded',           formatHumanDate((h.created_at || '').slice(0, 10)) || '—');
       setDetail('contract_start_date', formatHumanDate(h.contract_start_date) || '—');
       setDetail('property_type',       formatPropertyType(h.property_type) || '—');
@@ -3702,6 +3751,21 @@
       setDetail('region',              h.region || '—');
       setDetail('created',             formatHumanDateTime(h.created_at));
       setDetail('updated',             formatHumanDateTime(h.updated_at || h.created_at));
+
+      // "Show more" disclosure — toggles the secondary block of
+      // Details fields (URL slug, contract start, property type,
+      // star rating, region). State is local to this render only;
+      // re-renders reset to collapsed.
+      const detailsMore   = els.container.querySelector('#hdDetailsMore');
+      const detailsToggle = els.container.querySelector('#hdDetailsToggle');
+      if (detailsToggle && detailsMore) {
+        detailsToggle.onclick = () => {
+          const open = !detailsMore.hidden;
+          detailsMore.hidden = open;
+          detailsToggle.setAttribute('aria-expanded', String(!open));
+          detailsToggle.textContent = open ? 'Show more' : 'Show less';
+        };
+      }
 
       // ── Referral links card ──────────────────────────────
       // Sits at the top of the left main column. Master short URL
@@ -4599,6 +4663,42 @@
               </label>
 
               <label class="drawer-form__row">
+                <span class="drawer-form__label">Address</span>
+                <textarea class="input" id="heAddress" rows="2" maxlength="240"
+                          placeholder="Street + city + postal — appears on invoices.">${escapeHtml(h.address || '')}</textarea>
+              </label>
+
+              <div class="drawer-form__pair">
+                <label class="drawer-form__row">
+                  <span class="drawer-form__label">Phone</span>
+                  <input class="input" id="hePhone" type="tel" maxlength="40"
+                         value="${escapeHtml(h.phone || '')}"
+                         placeholder="+1 403 762 2211">
+                </label>
+                <label class="drawer-form__row">
+                  <span class="drawer-form__label">Website</span>
+                  <input class="input" id="heWebsite" type="text" maxlength="200"
+                         value="${escapeHtml(h.website || '')}"
+                         placeholder="fairmont.com/banff">
+                </label>
+              </div>
+
+              <div class="drawer-form__pair">
+                <label class="drawer-form__row">
+                  <span class="drawer-form__label">Primary contact name</span>
+                  <input class="input" id="heContactName" type="text" maxlength="120"
+                         value="${escapeHtml(h.primary_contact_name || '')}"
+                         placeholder="Anna Liang">
+                </label>
+                <label class="drawer-form__row">
+                  <span class="drawer-form__label">Primary contact email</span>
+                  <input class="input" id="heContactEmail" type="email" maxlength="200"
+                         value="${escapeHtml(h.primary_contact_email || '')}"
+                         placeholder="concierge@hotel.com">
+                </label>
+              </div>
+
+              <label class="drawer-form__row">
                 <span class="drawer-form__label">Notes</span>
                 <textarea class="input" id="heNotes" rows="3"
                           placeholder="Internal notes — not shown to partners.">${escapeHtml(h.notes || '')}</textarea>
@@ -4911,6 +5011,11 @@
       const propertyType = form.querySelector('#hePropertyType').value;
       const starRating   = form.querySelector('#heStarRating').value;
       const region       = form.querySelector('#heRegion').value.trim();
+      const address      = form.querySelector('#heAddress').value.trim();
+      const phone        = form.querySelector('#hePhone').value.trim();
+      const website      = form.querySelector('#heWebsite').value.trim();
+      const contactName  = form.querySelector('#heContactName').value.trim();
+      const contactEmail = form.querySelector('#heContactEmail').value.trim();
       const notes        = form.querySelector('#heNotes').value;
 
       if (!name) return showInline(errEl, 'Name is required.');
@@ -4921,12 +5026,17 @@
       // are auto-managed and locked — the worker silently strips them
       // even if they ever leak into a request body.
       const body = { name, location, type };
-      body.commission_pct      = commission !== '' ? Number(commission) : 0;
-      body.kickback_pool_pct   = pool !== '' ? Number(pool) : null;
-      body.effective_date      = effective || null;
-      body.contract_start_date = contractStart || null;
-      body.property_type       = propertyType || null;
-      body.star_rating         = starRating ? Number(starRating) : null;
+      body.commission_pct        = commission !== '' ? Number(commission) : 0;
+      body.kickback_pool_pct     = pool !== '' ? Number(pool) : null;
+      body.effective_date        = effective || null;
+      body.contract_start_date   = contractStart || null;
+      body.property_type         = propertyType || null;
+      body.star_rating           = starRating ? Number(starRating) : null;
+      body.address               = address  || null;
+      body.phone                 = phone    || null;
+      body.website               = website  || null;
+      body.primary_contact_name  = contactName  || null;
+      body.primary_contact_email = contactEmail || null;
       body.region              = region || null;
       body.notes               = notes ? notes : null;
 
