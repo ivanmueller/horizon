@@ -1710,19 +1710,11 @@
     const BOKUN_API_BASE = 'https://horizon-bokun.ivan-mueller02.workers.dev';
 
     /* ── QR code helpers ─────────────────────────────────── */
-    // Horizon "H" mark as a URL-safe SVG data URI — used as the centre
-    // image in every branded QR code.
-    const HORIZON_LOGO_URI = 'data:image/svg+xml,' +
-      encodeURIComponent(
-        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36">' +
-        '<rect width="36" height="36" rx="8" fill="#FF6B4A"/>' +
-        '<path d="M13 7v22M13 18c0-6 12-6 12 0v11"' +
-        ' stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>' +
-        '</svg>'
-      );
-
     // Returns a configured QRCodeStyling instance. Does NOT append to DOM —
     // call .append(el) yourself, or call .download() directly for headless use.
+    // Solid black, no center logo — maximises scan reliability on cheap
+    // print runs and at odd angles. The QR module count stays small
+    // because we don't reserve any error-correction budget for an image.
     function makeQRInstance(url, size) {
       if (typeof QRCodeStyling === 'undefined') return null;
       return new QRCodeStyling({
@@ -1730,25 +1722,19 @@
         height: size,
         type:   'canvas',
         data:   url,
-        image:  HORIZON_LOGO_URI,
         dotsOptions: {
-          color: '#4920C4',
-          type:  'rounded',
+          color: '#000000',
+          type:  'square',
         },
         cornersSquareOptions: {
-          type:  'extra-rounded',
-          color: '#4920C4',
+          type:  'square',
+          color: '#000000',
         },
         cornersDotOptions: {
-          type:  'dot',
-          color: '#4920C4',
+          type:  'square',
+          color: '#000000',
         },
         backgroundOptions: { color: '#ffffff' },
-        imageOptions: {
-          crossOrigin: 'anonymous',
-          margin:      4,
-          imageSize:   0.28,
-        },
       });
     }
 
