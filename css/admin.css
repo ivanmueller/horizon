@@ -1953,7 +1953,6 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 .hd-head__status:empty,
 .hd-head__status[hidden] { display: none; }
-.hd-head__contact-slot:empty { display: none; }
 .hd-head__actions { flex-shrink: 0; }
 
 .hd-body {
@@ -2159,27 +2158,112 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
    icon + "Add primary contact". Never accent-coloured — accent on an
    empty state reads as an error. */
 .hd-head__sub[hidden] { display: none; }
-.hd-head__contact {
+
+/* Master referral URL + Copy dropdown (Supabase-style) under
+   the hotel title. */
+.hd-refurl {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  min-width: 0;
+}
+.hd-refurl[hidden] { display: none; }
+.hd-refurl__link {
+  font-size: var(--t-sm);
+  color: var(--text-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 30ch;
+}
+.hd-refurl__link:hover { color: var(--text); text-decoration: underline; }
+.hd-refurl__copywrap { position: relative; }
+.hd-refurl__copybtn {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 4px;
-  margin: -2px -4px;
-  border: 0;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--text-muted);
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--text);
   font: inherit;
-  font-size: var(--t-sm);
+  font-size: var(--t-xs);
+  font-weight: 500;
   cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast);
 }
-.hd-head__contact:hover { background: var(--bg-subtle); color: var(--text); }
-.hd-head__contact .hd-copy__icon { color: var(--text-faint); }
-.hd-head__plus {
-  width: 12px;
-  height: 12px;
-  color: var(--text-faint);
+.hd-refurl__copybtn:hover { background: #f8fafb; border-color: var(--border-strong, #cbd5e1); }
+.hd-refurl__chev { flex-shrink: 0; }
+.hd-refurl__menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 50;
+  width: 320px;
+  padding: var(--s2);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.14);
+  display: grid;
+  gap: 2px;
+}
+.hd-refurl__menu[hidden] { display: none; }
+.hd-refurl__item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s3);
+  width: 100%;
+  padding: var(--s2) var(--s3);
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+.hd-refurl__item:hover { background: #f1f5f9; }
+.hd-refurl__item:disabled { opacity: 0.5; cursor: not-allowed; }
+.hd-refurl__ico {
   flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--text-muted);
+}
+.hd-refurl__itxt { display: grid; gap: 1px; min-width: 0; }
+.hd-refurl__ititle {
+  font-size: var(--t-sm);
+  font-weight: 500;
+  color: var(--text);
+}
+.hd-refurl__isub {
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hd-refurl__qrbox {
+  margin-top: var(--s2);
+  padding-top: var(--s3);
+  border-top: 1px solid var(--border);
+  display: grid;
+  justify-items: center;
+  gap: var(--s3);
+}
+.hd-refurl__qr {
+  width: 168px;
+  height: 168px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hd-refurl__qr canvas,
+.hd-refurl__qr svg { display: block; max-width: 100%; height: auto; }
+.hd-refurl__qractions {
+  display: flex;
+  gap: var(--s2);
 }
 
 /* Override indicator — small accent dot next to a rate that differs

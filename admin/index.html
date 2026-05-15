@@ -1237,11 +1237,43 @@
                   <div class="hd-head__avatar" id="hotelDetailAvatar" aria-hidden="true">—</div>
                   <div class="hd-head__lead">
                     <h1 class="bk-page__title" id="hotelDetailTitle">Loading…</h1>
-                    <!-- Status pill + primary contact live inline on
-                         the same sub-row beneath the title. -->
+                    <!-- Status pill + master referral URL inline on
+                         the sub-row beneath the title. Supabase-style
+                         URL + Copy dropdown. -->
                     <div class="hd-head__sub" id="hotelDetailSubRow">
                       <span class="hd-head__status" id="hotelDetailStatus" hidden></span>
-                      <span class="hd-head__contact-slot" id="hotelDetailContact"></span>
+                      <div class="hd-refurl" id="hotelDetailRefUrl" hidden>
+                        <a class="hd-refurl__link mono" id="hdRefUrlLink" href="#" target="_blank" rel="noopener noreferrer">—</a>
+                        <div class="hd-refurl__copywrap">
+                          <button type="button" class="hd-refurl__copybtn" id="hdRefUrlCopyBtn" aria-haspopup="true" aria-expanded="false">
+                            <span>Copy</span>
+                            <svg class="hd-refurl__chev" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
+                          </button>
+                          <div class="hd-refurl__menu" id="hdRefUrlMenu" hidden role="menu">
+                            <button type="button" class="hd-refurl__item" data-copy="" id="hdRefUrlCopyItem" role="menuitem">
+                              <svg class="hd-refurl__ico" viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4l1-1a2.5 2.5 0 013.5 3.5l-1 1M9 12l-1 1A2.5 2.5 0 014.5 9.5l1-1"/></svg>
+                              <span class="hd-refurl__itxt">
+                                <span class="hd-refurl__ititle"><span data-detail-text>Master referral URL</span></span>
+                                <span class="hd-refurl__isub" id="hdRefUrlMenuUrl">—</span>
+                              </span>
+                            </button>
+                            <button type="button" class="hd-refurl__item" id="hdRefUrlZipItem" role="menuitem">
+                              <svg class="hd-refurl__ico" viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v8M4.5 7l3.5 3.5L11.5 7M2.5 13h11"/></svg>
+                              <span class="hd-refurl__itxt">
+                                <span class="hd-refurl__ititle">Download all QR codes</span>
+                                <span class="hd-refurl__isub">ZIP — hotel + every active employee</span>
+                              </span>
+                            </button>
+                            <div class="hd-refurl__qrbox">
+                              <div class="hd-refurl__qr" id="hdRefUrlQR" role="img" aria-label="Master referral QR code"></div>
+                              <div class="hd-refurl__qractions">
+                                <button type="button" class="btn btn--sm" id="hdRefUrlPng">Download PNG</button>
+                                <button type="button" class="btn btn--sm" id="hdRefUrlSvg">Download SVG</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -3236,7 +3268,7 @@
         slug,
         title:        container.querySelector('#hotelDetailTitle'),
         avatar:       container.querySelector('#hotelDetailAvatar'),
-        contact:      container.querySelector('#hotelDetailContact'),
+        refUrl:       container.querySelector('#hotelDetailRefUrl'),
         status:       container.querySelector('#hotelDetailStatus'),
         empBody:      container.querySelector('#hdEmployeesBody'),
         linksBody:    container.querySelector('#hdLinksBody'),
@@ -3426,35 +3458,11 @@
         els.avatar.textContent = first;
       }
 
-      // Primary contact line under the title. With an email: plain
-      // mono address + a tiny copy icon. Without: "Add primary
-      // contact" with a small inline + icon.
-      const contactEmail = h.contact_email || h.email || '';
-      const plusIcon =
-        '<svg class="hd-head__plus" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">' +
-          '<line x1="8" y1="3.5" x2="8" y2="12.5"/><line x1="3.5" y1="8" x2="12.5" y2="8"/>' +
-        '</svg>';
-      const copyIcon16 =
-        '<svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-          '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>' +
-          '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>' +
-        '</svg>';
-      if (els.contact) {
-        els.contact.hidden = false;
-        if (contactEmail) {
-          els.contact.innerHTML =
-            '<button type="button" class="hd-head__contact hd-copy" data-copy="' + escapeHtml(contactEmail) + '" title="Copy email">' +
-              '<span data-detail-text>' + escapeHtml(contactEmail) + '</span>' + copyIcon16 +
-            '</button>';
-        } else {
-          els.contact.innerHTML =
-            '<button type="button" class="hd-head__contact hd-head__contact--add" id="hdAddContact">' +
-              plusIcon + '<span>Add primary contact</span>' +
-            '</button>';
-        }
-      }
+      // The master referral URL + Copy dropdown under the title is
+      // populated later, in the Referral links section, where
+      // hotelShort / masterShortUrl are already resolved.
 
-      // Status pill — sits inline next to the primary contact on the
+      // Status pill — sits inline next to the master referral URL on the
       // sub-row beneath the title. The full metadata strip (onboarded,
       // tier, lifetime commission, etc.) is gone — those values live
       // in the Insights + Details sidebar cards now.
@@ -3877,30 +3885,82 @@
           downloadQRSvg(masterShortUrl, 'horizon-qr-' + (h.code || 'hotel'));
         };
       }
+      // Build the ZIP export list once — shared by the Referral
+      // links card's "Download all QRs" button and the header
+      // Copy-dropdown's matching item.
+      const qrExports = [];
+      if (hotelShort && hotelShort.short_url) {
+        qrExports.push({ slug: (h.code || 'hotel') + '__master', url: hotelShort.short_url });
+      }
+      for (const s of (h.staff || []).filter((x) => x.status === 'active')) {
+        const sl = staffShortByStaffId.get(s.id);
+        if (!sl || !sl.short_url) continue;
+        const safeName = (s.name || s.tracking_code || s.id)
+          .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        qrExports.push({ slug: (h.code || 'hotel') + '__' + (safeName || s.id), url: sl.short_url });
+      }
       if (refDlZip) {
-        const activeStaff = (h.staff || []).filter((s) => s.status === 'active');
-        const exports = [];
-        if (hotelShort && hotelShort.short_url) {
-          exports.push({
-            slug: (h.code || 'hotel') + '__master',
-            url:  hotelShort.short_url,
-          });
-        }
-        for (const s of activeStaff) {
-          const sl = staffShortByStaffId.get(s.id);
-          if (!sl || !sl.short_url) continue;
-          const safeName = (s.name || s.tracking_code || s.id)
-            .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-          exports.push({
-            slug: (h.code || 'hotel') + '__' + (safeName || s.id),
-            url:  sl.short_url,
-          });
-        }
-        refDlZip.disabled = exports.length === 0;
-        refDlZip.title    = exports.length === 0
+        refDlZip.disabled = qrExports.length === 0;
+        refDlZip.title    = qrExports.length === 0
           ? 'No short links available yet for this hotel.'
           : 'Download a ZIP of PNG QR codes for the hotel and every active employee.';
-        refDlZip.onclick = () => bulkDownloadHotelQRs(h, exports);
+        refDlZip.onclick = () => bulkDownloadHotelQRs(h, qrExports);
+      }
+
+      // ── Header master-referral URL + Copy dropdown ───────
+      // Supabase-style: the short URL shown inline under the title
+      // with a Copy ▾ button that opens a panel offering copy,
+      // bulk-ZIP, an inline QR, and PNG/SVG downloads.
+      if (els.refUrl) {
+        const wrap     = els.refUrl;
+        const linkEl   = wrap.querySelector('#hdRefUrlLink');
+        const copyBtn  = wrap.querySelector('#hdRefUrlCopyBtn');
+        const menuEl   = wrap.querySelector('#hdRefUrlMenu');
+        const copyItem = wrap.querySelector('#hdRefUrlCopyItem');
+        const menuUrl  = wrap.querySelector('#hdRefUrlMenuUrl');
+        const zipItem  = wrap.querySelector('#hdRefUrlZipItem');
+        const qrEl     = wrap.querySelector('#hdRefUrlQR');
+        const pngBtn   = wrap.querySelector('#hdRefUrlPng');
+        const svgBtn   = wrap.querySelector('#hdRefUrlSvg');
+
+        if (masterShortUrl) {
+          wrap.hidden = false;
+          linkEl.textContent = masterShortUrl.replace(/^https?:\/\//, '');
+          linkEl.href        = masterShortUrl;
+          copyItem.dataset.copy = masterShortUrl;   // global [data-copy] handler copies it
+          menuUrl.textContent   = masterShortUrl;
+
+          const closeMenu = () => {
+            menuEl.hidden = true;
+            copyBtn.setAttribute('aria-expanded', 'false');
+          };
+          const openMenu = () => {
+            menuEl.hidden = false;
+            copyBtn.setAttribute('aria-expanded', 'true');
+            qrEl.innerHTML = '';
+            const qr = makeQRInstance(masterShortUrl, 168);
+            if (qr) qr.append(qrEl);
+          };
+          copyBtn.onclick = (ev) => {
+            ev.stopPropagation();
+            menuEl.hidden ? openMenu() : closeMenu();
+          };
+          // Close on outside click / Escape.
+          document.addEventListener('click', (ev) => {
+            if (!menuEl.hidden && !wrap.contains(ev.target)) closeMenu();
+          });
+          document.addEventListener('keydown', (ev) => {
+            if (ev.key === 'Escape' && !menuEl.hidden) closeMenu();
+          });
+          // Copy item closes the menu after the global handler copies.
+          copyItem.addEventListener('click', () => setTimeout(closeMenu, 1200));
+          zipItem.disabled = qrExports.length === 0;
+          zipItem.onclick = () => { bulkDownloadHotelQRs(h, qrExports); closeMenu(); };
+          pngBtn.onclick = () => downloadQRPng(masterShortUrl, 'horizon-qr-' + (h.code || 'hotel'));
+          svgBtn.onclick = () => downloadQRSvg(masterShortUrl, 'horizon-qr-' + (h.code || 'hotel'));
+        } else {
+          wrap.hidden = true;
+        }
       }
 
       // Placeholder/demo data for the Fairmont reference hotel so the
