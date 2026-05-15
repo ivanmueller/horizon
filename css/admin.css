@@ -3166,6 +3166,13 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   gap: var(--s2);
   white-space: nowrap;
 }
+/* Fix the amount column width so the status pills line up
+   vertically across rows regardless of price magnitude. */
+.bk-row__amount .mono {
+  display: inline-block;
+  min-width: 5.5rem;
+  font-variant-numeric: tabular-nums;
+}
 .bk-row__amount--muted .mono { color: var(--text-muted); }
 .bk-row__commission {
   font-variant-numeric: tabular-nums;
