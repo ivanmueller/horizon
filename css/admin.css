@@ -2088,29 +2088,53 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   color: var(--text);
 }
 .hd-card__edit {
-  background: transparent;
-  border: 0;
-  color: var(--accent);
-  font-size: var(--t-xs);
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
   cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
 }
-.hd-card__edit:hover { color: var(--accent-hover); }
+.hd-card__edit:hover {
+  background: #f8fafb;
+  color: var(--text);
+  border-color: var(--border-strong, #cbd5e1);
+}
 
-.hd-side__list { margin: 0; display: flex; flex-direction: column; gap: var(--s2); }
+/* Stripe-style rows: label bolded above the value, tight inner
+   gap, generous outer spacing between fields. The whole sidebar
+   reads like a definition list rather than a table. */
+.hd-side__list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+}
 .hd-side__row {
   display: grid;
-  grid-template-columns: minmax(0, 110px) minmax(0, 1fr);
-  gap: var(--s3);
-  align-items: baseline;
+  grid-template-columns: 1fr;
+  gap: 2px;
   font-size: var(--t-sm);
 }
-.hd-side__row--block { grid-template-columns: 1fr; gap: 4px; }
-.hd-side__label { color: var(--text-muted); margin: 0; }
-.hd-side__value {
-  color: var(--text);
+.hd-side__row--block { gap: 2px; }
+.hd-side__label {
   margin: 0;
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--text);
+}
+.hd-side__value {
+  margin: 0;
+  font-size: var(--t-sm);
+  color: var(--text);
   word-break: break-word;
-  text-align: right;
+  text-align: left;
 }
 .hd-side__row--block .hd-side__value { text-align: left; }
 .hd-side__more { display: contents; }
@@ -2388,14 +2412,21 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 
 /* ── Hotel detail page — round-3 additions ──────────── */
 
-/* Insights — metric row with delta line beneath the value. */
+/* Insights — same stacked layout as the regular row; the value
+   gets the larger weight since it's the headline number. */
 .hd-side__row--metric {
-  grid-template-columns: minmax(0, 110px) minmax(0, 1fr);
+  grid-template-columns: 1fr;
   grid-template-rows: auto auto;
   row-gap: 2px;
 }
-.hd-side__row--metric .hd-side__label { grid-row: 1; }
-.hd-side__row--metric .hd-side__value { grid-row: 1; }
+.hd-side__row--metric .hd-side__label {
+  grid-row: 1;
+  font-weight: 600;
+}
+.hd-side__row--metric .hd-side__value {
+  grid-row: 2;
+  font-size: var(--t-base);
+}
 .hd-delta {
   grid-column: 2;
   grid-row: 2;
