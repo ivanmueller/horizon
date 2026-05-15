@@ -1237,50 +1237,21 @@
                   <div class="hd-head__avatar" id="hotelDetailAvatar" aria-hidden="true">—</div>
                   <div class="hd-head__lead">
                     <h1 class="bk-page__title" id="hotelDetailTitle">Loading…</h1>
-                    <p class="hd-head__sub" id="hotelDetailContact" hidden></p>
+                    <!-- Status pill + primary contact live inline on
+                         the same sub-row beneath the title. -->
+                    <div class="hd-head__sub" id="hotelDetailSubRow">
+                      <span class="hd-head__status" id="hotelDetailStatus" hidden></span>
+                      <span class="hd-head__contact-slot" id="hotelDetailContact"></span>
+                    </div>
                   </div>
                 </div>
                 <div class="bk-page__actions hd-head__actions">
                   <button type="button" class="btn" id="hdSendEmail">Send Email</button>
-                  <button type="button" class="btn hd-head__qr-btn" id="hdQRBtn">
-                    <svg class="hd-head__qr-icon" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                      <rect x="1" y="1" width="5" height="5" rx="0.5"/>
-                      <rect x="1" y="10" width="5" height="5" rx="0.5"/>
-                      <rect x="10" y="1" width="5" height="5" rx="0.5"/>
-                      <rect x="3" y="3" width="1" height="1" fill="currentColor" stroke="none"/>
-                      <rect x="3" y="12" width="1" height="1" fill="currentColor" stroke="none"/>
-                      <rect x="12" y="3" width="1" height="1" fill="currentColor" stroke="none"/>
-                      <rect x="10" y="10" width="1.5" height="1.5" fill="currentColor" stroke="none"/>
-                      <rect x="12.5" y="10" width="1.5" height="1.5" fill="currentColor" stroke="none"/>
-                      <rect x="10" y="12.5" width="1.5" height="1.5" fill="currentColor" stroke="none"/>
-                      <rect x="12.5" y="12.5" width="1.5" height="1.5" fill="currentColor" stroke="none"/>
-                    </svg>
-                    <span>QR Code</span>
-                  </button>
                   <button type="button" class="btn btn--primary" id="hdAddEmployee">+ Add Employee</button>
                   <button type="button" class="bk-iconbtn" id="hdMore" aria-label="More actions">⋯</button>
                 </div>
               </div>
             </header>
-
-            <section class="hd-meta" id="hotelDetailMeta" aria-label="Hotel metadata">
-              <div class="hd-meta__col">
-                <div class="hd-meta__label">Onboarded</div>
-                <div class="hd-meta__value" data-meta="onboarded">—</div>
-              </div>
-              <div class="hd-meta__col">
-                <div class="hd-meta__label">Status</div>
-                <div class="hd-meta__value" data-meta="status">—</div>
-              </div>
-              <div class="hd-meta__col">
-                <div class="hd-meta__label">Tier</div>
-                <div class="hd-meta__value" data-meta="tier">—</div>
-              </div>
-              <div class="hd-meta__col">
-                <div class="hd-meta__label">Lifetime commission</div>
-                <div class="hd-meta__value hd-num" data-meta="lifetime_commission">—</div>
-              </div>
-            </section>
 
             <div class="hd-body">
               <main class="hd-main">
@@ -1461,7 +1432,16 @@
                     <div class="hd-side__row">
                       <dt class="hd-side__label">Hotel ID</dt>
                       <dd class="hd-side__value">
-                        <button type="button" class="hd-copy hd-copy--id mono" data-copy="" data-detail="id" title="Copy hotel ID">
+                        <button type="button" class="hd-copy hd-copy--id mono" data-copy="" data-detail="id" title="Copy Hotel ID">
+                          <span data-detail-text>—</span>
+                          <svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        </button>
+                      </dd>
+                    </div>
+                    <div class="hd-side__row">
+                      <dt class="hd-side__label">URL slug</dt>
+                      <dd class="hd-side__value">
+                        <button type="button" class="hd-copy hd-copy--id mono" data-copy="" data-detail="slug" title="Copy URL slug">
                           <span data-detail-text>—</span>
                           <svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                         </button>
@@ -3197,8 +3177,7 @@
         title:        container.querySelector('#hotelDetailTitle'),
         avatar:       container.querySelector('#hotelDetailAvatar'),
         contact:      container.querySelector('#hotelDetailContact'),
-        qrBtn:        container.querySelector('#hdQRBtn'),
-        meta:         container.querySelector('#hotelDetailMeta'),
+        status:       container.querySelector('#hotelDetailStatus'),
         empBody:      container.querySelector('#hdEmployeesBody'),
         linksBody:    container.querySelector('#hdLinksBody'),
         details:      container.querySelector('#hdDetails'),
@@ -3424,31 +3403,15 @@
         }
       }
 
-      // Metadata strip
-      const metaSet = (key, html) => {
-        const node = els.meta.querySelector('[data-meta="' + key + '"]');
-        if (node) node.innerHTML = html;
-      };
-      metaSet('onboarded', escapeHtml(formatHumanDate((h.created_at || '').slice(0, 10)) || '—'));
-      metaSet('status',    hotelStatusPill(h.status));
+      // Status pill — sits inline next to the primary contact on the
+      // sub-row beneath the title. The full metadata strip (onboarded,
+      // tier, lifetime commission, etc.) is gone — those values live
+      // in the Insights + Details sidebar cards now.
+      if (els.status) {
+        els.status.innerHTML = hotelStatusPill(h.status);
+        els.status.hidden    = !h.status;
+      }
       const currency = hotelCurrency(h);
-
-      // Tier: type label + the hotel's commission cut. The schema
-      // only stores commission_pct (and kickback_pool_pct for pool
-      // hotels), so that's what we surface — no derived "Horizon
-      // Tours" or platform percentages.
-      const tierBits = [];
-      if (h.commission_pct != null)    tierBits.push(h.commission_pct + '%');
-      if (h.kickback_pool_pct != null) tierBits.push(h.kickback_pool_pct + '%');
-      const tierLabel = (h.type === 'kickback' ? 'Kickback' : h.type === 'pool' ? 'Pool' : '—')
-                      + (tierBits.length ? ' · ' + tierBits.join(' / ') : '');
-      metaSet('tier', escapeHtml(tierLabel));
-
-      // Lifetime commission — same value the Insights card surfaces.
-      // Stays as a placeholder dash until real aggregation lands;
-      // the populated state is exercised today by the Fairmont demo
-      // data block below (populateFairmontDemoData).
-      metaSet('lifetime_commission', escapeHtml(formatHotelMoney(h.lifetime_commission || 0, currency)));
 
       // Employees & Referral Codes — primary working section. Reads
       // straight from h.staff (same source as the drawer) so the two
@@ -3730,7 +3693,8 @@
         textNode.textContent = value;
         if (opts && opts.copy != null) node.dataset.copy = opts.copy;
       };
-      setDetail('id',                  h.code || '—', { copy: h.code || '' });
+      setDetail('id',                  h.tracking_prefix || '—', { copy: h.tracking_prefix || '' });
+      setDetail('slug',                h.code || '—',            { copy: h.code || '' });
       setDetail('onboarded',           formatHumanDate((h.created_at || '').slice(0, 10)) || '—');
       setDetail('contract_start_date', formatHumanDate(h.contract_start_date) || '—');
       setDetail('property_type',       formatPropertyType(h.property_type) || '—');
@@ -3811,21 +3775,6 @@
           ? 'No short links available yet for this hotel.'
           : 'Download a ZIP of PNG QR codes for the hotel and every active employee.';
         refDlZip.onclick = () => bulkDownloadHotelQRs(h, exports);
-      }
-
-      // Header QR Code button — opens the master short URL in the
-      // singleton QR lightbox. Disabled when no short link exists
-      // yet (e.g. Short.io was down at creation), so we never render
-      // a QR pointing at anything other than the master short URL.
-      if (els.qrBtn) {
-        els.qrBtn.disabled = !masterShortUrl;
-        els.qrBtn.title    = masterShortUrl
-          ? 'View master QR code'
-          : 'No short link minted yet for this hotel';
-        els.qrBtn.onclick = () => {
-          if (!masterShortUrl) return;
-          openQRModal(masterShortUrl, h.name || 'Hotel', masterShortUrl);
-        };
       }
 
       // Placeholder/demo data for the Fairmont reference hotel so the
@@ -4100,11 +4049,6 @@
       setInsight('bookings-lifetime',   '5');
       setInsight('bookings-30d',        '5');
       setInsight('conversion-rate',     '6.2%');
-
-      // Mirror the demo lifetime commission into the meta strip so
-      // the page header reflects the same headline number.
-      const metaLc = els.meta && els.meta.querySelector('[data-meta="lifetime_commission"]');
-      if (metaLc) metaLc.textContent = fm(203.20);
 
       // ── Referral Links — patch the click/conversion/last-clicked
       // cells in place. The rows themselves come from the staff
