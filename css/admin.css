@@ -1951,8 +1951,6 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   font-size: var(--t-sm);
   color: var(--text-muted);
 }
-.hd-head__status:empty,
-.hd-head__status[hidden] { display: none; }
 .hd-head__actions { flex-shrink: 0; }
 
 .hd-body {
@@ -2195,11 +2193,17 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   transition: background var(--t-fast), border-color var(--t-fast);
 }
 .hd-refurl__copybtn:hover { background: #f8fafb; border-color: var(--border-strong, #cbd5e1); }
-.hd-refurl__chev { flex-shrink: 0; }
+.hd-refurl__chev {
+  flex-shrink: 0;
+  transition: transform var(--t-fast);
+}
+.hd-refurl__copybtn[aria-expanded="true"] .hd-refurl__chev {
+  transform: rotate(180deg);
+}
 .hd-refurl__menu {
   position: absolute;
   top: calc(100% + 6px);
-  left: 0;
+  right: 0;
   z-index: 50;
   width: 320px;
   padding: var(--s2);
@@ -2231,7 +2235,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   margin-top: 2px;
   color: var(--text-muted);
 }
-.hd-refurl__itxt { display: grid; gap: 1px; min-width: 0; }
+.hd-refurl__itxt { display: grid; gap: 1px; min-width: 0; flex: 1; }
 .hd-refurl__ititle {
   font-size: var(--t-sm);
   font-weight: 500;
@@ -2244,6 +2248,29 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* Right-side action slot on the copy row: copy glyph on hover,
+   green check after a successful copy (Supabase pattern). */
+.hd-refurl__act {
+  position: relative;
+  flex-shrink: 0;
+  align-self: center;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hd-refurl__copyico,
+.hd-refurl__checkico {
+  position: absolute;
+  opacity: 0;
+  transition: opacity var(--t-fast);
+}
+.hd-refurl__copyico { color: var(--text-muted); }
+.hd-refurl__checkico { color: #217005; }
+.hd-refurl__item--copy:hover .hd-refurl__copyico { opacity: 1; }
+.hd-refurl__item--copy.is-copied .hd-refurl__copyico { opacity: 0; }
+.hd-refurl__item--copy.is-copied .hd-refurl__checkico { opacity: 1; }
 .hd-refurl__qrbox {
   margin-top: var(--s2);
   padding-top: var(--s3);
