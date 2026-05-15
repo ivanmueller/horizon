@@ -4019,38 +4019,56 @@
       const refPill = (code) => '<span class="hd-pill-mono">' + escapeHtml(code) + '</span>';
 
       // ── Bookings table
+      // Demo data exercises all three status pills (Confirmed,
+      // Upcoming, Refunded). Future dates render as Upcoming.
       const bookings = [
-        { id: 'HZN-2026-0142', tour: 'Lake Louise Voyageur Canoe', date: 'Jun 18, 2026', guest: 'Sarah Chen',    party: 2, ref: 'Jane Smith',  amt: 747.00,  com: 37.35, status: 'ok',  label: 'Confirmed' },
-        { id: 'HZN-2026-0138', tour: 'Lake Agnes Tea House Hike',  date: 'Jun 15, 2026', guest: 'Michael Torres',party: 3, ref: 'Jane Smith',  amt: 876.00,  com: 43.80, status: 'ok',  label: 'Confirmed' },
-        { id: 'HZN-2026-0131', tour: 'Lake Louise Voyageur Canoe', date: 'Jun 12, 2026', guest: 'Priya Sharma',  party: 1, ref: 'Master link', amt: 498.00,  com: 24.90, status: 'ok',  label: 'Confirmed' },
-        { id: 'HZN-2026-0127', tour: 'Banff Town & Gondola Day',   date: 'Jun 10, 2026', guest: "James O'Brien", party: 4, ref: 'Jane Smith',  amt: 1196.00, com: 59.80, status: 'ok',  label: 'Confirmed' },
-        { id: 'HZN-2026-0119', tour: 'Lake Louise Voyageur Canoe', date: 'Jun 6, 2026',  guest: 'Elena Volkov',  party: 2, ref: 'Jane Smith',  amt: 747.00,  com: 37.35, status: 'neutral', label: 'Refunded' },
+        { tour: 'Lake Louise Voyageur Canoe', date: 'Jun 18, 2026', guest: 'Sarah Chen',     ref: 'X7K2_E_0001', amt: 747.00,  com: 37.35, status: 'ok',      label: 'Confirmed' },
+        { tour: 'Lake Agnes Tea House Hike',  date: 'Jun 22, 2026', guest: 'Michael Torres', ref: 'X7K2_E_0001', amt: 876.00,  com: 43.80, status: 'info',    label: 'Upcoming'  },
+        { tour: 'Banff Town & Gondola Day',   date: 'Jul 02, 2026', guest: "James O'Brien",  ref: 'X7K2_E_0002', amt: 1196.00, com: 59.80, status: 'info',    label: 'Upcoming'  },
+        { tour: 'Lake Louise Voyageur Canoe', date: 'Jun 12, 2026', guest: 'Priya Sharma',   ref: 'X7K2_H',      amt: 498.00,  com: 24.90, status: 'ok',      label: 'Confirmed' },
+        { tour: 'Lake Agnes Tea House Hike',  date: 'May 02, 2026', guest: 'Hannah Berg',    ref: 'X7K2_E_0001', amt: 438.00,  com: 0,     status: 'neutral', label: 'Refunded'  },
       ];
       const bookingsBody = els.container.querySelector('#hdBookingsBody');
       if (bookingsBody) {
-        const rows = bookings.map((b) =>
-          '<tr>' +
-            '<td class="mono">' + escapeHtml(b.id) + '</td>' +
-            '<td>' + escapeHtml(b.tour) + '</td>' +
-            '<td>' + escapeHtml(b.date) + '</td>' +
-            '<td>' + escapeHtml(b.guest) + ' <span class="muted">(+' + b.party + ' guest' + (b.party === 1 ? '' : 's') + ')</span></td>' +
-            '<td>' + escapeHtml(b.ref) + '</td>' +
-            '<td class="num hd-num">' + escapeHtml(fm(b.amt)) + '</td>' +
-            '<td class="num hd-num">' + escapeHtml(fm(b.com)) + '</td>' +
-            '<td>' + pill(b.status, b.label) + '</td>' +
-          '</tr>'
-        ).join('');
+        const rows = bookings.map((b) => {
+          const isRefunded  = b.status === 'neutral';
+          const statusPill  = pill(b.status, b.label);
+          const amountCell  = '<td class="bk-row__amount' + (isRefunded ? ' bk-row__amount--muted' : '') + '">' +
+                                '<span class="mono">' + escapeHtml(fm(b.amt)) + '</span>' +
+                                ' ' + statusPill +
+                              '</td>';
+          const commission  = isRefunded
+            ? '<td class="bk-row__commission bk-row__commission--muted">Refunded</td>'
+            : '<td class="bk-row__commission bk-row__commission--pos">+' + escapeHtml(fm(b.com)) + '</td>';
+          return (
+            '<tr>' +
+              amountCell +
+              '<td>' + escapeHtml(b.tour) + '</td>' +
+              '<td>' + escapeHtml(b.guest) + '</td>' +
+              '<td class="bk-table__muted">' + escapeHtml(b.date) + '</td>' +
+              '<td>' + refPill(b.ref) + '</td>' +
+              commission +
+            '</tr>'
+          );
+        }).join('');
         bookingsBody.innerHTML =
           '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
-            '<table class="bk-table">' +
+            '<table class="bk-table bk-table--bookings">' +
               '<thead><tr>' +
-                '<th>Booking ID</th><th>Tour</th><th>Date</th><th>Guest</th>' +
-                '<th>Referred By</th><th class="num">Amount</th>' +
-                '<th class="num">Commission</th><th>Status</th>' +
+                '<th>Amount</th>' +
+                '<th>Tour</th>' +
+                '<th>Customer</th>' +
+                '<th>Date</th>' +
+                '<th>Source</th>' +
+                '<th>Commission</th>' +
               '</tr></thead>' +
               '<tbody>' + rows + '</tbody>' +
             '</table>' +
-          '</div></div>';
+          '</div></div>' +
+          '<div class="bk-table__footer hd-bookings__footer">' +
+            '<span class="muted">Showing 5 of 247</span>' +
+            '<a href="#" class="hd-bookings__viewall">View all bookings →</a>' +
+          '</div>';
       }
 
       // ── Recent activity feed

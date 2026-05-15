@@ -1426,6 +1426,11 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   border-color: #d4dee9;
   color:        #50617a;
 }
+.bk-pill--info {
+  background: #eff5ff;
+  border-color: #bcd4ff;
+  color:        #1d4ed8;
+}
 
 /* ── Empty state inside the table card ────────────────────────── */
 .bk-empty {
@@ -3149,3 +3154,39 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   font-weight: 500;
   color: var(--text);
 }
+
+/* ── Bookings table (Stripe-style) ────────────────────────────
+   Amount column holds the dollar value + inline status pill
+   (no separate Status header). Commission is green for positive,
+   muted "Refunded" for refunded rows. */
+.bk-table--bookings tbody td { vertical-align: middle; }
+.bk-row__amount {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  white-space: nowrap;
+}
+.bk-row__amount--muted .mono { color: var(--text-muted); }
+.bk-row__commission {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.bk-row__commission--pos   { color: #217005; }
+.bk-row__commission--muted { color: var(--text-muted); }
+
+/* Footer beneath the bookings table: "Showing X of Y" on the
+   left, "View all bookings →" link in the brand accent on the
+   right. */
+.hd-bookings__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--s3) 0 0;
+  font-size: var(--t-sm);
+}
+.hd-bookings__viewall {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+.hd-bookings__viewall:hover { text-decoration: underline; }
