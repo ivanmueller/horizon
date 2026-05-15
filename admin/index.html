@@ -1476,8 +1476,8 @@
                         <dd class="hd-side__value" data-detail="star_rating">—</dd>
                       </div>
                       <div class="hd-side__row">
-                        <dt class="hd-side__label">Region</dt>
-                        <dd class="hd-side__value" data-detail="region">—</dd>
+                        <dt class="hd-side__label">Country</dt>
+                        <dd class="hd-side__value" data-detail="country">—</dd>
                       </div>
                     </div>
                   </dl>
@@ -3328,15 +3328,6 @@
       const cps = country.toUpperCase().split('').map((c) => base + (c.charCodeAt(0) - A));
       return String.fromCodePoint.apply(null, cps);
     }
-    // Region/province appended to the location label per the spec
-    // ("Banff, AB"). Pulled from h.region when set; AB is a sensible
-    // default for Banff/Canmore today.
-    function hotelRegion(h) {
-      if (h.region) return h.region;
-      const loc = (h.location || '').toLowerCase();
-      if (loc === 'banff' || loc === 'canmore') return 'AB';
-      return '';
-    }
     // Currency ISO code drives every dollar figure on the page so
     // hotels paid in USD/EUR/GBP don't show stale "CA$" prefixes once
     // we onboard outside Canada.
@@ -3739,7 +3730,7 @@
       setDetail('onboarded',           formatHumanDate((h.created_at || '').slice(0, 10)) || '—');
       setDetail('property_type',       formatPropertyType(h.property_type) || '—');
       setDetail('star_rating',         h.star_rating != null ? ('★'.repeat(h.star_rating) + '☆'.repeat(5 - h.star_rating)) : '—');
-      setDetail('region',              h.region || '—');
+      setDetail('country',             h.country || '—');
       setDetail('created',             formatHumanDateTime(h.created_at));
       setDetail('updated',             formatHumanDateTime(h.updated_at || h.created_at));
 
@@ -4646,10 +4637,10 @@
               </div>
 
               <label class="drawer-form__row">
-                <span class="drawer-form__label">Region</span>
-                <input class="input" id="heRegion" type="text" maxlength="80"
-                       value="${escapeHtml(h.region || '')}"
-                       placeholder="e.g. Canadian Rockies">
+                <span class="drawer-form__label">Country</span>
+                <input class="input" id="heCountry" type="text" maxlength="80"
+                       value="${escapeHtml(h.country || '')}"
+                       placeholder="e.g. Canada">
               </label>
 
               <label class="drawer-form__row">
@@ -5000,7 +4991,7 @@
       const contractStart = form.querySelector('#heContractStart').value.trim();
       const propertyType = form.querySelector('#hePropertyType').value;
       const starRating   = form.querySelector('#heStarRating').value;
-      const region       = form.querySelector('#heRegion').value.trim();
+      const country      = form.querySelector('#heCountry').value.trim();
       const address      = form.querySelector('#heAddress').value.trim();
       const phone        = form.querySelector('#hePhone').value.trim();
       const website      = form.querySelector('#heWebsite').value.trim();
@@ -5027,7 +5018,7 @@
       body.website               = website  || null;
       body.primary_contact_name  = contactName  || null;
       body.primary_contact_email = contactEmail || null;
-      body.region              = region || null;
+      body.country             = country || null;
       body.notes               = notes ? notes : null;
 
       saveBtn.disabled = true;

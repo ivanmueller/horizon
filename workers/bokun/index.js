@@ -824,7 +824,7 @@ async function handleAdminBookingPatch(id, request, env) {
 const HOTEL_FIELDS =
   "id,code,name,location,type,status,effective_date,default_tracking_code," +
   "tracking_prefix,commission_pct,kickback_pool_pct,notes,created_at,updated_at," +
-  "contract_start_date,property_type,star_rating,region," +
+  "contract_start_date,property_type,star_rating,country," +
   "address,phone,primary_contact_name,primary_contact_email,website";
 const STAFF_FIELDS =
   "id,hotel_id,name,tracking_code,sequence_number,kickback_pct," +
@@ -2094,10 +2094,10 @@ function validateHotel(body, { creating }) {
     }
     row.star_rating = body.star_rating;
   }
-  if (body.region === null) row.region = null;
-  else if (typeof body.region === "string") {
-    const r = body.region.trim();
-    row.region = r || null;
+  if (body.country === null) row.country = null;
+  else if (typeof body.country === "string") {
+    const c = body.country.trim();
+    row.country = c || null;
   }
   // Pure admin metadata — no attribution or commission impact.
   // Stored verbatim after trim; the UI handles display formatting.
