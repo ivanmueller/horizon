@@ -1928,7 +1928,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 /* Stripe customer-page architecture: header → metadata strip
    → two-column body (main + sidebar). Layout-only — colors,
    fonts, and tokens are reused from existing primitives. */
-.hd-head { gap: 6px; }
+.hd-head { gap: 6px; margin-bottom: var(--s8); }
 .hd-head__row {
   display: flex;
   align-items: flex-start;
@@ -1938,33 +1938,18 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 .hd-head__lead { display: flex; flex-direction: column; gap: 2px; }
 .hd-head__sub {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-wrap: wrap;
   margin: 0;
   font-size: var(--t-sm);
   color: var(--text-muted);
 }
+.hd-head__status:empty,
+.hd-head__status[hidden] { display: none; }
+.hd-head__contact-slot:empty { display: none; }
 .hd-head__actions { flex-shrink: 0; }
-
-.hd-meta {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--s4);
-  padding: var(--s4) 0;
-  margin: var(--s4) 0;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-}
-.hd-meta__col { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.hd-meta__label {
-  font-size: var(--t-xs);
-  color: var(--text-muted);
-  text-transform: none;
-  letter-spacing: 0;
-}
-.hd-meta__value {
-  font-size: var(--t-sm);
-  color: var(--text);
-  font-weight: 500;
-}
 
 .hd-body {
   display: grid;
@@ -1974,7 +1959,6 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 @media (max-width: 1024px) {
   .hd-body { grid-template-columns: 1fr; }
-  .hd-meta { grid-template-columns: repeat(2, 1fr); }
 }
 
 .hd-main { display: flex; flex-direction: column; gap: var(--s6); min-width: 0; }
@@ -2151,9 +2135,6 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   align-self: flex-start;
 }
 .hd-side__toggle:hover { color: var(--accent-hover); }
-
-/* ── Hotel detail page — round 2 polish ───────────────── */
-.hd-meta__value.mono { font-family: var(--font-mono); font-size: 0.95em; }
 
 /* Flag glyph inline with location label */
 .hd-flag {
@@ -3101,15 +3082,5 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   letter-spacing: 0.02em;
   font-family: 'Times New Roman', Georgia, serif;
   user-select: none;
-}
-.hd-head__qr-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s2);
-}
-.hd-head__qr-icon { flex-shrink: 0; }
-.hd-head__qr-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
