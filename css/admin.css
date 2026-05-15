@@ -1978,7 +1978,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 
 .hd-main { display: flex; flex-direction: column; gap: var(--s6); min-width: 0; }
-.hd-side { display: flex; flex-direction: column; gap: var(--s4); min-width: 0; }
+.hd-side { display: flex; flex-direction: column; gap: var(--s8); min-width: 0; }
 
 .hd-section { display: flex; flex-direction: column; gap: var(--s3); }
 .hd-section__head {
@@ -2068,11 +2068,9 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .hd-copy.mono { font-family: var(--font-mono); font-size: 0.85em; }
 .hd-copy--url { color: var(--accent); }
 
+/* Sidebar cards are borderless — visual rhythm comes from the
+   wide gap between sections (hd-side), not from card chrome. */
 .hd-card {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: var(--s4);
-  background: #fff;
   display: flex;
   flex-direction: column;
   gap: var(--s3);
@@ -2085,11 +2083,9 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 .hd-card__title {
   margin: 0;
-  font-size: var(--t-sm);
+  font-size: var(--t-base);
   font-weight: 600;
   color: var(--text);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 .hd-card__edit {
   background: transparent;
