@@ -2937,127 +2937,114 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   flex-shrink: 0;
 }
 
-/* ── Hotel detail drawer: full-width Hero strip ──────────────
-   Sits above the hd-body grid. QR on the left, the short URL +
-   actions + locked-identifier pills on the right. This is the
-   most important visual surface on the drawer — the QR is the
-   actual printed artifact, the codes beside it are what makes
-   attribution work. */
-.hd-hero {
+/* ── Referral links card (left main column) ─────────────────
+   Compact form-style card that holds the master short URL and
+   QR code with download actions. Per-staff links live in the
+   Referral Links section beneath it. */
+.hd-refcard__card {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: var(--s6);
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--s5);
   align-items: start;
-  padding: var(--s5);
-  margin-bottom: var(--s6);
+  padding: var(--s4);
   background: #ffffff;
   border: 1px solid var(--line, #e5e7eb);
   border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
-.hd-hero__qr-col {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.hd-hero__qr {
-  width: 192px;
-  height: 192px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.hd-hero__qr canvas,
-.hd-hero__qr svg {
-  display: block;
-  max-width: 100%;
-  height: auto;
-}
-.hd-hero__info-col {
+.hd-refcard__main {
   display: grid;
-  gap: var(--s3);
+  gap: var(--s4);
   min-width: 0;
 }
-.hd-hero__heading {
-  display: grid;
-  gap: 2px;
-}
-.hd-hero__title {
-  font-size: var(--t-lg);
-  font-weight: 600;
-  margin: 0;
-  color: #1a2c44;
-}
-.hd-hero__sub {
-  font-size: var(--t-sm);
-  color: #50617a;
-  margin: 0;
-}
-.hd-hero__url {
-  font-size: var(--t-base);
-  width: 100%;
-}
-.hd-hero__actions {
-  display: flex;
-  gap: var(--s2);
-  flex-wrap: wrap;
-}
-.hd-hero__codes {
-  display: grid;
-  gap: var(--s2);
-  margin: var(--s2) 0 0;
-  padding: var(--s3) 0 0;
-  border-top: 1px solid var(--line, #e5e7eb);
-}
-.hd-hero__code-row {
-  display: grid;
-  grid-template-columns: 180px 1fr;
-  align-items: center;
-  gap: var(--s3);
-}
-.hd-hero__code-label {
+.hd-refcard__field { display: grid; gap: var(--s2); }
+.hd-refcard__label {
   font-size: var(--t-xs);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: #50617a;
   font-weight: 500;
 }
-.hd-hero__code-value {
-  font-size: var(--t-base);
-  line-height: 1.4;
-  word-break: break-all;
+.hd-refcard__url-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  min-width: 0;
 }
-.hd-hero__details {
-  margin-top: var(--s2);
+.hd-refcard__url {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  background: #f8fafb;
+  border: 1px solid var(--line, #e5e7eb);
+  border-radius: 6px;
+  font-size: var(--t-sm);
+  color: #1a2c44;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.hd-hero__details-summary {
-  cursor: pointer;
-  font-size: var(--t-xs);
-  color: #50617a;
-  user-select: none;
-  padding: var(--s1) 0;
+.hd-refcard__copy {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
-.hd-hero__details-summary:hover { color: #1a2c44; }
-.hd-hero__longurl {
-  margin-top: var(--s2);
-  font-size: var(--t-xs);
+.hd-refcard__actions {
+  display: flex;
+  gap: var(--s2);
+  flex-wrap: wrap;
+}
+.hd-refcard__actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.hd-refcard__qr-col {
+  flex-shrink: 0;
+}
+.hd-refcard__qr {
+  width: 152px;
+  height: 152px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background: #ffffff;
+  border: 1px solid var(--line, #e5e7eb);
+  border-radius: 6px;
+}
+.hd-refcard__qr canvas,
+.hd-refcard__qr svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+.hd-refcard__qr-empty {
   width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--warn-bg);
+  border: 1px dashed var(--warn-border);
+  border-radius: 4px;
+  font-size: var(--t-xs);
+  color: var(--warn-fg);
+  text-align: center;
+  padding: var(--s2);
+}
+.hd-refcard__footer {
+  margin: var(--s3) 0 0;
+  padding: var(--s3) 0 0;
+  border-top: 1px solid var(--line, #e5e7eb);
+  font-size: var(--t-xs);
   color: #50617a;
 }
 
-/* Stack the hero columns on narrower viewports so the QR doesn't
-   force horizontal scroll on tablet widths. */
+/* Stack the QR under the form on narrower viewports. */
 @media (max-width: 720px) {
-  .hd-hero {
-    grid-template-columns: 1fr;
-  }
-  .hd-hero__qr-col {
-    justify-content: flex-start;
-  }
-  .hd-hero__code-row {
-    grid-template-columns: 1fr;
-    gap: 2px;
-  }
+  .hd-refcard__card { grid-template-columns: 1fr; }
+  .hd-refcard__qr-col { justify-self: flex-start; }
 }
 
 /* ── Hotel detail page header: identity block ────────────────
