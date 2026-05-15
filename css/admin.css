@@ -3089,3 +3089,63 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   user-select: none;
 }
 
+
+/* ── Commission structure (sidebar card) ─────────────────────
+   Thin stacked bar with a coloured-swatch legend. Shows how a
+   booking's revenue divides between the tour operator, the
+   hotel, and Horizon. Default to 5% platform fee when empty so
+   the design never reads as broken. */
+.hd-comm { display: grid; gap: var(--s3); }
+.hd-comm__head { display: grid; gap: 2px; }
+.hd-comm__tier {
+  font-size: var(--t-base);
+  font-weight: 600;
+  color: var(--text);
+}
+.hd-comm__sub {
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+}
+.hd-comm__bar {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #e2e8f0;
+  margin-top: var(--s1);
+}
+.hd-comm__seg {
+  display: block;
+  height: 100%;
+  transition: width var(--t-base);
+}
+.hd-comm__seg--op       { background: #1a2c44; }
+.hd-comm__seg--hotel    { background: #3b82f6; }
+.hd-comm__seg--platform { background: #FF6B4A; }
+.hd-comm__legend {
+  display: grid;
+  gap: var(--s2);
+  margin: 0;
+}
+.hd-comm__row {
+  display: grid;
+  grid-template-columns: 12px 1fr auto;
+  align-items: center;
+  gap: var(--s2);
+  font-size: var(--t-sm);
+}
+.hd-comm__swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.hd-comm__swatch--op       { background: #1a2c44; }
+.hd-comm__swatch--hotel    { background: #3b82f6; }
+.hd-comm__swatch--platform { background: #FF6B4A; }
+.hd-comm__label { color: var(--text-muted); }
+.hd-comm__pct {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: var(--text);
+}

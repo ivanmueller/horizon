@@ -825,6 +825,7 @@ const HOTEL_FIELDS =
   "id,code,name,location,type,status,effective_date,default_tracking_code," +
   "tracking_prefix,commission_pct,kickback_pool_pct,notes,created_at,updated_at," +
   "contract_start_date,property_type,star_rating,country," +
+  "platform_fee_pct," +
   "address,phone,primary_contact_name,primary_contact_email,website";
 const STAFF_FIELDS =
   "id,hotel_id,name,tracking_code,sequence_number,kickback_pct," +
@@ -2072,6 +2073,13 @@ function validateHotel(body, { creating }) {
   else if (creating) row.commission_pct = 0;
   if (body.kickback_pool_pct === null) row.kickback_pool_pct = null;
   else if (typeof body.kickback_pool_pct === "number") row.kickback_pool_pct = body.kickback_pool_pct;
+  if (body.platform_fee_pct === null) row.platform_fee_pct = null;
+  else if (typeof body.platform_fee_pct === "number") {
+    if (body.platform_fee_pct < 0 || body.platform_fee_pct > 100) {
+      return { error: "platform_fee_pct must be between 0 and 100" };
+    }
+    row.platform_fee_pct = body.platform_fee_pct;
+  }
   if (body.notes === null) row.notes = null;
   else if (typeof body.notes === "string") row.notes = body.notes;
   // Onboarding metadata — all nullable, all admin-editable. The
