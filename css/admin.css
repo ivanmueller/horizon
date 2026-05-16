@@ -2027,17 +2027,15 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .hd-statpop__item.is-todo  svg { color: #c0820c; }
 
 /* Setup guide — Stripe-style checklist card in the sidebar above
-   Details. Reads as RECESSED into the page (inset shadow, sunken
-   fill, no outward elevation) rather than a floating widget.
-   Closes when every item is done (pill flips Active) or archived. */
+   Details. Flat white card, plain grey border, no shadow and no
+   recessed look. Closes when every item is done (pill flips
+   Active) or archived. */
 .hd-setup {
   display: flex;
   flex-direction: column;
   border-radius: 10px;
-  background: #eceff4;
-  box-shadow:
-    inset 0 2px 4px rgba(15, 23, 42, 0.10),
-    inset 0 0 0 1px rgba(15, 23, 42, 0.05);
+  background: #fff;
+  border: 1px solid var(--border);
   overflow: hidden;
 }
 .hd-setup[hidden] { display: none; }
@@ -2086,9 +2084,14 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 7px 4px;
+  padding: 7px 8px;
+  margin: 0 -4px;
+  border-radius: 6px;
   font-size: var(--t-sm);
+  cursor: default;
+  transition: background var(--t-fast);
 }
+.hd-setup__item:hover { background: #f1f5f9; }
 .hd-setup__mark {
   flex-shrink: 0;
   width: 17px;
