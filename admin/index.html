@@ -1326,6 +1326,16 @@
               </div>
             </div>
 
+            <!-- Setup-health strip — conditional. Renders only while
+                 the property is "pending" (any setup item open). It
+                 vanishes once everything is complete (green pill
+                 takes over) or when archived. Permanent real estate
+                 isn't earned by a finished task. -->
+            <div class="hd-setup" id="hotelDetailSetup" hidden>
+              <span class="hd-setup__title">Finish setup</span>
+              <div class="hd-setup__items" id="hdSetupItems"></div>
+            </div>
+
             <div class="hd-body">
               <main class="hd-main">
 
@@ -3237,6 +3247,7 @@
         slug,
         title:        container.querySelector('#hotelDetailTitle'),
         statusWrap:   container.querySelector('#hotelDetailStatusWrap'),
+        setup:        container.querySelector('#hotelDetailSetup'),
         refUrl:       container.querySelector('#hotelDetailRefUrl'),
         empBody:      container.querySelector('#hdEmployeesBody'),
         linksBody:    container.querySelector('#hdLinksBody'),
@@ -3846,6 +3857,28 @@
         document.addEventListener('keydown', (ev) => {
           if (ev.key === 'Escape' && !pop.hidden) closePop();
         });
+
+        // Setup-health strip — same deriveHotelStatus source as the
+        // pill/popover so they can never disagree. Visible only
+        // while pending; gone once verified or archived.
+        if (els.setup) {
+          if (st.key === 'pending') {
+            const itemsEl = els.setup.querySelector('#hdSetupItems');
+            itemsEl.innerHTML = st.checklist.map((c) => {
+              const state = c.done ? 'done' : (c.kind === 'event' ? 'event' : 'action');
+              const icon = c.done
+                ? '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 4.5"/></svg>'
+                : c.kind === 'event'
+                  ? '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/></svg>'
+                  : '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 5l6 6M11 5l-6 6"/></svg>';
+              return '<span class="hd-setup__item is-' + state + '">' +
+                icon + '<span>' + escapeHtml(c.label) + '</span></span>';
+            }).join('');
+            els.setup.hidden = false;
+          } else {
+            els.setup.hidden = true;
+          }
+        }
       }
 
       const qrExports = [];
@@ -4400,26 +4433,44 @@
       return '<span class="bk-pill bk-pill--neutral">' + escapeHtml(status || '—') + '</span>';
     }
 
-    // Derives the title-row status. Three states only:
+    // Single source of truth for the title-row pill, its popover,
+    // and the setup-health strip. Three states:
     //   archived — manually terminated
-    //   pending  — a required setup item is still missing
-    //   active   — every required item complete (the "Verified" state)
-    // Returns the checklist too so the popover can show what's
-    // verified / outstanding. tone: 'green' | 'amber' | 'gray'.
+    //   pending  — any setup item still outstanding
+    //   active   — every item complete (the green "Verified" state)
+    //
+    // The checklist is the full target list. "First employee" is
+    // intentionally excluded — pool-type hotels run a single hotel
+    // commission with no per-employee codes, so it isn't a gate.
+    //
+    // Each item carries `kind`:
+    //   'action' — the admin can go do it now (incomplete → ✗)
+    //   'event'  — happens passively, can't be forced (incomplete → ○)
+    //
+    // Stripe Connect + First booking have no backing columns yet
+    // (stripe_account_id / a booking count are referenced but never
+    // migrated). They read incomplete until that data exists, which
+    // means no hotel earns the green pill until then — the honest,
+    // intended consequence of showing the real end-state list. The
+    // checks light up automatically once the columns land.
     function deriveHotelStatus(h, hotelShort) {
-      const linkDone = !!(hotelShort && hotelShort.short_url);
-      const commDone = h.commission_pct != null && Number(h.commission_pct) > 0;
-      const needsStaff = h.type === 'kickback';
-      const staffDone = !needsStaff ||
-        (h.staff || []).filter((s) => s.status === 'active').length > 0;
+      const stripeConnected = !!h.stripe_account_id &&
+        (h.stripe_status === 'connected' || h.stripe_status === 'active');
+      const hasBooking = (Number(h.bookings_count) || 0) > 0 || !!h.first_booking_at;
 
       const checklist = [
-        { label: 'Referral link minted',   done: linkDone },
-        { label: 'Commission configured',  done: commDone },
+        { label: 'Referral link minted',  kind: 'action',
+          done: !!(hotelShort && hotelShort.short_url) },
+        { label: 'Commission configured', kind: 'action',
+          done: h.commission_pct != null && Number(h.commission_pct) > 0 },
+        { label: 'Primary contact added', kind: 'action',
+          done: !!(h.primary_contact_name || h.primary_contact_email) },
+        { label: 'Stripe Connect linked', kind: 'action',
+          done: stripeConnected },
+        { label: 'First booking received', kind: 'event',
+          done: hasBooking },
       ];
-      if (needsStaff) {
-        checklist.push({ label: 'At least one active employee', done: staffDone });
-      }
+      const allDone = checklist.every((c) => c.done);
 
       if (h.status === 'terminated') {
         return {
@@ -4429,7 +4480,7 @@
           checklist: [],
         };
       }
-      if (!linkDone || !commDone || !staffDone) {
+      if (!allDone) {
         return {
           key: 'pending', tone: 'amber', label: 'Pending',
           headline: 'Setup is incomplete',
@@ -4440,7 +4491,7 @@
       return {
         key: 'active', tone: 'green', label: 'Active',
         headline: 'This property is verified & active',
-        note: 'All required setup is complete and attribution is live.',
+        note: 'All setup is complete and attribution is live.',
         checklist,
       };
     }

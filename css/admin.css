@@ -2026,6 +2026,48 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .hd-statpop__item.is-todo      { color: var(--text-muted); }
 .hd-statpop__item.is-todo  svg { color: #c0820c; }
 
+/* Setup-health strip — conditional row of chips below the hero.
+   Only rendered while the property is pending; vanishes when
+   verified or archived (permanence is for things needing
+   attention). Done = green ✓, actionable-open = amber ✗,
+   awaiting-event = gray ○. */
+.hd-setup {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s3) var(--s5);
+  padding: 0 0 var(--s5);
+  margin-bottom: var(--s6);
+  border-bottom: 1px solid var(--border);
+}
+.hd-setup[hidden] { display: none; }
+.hd-setup__title {
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.hd-setup__items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s3) var(--s5);
+}
+.hd-setup__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--t-sm);
+  white-space: nowrap;
+}
+.hd-setup__item svg { flex-shrink: 0; }
+.hd-setup__item.is-done   { color: var(--text); }
+.hd-setup__item.is-done   svg { color: #1a7f37; }
+.hd-setup__item.is-action { color: #92400e; }
+.hd-setup__item.is-action svg { color: #c0820c; }
+.hd-setup__item.is-event  { color: var(--text-muted); }
+.hd-setup__item.is-event  svg { color: #94a3b8; }
+
 /* Hero metric strip — labels + numbers, no charts. Sits directly
    below the identity row, above the body grid. Four columns
    spread evenly across the full width with generous vertical
