@@ -2043,11 +2043,14 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   height: 4px;
   width: 100%;
   background: rgba(15, 23, 42, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
 }
 .hd-setup__fill {
   display: block;
   height: 100%;
   background: #635bff;
+  border-radius: 999px;
   transition: width 320ms ease;
 }
 .hd-setup__body {
