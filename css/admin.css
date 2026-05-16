@@ -1968,7 +1968,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   transition: background var(--t-fast), border-color var(--t-fast);
 }
 .hd-statpill:hover { background: #f8fafb; }
-.hd-statpill--green { color: #1a7f37; border-color: #b7dcb9; }
+.hd-statpill--green { color: #1a7f37; border-color: var(--border); }
 .hd-statpill--amber { color: #92400e; border-color: #f3d28b; }
 .hd-statpill--gray  { color: #50617a; border-color: var(--border); }
 
