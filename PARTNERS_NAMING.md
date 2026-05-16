@@ -12,27 +12,40 @@ Three layers of identifier, each serving a distinct purpose:
 | Identifier | Format | Example | Visibility |
 |---|---|---|---|
 | Hotel slug | Lowercase full property name, hyphenated, 2–60 chars | `fairmont-chateau-lake-louise`, `the-rimrock-resort-hotel` | Internal only |
-| Hotel tracking prefix | Random 4-char uppercase alphanumeric, immutable | `X7K2`, `B9M4` | Internal only |
-| Hotel default tracking code | `{prefix}_H` | `X7K2_H` | Sent in `?ref=` for walk-ins |
-| Employee tracking code | `{prefix}_E_{4-digit zero-padded seq}` | `X7K2_E_0042` | Sent in `?ref=` for kickback bookings |
+| Hotel tracking prefix / support ID | `htl-` + 5 chars from the unambiguous lowercase set (no i, l, o, 0, 1), immutable | `htl-7x4k9`, `htl-b9m4q` | Human/support-facing internal ID |
+| Hotel default tracking code | `{prefix}-h` | `htl-7x4k9-h` | Sent in `?ref=` for walk-ins |
+| Employee tracking code | `{prefix}-e{4-digit zero-padded seq}` | `htl-7x4k9-e0042` | Sent in `?ref=` for kickback bookings |
+
+**One format, everywhere.** The tracking code is lowercase and
+hyphenated by construction, so it doubles as the short-URL path with
+no translation step: `htl-7x4k9-h` is stored in the database, sent in
+`?ref=`, read aloud on a support call, and lives at
+`link.gowithhorizon.com/htl-7x4k9-h` — the same string in every
+context. There is no underscore form and no `{prefix}_H`↔`prefix-h`
+mapping to reconcile. The `htl-` tag makes the ID self-describing in
+logs and tickets (cf. Stripe's `cus_`/`acct_`).
 
 The tracking prefix is **server-generated at hotel creation** with a
 UNIQUE constraint, so collisions never happen in practice. Employee
 sequence numbers are server-incremented per-hotel. There is no
-client-side derivation any more — the worker mints these values and
-the admin UI displays them as read-only after creation.
+client-side derivation — the worker mints these values and the admin
+UI displays them as read-only after creation. Codes are
+case-insensitive on the way in (lowercase-normalised) but always
+stored and displayed lowercase.
 
 Employees have no separate slug: `hotel_staff.id` (uuid) is the
 internal stable reference and `tracking_code` is the canonical
 human-readable identifier shown in the admin UI and encoded in
 short URLs. See `ADDING_A_PARTNER.md` for the full lifecycle.
 
-## Short paths are derived from tracking codes, never from slugs
+## The short path IS the tracking code, never the slug
 
-The short-URL path component (e.g. `x7k2-h` in
-`link.gowithhorizon.com/x7k2-h`) is **always** derived from the
-tracking code via `trackingCodeToShortPath()`. Hotel masters get
-`{prefix}-h`, staff get `{prefix}-eNNNN`. Both follow the same
+The short-URL path component (e.g. `htl-7x4k9-h` in
+`link.gowithhorizon.com/htl-7x4k9-h`) **is the tracking code
+verbatim**. `trackingCodeToShortPath()` is now an identity
+pass-through (lowercase guard only) — there is no translation
+because the code is URL-safe by construction. Hotel masters are
+`htl-7x4k9-h`, staff are `htl-7x4k9-eNNNN`. Both follow the same
 format so every short URL on the platform looks consistent
 regardless of property name, brand, or hotel slug.
 
@@ -42,7 +55,7 @@ appears in a short URL or QR code. This decoupling means:
 
 - Slugs can be ugly without leaking onto printed material
   (`hotel-test-2` lives at long-URL only; its short URL is
-  `link.gowithhorizon.com/x7k2-h`).
+  `link.gowithhorizon.com/htl-7x4k9-h`).
 - QR payloads stay short and uniformly-sized regardless of how
   long a hotel's name is, so scan reliability doesn't degrade for
   long-named properties.
@@ -86,13 +99,13 @@ worker round-trip; admins never edit it directly.
       "type": "kickback",
       "status": "active",
       "effective_date": "2026-05-01",
-      "default_tracking_code": "FAIRMONT_LL",
+      "default_tracking_code": "htl-7x4k9-h",
       "commission_pct": 10,
       "kickback_pool_pct": null,
       "employees": [
         {
           "name": "Jane Smith",
-          "tracking_code": "X7K2_E_0042",
+          "tracking_code": "htl-7x4k9-e0042",
           "kickback_pct": 5,
           "status": "active"
         }

@@ -3,8 +3,8 @@
 // for sanity checking.
 //
 // Phase 1 of the Short.io refactor decoupled the tracking code from
-// the slug: codes are now opaque values like X7K2_H (hotel) and
-// X7K2_E_0042 (staff), generated server-side by the worker. There is
+// the slug: codes are now opaque values like htl-7x4k9-h (hotel) and
+// htl-7x4k9-e0042 (staff), generated server-side by the worker. There is
 // no derivation rule any more — partners.json holds the authoritative
 // tracking_code string and this script reads it verbatim.
 //

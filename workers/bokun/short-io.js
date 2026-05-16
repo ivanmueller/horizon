@@ -166,18 +166,15 @@ export async function getLinkStats(env, shortIoId, period = "total") {
   return parseResponse(res, `GET ${SHORT_IO_STATS}/${shortIoId}`);
 }
 
-// Lower-case + hyphen-normalise a tracking code into a short URL
-// path. e.g. "X7K2_E_0042" → "x7k2-e0042". Drops the separator
-// underscore between {prefix}_{type}_{seq} because the result reads
-// better as a short URL: "x7k2-e0042" vs "x7k2-e-0042".
+// The tracking code IS the short-URL path: lowercase, hyphenated and
+// URL-safe by construction (htl-7x4k9-h, htl-7x4k9-e0042 — see
+// PARTNERS_NAMING.md). There is no underscore↔hyphen translation
+// any more; this returns the code verbatim (lowercased defensively)
+// and exists only so call sites read intently and we keep a single
+// normalisation choke point.
 export function trackingCodeToShortPath(trackingCode) {
-  if (typeof trackingCode !== "string") return null;
-  const parts = trackingCode.toLowerCase().split("_");
-  if (parts.length < 2) return null;
-  // Hotel format:  prefix_h         → prefix-h
-  // Staff format:  prefix_e_NNNN    → prefix-eNNNN
-  if (parts.length === 2) return `${parts[0]}-${parts[1]}`;
-  return `${parts[0]}-${parts[1]}${parts[2]}`;
+  if (typeof trackingCode !== "string" || !trackingCode) return null;
+  return trackingCode.toLowerCase();
 }
 
 export { ShortIoError };

@@ -21,7 +21,7 @@ whether you add staff under the hotel.
 ## How attribution actually works
 
 A guest clicks a link the hotel gave them — say
-`gowithhorizon.com/?ref=X7K2_E_0042`. The page captures that
+`gowithhorizon.com/?ref=htl-7x4k9-e0042`. The page captures that
 `ref` through the booking flow and forwards it to the worker as
 `tracking_code` when the booking confirms. The worker matches
 that slug against `hotel_staff.tracking_code`, populates `staff_id`
@@ -30,14 +30,14 @@ who gets credited.
 
 For walk-ins (`?hotel=fairmont-chateau-lake-louise`, no employee
 in the URL), the hotel-level default code
-(`hotels.default_tracking_code`, e.g. `X7K2_H`) gets sent. It
+(`hotels.default_tracking_code`, e.g. `htl-7x4k9-h`) gets sent. It
 doesn't match any `hotel_staff` row, so `staff_id` stays null —
 the booking is attributed to the hotel pool.
 
 You never type a tracking code by hand. The worker mints the
-hotel's 4-character `tracking_prefix` (e.g. `X7K2`) at creation
+hotel's `tracking_prefix` (e.g. `htl-7x4k9`) at creation
 and increments a per-hotel sequence number for each staff member,
-so codes come out as `X7K2_E_0001`, `X7K2_E_0002`, etc. See
+so codes come out as `htl-7x4k9-e0001`, `htl-7x4k9-e0002`, etc. See
 [`PARTNERS_NAMING.md`](./PARTNERS_NAMING.md) for the full format.
 Opaque codes mean QR codes never leak employee names and survive
 staff turnover via Short.io retargeting later.
@@ -63,7 +63,7 @@ staff turnover via Short.io retargeting later.
 
    The tracking prefix and default tracking code are assigned by the
    worker on save — you'll see them in the hotel's drawer after
-   creation (e.g. prefix `X7K2`, default code `X7K2_H`).
+   creation (e.g. prefix `htl-7x4k9`, default code `htl-7x4k9-h`).
 
 4. Hit **Create hotel**. The drawer closes and the row appears in
    the list. A green notice says *"Hotel created. Republishing
@@ -89,8 +89,8 @@ Same as pool, but pick **`kickback`** for Type. Then add staff:
    | Name           | `Jane Smith`                                           |
    | Kickback %     | `5`                                                    |
 
-   The tracking code is minted by the worker (`{hotel-prefix}_E_{seq}`,
-   e.g. `X7K2_E_0001` for the first staff member at this hotel) and
+   The tracking code is minted by the worker (`{hotel-prefix}-e{seq}`,
+   e.g. `htl-7x4k9-e0001` for the first staff member at this hotel) and
    shown in the staff row after save. It's permanent — the QR code
    encoded with this employee's short URL will resolve via it forever.
 
@@ -98,7 +98,7 @@ Same as pool, but pick **`kickback`** for Type. Then add staff:
 
 Each `Add staff` triggers another republish so their tracking code
 becomes live within ~60s. End-to-end: a booking tagged
-`X7K2_E_0001` (via the URL flow) lands in the `bookings` table
+`htl-7x4k9-e0001` (via the URL flow) lands in the `bookings` table
 with `staff_id` resolved to Jane's row, and the in-dashboard
 invoice for the hotel breaks out her kickback under the kickback
 breakdown table.
@@ -169,7 +169,7 @@ the API call succeeds.
 
 - **Editing a tracking code.** You can't, and you shouldn't need
   to. Tracking codes are minted by the worker at create time
-  (`X7K2_H` for hotels, `X7K2_E_0042` for staff) and locked
+  (`htl-7x4k9-h` for hotels, `htl-7x4k9-e0042` for staff) and locked
   thereafter. The admin UI shows them as read-only. If you ever
   needed to "rename" one, the right move is to retire the staff
   row (Revoke) and create a new one — never to mutate an existing
