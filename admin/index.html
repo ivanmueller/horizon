@@ -1383,13 +1383,7 @@
                     <button type="button" class="hd-section__link" disabled>View all</button>
                   </header>
                   <div class="hd-section__body" id="hdPayoutsBody">
-                    <div class="hd-cta">
-                      <div class="hd-cta__body">
-                        <div class="hd-cta__title">Stripe Connect not configured</div>
-                        <p class="hd-cta__sub">Payouts can't be processed until this hotel connects a Stripe account. No invoices will be generated.</p>
-                      </div>
-                      <button type="button" class="btn btn--primary" id="hdConnectStripe">Connect Stripe</button>
-                    </div>
+                    <div class="hd-empty">Stripe Connect not configured</div>
                   </div>
                 </section>
 
@@ -3742,14 +3736,7 @@
       const payoutsBody = els.container.querySelector('#hdPayoutsBody');
       const stripeConnected = !!h.stripe_account_id && (h.stripe_status === 'connected' || h.stripe_status === 'active');
       if (payoutsBody && !stripeConnected) {
-        payoutsBody.innerHTML =
-          '<div class="hd-cta">' +
-            '<div class="hd-cta__body">' +
-              '<div class="hd-cta__title">Stripe Connect not configured</div>' +
-              '<p class="hd-cta__sub">Payouts can\'t be processed until this hotel connects a Stripe account. No invoices will be generated.</p>' +
-            '</div>' +
-            '<button type="button" class="btn btn--primary" id="hdConnectStripe">Connect Stripe</button>' +
-          '</div>';
+        payoutsBody.innerHTML = '<div class="hd-empty">Stripe Connect not configured</div>';
       } else if (payoutsBody && stripeConnected) {
         payoutsBody.innerHTML = '<div class="hd-empty">No invoices yet</div>';
       }
@@ -3768,11 +3755,12 @@
       const bankBody   = els.container.querySelector('#hdBankingBody');
       const bankTag    = els.container.querySelector('#hdBankingTag');
       if (bankCard && bankToggle && bankBody && bankTag) {
-        const bankCheck = '<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 4.5"/></svg>';
         const bankCopyIcon = '<svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
         if (stripeConnected) {
-          bankTag.className = 'hd-bank__tag bk-pill bk-pill--ok';
-          bankTag.innerHTML = 'Verified ' + bankCheck;
+          // Same pill component as the hotel-title status (hd-statpill),
+          // not bk-pill — visually identical to the header badge.
+          bankTag.className = 'hd-bank__tag hd-statpill hd-statpill--green';
+          bankTag.textContent = 'Verified';
           const acct = h.stripe_account_id || '—';
           const bankRow = (label, valueHtml) =>
             '<div class="hd-side__row"><dt class="hd-side__label">' + label + '</dt>' +
@@ -3791,16 +3779,9 @@
                 : '—') +
             '</dl>';
         } else {
-          bankTag.className = 'hd-bank__tag bk-pill bk-pill--warn';
+          bankTag.className = 'hd-bank__tag hd-statpill hd-statpill--amber';
           bankTag.textContent = 'Pending';
-          bankBody.innerHTML =
-            '<div class="hd-cta">' +
-              '<div class="hd-cta__body">' +
-                '<div class="hd-cta__title">Stripe Connect not configured</div>' +
-                '<p class="hd-cta__sub">Connect a Stripe account to verify banking details and enable payouts. No invoices are generated until this is complete.</p>' +
-              '</div>' +
-              '<button type="button" class="btn btn--primary" id="hdBankingConnect">Connect Stripe</button>' +
-            '</div>';
+          bankBody.innerHTML = '<div class="hd-empty">Stripe Connect not configured</div>';
         }
         const setBankOpen = (open) => {
           bankBody.hidden = !open;
