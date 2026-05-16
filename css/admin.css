@@ -2111,11 +2111,42 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   background: #635bff;
   color: #fff;
 }
-.hd-setup__label { color: var(--text); }
+.hd-setup__label { color: var(--text); flex: 1; min-width: 0; }
 .hd-setup__item.is-done .hd-setup__label {
   color: var(--text-muted);
   text-decoration: line-through;
   text-decoration-thickness: 1px;
+}
+/* Clickable (actionable, incomplete) — pointer + a trailing
+   chevron that nudges on hover. Says "you can fix this now". */
+.hd-setup__item.is-clickable { cursor: pointer; }
+.hd-setup__go {
+  flex-shrink: 0;
+  color: var(--text-faint);
+  opacity: 0;
+  transform: translateX(-2px);
+  transition: opacity var(--t-fast), transform var(--t-fast);
+}
+.hd-setup__item.is-clickable:hover .hd-setup__go,
+.hd-setup__item.is-clickable:focus-visible .hd-setup__go {
+  opacity: 1;
+  transform: translateX(0);
+}
+.hd-setup__item.is-clickable:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+/* Waiting (external event) — visually distinct, NOT actionable:
+   no hover highlight, no pointer, muted, italicised label. */
+.hd-setup__item.is-waiting { cursor: default; }
+.hd-setup__item.is-waiting:hover { background: transparent; }
+.hd-setup__item.is-waiting .hd-setup__mark {
+  border-style: dashed;
+  border-color: #cbd5e1;
+}
+.hd-setup__item.is-waiting .hd-setup__label {
+  color: var(--text-faint);
+  font-style: italic;
 }
 
 
@@ -2431,19 +2462,16 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .hd-refurl__copybtn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
+  justify-content: center;
+  padding: 5px;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: #fff;
-  color: var(--text);
-  font: inherit;
-  font-size: var(--t-xs);
-  font-weight: 500;
+  color: var(--text-muted);
   cursor: pointer;
-  transition: background var(--t-fast), border-color var(--t-fast);
+  transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
 }
-.hd-refurl__copybtn:hover { background: #f8fafb; border-color: var(--border-strong, #cbd5e1); }
+.hd-refurl__copybtn:hover { background: #f8fafb; border-color: var(--border-strong, #cbd5e1); color: var(--text); }
 .hd-refurl__chev {
   flex-shrink: 0;
   transition: transform var(--t-fast);
