@@ -1972,6 +1972,37 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .hd-statpill--red   .hd-statpill__dot { background: #dc2626; }
 .hd-statpill--red                     { color: #b91c1c; }
 .hd-statpill--gray  .hd-statpill__dot { background: #94a3b8; }
+
+/* Hero metric strip — labels + numbers, no charts. Sits directly
+   below the identity row, above the body grid. */
+.hd-herostat {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s8);
+  padding: var(--s5) 0;
+  margin-bottom: var(--s4);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.hd-herostat__col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.hd-herostat__label {
+  font-size: var(--t-xs);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.hd-herostat__value {
+  font-size: var(--t-xl);
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
 .hd-head__sub {
   display: flex;
   align-items: center;
@@ -2584,21 +2615,6 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 
 /* ── Hotel detail page — round-3 additions ──────────── */
 
-/* Insights — same stacked layout as the regular row; the value
-   gets the larger weight since it's the headline number. */
-.hd-side__row--metric {
-  grid-template-columns: 1fr;
-  grid-template-rows: auto auto;
-  row-gap: 2px;
-}
-.hd-side__row--metric .hd-side__label {
-  grid-row: 1;
-  font-weight: 600;
-}
-.hd-side__row--metric .hd-side__value {
-  grid-row: 2;
-  font-size: var(--t-base);
-}
 .hd-delta {
   grid-column: 2;
   grid-row: 2;

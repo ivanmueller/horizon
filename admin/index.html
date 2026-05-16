@@ -1295,6 +1295,28 @@
               </div>
             </header>
 
+            <!-- Hero metric strip — current-state numbers only, no
+                 charts. Trend analysis lives on the Bookings /
+                 Payouts pages, not the identity hero. -->
+            <div class="hd-herostat" id="hotelDetailHeroStat">
+              <div class="hd-herostat__col">
+                <div class="hd-herostat__label">Total commission</div>
+                <div class="hd-herostat__value" data-herostat="commission">—</div>
+              </div>
+              <div class="hd-herostat__col">
+                <div class="hd-herostat__label">Bookings</div>
+                <div class="hd-herostat__value" data-herostat="bookings">0</div>
+              </div>
+              <div class="hd-herostat__col">
+                <div class="hd-herostat__label">Conversion rate</div>
+                <div class="hd-herostat__value" data-herostat="conversion">—</div>
+              </div>
+              <div class="hd-herostat__col">
+                <div class="hd-herostat__label">Pending payout</div>
+                <div class="hd-herostat__value" data-herostat="payout">—</div>
+              </div>
+            </div>
+
             <div class="hd-body">
               <main class="hd-main">
 
@@ -1386,28 +1408,6 @@
               </main>
 
               <aside class="hd-side">
-
-                <section class="hd-card">
-                  <header class="hd-card__head"><h3 class="hd-card__title">Insights</h3></header>
-                  <dl class="hd-side__list" id="hdInsights">
-                    <div class="hd-side__row hd-side__row--metric">
-                      <dt class="hd-side__label">Total commission</dt>
-                      <dd class="hd-side__value hd-num" data-insight="lifetime-commission">—</dd>
-                    </div>
-                    <div class="hd-side__row hd-side__row--metric">
-                      <dt class="hd-side__label"># of bookings</dt>
-                      <dd class="hd-side__value hd-num" data-insight="bookings-lifetime">0</dd>
-                    </div>
-                    <div class="hd-side__row hd-side__row--metric">
-                      <dt class="hd-side__label">Active employees</dt>
-                      <dd class="hd-side__value hd-num" data-insight="active-employees">0 of 0</dd>
-                    </div>
-                    <div class="hd-side__row hd-side__row--metric">
-                      <dt class="hd-side__label">Conversion rate</dt>
-                      <dd class="hd-side__value hd-num" data-insight="conversion-rate">—</dd>
-                    </div>
-                  </dl>
-                </section>
 
                 <section class="hd-card">
                   <header class="hd-card__head">
@@ -3232,7 +3232,7 @@
         empBody:      container.querySelector('#hdEmployeesBody'),
         linksBody:    container.querySelector('#hdLinksBody'),
         details:      container.querySelector('#hdDetails'),
-        insights:     container.querySelector('#hdInsights'),
+        heroStat:     container.querySelector('#hotelDetailHeroStat'),
         notes:        container.querySelector('#hdNotes'),
         notesMeta:    container.querySelector('#hdNotesMeta'),
         addBtnHead:   container.querySelector('#hdAddEmployee'),
@@ -3676,13 +3676,20 @@
         payoutsBody.innerHTML = '<div class="hd-empty">No invoices yet</div>';
       }
 
-      // Sidebar — Insights (currency-driven money formatting)
-      const activeEmps = staff.filter((s) => s.status === 'active').length;
-      const totalEmps  = staff.length;
-      const aeNode = els.insights.querySelector('[data-insight="active-employees"]');
-      if (aeNode) aeNode.textContent = activeEmps + ' of ' + totalEmps;
-      const lcNode = els.insights.querySelector('[data-insight="lifetime-commission"]');
-      if (lcNode) lcNode.textContent = formatHotelMoney(h.lifetime_commission || 0, currency);
+      // Hero metric strip — current-state numbers, no trend charts.
+      // Payout reads "Setup required" until Stripe Connect is wired
+      // (stripe_account_id isn't a real column yet — see
+      // deriveHotelStatus notes).
+      const setHeroStat = (k, v) => {
+        const n = els.heroStat && els.heroStat.querySelector('[data-herostat="' + k + '"]');
+        if (n) n.textContent = v;
+      };
+      setHeroStat('commission', formatHotelMoney(h.lifetime_commission || 0, currency));
+      setHeroStat('bookings',   String(h.bookings_count || 0));
+      setHeroStat('conversion', h.conversion_rate != null ? h.conversion_rate + '%' : '—');
+      setHeroStat('payout',     stripeConnected
+        ? formatHotelMoney(h.pending_payout || 0, currency)
+        : 'Setup required');
 
       // Sidebar — Details. setDetail handles three node shapes:
       //  • plain element with [data-detail]
@@ -4172,14 +4179,14 @@
           '</div></div>';
       }
 
-      // ── Insights values (deltas removed)
-      const setInsight = (k, v) => {
-        const n = els.insights.querySelector('[data-insight="' + k + '"]');
+      // ── Hero metric strip (demo values for the reference hotel)
+      const setHero = (k, v) => {
+        const n = els.heroStat && els.heroStat.querySelector('[data-herostat="' + k + '"]');
         if (n) n.textContent = v;
       };
-      setInsight('lifetime-commission', fm(203.20));
-      setInsight('bookings-lifetime',   '5');
-      setInsight('conversion-rate',     '6.2%');
+      setHero('commission', fm(203.20));
+      setHero('bookings',   '5');
+      setHero('conversion', '6.2%');
 
       // ── Referral Links — patch the click/conversion/last-clicked
       // cells in place. The rows themselves come from the staff
