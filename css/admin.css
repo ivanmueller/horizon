@@ -2174,12 +2174,32 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   font-weight: 400;
   color: var(--text-muted);
   text-decoration: none;
-  cursor: default;
+  cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 42ch;
+  padding: 2px 6px;
+  margin: -2px -6px;
+  border-radius: 5px;
+  transition: background var(--t-fast), color var(--t-fast);
 }
+/* Same highlight the "Master referral URL" menu row gets on hover. */
+.hd-refurl__link:hover {
+  background: #f1f5f9;
+  color: var(--text);
+}
+/* Button label/icon swap: one slot, three glyphs.
+   default → "Copy" · URL hovered → copy icon · copied → check */
+.hd-refurl__cl { display: none; }
+.hd-refurl__cl--text { display: inline; }
+.hd-refurl__cl--copy,
+.hd-refurl__cl--check { flex-shrink: 0; }
+.hd-refurl__copybtn.is-urlhover .hd-refurl__cl--text { display: none; }
+.hd-refurl__copybtn.is-urlhover .hd-refurl__cl--copy { display: inline; }
+.hd-refurl__copybtn.is-copied   .hd-refurl__cl--text,
+.hd-refurl__copybtn.is-copied   .hd-refurl__cl--copy { display: none; }
+.hd-refurl__copybtn.is-copied   .hd-refurl__cl--check { display: inline; color: #217005; }
 .hd-refurl__copywrap { position: relative; }
 .hd-refurl__copybtn {
   display: inline-flex;
