@@ -1326,16 +1326,6 @@
               </div>
             </div>
 
-            <!-- Setup-health strip — conditional. Renders only while
-                 the property is "pending" (any setup item open). It
-                 vanishes once everything is complete (green pill
-                 takes over) or when archived. Permanent real estate
-                 isn't earned by a finished task. -->
-            <div class="hd-setup" id="hotelDetailSetup" hidden>
-              <span class="hd-setup__title">Finish setup</span>
-              <div class="hd-setup__items" id="hdSetupItems"></div>
-            </div>
-
             <div class="hd-body">
               <main class="hd-main">
 
@@ -1427,6 +1417,21 @@
               </main>
 
               <aside class="hd-side">
+
+                <!-- Setup guide — conditional checklist card. Renders
+                     only while pending; closes when verified (pill
+                     flips to Active) or archived. Soft elevated card
+                     for a recessed/3D feel. -->
+                <section class="hd-setup" id="hotelDetailSetup" hidden>
+                  <header class="hd-setup__head">
+                    <span class="hd-setup__title">Finish setup</span>
+                    <span class="hd-setup__count" id="hdSetupCount">0 / 5</span>
+                  </header>
+                  <div class="hd-setup__bar" role="progressbar" aria-label="Setup progress">
+                    <span class="hd-setup__fill" id="hdSetupFill" style="width:0%"></span>
+                  </div>
+                  <ul class="hd-setup__list" id="hdSetupItems"></ul>
+                </section>
 
                 <section class="hd-card">
                   <header class="hd-card__head">
@@ -3858,22 +3863,27 @@
           if (ev.key === 'Escape' && !pop.hidden) closePop();
         });
 
-        // Setup-health strip — same deriveHotelStatus source as the
+        // Setup guide card — same deriveHotelStatus source as the
         // pill/popover so they can never disagree. Visible only
-        // while pending; gone once verified or archived.
+        // while pending; closes once verified or archived.
         if (els.setup) {
           if (st.key === 'pending') {
-            const itemsEl = els.setup.querySelector('#hdSetupItems');
-            itemsEl.innerHTML = st.checklist.map((c) => {
-              const state = c.done ? 'done' : (c.kind === 'event' ? 'event' : 'action');
-              const icon = c.done
-                ? '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 4.5"/></svg>'
-                : c.kind === 'event'
-                  ? '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/></svg>'
-                  : '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 5l6 6M11 5l-6 6"/></svg>';
-              return '<span class="hd-setup__item is-' + state + '">' +
-                icon + '<span>' + escapeHtml(c.label) + '</span></span>';
-            }).join('');
+            const total = st.checklist.length;
+            const done  = st.checklist.filter((c) => c.done).length;
+            els.setup.querySelector('#hdSetupCount').textContent = done + ' / ' + total;
+            els.setup.querySelector('#hdSetupFill').style.width =
+              (total ? Math.round((done / total) * 100) : 0) + '%';
+            els.setup.querySelector('#hdSetupItems').innerHTML =
+              st.checklist.map((c) => {
+                const cls = c.done ? 'is-done' : 'is-todo';
+                const mark = c.done
+                  ? '<span class="hd-setup__mark hd-setup__mark--done">' +
+                      '<svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-6.5"/></svg>' +
+                    '</span>'
+                  : '<span class="hd-setup__mark"></span>';
+                return '<li class="hd-setup__item ' + cls + '">' +
+                  mark + '<span class="hd-setup__label">' + escapeHtml(c.label) + '</span></li>';
+              }).join('');
             els.setup.hidden = false;
           } else {
             els.setup.hidden = true;
