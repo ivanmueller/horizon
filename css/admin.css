@@ -2448,6 +2448,16 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   text-overflow: ellipsis;
   transition: opacity 180ms ease, transform 180ms ease;
 }
+/* The referral URL under the hotel title (and its copy-menu echo)
+   renders in the body font, not .mono, so a digit-x-digit run in the
+   tracking code (e.g. "htl-8x7yu") was being rewritten to "8×7" by
+   the font's contextual alternates. Render these literal codes
+   verbatim — this is the only place x mis-rendered. */
+.hd-refurl__urltext,
+.hd-refurl__isub {
+  font-variant-ligatures: none;
+  font-feature-settings: 'calt' 0, 'liga' 0;
+}
 .hd-refurl__urldone {
   display: inline-flex;
   align-items: center;

@@ -846,27 +846,23 @@ const SLUG_RE = /^[a-z0-9-]{2,60}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // The hotel's human/support-facing ID and tracking prefix, one value:
-// "htl-" + 5 chars from an unambiguous lowercase set (no i, l, o, x,
-// 0, 1) so it's safe to read aloud, print, and drop straight into a
-// URL. i/l/o/0/1 are excluded for transcription ambiguity; x is
-// excluded because a digit-x-digit run (e.g. "8x7") is rewritten to a
-// multiplication sign ("8×7") by typographic renderers, breaking the
-// code on signage and in third-party dashboards. 30^5 ≈ 24M
-// combinations — collision probability is negligible even at 100k+
-// hotels, and the UNIQUE constraint on hotels.tracking_prefix
+// "htl-" + 5 chars from an unambiguous lowercase set (no i, l, o, 0, 1)
+// so it's safe to read aloud, print, and drop straight into a URL.
+// 31^5 ≈ 28M combinations — collision probability is negligible even
+// at 100k+ hotels, and the UNIQUE constraint on hotels.tracking_prefix
 // backstops any that slip through. The "htl-" tag makes the ID
 // self-describing in logs and support tickets (cf. Stripe's cus_).
 const PREFIX_TAG = "htl-";
-const PREFIX_ALPHABET = "abcdefghjkmnpqrstuvwyz23456789";
+const PREFIX_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789";
 const PREFIX_LENGTH = 5;
-const TRACKING_PREFIX_RE = /^htl-[a-hjkmnp-wyz2-9]{5}$/;
+const TRACKING_PREFIX_RE = /^htl-[a-hjkmnp-z2-9]{5}$/;
 // Full tracking code: the bare prefix ("<prefix>") IS the hotel
 // default code; staff append "-eNNN" (3-digit zero-padded, room for
 // 999 per property — bump to 4 if a property ever needs it).
 // Lowercase + hyphen by construction, so the code IS the short-URL
 // path verbatim — there is no underscore↔hyphen translation layer
 // (see trackingCodeToShortPath). One format everywhere.
-const TRACKING_CODE_RE = /^htl-[a-hjkmnp-wyz2-9]{5}(-e\d{3})?$/;
+const TRACKING_CODE_RE = /^htl-[a-hjkmnp-z2-9]{5}(-e\d{3})?$/;
 
 function generateTrackingPrefix() {
   let s = PREFIX_TAG;

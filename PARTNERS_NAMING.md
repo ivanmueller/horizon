@@ -12,7 +12,7 @@ Three layers of identifier, each serving a distinct purpose:
 | Identifier | Format | Example | Visibility |
 |---|---|---|---|
 | Hotel slug | Lowercase full property name, hyphenated, 2–60 chars | `fairmont-chateau-lake-louise`, `the-rimrock-resort-hotel` | Internal only |
-| Hotel tracking prefix / support ID | `htl-` + 5 chars from the unambiguous lowercase set (no i, l, o, x, 0, 1), immutable | `htl-7q4k9`, `htl-b9m4q` | Human/support-facing internal ID |
+| Hotel tracking prefix / support ID | `htl-` + 5 chars from the unambiguous lowercase set (no i, l, o, 0, 1), immutable | `htl-7q4k9`, `htl-b9m4q` | Human/support-facing internal ID |
 | Hotel default tracking code | `{prefix}` (the bare prefix itself) | `htl-7q4k9` | Sent in `?ref=` for walk-ins |
 | Employee tracking code | `{prefix}-e{3-digit zero-padded seq}` | `htl-7q4k9-e042` | Sent in `?ref=` for kickback bookings |
 
