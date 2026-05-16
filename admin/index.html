@@ -1520,6 +1520,25 @@
                   <button type="button" class="hd-side__toggle" id="hdDetailsToggle" aria-expanded="false" aria-controls="hdDetailsMore">Show more</button>
                 </section>
 
+                <!-- ── Banking information ────────────────────────────
+                     Stripe Connect status, payout config + linked
+                     bank account. Accordion whose whole header is the
+                     toggle. No banking connected → open by default
+                     with a "Pending" tag (action needed); connected →
+                     collapsed with a "Verified" tag. Body is rendered
+                     in renderHotelDetail (mock until columns land). -->
+                <section class="hd-card hd-bank" id="hdBankingCard">
+                  <button type="button" class="hd-bank__head" id="hdBankingToggle" aria-expanded="true" aria-controls="hdBankingBody">
+                    <span class="hd-bank__brand" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M13.5 9.4c0-.66.55-.92 1.43-.92 1.27 0 2.88.39 4.15 1.08V5.7A11 11 0 0 0 14.93 5C11.6 5 9.4 6.74 9.4 9.65c0 4.53 6.23 3.8 6.23 5.76 0 .78-.68 1.04-1.6 1.04-1.39 0-3.17-.57-4.58-1.34v3.9A11.6 11.6 0 0 0 14.03 19c3.42 0 5.74-1.7 5.74-4.64 0-4.9-6.27-4.03-6.27-5.96Z"/></svg>
+                    </span>
+                    <span class="hd-card__title hd-bank__title">Banking information</span>
+                    <span class="hd-bank__tag" id="hdBankingTag"></span>
+                    <svg class="hd-bank__chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
+                  </button>
+                  <div class="hd-bank__body" id="hdBankingBody"></div>
+                </section>
+
                 <!-- ── Commission structure ───────────────────────────
                      Visualises how a booking's revenue gets split
                      between the tour operator (Horizon Tours), the
@@ -3733,6 +3752,63 @@
           '</div>';
       } else if (payoutsBody && stripeConnected) {
         payoutsBody.innerHTML = '<div class="hd-empty">No invoices yet</div>';
+      }
+
+      // ── Banking information accordion ────────────────────
+      // Reuses the stripeConnected signal above. Not connected
+      // → "Pending" tag + Connect CTA, open by default (an
+      // admin needs to act). Connected → "Verified" tag + a
+      // Stripe-style label/value list, collapsed by default
+      // (nothing to do). State is local to this render. The
+      // backing columns don't exist yet, so this reads "not
+      // connected" for every hotel until they land — the same
+      // honest end-state as the Payouts card.
+      const bankCard   = els.container.querySelector('#hdBankingCard');
+      const bankToggle = els.container.querySelector('#hdBankingToggle');
+      const bankBody   = els.container.querySelector('#hdBankingBody');
+      const bankTag    = els.container.querySelector('#hdBankingTag');
+      if (bankCard && bankToggle && bankBody && bankTag) {
+        const bankCheck = '<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 4.5"/></svg>';
+        const bankCopyIcon = '<svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+        if (stripeConnected) {
+          bankTag.className = 'hd-bank__tag bk-pill bk-pill--ok';
+          bankTag.innerHTML = 'Verified ' + bankCheck;
+          const acct = h.stripe_account_id || '—';
+          const bankRow = (label, valueHtml) =>
+            '<div class="hd-side__row"><dt class="hd-side__label">' + label + '</dt>' +
+            '<dd class="hd-side__value">' + valueHtml + '</dd></div>';
+          bankBody.innerHTML =
+            '<dl class="hd-side__list">' +
+              bankRow('Connection', '<span class="hd-bank__live"><span class="hd-bank__dot"></span>Connected</span>') +
+              bankRow('Account ID',
+                '<button type="button" class="hd-copy hd-copy--id mono" data-copy="' + escapeHtml(acct) + '" title="Copy account ID">' +
+                  '<span data-detail-text>' + escapeHtml(acct) + '</span>' + bankCopyIcon + '</button>') +
+              bankRow('Payout schedule', escapeHtml(h.payout_schedule || '—')) +
+              bankRow('Next payout', escapeHtml(h.next_payout_date ? (formatHumanDate(h.next_payout_date) || '—') : '—')) +
+              bankRow('Pending', escapeHtml(h.pending_payout != null ? formatHotelMoney(h.pending_payout, currency) : '—')) +
+              bankRow('Bank account', h.bank_account_last4
+                ? '<span class="mono">•••• ' + escapeHtml(String(h.bank_account_last4)) + '</span>'
+                : '—') +
+            '</dl>';
+        } else {
+          bankTag.className = 'hd-bank__tag bk-pill bk-pill--warn';
+          bankTag.textContent = 'Pending';
+          bankBody.innerHTML =
+            '<div class="hd-cta">' +
+              '<div class="hd-cta__body">' +
+                '<div class="hd-cta__title">Stripe Connect not configured</div>' +
+                '<p class="hd-cta__sub">Connect a Stripe account to verify banking details and enable payouts. No invoices are generated until this is complete.</p>' +
+              '</div>' +
+              '<button type="button" class="btn btn--primary" id="hdBankingConnect">Connect Stripe</button>' +
+            '</div>';
+        }
+        const setBankOpen = (open) => {
+          bankBody.hidden = !open;
+          bankCard.classList.toggle('is-open', open);
+          bankToggle.setAttribute('aria-expanded', String(open));
+        };
+        setBankOpen(!stripeConnected);
+        bankToggle.onclick = () => setBankOpen(bankBody.hidden);
       }
 
       // Hero metric strip — current-state numbers, no trend charts.

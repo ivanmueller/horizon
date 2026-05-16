@@ -2343,6 +2343,60 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   border-color: var(--border-strong, #cbd5e1);
 }
 
+/* Banking information — Stripe-style accordion. The whole header is
+   the toggle: brand mark + title + status tag + chevron. Open by
+   default when no banking is connected (Pending), collapsed once
+   Verified. */
+.hd-bank__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text);
+}
+.hd-bank__brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: var(--r-sm);
+  background: #635bff;            /* Stripe brand purple */
+  color: #fff;
+}
+.hd-bank__title { flex: 1; min-width: 0; }
+.hd-bank__tag {
+  margin-left: 0;                 /* override .bk-pill default */
+  flex-shrink: 0;
+}
+.hd-bank__chev {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: transform var(--t-fast);
+}
+.hd-bank.is-open .hd-bank__chev { transform: rotate(180deg); }
+.hd-bank__body { margin-top: var(--s1); }
+.hd-bank__body[hidden] { display: none; }
+.hd-bank__live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+.hd-bank__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #1a7f37;            /* live green */
+  flex-shrink: 0;
+}
+
 /* Stripe-style rows: label bolded above the value, tight inner
    gap, generous outer spacing between fields. The whole sidebar
    reads like a definition list rather than a table. */
