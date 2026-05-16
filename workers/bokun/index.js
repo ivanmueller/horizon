@@ -404,11 +404,11 @@ async function handleBookingInitiate(request, env) {
   const expiresAt = now + TTL_BOOKING * 1000;
   const bookingId = crypto.randomUUID();
 
-  // Optional employee-attribution code (htl-7x4k9-e001 form). Same
+  // Optional employee-attribution code (htl-7q4k9-e001 form). Same
   // shape as the URL ?ref=<code> param that originates this; matched
   // against hotel_staff.tracking_code at insert time on the checkout
   // page side → /api/dashboard/record. Hotel-default codes
-  // (bare htl-7x4k9) ride through too and harmlessly fail to match any
+  // (bare htl-7q4k9) ride through too and harmlessly fail to match any
   // staff row, leaving the booking attributed to the hotel pool.
   // Lowercase-normalised defensively so a mistyped capital from a
   // hand-typed URL still attributes.
@@ -463,7 +463,7 @@ async function handleDashboardRecord(request, env) {
 
   // Parallel lookups — saves a round trip vs. sequential. Staff
   // resolution matches on the partner-controlled slug
-  // (hotel_staff.tracking_code, e.g. htl-7x4k9-e001) rather than the
+  // (hotel_staff.tracking_code, e.g. htl-7q4k9-e001) rather than the
   // hex tracking codes Bokun used to mint.
   const [hotelRows, staffRows] = await Promise.all([
     supabaseSelect(env, `hotels?code=eq.${encodeURIComponent(hotel)}&select=id`),
@@ -482,7 +482,7 @@ async function handleDashboardRecord(request, env) {
 
   // Only attribute to staff if their hotel matches — defends against a
   // tracking-code collision between hotels. Hotel-level codes (e.g.
-  // bare htl-7x4k9) won't match any hotel_staff row and so resolve to
+  // bare htl-7q4k9) won't match any hotel_staff row and so resolve to
   // staff_id=null, which is the correct "hotel pool" attribution.
   const staffMatch = staffRows[0];
   const staffId = staffMatch && staffMatch.hotel_id === hotelId ? staffMatch.id : null;
@@ -1008,7 +1008,7 @@ async function insertHotelWithPrefix(env, row, maxAttempts = 8) {
       // admin — silent loss would leave a hotel with no QR.
       // The short path is derived from the tracking code, not the
       // hotel slug, so every short URL on the platform follows the
-      // same htl-7x4k9 / htl-7x4k9-eNNN format. Slugs live in the
+      // same htl-7q4k9 / htl-7q4k9-eNNN format. Slugs live in the
       // long URL only — see PARTNERS_NAMING.md.
       const { error: shortLinkWarning } = await mintShortLinkAndRecord(env, {
         shortPath: trackingCodeToShortPath(hotel.default_tracking_code),
@@ -1459,8 +1459,8 @@ async function handleAdminShortLinkCreate(request, env) {
 
   // Derive defaults — overridable by request body.
   // Both hotel and staff short paths come from the tracking code so
-  // every short URL on the platform follows the same htl-7x4k9 /
-  // htl-7x4k9-eNNN format. Slugs live in the long URL only — see
+  // every short URL on the platform follows the same htl-7q4k9 /
+  // htl-7q4k9-eNNN format. Slugs live in the long URL only — see
   // PARTNERS_NAMING.md.
   let shortPath = typeof body.short_path === "string" ? body.short_path.trim() : "";
   if (!shortPath) {
