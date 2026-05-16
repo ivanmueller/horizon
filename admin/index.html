@@ -1242,7 +1242,7 @@
                          project-header pattern). -->
                     <div class="hd-head__sub" id="hotelDetailSubRow">
                       <div class="hd-refurl" id="hotelDetailRefUrl" hidden>
-                        <a class="hd-refurl__link mono" id="hdRefUrlLink" href="#" target="_blank" rel="noopener noreferrer">—</a>
+                        <span class="hd-refurl__link" id="hdRefUrlLink">—</span>
                         <div class="hd-refurl__copywrap">
                           <button type="button" class="hd-refurl__copybtn" id="hdRefUrlCopyBtn" aria-haspopup="true" aria-expanded="false">
                             <span>Copy</span>
@@ -1290,53 +1290,6 @@
 
             <div class="hd-body">
               <main class="hd-main">
-
-                <!-- ── Master referral card ────────────────────────────
-                     Lives at the top of the left main column. Compact
-                     form-style layout: URL field + copy button, then
-                     QR & embed download row, with the QR rendered on
-                     the right. Per-staff links are surfaced in the
-                     Referral Links table below. -->
-                <section class="hd-section hd-refcard" id="hdRefcard">
-                  <header class="hd-section__head">
-                    <h2 class="hd-section__title">Referral links</h2>
-                  </header>
-                  <div class="hd-refcard__card">
-                    <div class="hd-refcard__main">
-                      <div class="hd-refcard__field">
-                        <label class="hd-refcard__label" for="hdRefShortUrl">Master referral URL</label>
-                        <div class="hd-refcard__url-row">
-                          <code class="hd-refcard__url mono" id="hdRefShortUrl" data-ref-url>—</code>
-                          <button type="button" class="btn btn--sm hd-refcard__copy hd-copy" id="hdRefCopyBtn" data-copy="">
-                            <svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                            <span>Copy</span>
-                          </button>
-                        </div>
-                      </div>
-                      <div class="hd-refcard__field">
-                        <label class="hd-refcard__label">QR &amp; download</label>
-                        <div class="hd-refcard__actions">
-                          <button type="button" class="btn btn--sm" id="hdRefDlPng">
-                            <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
-                            <span>Download PNG</span>
-                          </button>
-                          <button type="button" class="btn btn--sm" id="hdRefDlSvg">
-                            <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
-                            <span>Download SVG</span>
-                          </button>
-                          <button type="button" class="btn btn--sm" id="hdRefDlZip">
-                            <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v8M4 7l4 4 4-4M2 13h12"/></svg>
-                            <span>Download all QRs (ZIP)</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="hd-refcard__qr-col">
-                      <div class="hd-refcard__qr" id="hdRefQR" role="img" aria-label="Master referral QR code"></div>
-                    </div>
-                  </div>
-                  <p class="hd-refcard__footer">Per-employee referral links and QR codes are listed in the Referral Links section below.</p>
-                </section>
 
                 <section class="hd-section" id="hdEmployeesSection">
                   <header class="hd-section__head">
@@ -1906,9 +1859,6 @@
       if (e.target === qrModal) closeQRModal();
     });
 
-    // Tracks the QR instance currently rendered in the Master Referral
-    // card sidebar so the Download button can reference the correct URL.
-    let _hotelDrawerQRUrl = null;
 
     /* ── Generic danger confirmation modal ──────────────────
        Singleton — caller passes title, body, confirm label, and
@@ -3831,57 +3781,10 @@
         };
       }
 
-      // ── Referral links card ──────────────────────────────
-      // Sits at the top of the left main column. Master short URL
-      // with click-to-copy, QR rendered on the right, and three
-      // download actions (PNG, SVG, ZIP-of-all). Per-staff links
-      // live in the Referral Links table below.
-      const refUrlEl    = els.container.querySelector('#hdRefShortUrl');
-      const refCopyBtn  = els.container.querySelector('#hdRefCopyBtn');
-      const refQREl     = els.container.querySelector('#hdRefQR');
-      const refDlPng    = els.container.querySelector('#hdRefDlPng');
-      const refDlSvg    = els.container.querySelector('#hdRefDlSvg');
-      const refDlZip    = els.container.querySelector('#hdRefDlZip');
+      // Master short URL + the ZIP export list — consumed by the
+      // header Copy dropdown below. (The standalone Referral links
+      // card was removed; the dropdown is the single home now.)
       const masterShortUrl = hotelShort ? hotelShort.short_url : null;
-
-      if (refUrlEl) {
-        refUrlEl.textContent = masterShortUrl || 'No short link yet';
-      }
-      if (refCopyBtn) {
-        refCopyBtn.dataset.copy = masterShortUrl || '';
-        refCopyBtn.disabled     = !masterShortUrl;
-        refCopyBtn.title        = masterShortUrl ? 'Copy short URL' : 'No short link yet';
-      }
-      if (refQREl) {
-        refQREl.innerHTML = '';
-        if (masterShortUrl) {
-          const qrInst = makeQRInstance(masterShortUrl, 152);
-          if (qrInst) qrInst.append(refQREl);
-        } else {
-          refQREl.innerHTML =
-            '<div class="hd-refcard__qr-empty" title="No short link yet — QR will appear once one is minted.">' +
-              '<span>No short link yet</span>' +
-            '</div>';
-        }
-      }
-      _hotelDrawerQRUrl = masterShortUrl;
-      if (refDlPng) {
-        refDlPng.disabled = !masterShortUrl;
-        refDlPng.onclick = () => {
-          if (!masterShortUrl) return;
-          downloadQRPng(masterShortUrl, 'horizon-qr-' + (h.code || 'hotel'));
-        };
-      }
-      if (refDlSvg) {
-        refDlSvg.disabled = !masterShortUrl;
-        refDlSvg.onclick = () => {
-          if (!masterShortUrl) return;
-          downloadQRSvg(masterShortUrl, 'horizon-qr-' + (h.code || 'hotel'));
-        };
-      }
-      // Build the ZIP export list once — shared by the Referral
-      // links card's "Download all QRs" button and the header
-      // Copy-dropdown's matching item.
       const qrExports = [];
       if (hotelShort && hotelShort.short_url) {
         qrExports.push({ slug: (h.code || 'hotel') + '__master', url: hotelShort.short_url });
@@ -3892,13 +3795,6 @@
         const safeName = (s.name || s.tracking_code || s.id)
           .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
         qrExports.push({ slug: (h.code || 'hotel') + '__' + (safeName || s.id), url: sl.short_url });
-      }
-      if (refDlZip) {
-        refDlZip.disabled = qrExports.length === 0;
-        refDlZip.title    = qrExports.length === 0
-          ? 'No short links available yet for this hotel.'
-          : 'Download a ZIP of PNG QR codes for the hotel and every active employee.';
-        refDlZip.onclick = () => bulkDownloadHotelQRs(h, qrExports);
       }
 
       // ── Header master-referral URL + Copy dropdown ───────
@@ -3920,7 +3816,6 @@
         if (masterShortUrl) {
           wrap.hidden = false;
           linkEl.textContent = masterShortUrl.replace(/^https?:\/\//, '');
-          linkEl.href        = masterShortUrl;
           menuUrl.textContent = masterShortUrl;
 
           const closeMenu = () => {
