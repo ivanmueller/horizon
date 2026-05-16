@@ -262,6 +262,22 @@
     </div>
   </div>
 
+  <!-- ── Setup-step info lightbox ──────────────────────────────
+       Placeholder note shown when an actionable setup-guide item
+       is clicked, until the real deep-link / flow is wired. -->
+  <div class="modal" id="setupNoteModal" hidden>
+    <div class="modal__card">
+      <div class="modal__head">
+        <h2 class="modal__title" id="setupNoteTitle">Coming next phase</h2>
+        <button type="button" class="modal__close" id="setupNoteClose" aria-label="Close">×</button>
+      </div>
+      <p class="modal__sub" id="setupNoteBody"></p>
+      <div class="modal__actions">
+        <button type="button" class="btn btn--primary" id="setupNoteOk">Got it</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Create short link modal ───────────────────────────── -->
   <div class="modal" id="slCreateModal" hidden>
     <form class="modal__card" id="slCreateForm" novalidate>
@@ -1261,9 +1277,8 @@
                         </span>
                       </span>
                       <div class="hd-refurl__copywrap">
-                          <button type="button" class="hd-refurl__copybtn" id="hdRefUrlCopyBtn" aria-haspopup="true" aria-expanded="false">
-                            <span>Copy</span>
-                            <svg class="hd-refurl__chev" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
+                          <button type="button" class="hd-refurl__copybtn" id="hdRefUrlCopyBtn" aria-haspopup="true" aria-expanded="false" aria-label="Copy options">
+                            <svg class="hd-refurl__chev" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
                           </button>
                           <div class="hd-refurl__menu" id="hdRefUrlMenu" hidden role="menu">
                             <button type="button" class="hd-refurl__item hd-refurl__item--copy" id="hdRefUrlCopyItem" role="menuitem">
@@ -1858,6 +1873,23 @@
 
     // QR modal — singleton; re-used for every row click.
     let _qrModalInstance = null;
+    // Setup-step info lightbox — placeholder until the real
+    // deep-links/flows are wired in the next phase.
+    const setupNoteModal = document.getElementById('setupNoteModal');
+    const setupNoteTitle = document.getElementById('setupNoteTitle');
+    const setupNoteBody  = document.getElementById('setupNoteBody');
+    (function wireSetupNote() {
+      const close = () => { setupNoteModal.hidden = true; };
+      document.getElementById('setupNoteClose').addEventListener('click', close);
+      document.getElementById('setupNoteOk').addEventListener('click', close);
+      setupNoteModal.addEventListener('click', (e) => {
+        if (e.target === setupNoteModal) close();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !setupNoteModal.hidden) close();
+      });
+    })();
+
     const qrModal         = document.getElementById('qrModal');
     const qrModalTitle    = document.getElementById('qrModalTitle');
     const qrModalSub      = document.getElementById('qrModalSub');
@@ -3875,17 +3907,44 @@
             els.setup.querySelector('#hdSetupCount').textContent = done + ' / ' + total;
             els.setup.querySelector('#hdSetupFill').style.width =
               (total ? Math.round((done / total) * 100) : 0) + '%';
-            els.setup.querySelector('#hdSetupItems').innerHTML =
-              st.checklist.map((c) => {
-                const cls = c.done ? 'is-done' : 'is-todo';
-                const mark = c.done
-                  ? '<span class="hd-setup__mark hd-setup__mark--done">' +
-                      '<svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-6.5"/></svg>' +
-                    '</span>'
-                  : '<span class="hd-setup__mark"></span>';
-                return '<li class="hd-setup__item ' + cls + '">' +
-                  mark + '<span class="hd-setup__label">' + escapeHtml(c.label) + '</span></li>';
-              }).join('');
+            const itemsEl = els.setup.querySelector('#hdSetupItems');
+            itemsEl.innerHTML = st.checklist.map((c, i) => {
+              if (c.done) {
+                return '<li class="hd-setup__item is-done">' +
+                  '<span class="hd-setup__mark hd-setup__mark--done">' +
+                    '<svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-6.5"/></svg>' +
+                  '</span>' +
+                  '<span class="hd-setup__label">' + escapeHtml(c.label) + '</span></li>';
+              }
+              // Event items resolve on their own — no affordance.
+              if (c.kind === 'event') {
+                return '<li class="hd-setup__item is-waiting">' +
+                  '<span class="hd-setup__mark"></span>' +
+                  '<span class="hd-setup__label">Waiting for first booking</span></li>';
+              }
+              // Actionable + incomplete — clickable.
+              return '<li class="hd-setup__item is-todo is-clickable" role="button" tabindex="0" data-setup-idx="' + i + '">' +
+                '<span class="hd-setup__mark"></span>' +
+                '<span class="hd-setup__label">' + escapeHtml(c.label) + '</span>' +
+                '<svg class="hd-setup__go" viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4l4 4-4 4"/></svg></li>';
+            }).join('');
+
+            const openSetupNote = (idx) => {
+              const c = st.checklist[idx];
+              if (!c) return;
+              setupNoteBody.textContent = c.hint || '';
+              setupNoteTitle.textContent = c.label;
+              setupNoteModal.hidden = false;
+            };
+            itemsEl.querySelectorAll('[data-setup-idx]').forEach((el) => {
+              el.addEventListener('click', () => openSetupNote(Number(el.dataset.setupIdx)));
+              el.addEventListener('keydown', (ev) => {
+                if (ev.key === 'Enter' || ev.key === ' ') {
+                  ev.preventDefault();
+                  openSetupNote(Number(el.dataset.setupIdx));
+                }
+              });
+            });
             els.setup.hidden = false;
           } else {
             els.setup.hidden = true;
@@ -4472,15 +4531,20 @@
 
       const checklist = [
         { label: 'Referral link minted',  kind: 'action',
-          done: !!(hotelShort && hotelShort.short_url) },
+          done: !!(hotelShort && hotelShort.short_url),
+          hint: 'Next phase: this will retry minting the Short.io link for this hotel.' },
         { label: 'Commission configured', kind: 'action',
-          done: h.commission_pct != null && Number(h.commission_pct) > 0 },
+          done: h.commission_pct != null && Number(h.commission_pct) > 0,
+          hint: 'Next phase: this will open the commission editor for this hotel.' },
         { label: 'Primary contact added', kind: 'action',
-          done: !!(h.primary_contact_name || h.primary_contact_email) },
+          done: !!(h.primary_contact_name || h.primary_contact_email),
+          hint: 'Next phase: this will jump to the Details card and open the primary-contact field for inline editing.' },
         { label: 'Stripe Connect linked', kind: 'action',
-          done: stripeConnected },
+          done: stripeConnected,
+          hint: 'Next phase: this will scroll to Invoices & Payouts and start the Connect Stripe flow.' },
         { label: 'First booking received', kind: 'event',
-          done: hasBooking },
+          done: hasBooking,
+          hint: '' },
       ];
       const allDone = checklist.every((c) => c.done);
 
