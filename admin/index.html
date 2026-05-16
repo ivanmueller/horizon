@@ -1234,10 +1234,19 @@
                 <div class="hd-head__lead">
                   <div class="hd-head__titlerow">
                     <h1 class="bk-page__title" id="hotelDetailTitle">Loading…</h1>
-                    <span class="hd-statpill" id="hotelDetailStatusPill" hidden>
-                      <span class="hd-statpill__dot" aria-hidden="true"></span>
-                      <span class="hd-statpill__label"></span>
-                    </span>
+                    <div class="hd-statwrap" id="hotelDetailStatusWrap" hidden>
+                      <button type="button" class="hd-statpill" id="hotelDetailStatusBtn" aria-haspopup="true" aria-expanded="false">
+                        <span class="hd-statpill__label"></span>
+                      </button>
+                      <div class="hd-statpop" id="hotelDetailStatusPop" hidden role="dialog">
+                        <div class="hd-statpop__head">
+                          <svg class="hd-statpop__icon" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M5.5 8.2l1.8 1.8 3.4-3.6"/></svg>
+                          <span class="hd-statpop__headline" id="hdStatHeadline">—</span>
+                        </div>
+                        <p class="hd-statpop__note" id="hdStatNote"></p>
+                        <ul class="hd-statpop__list" id="hdStatList"></ul>
+                      </div>
+                    </div>
                   </div>
                   <!-- Master referral URL + Copy dropdown inline
                        on the sub-row beneath the title (Supabase
@@ -3227,7 +3236,7 @@
         container,
         slug,
         title:        container.querySelector('#hotelDetailTitle'),
-        statusPill:   container.querySelector('#hotelDetailStatusPill'),
+        statusWrap:   container.querySelector('#hotelDetailStatusWrap'),
         refUrl:       container.querySelector('#hotelDetailRefUrl'),
         empBody:      container.querySelector('#hdEmployeesBody'),
         linksBody:    container.querySelector('#hdLinksBody'),
@@ -3793,13 +3802,50 @@
       // card was removed; the dropdown is the single home now.)
       const masterShortUrl = hotelShort ? hotelShort.short_url : null;
 
-      // Title-row status pill — aggregate health from the setup
-      // checklist + (eventually) activity. See deriveHotelStatus.
-      if (els.statusPill) {
-        const st = deriveHotelStatus(h, hotelShort);
-        els.statusPill.className = 'hd-statpill hd-statpill--' + st.tone;
-        els.statusPill.querySelector('.hd-statpill__label').textContent = st.label;
-        els.statusPill.hidden = false;
+      // Title-row status pill + verification popover. Three states
+      // (Active / Pending / Archived) from deriveHotelStatus; the
+      // popover lists the setup checklist so an admin can see what
+      // is verified or still outstanding.
+      if (els.statusWrap) {
+        const st     = deriveHotelStatus(h, hotelShort);
+        const wrap   = els.statusWrap;
+        const btn    = wrap.querySelector('#hotelDetailStatusBtn');
+        const pop    = wrap.querySelector('#hotelDetailStatusPop');
+        const headEl = wrap.querySelector('#hdStatHeadline');
+        const noteEl = wrap.querySelector('#hdStatNote');
+        const listEl = wrap.querySelector('#hdStatList');
+
+        btn.className = 'hd-statpill hd-statpill--' + st.tone;
+        btn.querySelector('.hd-statpill__label').textContent = st.label;
+        wrap.className = 'hd-statwrap hd-statwrap--' + st.tone;
+        wrap.hidden = false;
+
+        headEl.textContent = st.headline;
+        noteEl.textContent = st.note;
+        listEl.innerHTML = st.checklist.length
+          ? st.checklist.map((c) =>
+              '<li class="hd-statpop__item ' + (c.done ? 'is-done' : 'is-todo') + '">' +
+                (c.done
+                  ? '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 4.5"/></svg>'
+                  : '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6"/></svg>') +
+                '<span>' + escapeHtml(c.label) + '</span>' +
+              '</li>'
+            ).join('')
+          : '';
+        listEl.hidden = st.checklist.length === 0;
+
+        const closePop = () => { pop.hidden = true; btn.setAttribute('aria-expanded', 'false'); };
+        const openPop  = () => { pop.hidden = false; btn.setAttribute('aria-expanded', 'true'); };
+        btn.onclick = (ev) => {
+          ev.stopPropagation();
+          pop.hidden ? openPop() : closePop();
+        };
+        document.addEventListener('click', (ev) => {
+          if (!pop.hidden && !wrap.contains(ev.target)) closePop();
+        });
+        document.addEventListener('keydown', (ev) => {
+          if (ev.key === 'Escape' && !pop.hidden) closePop();
+        });
       }
 
       const qrExports = [];
@@ -4354,44 +4400,49 @@
       return '<span class="bk-pill bk-pill--neutral">' + escapeHtml(status || '—') + '</span>';
     }
 
-    // Derives the aggregate health state shown in the title-row pill.
-    // Only conditions backed by real data fire today; the At-risk
-    // branch is intentionally dormant until Stripe-connect state and
-    // booking-recency become real columns (see the commented block).
-    //   tone: 'amber' | 'gray' | 'red'
+    // Derives the title-row status. Three states only:
+    //   archived — manually terminated
+    //   pending  — a required setup item is still missing
+    //   active   — every required item complete (the "Verified" state)
+    // Returns the checklist too so the popover can show what's
+    // verified / outstanding. tone: 'green' | 'amber' | 'gray'.
     function deriveHotelStatus(h, hotelShort) {
-      // Manually archived — terminal, overrides everything.
+      const linkDone = !!(hotelShort && hotelShort.short_url);
+      const commDone = h.commission_pct != null && Number(h.commission_pct) > 0;
+      const needsStaff = h.type === 'kickback';
+      const staffDone = !needsStaff ||
+        (h.staff || []).filter((s) => s.status === 'active').length > 0;
+
+      const checklist = [
+        { label: 'Referral link minted',   done: linkDone },
+        { label: 'Commission configured',  done: commDone },
+      ];
+      if (needsStaff) {
+        checklist.push({ label: 'At least one active employee', done: staffDone });
+      }
+
       if (h.status === 'terminated') {
-        return { tone: 'gray', label: 'Inactive' };
+        return {
+          key: 'archived', tone: 'gray', label: 'Archived',
+          headline: 'This property is archived',
+          note: 'No new bookings will be attributed. Reinstate it to resume.',
+          checklist: [],
+        };
       }
-
-      // Required setup checklist (real data only). Stripe is
-      // deliberately excluded — it isn't a real column yet, so
-      // including it would mark every hotel incomplete forever.
-      const missing = [];
-      if (!hotelShort || !hotelShort.short_url) missing.push('referral link');
-      if (h.commission_pct == null || Number(h.commission_pct) <= 0) missing.push('commission %');
-      if (h.type === 'kickback') {
-        const activeStaff = (h.staff || []).filter((s) => s.status === 'active').length;
-        if (activeStaff === 0) missing.push('staff');
+      if (!linkDone || !commDone || !staffDone) {
+        return {
+          key: 'pending', tone: 'amber', label: 'Pending',
+          headline: 'Setup is incomplete',
+          note: 'Finish the items below to verify this property.',
+          checklist,
+        };
       }
-      if (missing.length) {
-        return { tone: 'amber', label: 'Setup incomplete' };
-      }
-
-      // ── At-risk — dormant until the backing data exists ────────
-      // Uncomment once stripe_account_id / last_booking_at land:
-      //
-      // const stripeConnected = !!h.stripe_account_id &&
-      //   (h.stripe_status === 'connected' || h.stripe_status === 'active');
-      // const lastBooking = h.last_booking_at ? new Date(h.last_booking_at) : null;
-      // const staleDays = lastBooking
-      //   ? (Date.now() - lastBooking.getTime()) / 86400000 : Infinity;
-      // if (!stripeConnected || h.payment_failing || staleDays >= 30) {
-      //   return { tone: 'red', label: 'At risk' };
-      // }
-
-      return { tone: 'gray', label: 'Active' };
+      return {
+        key: 'active', tone: 'green', label: 'Active',
+        headline: 'This property is verified & active',
+        note: 'All required setup is complete and attribution is live.',
+        checklist,
+      };
     }
 
     // Kept for any drawer-internal code that still references it. The

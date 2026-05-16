@@ -1948,30 +1948,83 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   gap: var(--s3);
   flex-wrap: wrap;
 }
-/* Aggregate-health pill beside the hotel name. Deliberately
-   minimal: a coloured dot + label, no border fill. */
+/* Status pill beside the hotel name — GitHub "Verified"-style
+   bordered chip. Click toggles the verification popover below. */
+.hd-statwrap { position: relative; display: inline-flex; }
+.hd-statwrap[hidden] { display: none; }
 .hd-statpill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  padding: 3px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
   font-size: var(--t-xs);
-  font-weight: 500;
+  font-weight: 600;
+  line-height: 1.4;
   color: var(--text-muted);
   white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast);
 }
-.hd-statpill[hidden] { display: none; }
-.hd-statpill__dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--text-faint);
-  flex-shrink: 0;
+.hd-statpill:hover { background: #f8fafb; }
+.hd-statpill--green { color: #1a7f37; border-color: #b7dcb9; }
+.hd-statpill--amber { color: #92400e; border-color: #f3d28b; }
+.hd-statpill--gray  { color: #50617a; border-color: var(--border); }
+
+/* Verification popover — same visual language as the copy-URL
+   dropdown: white card, soft shadow, opens directly below. */
+.hd-statpop {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 50;
+  width: 300px;
+  padding: var(--s4);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.14);
 }
-.hd-statpill--amber .hd-statpill__dot { background: #d9870c; }
-.hd-statpill--amber                   { color: #92400e; }
-.hd-statpill--red   .hd-statpill__dot { background: #dc2626; }
-.hd-statpill--red                     { color: #b91c1c; }
-.hd-statpill--gray  .hd-statpill__dot { background: #94a3b8; }
+.hd-statpop[hidden] { display: none; }
+.hd-statpop__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--text);
+}
+.hd-statwrap--green .hd-statpop__icon { color: #1a7f37; }
+.hd-statwrap--amber .hd-statpop__icon { color: #b8860b; }
+.hd-statwrap--gray  .hd-statpop__icon { color: #94a3b8; }
+.hd-statpop__icon { flex-shrink: 0; }
+.hd-statpop__note {
+  margin: 6px 0 0;
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.hd-statpop__list {
+  list-style: none;
+  margin: var(--s3) 0 0;
+  padding: var(--s3) 0 0;
+  border-top: 1px solid var(--border);
+  display: grid;
+  gap: 8px;
+}
+.hd-statpop__list[hidden] { display: none; }
+.hd-statpop__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--t-sm);
+  color: var(--text);
+}
+.hd-statpop__item svg { flex-shrink: 0; }
+.hd-statpop__item.is-done  svg { color: #1a7f37; }
+.hd-statpop__item.is-todo      { color: var(--text-muted); }
+.hd-statpop__item.is-todo  svg { color: #c0820c; }
 
 /* Hero metric strip — labels + numbers, no charts. Sits directly
    below the identity row, above the body grid. Four columns
