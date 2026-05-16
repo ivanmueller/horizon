@@ -1232,7 +1232,13 @@
               <a href="/admin/hotels/" class="bk-page__back" id="hotelDetailBack">Hotels</a>
               <div class="hd-head__row">
                 <div class="hd-head__lead">
-                  <h1 class="bk-page__title" id="hotelDetailTitle">Loading…</h1>
+                  <div class="hd-head__titlerow">
+                    <h1 class="bk-page__title" id="hotelDetailTitle">Loading…</h1>
+                    <span class="hd-statpill" id="hotelDetailStatusPill" hidden>
+                      <span class="hd-statpill__dot" aria-hidden="true"></span>
+                      <span class="hd-statpill__label"></span>
+                    </span>
+                  </div>
                   <!-- Master referral URL + Copy dropdown inline
                        on the sub-row beneath the title (Supabase
                        project-header pattern). -->
@@ -3221,6 +3227,7 @@
         container,
         slug,
         title:        container.querySelector('#hotelDetailTitle'),
+        statusPill:   container.querySelector('#hotelDetailStatusPill'),
         refUrl:       container.querySelector('#hotelDetailRefUrl'),
         empBody:      container.querySelector('#hdEmployeesBody'),
         linksBody:    container.querySelector('#hdLinksBody'),
@@ -3778,6 +3785,16 @@
       // header Copy dropdown below. (The standalone Referral links
       // card was removed; the dropdown is the single home now.)
       const masterShortUrl = hotelShort ? hotelShort.short_url : null;
+
+      // Title-row status pill — aggregate health from the setup
+      // checklist + (eventually) activity. See deriveHotelStatus.
+      if (els.statusPill) {
+        const st = deriveHotelStatus(h, hotelShort);
+        els.statusPill.className = 'hd-statpill hd-statpill--' + st.tone;
+        els.statusPill.querySelector('.hd-statpill__label').textContent = st.label;
+        els.statusPill.hidden = false;
+      }
+
       const qrExports = [];
       if (hotelShort && hotelShort.short_url) {
         qrExports.push({ slug: (h.code || 'hotel') + '__master', url: hotelShort.short_url });
@@ -4328,6 +4345,46 @@
       if (status === 'terminated') return '<span class="bk-pill bk-pill--neutral">Terminated</span>';
       if (status === 'revoked')    return '<span class="bk-pill bk-pill--neutral">Revoked</span>';
       return '<span class="bk-pill bk-pill--neutral">' + escapeHtml(status || '—') + '</span>';
+    }
+
+    // Derives the aggregate health state shown in the title-row pill.
+    // Only conditions backed by real data fire today; the At-risk
+    // branch is intentionally dormant until Stripe-connect state and
+    // booking-recency become real columns (see the commented block).
+    //   tone: 'amber' | 'gray' | 'red'
+    function deriveHotelStatus(h, hotelShort) {
+      // Manually archived — terminal, overrides everything.
+      if (h.status === 'terminated') {
+        return { tone: 'gray', label: 'Inactive' };
+      }
+
+      // Required setup checklist (real data only). Stripe is
+      // deliberately excluded — it isn't a real column yet, so
+      // including it would mark every hotel incomplete forever.
+      const missing = [];
+      if (!hotelShort || !hotelShort.short_url) missing.push('referral link');
+      if (h.commission_pct == null || Number(h.commission_pct) <= 0) missing.push('commission %');
+      if (h.type === 'kickback') {
+        const activeStaff = (h.staff || []).filter((s) => s.status === 'active').length;
+        if (activeStaff === 0) missing.push('staff');
+      }
+      if (missing.length) {
+        return { tone: 'amber', label: 'Setup incomplete' };
+      }
+
+      // ── At-risk — dormant until the backing data exists ────────
+      // Uncomment once stripe_account_id / last_booking_at land:
+      //
+      // const stripeConnected = !!h.stripe_account_id &&
+      //   (h.stripe_status === 'connected' || h.stripe_status === 'active');
+      // const lastBooking = h.last_booking_at ? new Date(h.last_booking_at) : null;
+      // const staleDays = lastBooking
+      //   ? (Date.now() - lastBooking.getTime()) / 86400000 : Infinity;
+      // if (!stripeConnected || h.payment_failing || staleDays >= 30) {
+      //   return { tone: 'red', label: 'At risk' };
+      // }
+
+      return { tone: 'gray', label: 'Active' };
     }
 
     // Kept for any drawer-internal code that still references it. The

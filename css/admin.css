@@ -1942,6 +1942,36 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   flex-wrap: wrap;
 }
 .hd-head__lead { display: flex; flex-direction: column; gap: 6px; }
+.hd-head__titlerow {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  flex-wrap: wrap;
+}
+/* Aggregate-health pill beside the hotel name. Deliberately
+   minimal: a coloured dot + label, no border fill. */
+.hd-statpill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--t-xs);
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.hd-statpill[hidden] { display: none; }
+.hd-statpill__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-faint);
+  flex-shrink: 0;
+}
+.hd-statpill--amber .hd-statpill__dot { background: #d9870c; }
+.hd-statpill--amber                   { color: #92400e; }
+.hd-statpill--red   .hd-statpill__dot { background: #dc2626; }
+.hd-statpill--red                     { color: #b91c1c; }
+.hd-statpill--gray  .hd-statpill__dot { background: #94a3b8; }
 .hd-head__sub {
   display: flex;
   align-items: center;
