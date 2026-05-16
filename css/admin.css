@@ -1941,7 +1941,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   gap: var(--s4);
   flex-wrap: wrap;
 }
-.hd-head__lead { display: flex; flex-direction: column; gap: 2px; }
+.hd-head__lead { display: flex; flex-direction: column; gap: 6px; }
 .hd-head__sub {
   display: flex;
   align-items: center;
@@ -2162,20 +2162,24 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .hd-refurl {
   display: inline-flex;
   align-items: center;
-  gap: var(--s2);
+  gap: var(--s4);
   min-width: 0;
 }
 .hd-refurl[hidden] { display: none; }
+/* Non-interactive label — regular sans weight, muted, no hover
+   or pointer affordance (matches the Supabase project header). */
 .hd-refurl__link {
+  font-family: inherit;
   font-size: var(--t-sm);
+  font-weight: 400;
   color: var(--text-muted);
   text-decoration: none;
+  cursor: default;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 30ch;
+  max-width: 42ch;
 }
-.hd-refurl__link:hover { color: var(--text); text-decoration: underline; }
 .hd-refurl__copywrap { position: relative; }
 .hd-refurl__copybtn {
   display: inline-flex;
@@ -3064,116 +3068,6 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .sl-edit__history-arrow {
   color: var(--text-faint);
   flex-shrink: 0;
-}
-
-/* ── Referral links card (left main column) ─────────────────
-   Compact form-style card that holds the master short URL and
-   QR code with download actions. Per-staff links live in the
-   Referral Links section beneath it. */
-.hd-refcard__card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--s5);
-  align-items: start;
-  padding: var(--s4);
-  background: #ffffff;
-  border: 1px solid var(--line, #e5e7eb);
-  border-radius: 8px;
-}
-.hd-refcard__main {
-  display: grid;
-  gap: var(--s4);
-  min-width: 0;
-}
-.hd-refcard__field { display: grid; gap: var(--s2); }
-.hd-refcard__label {
-  font-size: var(--t-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #50617a;
-  font-weight: 500;
-}
-.hd-refcard__url-row {
-  display: flex;
-  align-items: center;
-  gap: var(--s2);
-  min-width: 0;
-}
-.hd-refcard__url {
-  flex: 1;
-  min-width: 0;
-  padding: 8px 12px;
-  background: #f8fafb;
-  border: 1px solid var(--line, #e5e7eb);
-  border-radius: 6px;
-  font-size: var(--t-sm);
-  color: #1a2c44;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.hd-refcard__copy {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.hd-refcard__actions {
-  display: flex;
-  gap: var(--s2);
-  flex-wrap: wrap;
-}
-.hd-refcard__actions .btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.hd-refcard__qr-col {
-  flex-shrink: 0;
-}
-.hd-refcard__qr {
-  width: 152px;
-  height: 152px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px;
-  background: #ffffff;
-  border: 1px solid var(--line, #e5e7eb);
-  border-radius: 6px;
-}
-.hd-refcard__qr canvas,
-.hd-refcard__qr svg {
-  display: block;
-  max-width: 100%;
-  height: auto;
-}
-.hd-refcard__qr-empty {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--warn-bg);
-  border: 1px dashed var(--warn-border);
-  border-radius: 4px;
-  font-size: var(--t-xs);
-  color: var(--warn-fg);
-  text-align: center;
-  padding: var(--s2);
-}
-.hd-refcard__footer {
-  margin: var(--s3) 0 0;
-  padding: var(--s3) 0 0;
-  border-top: 1px solid var(--line, #e5e7eb);
-  font-size: var(--t-xs);
-  color: #50617a;
-}
-
-/* Stack the QR under the form on narrower viewports. */
-@media (max-width: 720px) {
-  .hd-refcard__card { grid-template-columns: 1fr; }
-  .hd-refcard__qr-col { justify-self: flex-start; }
 }
 
 /* ── Hotel detail page header: identity block ────────────────
