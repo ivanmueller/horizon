@@ -2026,24 +2026,38 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .hd-statpop__item.is-todo      { color: var(--text-muted); }
 .hd-statpop__item.is-todo  svg { color: #c0820c; }
 
-/* Setup guide — conditional sidebar card (above Details).
-   Closes once every item is done (pill flips to Active) or when
-   archived. Soft layered shadow + faint inset highlight give it
-   a recessed, almost-3D feel. */
+/* Setup guide — Stripe-style checklist card in the sidebar above
+   Details. Reads as RECESSED into the page (inset shadow, sunken
+   fill, no outward elevation) rather than a floating widget.
+   Closes when every item is done (pill flips Active) or archived. */
 .hd-setup {
+  display: flex;
+  flex-direction: column;
+  border-radius: 10px;
+  background: #eceff4;
+  box-shadow:
+    inset 0 2px 4px rgba(15, 23, 42, 0.10),
+    inset 0 0 0 1px rgba(15, 23, 42, 0.05);
+  overflow: hidden;
+}
+.hd-setup[hidden] { display: none; }
+.hd-setup__bar {
+  height: 4px;
+  width: 100%;
+  background: rgba(15, 23, 42, 0.08);
+}
+.hd-setup__fill {
+  display: block;
+  height: 100%;
+  background: #635bff;
+  transition: width 320ms ease;
+}
+.hd-setup__body {
   display: flex;
   flex-direction: column;
   gap: var(--s3);
   padding: var(--s4);
-  border-radius: 12px;
-  background: linear-gradient(180deg, #fbfdff 0%, #f4f7fb 100%);
-  border: 1px solid #e2e8f0;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.9) inset,
-    0 1px 2px rgba(15, 23, 42, 0.05),
-    0 8px 20px -12px rgba(15, 23, 42, 0.18);
 }
-.hd-setup[hidden] { display: none; }
 .hd-setup__head {
   display: flex;
   align-items: baseline;
@@ -2061,48 +2075,34 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
-.hd-setup__bar {
-  height: 6px;
-  border-radius: 999px;
-  background: #e2e8f0;
-  overflow: hidden;
-  box-shadow: 0 1px 1px rgba(15, 23, 42, 0.06) inset;
-}
-.hd-setup__fill {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #4f7ef7 0%, #2563eb 100%);
-  transition: width 320ms ease;
-}
 .hd-setup__list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 2px;
+  gap: 1px;
 }
 .hd-setup__item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 4px;
+  padding: 7px 4px;
   font-size: var(--t-sm);
 }
 .hd-setup__mark {
   flex-shrink: 0;
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
   border-radius: 50%;
-  border: 1.5px solid #cbd5e1;
+  border: 1.5px solid #c4cad6;
   background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .hd-setup__mark--done {
-  border-color: #2563eb;
-  background: #2563eb;
+  border-color: #635bff;
+  background: #635bff;
   color: #fff;
 }
 .hd-setup__label { color: var(--text); }
@@ -2111,6 +2111,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   text-decoration: line-through;
   text-decoration-thickness: 1px;
 }
+
 
 /* Hero metric strip — labels + numbers, no charts. Sits directly
    below the identity row, above the body grid. Four columns
