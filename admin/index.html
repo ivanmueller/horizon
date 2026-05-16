@@ -1231,19 +1231,15 @@
             <header class="bk-page__head bk-page__head--stack hd-head">
               <a href="/admin/hotels/" class="bk-page__back" id="hotelDetailBack">Hotels</a>
               <div class="hd-head__row">
-                <div class="hd-head__identity">
-                  <!-- Hotel avatar — square with rounded corners, first
-                       letter of name. Visual anchor for the property. -->
-                  <div class="hd-head__avatar" id="hotelDetailAvatar" aria-hidden="true">—</div>
-                  <div class="hd-head__lead">
-                    <h1 class="bk-page__title" id="hotelDetailTitle">Loading…</h1>
-                    <!-- Master referral URL + Copy dropdown inline
-                         on the sub-row beneath the title (Supabase
-                         project-header pattern). -->
-                    <div class="hd-head__sub" id="hotelDetailSubRow">
-                      <div class="hd-refurl" id="hotelDetailRefUrl" hidden>
-                        <span class="hd-refurl__link" id="hdRefUrlLink">—</span>
-                        <div class="hd-refurl__copywrap">
+                <div class="hd-head__lead">
+                  <h1 class="bk-page__title" id="hotelDetailTitle">Loading…</h1>
+                  <!-- Master referral URL + Copy dropdown inline
+                       on the sub-row beneath the title (Supabase
+                       project-header pattern). -->
+                  <div class="hd-head__sub" id="hotelDetailSubRow">
+                    <div class="hd-refurl" id="hotelDetailRefUrl" hidden>
+                      <span class="hd-refurl__link" id="hdRefUrlLink">—</span>
+                      <div class="hd-refurl__copywrap">
                           <button type="button" class="hd-refurl__copybtn" id="hdRefUrlCopyBtn" aria-haspopup="true" aria-expanded="false">
                             <span>Copy</span>
                             <svg class="hd-refurl__chev" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
@@ -1279,7 +1275,6 @@
                       </div>
                     </div>
                   </div>
-                </div>
                 <div class="bk-page__actions hd-head__actions">
                   <button type="button" class="btn" id="hdSendEmail">Send Email</button>
                   <button type="button" class="btn btn--primary" id="hdAddEmployee">+ Add Employee</button>
@@ -3220,7 +3215,6 @@
         container,
         slug,
         title:        container.querySelector('#hotelDetailTitle'),
-        avatar:       container.querySelector('#hotelDetailAvatar'),
         refUrl:       container.querySelector('#hotelDetailRefUrl'),
         empBody:      container.querySelector('#hdEmployeesBody'),
         linksBody:    container.querySelector('#hdLinksBody'),
@@ -3402,13 +3396,6 @@
       // address + a tiny copy icon. Without: "Add primary contact"
       // with a small inline + icon, no link styling.
       els.title.textContent = h.name || 'Hotel';
-
-      // Avatar — first letter of the hotel name. Visual anchor at
-      // the top-left of the page header.
-      if (els.avatar) {
-        const first = ((h.name || '').trim().charAt(0) || '?').toUpperCase();
-        els.avatar.textContent = first;
-      }
 
       // The master referral URL + Copy dropdown under the title is
       // populated later, in the Referral links section, where
