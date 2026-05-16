@@ -2464,14 +2464,14 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   align-items: center;
   justify-content: center;
   padding: 5px;
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: 6px;
-  background: #fff;
+  background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
+  transition: background var(--t-fast), color var(--t-fast);
 }
-.hd-refurl__copybtn:hover { background: #f8fafb; border-color: var(--border-strong, #cbd5e1); color: var(--text); }
+.hd-refurl__copybtn:hover { background: #e2e8f0; color: var(--text); }
 .hd-refurl__chev {
   flex-shrink: 0;
   transition: transform var(--t-fast);
