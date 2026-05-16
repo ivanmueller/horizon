@@ -1238,12 +1238,16 @@
                        project-header pattern). -->
                   <div class="hd-head__sub" id="hotelDetailSubRow">
                     <div class="hd-refurl" id="hotelDetailRefUrl" hidden>
-                      <span class="hd-refurl__link" id="hdRefUrlLink">—</span>
+                      <span class="hd-refurl__link" id="hdRefUrlLink">
+                        <span class="hd-refurl__urltext" id="hdRefUrlText">—</span>
+                        <span class="hd-refurl__urldone" aria-hidden="true">
+                          <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.5 3.5L13 4.5"/></svg>
+                          Copied
+                        </span>
+                      </span>
                       <div class="hd-refurl__copywrap">
                           <button type="button" class="hd-refurl__copybtn" id="hdRefUrlCopyBtn" aria-haspopup="true" aria-expanded="false">
-                            <span class="hd-refurl__cl hd-refurl__cl--text">Copy</span>
-                            <svg class="hd-refurl__cl hd-refurl__cl--copy" viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M3 10.5H2.5A1.5 1.5 0 011 9V3a1.5 1.5 0 011.5-1.5h6A1.5 1.5 0 0110 3v.5"/></svg>
-                            <svg class="hd-refurl__cl hd-refurl__cl--check" viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 4.5"/></svg>
+                            <span>Copy</span>
                             <svg class="hd-refurl__chev" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>
                           </button>
                           <div class="hd-refurl__menu" id="hdRefUrlMenu" hidden role="menu">
@@ -3793,6 +3797,7 @@
       if (els.refUrl) {
         const wrap     = els.refUrl;
         const linkEl   = wrap.querySelector('#hdRefUrlLink');
+        const linkText = wrap.querySelector('#hdRefUrlText');
         const copyBtn  = wrap.querySelector('#hdRefUrlCopyBtn');
         const menuEl   = wrap.querySelector('#hdRefUrlMenu');
         const copyItem = wrap.querySelector('#hdRefUrlCopyItem');
@@ -3804,7 +3809,7 @@
 
         if (masterShortUrl) {
           wrap.hidden = false;
-          linkEl.textContent = masterShortUrl.replace(/^https?:\/\//, '');
+          linkText.textContent = masterShortUrl.replace(/^https?:\/\//, '');
           menuUrl.textContent = masterShortUrl;
 
           const closeMenu = () => {
@@ -3824,29 +3829,21 @@
             menuEl.hidden ? openMenu() : closeMenu();
           };
 
-          // The inline URL itself is a click-to-copy target. Hovering
-          // it previews the copy affordance in the button (Copy text
-          // → copy icon); clicking copies and flashes a checkmark in
-          // the button before transitioning back to "Copy".
+          // The inline URL is a click-to-copy target. Clicking it
+          // copies, then crossfades the URL text out and a "Copied"
+          // checkmark in (in place of the link), reverting after a
+          // short delay.
           let _urlCopyTimer = null;
-          linkEl.addEventListener('mouseenter', () => {
-            if (copyBtn.classList.contains('is-copied')) return;
-            copyBtn.classList.add('is-urlhover');
-          });
-          linkEl.addEventListener('mouseleave', () => {
-            copyBtn.classList.remove('is-urlhover');
-          });
           linkEl.addEventListener('click', (ev) => {
             ev.stopPropagation();
             if (navigator.clipboard) {
               navigator.clipboard.writeText(masterShortUrl).catch(() => {});
             }
-            copyBtn.classList.remove('is-urlhover');
-            copyBtn.classList.add('is-copied');
+            linkEl.classList.add('is-copied');
             clearTimeout(_urlCopyTimer);
             _urlCopyTimer = setTimeout(() => {
-              copyBtn.classList.remove('is-copied');
-            }, 1500);
+              linkEl.classList.remove('is-copied');
+            }, 1400);
           });
           // Close on outside click / Escape.
           document.addEventListener('click', (ev) => {

@@ -2168,16 +2168,17 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .hd-refurl[hidden] { display: none; }
 /* Non-interactive label — regular sans weight, muted, no hover
    or pointer affordance (matches the Supabase project header). */
+/* The link is a grid stack — URL text and the "Copied" confirm
+   occupy the same cell so they crossfade in place without the
+   row width jumping. */
 .hd-refurl__link {
+  display: inline-grid;
   font-family: inherit;
   font-size: var(--t-sm);
   font-weight: 400;
   color: var(--text-muted);
   text-decoration: none;
   cursor: pointer;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   max-width: 42ch;
   padding: 2px 6px;
   margin: -2px -6px;
@@ -2189,17 +2190,32 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   background: #f1f5f9;
   color: var(--text);
 }
-/* Button label/icon swap: one slot, three glyphs.
-   default → "Copy" · URL hovered → copy icon · copied → check */
-.hd-refurl__cl { display: none; }
-.hd-refurl__cl--text { display: inline; }
-.hd-refurl__cl--copy,
-.hd-refurl__cl--check { flex-shrink: 0; }
-.hd-refurl__copybtn.is-urlhover .hd-refurl__cl--text { display: none; }
-.hd-refurl__copybtn.is-urlhover .hd-refurl__cl--copy { display: inline; }
-.hd-refurl__copybtn.is-copied   .hd-refurl__cl--text,
-.hd-refurl__copybtn.is-copied   .hd-refurl__cl--copy { display: none; }
-.hd-refurl__copybtn.is-copied   .hd-refurl__cl--check { display: inline; color: #217005; }
+.hd-refurl__urltext,
+.hd-refurl__urldone {
+  grid-area: 1 / 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+.hd-refurl__urldone {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #217005;
+  font-weight: 500;
+  opacity: 0;
+  transform: translateY(2px);
+  pointer-events: none;
+}
+.hd-refurl__link.is-copied .hd-refurl__urltext {
+  opacity: 0;
+  transform: translateY(-2px);
+}
+.hd-refurl__link.is-copied .hd-refurl__urldone {
+  opacity: 1;
+  transform: translateY(0);
+}
 .hd-refurl__copywrap { position: relative; }
 .hd-refurl__copybtn {
   display: inline-flex;
