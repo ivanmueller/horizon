@@ -1974,20 +1974,24 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .hd-statpill--gray  .hd-statpill__dot { background: #94a3b8; }
 
 /* Hero metric strip — labels + numbers, no charts. Sits directly
-   below the identity row, above the body grid. */
+   below the identity row, above the body grid. Four columns
+   spread evenly across the full width with generous vertical
+   padding; divider below only. */
 .hd-herostat {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s8);
-  padding: var(--s5) 0;
-  margin-bottom: var(--s4);
-  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--s4) var(--s6);
+  padding: 0 0 var(--s6);
+  margin-bottom: var(--s8);
   border-bottom: 1px solid var(--border);
+}
+@media (max-width: 720px) {
+  .hd-herostat { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 .hd-herostat__col {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
   min-width: 0;
 }
 .hd-herostat__label {
