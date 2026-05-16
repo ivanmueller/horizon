@@ -1046,7 +1046,15 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 /* ── Utilities ────────────────────────────────────────────────── */
 .muted { color: var(--text-muted); }
 .faint { color: var(--text-faint); }
-.mono  { font-family: var(--font-mono); font-size: 0.85em; }
+.mono  {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  /* Literal codes/URLs must render verbatim: kill ligatures and
+     contextual alternates so a digit-x-digit run (e.g. "8x7" in a
+     tracking code) is never rewritten to "8×7" by the font. */
+  font-variant-ligatures: none;
+  font-feature-settings: 'calt' 0, 'liga' 0;
+}
 .hide  { display: none !important; }
 
 /* ─────────────────────────────────────────────────────────────────
