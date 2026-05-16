@@ -167,7 +167,7 @@ export async function getLinkStats(env, shortIoId, period = "total") {
 }
 
 // The tracking code IS the short-URL path: lowercase, hyphenated and
-// URL-safe by construction (htl-7x4k9-h, htl-7x4k9-e0042 — see
+// URL-safe by construction (htl-7x4k9, htl-7x4k9-e001 — see
 // PARTNERS_NAMING.md). There is no underscore↔hyphen translation
 // any more; this returns the code verbatim (lowercased defensively)
 // and exists only so call sites read intently and we keep a single

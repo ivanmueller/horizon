@@ -404,11 +404,11 @@ async function handleBookingInitiate(request, env) {
   const expiresAt = now + TTL_BOOKING * 1000;
   const bookingId = crypto.randomUUID();
 
-  // Optional employee-attribution code (htl-7x4k9-e0042 form). Same
+  // Optional employee-attribution code (htl-7x4k9-e001 form). Same
   // shape as the URL ?ref=<code> param that originates this; matched
   // against hotel_staff.tracking_code at insert time on the checkout
   // page side → /api/dashboard/record. Hotel-default codes
-  // (htl-7x4k9-h) ride through too and harmlessly fail to match any
+  // (bare htl-7x4k9) ride through too and harmlessly fail to match any
   // staff row, leaving the booking attributed to the hotel pool.
   // Lowercase-normalised defensively so a mistyped capital from a
   // hand-typed URL still attributes.
@@ -463,7 +463,7 @@ async function handleDashboardRecord(request, env) {
 
   // Parallel lookups — saves a round trip vs. sequential. Staff
   // resolution matches on the partner-controlled slug
-  // (hotel_staff.tracking_code, e.g. htl-7x4k9-e0042) rather than the
+  // (hotel_staff.tracking_code, e.g. htl-7x4k9-e001) rather than the
   // hex tracking codes Bokun used to mint.
   const [hotelRows, staffRows] = await Promise.all([
     supabaseSelect(env, `hotels?code=eq.${encodeURIComponent(hotel)}&select=id`),
@@ -482,7 +482,7 @@ async function handleDashboardRecord(request, env) {
 
   // Only attribute to staff if their hotel matches — defends against a
   // tracking-code collision between hotels. Hotel-level codes (e.g.
-  // htl-7x4k9-h) won't match any hotel_staff row and so resolve to
+  // bare htl-7x4k9) won't match any hotel_staff row and so resolve to
   // staff_id=null, which is the correct "hotel pool" attribution.
   const staffMatch = staffRows[0];
   const staffId = staffMatch && staffMatch.hotel_id === hotelId ? staffMatch.id : null;
@@ -856,12 +856,13 @@ const PREFIX_TAG = "htl-";
 const PREFIX_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789";
 const PREFIX_LENGTH = 5;
 const TRACKING_PREFIX_RE = /^htl-[a-hjkmnp-z2-9]{5}$/;
-// Full tracking code, derived from the prefix: "<prefix>-h" for the
-// hotel default, "<prefix>-eNNNN" (4-digit zero-padded) for staff.
+// Full tracking code: the bare prefix ("<prefix>") IS the hotel
+// default code; staff append "-eNNN" (3-digit zero-padded, room for
+// 999 per property — bump to 4 if a property ever needs it).
 // Lowercase + hyphen by construction, so the code IS the short-URL
 // path verbatim — there is no underscore↔hyphen translation layer
 // (see trackingCodeToShortPath). One format everywhere.
-const TRACKING_CODE_RE = /^htl-[a-hjkmnp-z2-9]{5}-(h|e\d{4})$/;
+const TRACKING_CODE_RE = /^htl-[a-hjkmnp-z2-9]{5}(-e\d{3})?$/;
 
 function generateTrackingPrefix() {
   let s = PREFIX_TAG;
@@ -989,13 +990,13 @@ async function insertHotelWithPrefix(env, row, maxAttempts = 8) {
     const candidate = {
       ...row,
       tracking_prefix: prefix,
-      // Hotel-level default — sent as tracking_code when a guest
-      // arrives via the master link with no employee ?ref=. Worker
-      // fails the staff lookup against it (no staff row matches
-      // htl-7x4k9-h), so staff_id stays null and the booking
-      // attributes to the hotel pool. Same format as the staff code
-      // htl-7x4k9-e0042 so the admin UI renders both uniformly.
-      default_tracking_code: `${prefix}-h`,
+      // Hotel-level default — the bare prefix itself, used when a
+      // guest arrives via the master link with no employee ?ref=.
+      // No staff row ever matches it (staff always carry "-eNNN"),
+      // so staff_id stays null and the booking attributes to the
+      // hotel pool. Equal to tracking_prefix by design — one ID
+      // per hotel.
+      default_tracking_code: prefix,
     };
     try {
       const inserted = await supabaseInsert(env, "hotels", [candidate], { returnRow: true });
@@ -1007,7 +1008,7 @@ async function insertHotelWithPrefix(env, row, maxAttempts = 8) {
       // admin — silent loss would leave a hotel with no QR.
       // The short path is derived from the tracking code, not the
       // hotel slug, so every short URL on the platform follows the
-      // same htl-7x4k9-h / htl-7x4k9-eNNNN format. Slugs live in the
+      // same htl-7x4k9 / htl-7x4k9-eNNN format. Slugs live in the
       // long URL only — see PARTNERS_NAMING.md.
       const { error: shortLinkWarning } = await mintShortLinkAndRecord(env, {
         shortPath: trackingCodeToShortPath(hotel.default_tracking_code),
@@ -1031,7 +1032,7 @@ async function insertHotelWithPrefix(env, row, maxAttempts = 8) {
 
 // Staff insert wrapper. Computes the next sequence_number for the
 // hotel (max + 1) and mints the tracking_code as
-// {hotel.tracking_prefix}-e{4-digit padded sequence}. The UNIQUE
+// {hotel.tracking_prefix}-e{3-digit padded sequence}. The UNIQUE
 // (hotel_id, sequence_number) index catches concurrent inserts;
 // on collision we re-read max and try again.
 async function insertStaffWithSequence(env, row, maxAttempts = 5) {
@@ -1060,7 +1061,7 @@ async function insertStaffWithSequence(env, row, maxAttempts = 5) {
     const candidate = {
       ...row,
       sequence_number: nextSeq,
-      tracking_code: `${prefix}-e${String(nextSeq).padStart(4, "0")}`,
+      tracking_code: `${prefix}-e${String(nextSeq).padStart(3, "0")}`,
     };
     try {
       const inserted = await supabaseInsert(env, "hotel_staff", [candidate], { returnRow: true });
@@ -1458,8 +1459,8 @@ async function handleAdminShortLinkCreate(request, env) {
 
   // Derive defaults — overridable by request body.
   // Both hotel and staff short paths come from the tracking code so
-  // every short URL on the platform follows the same htl-7x4k9-h /
-  // htl-7x4k9-eNNNN format. Slugs live in the long URL only — see
+  // every short URL on the platform follows the same htl-7x4k9 /
+  // htl-7x4k9-eNNN format. Slugs live in the long URL only — see
   // PARTNERS_NAMING.md.
   let shortPath = typeof body.short_path === "string" ? body.short_path.trim() : "";
   if (!shortPath) {
