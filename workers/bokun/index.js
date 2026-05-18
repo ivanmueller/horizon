@@ -2411,26 +2411,26 @@ async function handleAdminHotelConnectOnboard(hotelId, request, env) {
       // requested — hotels never charge cards, they only receive
       // platform Transfers.
       //
-      // These controller props are aligned to the LIVE Connect
-      // platform profile that was acknowledged in the Stripe
-      // dashboard (Settings → Connect → Platform setup) — they MUST
-      // match it or account creation is rejected:
-      //   fees.payer=application     ← fees_collector: application
-      //   losses.payments=application ← losses_collector: application
-      //       (Platform is responsible for losses; acknowledged in
-      //       the live profile. Clawbacks are still handled by payout
-      //       netting in our ledger, not by debiting the hotel.)
-      // Dashboard type and requirement_collection are intentionally
-      // omitted so the account inherits the platform defaults
-      // (embedded). Phase 3 only needs the account + Account Link +
-      // webhook, none of which depend on the seller dashboard type;
-      // the embedded seller portal is later-phase work.
+      // stripe_dashboard.type=express is REQUIRED here, not optional:
+      // omitting it makes Stripe default the account to the "full"
+      // dashboard (a Standard account), and a full-dashboard account
+      // rejects fees.payer=application ("not supported when creating
+      // an account with the full dashboard"). Express is also the
+      // config that successfully onboarded the first live account.
+      //
+      // fees.payer=application and losses.payments=application match
+      // the acknowledged live Connect platform profile
+      // (fees_collector / losses_collector = application — Platform
+      // responsible). losses=application is valid because the
+      // Platform loss responsibility was acknowledged in the live
+      // profile; clawbacks are still handled via payout netting.
       //
       // `type` is omitted: Stripe rejects `type` and `controller[*]`
       // together (mutually exclusive).
       const acctParams = {
         country: "CA",
         "capabilities[transfers][requested]": "true",
+        "controller[stripe_dashboard][type]": "express",
         "controller[fees][payer]": "application",
         "controller[losses][payments]": "application",
         "metadata[hotel_id]": hotel.id,
