@@ -2409,19 +2409,28 @@ async function handleAdminHotelConnectOnboard(hotelId, request, env) {
     if (!accountId) {
       // Express, transfers-only. card_payments is deliberately NOT
       // requested — hotels never charge cards, they only receive
-      // platform Transfers. controller[*] makes Horizon the platform
-      // that owns fees/losses (separate charges & transfers model).
+      // platform Transfers. This is the conventional low-burden
+      // Express recipient config:
+      //   stripe_dashboard.type=express  → Express hosted dashboard
+      //   fees.payer=application         → Horizon pays Stripe fees
+      //   losses.payments=stripe         → Stripe assumes loss
+      //       liability (recipients can't chargeback; clawbacks are
+      //       handled by payout netting, not account debits). Must
+      //       match the "Stripe" choice in the Connect platform
+      //       profile — keep these in sync.
+      //   requirement_collection=stripe  → Stripe-hosted onboarding
+      //       collects KYC (matches "Onboarding hosted by Stripe").
       //
       // `type` is intentionally omitted: Stripe's modern Accounts API
       // rejects `type` and `controller[*]` together (mutually
-      // exclusive). The Express dashboard is selected via
-      // controller[stripe_dashboard][type]=express instead.
+      // exclusive).
       const acctParams = {
         country: "CA",
         "capabilities[transfers][requested]": "true",
         "controller[stripe_dashboard][type]": "express",
         "controller[fees][payer]": "application",
-        "controller[losses][payments]": "application",
+        "controller[losses][payments]": "stripe",
+        "controller[requirement_collection]": "stripe",
         "metadata[hotel_id]": hotel.id,
         "metadata[hotel_code]": hotel.code || "",
       };
