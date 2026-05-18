@@ -485,11 +485,15 @@ async function handleDashboardRecord(request, env) {
   // (hotel_staff.tracking_code, e.g. htl-7q4k9-e001) rather than the
   // hex tracking codes Bokun used to mint.
   const [hotelRows, staffRows] = await Promise.all([
-    supabaseSelect(env, `hotels?code=eq.${encodeURIComponent(hotel)}&select=id`),
+    supabaseSelect(
+      env,
+      `hotels?code=eq.${encodeURIComponent(hotel)}` +
+        `&select=id,type,commission_pct,platform_fee_pct`,
+    ),
     trackingCode
       ? supabaseSelect(
           env,
-          `hotel_staff?tracking_code=eq.${encodeURIComponent(trackingCode)}&select=id,hotel_id`,
+          `hotel_staff?tracking_code=eq.${encodeURIComponent(trackingCode)}&select=id,hotel_id,kickback_pct`,
         )
       : Promise.resolve([]),
   ]);
@@ -533,7 +537,112 @@ async function handleDashboardRecord(request, env) {
     prefer: "resolution=ignore-duplicates,return=minimal",
   });
 
+  // Phase 2 — accrual. Best-effort and non-blocking: the customer-
+  // facing booking ledger is the critical path; an internal
+  // commission-accrual hiccup must never fail the booking record or
+  // the page's retry loop. Failures log loudly for reconciliation.
+  try {
+    await accrueCommission(env, {
+      confirmationCode: code,
+      hotel: hotelRows[0],
+      staffMatch: staffId ? staffMatch : null,
+      bookingAmount: typeof body.amount === "number" ? body.amount : null,
+      currency: typeof body.currency === "string" ? body.currency : CURRENCY,
+      tourDate: row.date,
+    });
+  } catch (err) {
+    console.error(
+      "ACCRUAL_FAILED",
+      JSON.stringify({ confirmation_code: code, error: err && err.message }),
+    );
+  }
+
   return jsonResponse({ ok: true }, 200, request);
+}
+
+// Writes exactly one commission_ledger row per booking. Idempotent:
+// keyed on booking_id with ON CONFLICT DO NOTHING, so the checkout
+// page's fire-and-forget retries (and a re-confirmed booking) never
+// double-accrue.
+//
+// Rates are SNAPSHOT here, never re-derived later: a future edit to
+// a hotel's commission_pct / platform_fee_pct or a staff member's
+// kickback_pct must not rewrite money already owed.
+//
+// Amount model (kickback hotels earn commission + the attributed
+// staff member's kickback, paid in full to the hotel which then
+// distributes internally; pool hotels earn commission only):
+//   commission_amount   = amount * (commission_pct + kickback_pct)/100
+//   platform_fee_amount = commission_amount * platform_fee_pct/100
+//   net_payable         = commission_amount - platform_fee_amount
+async function accrueCommission(env, params) {
+  const { confirmationCode, hotel, staffMatch, bookingAmount, currency, tourDate } = params;
+
+  // Resolve the canonical bookings.id (the FK + idempotency anchor).
+  // The row was just upserted; one select also covers the duplicate
+  // case (a retry finds the original row).
+  const bookingRows = await supabaseSelect(
+    env,
+    `bookings?confirmation_code=eq.${encodeURIComponent(confirmationCode)}&select=id`,
+  );
+  if (!bookingRows.length) {
+    console.error(
+      "ACCRUAL_NO_BOOKING",
+      JSON.stringify({ confirmation_code: confirmationCode }),
+    );
+    return;
+  }
+  const bookingDbId = bookingRows[0].id;
+
+  // kickback only applies to kickback-type hotels with an attributed
+  // staff member. Pool hotels / hotel-pool bookings carry none.
+  const isKickback = hotel && hotel.type === "kickback" && staffMatch;
+  const kickbackPct = isKickback && staffMatch.kickback_pct != null
+    ? Number(staffMatch.kickback_pct)
+    : null;
+  const commissionPct = hotel && hotel.commission_pct != null
+    ? Number(hotel.commission_pct)
+    : 0;
+  const platformFeePct = hotel && hotel.platform_fee_pct != null
+    ? Number(hotel.platform_fee_pct)
+    : null;
+
+  // No usable amount → record an excluded row so the booking still
+  // has a ledger entry (audit completeness) but is never paid out.
+  const hasAmount = typeof bookingAmount === "number" && bookingAmount > 0;
+
+  let commissionAmount = 0;
+  let platformFeeAmount = 0;
+  let netPayable = 0;
+  if (hasAmount) {
+    const effectivePct = commissionPct + (kickbackPct || 0);
+    commissionAmount = round2(bookingAmount * (effectivePct / 100));
+    platformFeeAmount = platformFeePct != null
+      ? round2(commissionAmount * (platformFeePct / 100))
+      : 0;
+    netPayable = round2(commissionAmount - platformFeeAmount);
+  }
+
+  const ledgerRow = {
+    booking_id:          bookingDbId,
+    hotel_id:            hotel ? hotel.id : null,
+    staff_id:            staffMatch ? staffMatch.id : null,
+    booking_amount:      hasAmount ? bookingAmount : null,
+    currency,
+    commission_pct:      commissionPct,
+    kickback_pct:        kickbackPct,
+    platform_fee_pct:    platformFeePct,
+    commission_amount:   commissionAmount,
+    platform_fee_amount: platformFeeAmount,
+    net_payable:         netPayable,
+    tour_date:           tourDate,
+    status:              hasAmount ? "accrued" : "excluded",
+  };
+
+  await supabaseRequest(env, "POST", "/commission_ledger?on_conflict=booking_id", {
+    body: [ledgerRow],
+    prefer: "resolution=ignore-duplicates,return=minimal",
+  });
 }
 
 async function handleDashboardBookings(url, env, request) {
