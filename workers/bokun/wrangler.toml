@@ -32,6 +32,14 @@ SHORT_IO_DOMAIN = "link.gowithhorizon.com"
 #   wrangler secret put BOKUN_ACCESS_KEY      # Bokun HMAC signing
 #   wrangler secret put BOKUN_SECRET_KEY      # Bokun HMAC signing
 #   wrangler secret put STRIPE_SECRET_KEY     # sk_test_... (then sk_live_... for prod)
+#   wrangler secret put STRIPE_WEBHOOK_SECRET # whsec_... — Stripe Dashboard →
+#                                              #   Developers → Webhooks → add
+#                                              #   endpoint POST /api/stripe/webhook,
+#                                              #   subscribe to account.updated.
+#                                              #   Connect onboarding/status no-ops
+#                                              #   gracefully until STRIPE_SECRET_KEY
+#                                              #   is set; the webhook 500s (logged)
+#                                              #   until this secret is set.
 #   wrangler secret put SUPABASE_SERVICE_KEY  # Supabase service_role; bypasses RLS
 #   wrangler secret put CF_PAGES_DEPLOY_HOOK  # CF Pages webhook URL for /api/admin/republish
 #   wrangler secret put SHORT_IO_API_KEY      # Short.io API key — generate at
