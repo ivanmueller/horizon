@@ -35,7 +35,9 @@ SHORT_IO_DOMAIN = "link.gowithhorizon.com"
 #   wrangler secret put STRIPE_WEBHOOK_SECRET # whsec_... — Stripe Dashboard →
 #                                              #   Developers → Webhooks → add
 #                                              #   endpoint POST /api/stripe/webhook,
-#                                              #   subscribe to account.updated.
+#                                              #   subscribe to account.updated
+#                                              #   (Phase 3) + transfer.reversed
+#                                              #   (Phase 5 payout-reversal flag).
 #                                              #   Connect onboarding/status no-ops
 #                                              #   gracefully until STRIPE_SECRET_KEY
 #                                              #   is set; the webhook 500s (logged)

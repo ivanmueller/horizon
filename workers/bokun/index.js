@@ -223,6 +223,22 @@ export default {
         return await handleAdminBookingPatch(segs[3], request, env);
       }
 
+      // ── Payouts (Phase 5) — monthly commission payout run ───────
+      // GET  /api/admin/payouts/preview?period=YYYY-MM  → dry-run plan
+      // POST /api/admin/payouts/run  { period, confirm:true, hotel_ids? }
+      // GET  /api/admin/payouts?period=YYYY-MM           → batch list
+      if (segs[0] === "api" && segs[1] === "admin" && segs[2] === "payouts") {
+        if (request.method === "GET" && segs[3] === "preview") {
+          return await handleAdminPayoutPreview(url, request, env);
+        }
+        if (request.method === "POST" && segs[3] === "run") {
+          return await handleAdminPayoutRun(request, env);
+        }
+        if (request.method === "GET" && !segs[3]) {
+          return await handleAdminPayoutsList(url, request, env);
+        }
+      }
+
       // ── Hotels CRUD ─────────────────────────────────────────────
       if (segs[0] === "api" && segs[1] === "admin" && segs[2] === "hotels") {
         if (request.method === "GET" && !segs[3])  return await handleAdminHotelsList(env, request);
@@ -1018,7 +1034,18 @@ async function reconcileLedgerForBooking(env, bookingDbId, newStatus, claims, re
     }
     if (ledger.status === "paid") {
       // Money already left the platform. Needs a payout-level
-      // clawback (Phase 5). Flag, don't mutate.
+      // clawback (Phase 5). The row's status stays 'paid' (it WAS
+      // paid — a true historical fact); we persist a durable
+      // clawback_status='pending' signal (migration 0016) so the next
+      // payout run can net net_payable out of this hotel's batch. The
+      // filter only sets it from null, so a re-fired refund event
+      // never clobbers an already-'netted' recovery.
+      await supabaseUpdate(
+        env,
+        `commission_ledger?id=eq.${encodeURIComponent(ledger.id)}` +
+          `&clawback_status=is.null`,
+        { clawback_status: "pending" },
+      );
       console.error(
         "CLAWBACK_REQUIRED",
         JSON.stringify({
@@ -2806,6 +2833,41 @@ async function handleStripeWebhook(request, env) {
           await applyConnectAccountState(env, rows[0], enabled);
         }
       }
+    } else if (event.type === "transfer.reversed") {
+      // A completed payout Transfer was reversed (Stripe-side
+      // failure, or a manual reversal). The money came back; the
+      // payout row stays factually 'paid' (it WAS sent) but we
+      // record the reversal and flag loudly for ops — auto-reversing
+      // the ledger here would race the clawback/netting model, so
+      // this is a detect-and-flag, not a mutate.
+      const tr = event.data && event.data.object;
+      if (tr && tr.id) {
+        const rows = await supabaseSelect(
+          env,
+          `payouts?stripe_transfer_id=eq.${encodeURIComponent(tr.id)}` +
+            `&select=id,status,failed_reason`,
+        );
+        if (rows.length) {
+          const reason =
+            `transfer reversed via Stripe (amount_reversed=${tr.amount_reversed ?? "?"})`;
+          await supabaseUpdate(
+            env,
+            `payouts?id=eq.${encodeURIComponent(rows[0].id)}`,
+            { failed_reason: reason },
+          );
+          await recordPayoutAudit(
+            env,
+            rows[0].id,
+            "failed_reason",
+            rows[0].failed_reason,
+            reason,
+          );
+          console.error(
+            "PAYOUT_TRANSFER_REVERSED",
+            JSON.stringify({ payout_id: rows[0].id, transfer_id: tr.id }),
+          );
+        }
+      }
     }
   } catch (err) {
     // Log and still 200 — Stripe retries 5xx, and a transient
@@ -2865,6 +2927,475 @@ async function verifyStripeSignature(payload, header, secret) {
   return match;
 }
 
+// ── Phase 5 — monthly commission payout run ────────────────────────────────
+//
+// Money-moving code. The safety model, in order:
+//
+//   1. Dry-run first.  GET .../payouts/preview computes the exact
+//      batch plan and writes NOTHING. It is the approval gate's input.
+//   2. Explicit confirm.  POST .../payouts/run requires {confirm:true};
+//      it never fires implicitly and never trusts client-supplied
+//      amounts — it recomputes everything server-side.
+//   3. Idempotent.  payouts UNIQUE(hotel_id,period) means one batch
+//      per hotel per period; the Stripe Transfer carries
+//      Idempotency-Key = payouts.id so a retried run never
+//      double-pays even if it crashed mid-flight.
+//   4. DB is the source of truth.  The run flips accrued ledger rows
+//      to 'paid' (returning the rows) and sums THOSE — never a
+//      pre-read snapshot — so a concurrent accrual can't desync the
+//      transferred amount from what was marked paid.
+//   5. Clawback netting.  A hotel's pending clawbacks (Phase 4 →
+//      migration 0016) are netted against its gross. All-or-nothing
+//      per hotel per period: gross>clawbacks ⇒ pay the difference and
+//      flip clawbacks to 'netted'; clawbacks>=gross ⇒ skip the hotel
+//      entirely, carry everything forward (a Transfer can't be
+//      negative). Conservative and trivially auditable.
+//   6. Failure reverts cleanly.  If Stripe rejects the Transfer, the
+//      batch's ledger rows revert to 'accrued' and its clawbacks
+//      revert to 'pending' so the next run retries from a clean state.
+//
+// 'YYYY-MM' period selects every still-accrued, tour-completed,
+// positive accrual with tour_date <= the last day of that month — so
+// stragglers from earlier months (e.g. a hotel that onboarded late)
+// are swept into the next batch automatically.
+
+const PERIOD_RE = /^\d{4}-\d{2}$/;
+
+// Last calendar day of a 'YYYY-MM' period, as 'YYYY-MM-DD' (UTC).
+// Day 0 of month+1 is the last day of `month`.
+function periodLastDay(period) {
+  const [y, m] = period.split("-").map(Number);
+  return new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10);
+}
+
+function recordPayoutAudit(env, payoutId, field, oldValue, newValue) {
+  return supabaseInsert(env, "payout_audit", [
+    {
+      payout_id: payoutId,
+      field,
+      old_value: oldValue == null ? null : String(oldValue),
+      new_value: newValue == null ? null : String(newValue),
+    },
+  ]).catch((err) => {
+    // Audit is best-effort: never let an audit-write hiccup wedge a
+    // money movement that already succeeded. Log loudly instead.
+    console.error("PAYOUT_AUDIT_WRITE_FAILED", String(err && err.message));
+  });
+}
+
+// Pure planner shared by preview and run. Returns a per-hotel plan
+// from the CURRENT ledger state; writes nothing.
+async function computePayoutBatch(env, period) {
+  const cutoff = periodLastDay(period);
+
+  const [accrued, clawbacks] = await Promise.all([
+    supabaseSelect(
+      env,
+      `commission_ledger?status=eq.accrued&net_payable=gt.0` +
+        `&tour_date=lte.${cutoff}` +
+        `&select=id,hotel_id,net_payable,currency`,
+    ),
+    supabaseSelect(
+      env,
+      `commission_ledger?clawback_status=eq.pending` +
+        `&select=id,hotel_id,net_payable`,
+    ),
+  ]);
+
+  const byHotel = new Map();
+  const ensure = (hid) => {
+    if (!byHotel.has(hid)) {
+      byHotel.set(hid, {
+        hotel_id: hid,
+        accrued_count: 0,
+        gross: 0,
+        clawback: 0,
+        currencies: new Set(),
+      });
+    }
+    return byHotel.get(hid);
+  };
+  for (const r of accrued) {
+    const h = ensure(r.hotel_id);
+    h.accrued_count += 1;
+    h.gross = round2(h.gross + Number(r.net_payable));
+    h.currencies.add((r.currency || "CAD").toUpperCase());
+  }
+  for (const c of clawbacks) {
+    ensure(c.hotel_id).clawback = round2(
+      ensure(c.hotel_id).clawback + Number(c.net_payable),
+    );
+  }
+  if (!byHotel.size) return [];
+
+  const ids = [...byHotel.keys()];
+  const hotels = await supabaseSelect(
+    env,
+    `hotels?id=in.(${ids.join(",")})` +
+      `&select=id,name,stripe_connect_account_id,stripe_payouts_enabled`,
+  );
+  const hmap = new Map(hotels.map((h) => [h.id, h]));
+
+  return [...byHotel.values()].map((h) => {
+    const hotel = hmap.get(h.hotel_id) || {};
+    const net = round2(h.gross - h.clawback);
+    let payable = true;
+    let skip_reason = null;
+    if (!hotel.stripe_connect_account_id || hotel.stripe_payouts_enabled !== true) {
+      payable = false;
+      skip_reason = "hotel has no payouts-enabled Stripe Connect account";
+    } else if (h.currencies.size > 1) {
+      payable = false;
+      skip_reason = `mixed currencies in batch (${[...h.currencies].join(",")})`;
+    } else if (net <= 0) {
+      payable = false;
+      skip_reason =
+        h.clawback > 0
+          ? "clawbacks meet or exceed gross — carried to next period"
+          : "nothing due";
+    }
+    return {
+      hotel_id: h.hotel_id,
+      hotel_name: hotel.name || null,
+      accrued_count: h.accrued_count,
+      gross: h.gross,
+      clawback: h.clawback,
+      net,
+      currency: [...h.currencies][0] || "CAD",
+      payable,
+      skip_reason,
+    };
+  });
+}
+
+async function handleAdminPayoutPreview(url, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const period = url.searchParams.get("period") || "";
+  if (!PERIOD_RE.test(period)) {
+    return jsonResponse({ error: "period must be YYYY-MM" }, 400, request);
+  }
+  const plan = await computePayoutBatch(env, period);
+  const payable = plan.filter((p) => p.payable);
+  return jsonResponse(
+    {
+      period,
+      dry_run: true,
+      hotels: plan,
+      totals: {
+        hotels_payable: payable.length,
+        amount_total: round2(payable.reduce((a, p) => a + p.net, 0)),
+      },
+    },
+    200,
+    request,
+  );
+}
+
+async function handleAdminPayoutsList(url, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const period = url.searchParams.get("period");
+  let q =
+    "payouts?select=id,hotel_id,period,amount_total,currency,status," +
+    "stripe_transfer_id,failed_reason,paid_at,created_at" +
+    "&order=created_at.desc";
+  if (period) {
+    if (!PERIOD_RE.test(period)) {
+      return jsonResponse({ error: "period must be YYYY-MM" }, 400, request);
+    }
+    q += `&period=eq.${period}`;
+  }
+  const rows = await supabaseSelect(env, q);
+  return jsonResponse({ payouts: rows }, 200, request);
+}
+
+async function handleAdminPayoutRun(request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!env.STRIPE_SECRET_KEY) {
+    return jsonResponse({ error: "STRIPE_SECRET_KEY not configured" }, 500, request);
+  }
+  const body = await readJson(request);
+  if (body && body.__error) {
+    return jsonResponse({ error: body.__error }, 400, request);
+  }
+  const period = String((body && body.period) || "");
+  if (!PERIOD_RE.test(period)) {
+    return jsonResponse({ error: "period must be YYYY-MM" }, 400, request);
+  }
+  // Belt-and-braces: this endpoint moves real money. It will not run
+  // without an explicit confirm, and never on a GET.
+  if (body.confirm !== true) {
+    return jsonResponse(
+      { error: "confirmation required", hint: "POST { period, confirm: true }" },
+      400,
+      request,
+    );
+  }
+  const onlyHotels =
+    Array.isArray(body.hotel_ids) && body.hotel_ids.length
+      ? new Set(body.hotel_ids.filter((x) => UUID_RE.test(x)))
+      : null;
+
+  const plan = await computePayoutBatch(env, period);
+  const cutoff = periodLastDay(period);
+  const results = [];
+
+  for (const p of plan) {
+    if (!p.payable) {
+      results.push({ ...p, outcome: "skipped" });
+      continue;
+    }
+    if (onlyHotels && !onlyHotels.has(p.hotel_id)) {
+      results.push({ ...p, outcome: "skipped", skip_reason: "not in hotel_ids filter" });
+      continue;
+    }
+
+    const hotelId = p.hotel_id;
+    try {
+      // 1. Idempotent payout row. SELECT-then-INSERT keyed on the
+      //    UNIQUE(hotel_id,period). A pre-existing paid/processing row
+      //    means a prior run already settled this batch — skip.
+      const existing = await supabaseSelect(
+        env,
+        `payouts?hotel_id=eq.${hotelId}&period=eq.${period}` +
+          `&select=id,status`,
+      );
+      let payout = existing[0] || null;
+      if (payout && (payout.status === "paid" || payout.status === "processing")) {
+        results.push({
+          ...p,
+          outcome: "already_settled",
+          payout_id: payout.id,
+        });
+        continue;
+      }
+      if (!payout) {
+        const ins = await supabaseInsert(
+          env,
+          "payouts",
+          [
+            {
+              hotel_id: hotelId,
+              period,
+              currency: p.currency,
+              status: "pending",
+              amount_total: 0,
+            },
+          ],
+          { onConflict: "hotel_id,period", returnRow: true },
+        );
+        payout = Array.isArray(ins) ? ins[0] : ins;
+      }
+      const payoutId = payout.id;
+
+      // 2. Re-check clawback feasibility against fresh sums BEFORE
+      //    mutating anything (the planner's read could be stale).
+      const [accruedNow, clawNow] = await Promise.all([
+        supabaseSelect(
+          env,
+          `commission_ledger?status=eq.accrued&net_payable=gt.0` +
+            `&tour_date=lte.${cutoff}&hotel_id=eq.${hotelId}` +
+            `&select=id,net_payable`,
+        ),
+        supabaseSelect(
+          env,
+          `commission_ledger?clawback_status=eq.pending&hotel_id=eq.${hotelId}` +
+            `&select=id,net_payable`,
+        ),
+      ]);
+      const grossNow = round2(
+        accruedNow.reduce((a, r) => a + Number(r.net_payable), 0),
+      );
+      const clawNowTotal = round2(
+        clawNow.reduce((a, r) => a + Number(r.net_payable), 0),
+      );
+      const netNow = round2(grossNow - clawNowTotal);
+      if (!accruedNow.length || netNow <= 0) {
+        // State moved under us (e.g. a reversal landed). Leave the
+        // pending payout row for the next run; nothing transferred.
+        results.push({
+          ...p,
+          outcome: "skipped",
+          skip_reason: "no positive net at execution time",
+          payout_id: payoutId,
+        });
+        continue;
+      }
+
+      // 3. Claim the rows: flip accrued → paid (returning the rows so
+      //    the transferred amount equals exactly what was marked
+      //    paid), and pending clawbacks → netted.
+      const paidRows = await supabaseUpdate(
+        env,
+        `commission_ledger?status=eq.accrued&net_payable=gt.0` +
+          `&tour_date=lte.${cutoff}&hotel_id=eq.${hotelId}`,
+        { status: "paid", payout_id: payoutId },
+        { returnRow: true },
+      );
+      const claimedGross = round2(
+        paidRows.reduce((a, r) => a + Number(r.net_payable), 0),
+      );
+      let claimedClaw = 0;
+      if (clawNow.length) {
+        const nettedRows = await supabaseUpdate(
+          env,
+          `commission_ledger?clawback_status=eq.pending&hotel_id=eq.${hotelId}`,
+          { clawback_status: "netted" },
+          { returnRow: true },
+        );
+        claimedClaw = round2(
+          nettedRows.reduce((a, r) => a + Number(r.net_payable), 0),
+        );
+      }
+      const amount = round2(claimedGross - claimedClaw);
+
+      const revertClaim = async () => {
+        await supabaseUpdate(
+          env,
+          `commission_ledger?payout_id=eq.${payoutId}`,
+          { status: "accrued", payout_id: null },
+        );
+        if (claimedClaw > 0) {
+          await supabaseUpdate(
+            env,
+            `commission_ledger?clawback_status=eq.netted&hotel_id=eq.${hotelId}`,
+            { clawback_status: "pending" },
+          );
+        }
+      };
+
+      if (amount <= 0) {
+        // Defensive — feasibility was checked, but never transfer
+        // a non-positive amount. Unwind and carry forward.
+        await revertClaim();
+        await supabaseUpdate(
+          env,
+          `payouts?id=eq.${payoutId}`,
+          { status: "failed", failed_reason: "non-positive net at claim time" },
+        );
+        results.push({
+          ...p,
+          outcome: "skipped",
+          skip_reason: "non-positive net at claim time",
+          payout_id: payoutId,
+        });
+        continue;
+      }
+
+      await supabaseUpdate(
+        env,
+        `payouts?id=eq.${payoutId}`,
+        { status: "processing", amount_total: amount },
+      );
+      await recordPayoutAudit(env, payoutId, "amount_total", "0", amount);
+      await recordPayoutAudit(env, payoutId, "status", "pending", "processing");
+
+      // 4. The Transfer. Idempotency-Key = payoutId: a retried run
+      //    (or a crash-then-retry) returns the original transfer
+      //    instead of sending a second one.
+      const hotelRow = (
+        await supabaseSelect(
+          env,
+          `hotels?id=eq.${hotelId}&select=stripe_connect_account_id`,
+        )
+      )[0];
+      try {
+        const transfer = await stripeRequest(
+          "POST",
+          "/v1/transfers",
+          {
+            amount: String(Math.round(amount * 100)),
+            currency: p.currency.toLowerCase(),
+            destination: hotelRow.stripe_connect_account_id,
+            transfer_group: `payout_${period}`,
+            "metadata[payout_id]": payoutId,
+            "metadata[hotel_id]": hotelId,
+            "metadata[period]": period,
+          },
+          env,
+          { idempotencyKey: payoutId },
+        );
+        // Stripe Transfers settle synchronously: a 200 means the
+        // money moved to the connected account's Stripe balance.
+        await supabaseUpdate(
+          env,
+          `payouts?id=eq.${payoutId}`,
+          {
+            status: "paid",
+            stripe_transfer_id: transfer.id,
+            stripe_transfer_group: `payout_${period}`,
+            paid_at: new Date().toISOString(),
+          },
+        );
+        await recordPayoutAudit(
+          env,
+          payoutId,
+          "stripe_transfer_id",
+          null,
+          transfer.id,
+        );
+        await recordPayoutAudit(env, payoutId, "status", "processing", "paid");
+        logMutation(request, auth.claims, "payout_paid", "payout", payoutId, {
+          hotel_id: hotelId,
+          period,
+          amount,
+        });
+        results.push({
+          ...p,
+          net: amount,
+          outcome: "paid",
+          payout_id: payoutId,
+          stripe_transfer_id: transfer.id,
+        });
+      } catch (stripeErr) {
+        // Transfer rejected. Revert the claim so the next run retries
+        // from a clean state, and mark the batch failed.
+        await revertClaim();
+        const reason = String(stripeErr && stripeErr.message).slice(0, 480);
+        await supabaseUpdate(
+          env,
+          `payouts?id=eq.${payoutId}`,
+          { status: "failed", failed_reason: reason },
+        );
+        await recordPayoutAudit(env, payoutId, "status", "processing", "failed");
+        await recordPayoutAudit(env, payoutId, "failed_reason", null, reason);
+        console.error(
+          "PAYOUT_TRANSFER_FAILED",
+          JSON.stringify({ payout_id: payoutId, hotel_id: hotelId, reason }),
+        );
+        results.push({
+          ...p,
+          outcome: "failed",
+          payout_id: payoutId,
+          error: reason,
+        });
+      }
+    } catch (err) {
+      console.error(
+        "PAYOUT_RUN_ERROR",
+        JSON.stringify({ hotel_id: hotelId, period, msg: String(err && err.message) }),
+      );
+      results.push({ ...p, outcome: "error", error: String(err && err.message) });
+    }
+  }
+
+  const paid = results.filter((r) => r.outcome === "paid");
+  return jsonResponse(
+    {
+      period,
+      results,
+      totals: {
+        hotels_paid: paid.length,
+        amount_paid: round2(paid.reduce((a, r) => a + r.net, 0)),
+      },
+    },
+    200,
+    request,
+  );
+}
+
 async function handleStripeSetupIntent(request, env) {
   if (!env.STRIPE_SECRET_KEY) {
     return jsonResponse({ error: "STRIPE_SECRET_KEY not configured" }, 500, request);
@@ -2911,10 +3442,15 @@ async function handleStripeSetupIntent(request, env) {
   }
 }
 
-async function stripeRequest(method, path, body, env) {
+async function stripeRequest(method, path, body, env, opts = {}) {
   const headers = {
     Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
   };
+
+  // Stripe idempotency: a retried POST carrying the same key returns
+  // the original result instead of creating a second object. The
+  // payout run passes payouts.id so a re-run never double-transfers.
+  if (opts.idempotencyKey) headers["Idempotency-Key"] = opts.idempotencyKey;
 
   let bodyStr;
   if (body) {
