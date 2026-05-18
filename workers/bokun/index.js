@@ -2411,8 +2411,12 @@ async function handleAdminHotelConnectOnboard(hotelId, request, env) {
       // requested — hotels never charge cards, they only receive
       // platform Transfers. controller[*] makes Horizon the platform
       // that owns fees/losses (separate charges & transfers model).
+      //
+      // `type` is intentionally omitted: Stripe's modern Accounts API
+      // rejects `type` and `controller[*]` together (mutually
+      // exclusive). The Express dashboard is selected via
+      // controller[stripe_dashboard][type]=express instead.
       const acctParams = {
-        type: "express",
         country: "CA",
         "capabilities[transfers][requested]": "true",
         "controller[stripe_dashboard][type]": "express",
