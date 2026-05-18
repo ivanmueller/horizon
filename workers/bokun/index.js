@@ -2409,28 +2409,30 @@ async function handleAdminHotelConnectOnboard(hotelId, request, env) {
     if (!accountId) {
       // Express, transfers-only. card_payments is deliberately NOT
       // requested — hotels never charge cards, they only receive
-      // platform Transfers. This is the conventional low-burden
-      // Express recipient config:
-      //   stripe_dashboard.type=express  → Express hosted dashboard
-      //   fees.payer=application         → Horizon pays Stripe fees
-      //   losses.payments=stripe         → Stripe assumes loss
-      //       liability (recipients can't chargeback; clawbacks are
-      //       handled by payout netting, not account debits). Must
-      //       match the "Stripe" choice in the Connect platform
-      //       profile — keep these in sync.
-      //   requirement_collection=stripe  → Stripe-hosted onboarding
-      //       collects KYC (matches "Onboarding hosted by Stripe").
+      // platform Transfers.
       //
-      // `type` is intentionally omitted: Stripe's modern Accounts API
-      // rejects `type` and `controller[*]` together (mutually
-      // exclusive).
+      // These controller props are aligned to the LIVE Connect
+      // platform profile that was acknowledged in the Stripe
+      // dashboard (Settings → Connect → Platform setup) — they MUST
+      // match it or account creation is rejected:
+      //   fees.payer=application     ← fees_collector: application
+      //   losses.payments=application ← losses_collector: application
+      //       (Platform is responsible for losses; acknowledged in
+      //       the live profile. Clawbacks are still handled by payout
+      //       netting in our ledger, not by debiting the hotel.)
+      // Dashboard type and requirement_collection are intentionally
+      // omitted so the account inherits the platform defaults
+      // (embedded). Phase 3 only needs the account + Account Link +
+      // webhook, none of which depend on the seller dashboard type;
+      // the embedded seller portal is later-phase work.
+      //
+      // `type` is omitted: Stripe rejects `type` and `controller[*]`
+      // together (mutually exclusive).
       const acctParams = {
         country: "CA",
         "capabilities[transfers][requested]": "true",
-        "controller[stripe_dashboard][type]": "express",
         "controller[fees][payer]": "application",
-        "controller[losses][payments]": "stripe",
-        "controller[requirement_collection]": "stripe",
+        "controller[losses][payments]": "application",
         "metadata[hotel_id]": hotel.id,
         "metadata[hotel_code]": hotel.code || "",
       };
