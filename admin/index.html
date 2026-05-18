@@ -3734,7 +3734,11 @@
       // real CTA card (vs. a quiet empty state). Updates the existing
       // node from the route HTML; the button wires below.
       const payoutsBody = els.container.querySelector('#hdPayoutsBody');
-      const stripeConnected = !!h.stripe_account_id && (h.stripe_status === 'connected' || h.stripe_status === 'active');
+      // Phase 3: real Stripe Connect columns. "Connected" (and the
+      // Verified badge / payable gating) means Stripe has confirmed
+      // payouts are enabled — never asserted by the client.
+      const stripeAcct = h.stripe_connect_account_id || null;
+      const stripeConnected = !!stripeAcct && h.stripe_payouts_enabled === true;
       if (payoutsBody && !stripeConnected) {
         payoutsBody.innerHTML = '<div class="hd-empty">Stripe Connect not configured</div>';
       } else if (payoutsBody && stripeConnected) {
@@ -3756,33 +3760,100 @@
       const bankTag    = els.container.querySelector('#hdBankingTag');
       if (bankCard && bankToggle && bankBody && bankTag) {
         const bankCopyIcon = '<svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+        const bankRow = (label, valueHtml) =>
+          '<div class="hd-side__row"><dt class="hd-side__label">' + label + '</dt>' +
+          '<dd class="hd-side__value">' + valueHtml + '</dd></div>';
+        const acctIdHtml = (acct) =>
+          '<button type="button" class="hd-copy hd-copy--id mono" data-copy="' + escapeHtml(acct) + '" title="Copy account ID">' +
+            '<span data-detail-text>' + escapeHtml(acct) + '</span>' + bankCopyIcon + '</button>';
+
+        // Three honest states:
+        //   no account            → Not connected (amber) + Connect CTA
+        //   account, !payouts      → In review (amber) + Continue setup
+        //   payouts_enabled        → Verified (green) + account details
         if (stripeConnected) {
-          // Same pill component as the hotel-title status (hd-statpill),
-          // not bk-pill — visually identical to the header badge.
           bankTag.className = 'hd-bank__tag hd-statpill hd-statpill--green';
           bankTag.textContent = 'Verified';
-          const acct = h.stripe_account_id || '—';
-          const bankRow = (label, valueHtml) =>
-            '<div class="hd-side__row"><dt class="hd-side__label">' + label + '</dt>' +
-            '<dd class="hd-side__value">' + valueHtml + '</dd></div>';
           bankBody.innerHTML =
             '<dl class="hd-side__list">' +
-              bankRow('Connection', '<span class="hd-bank__live"><span class="hd-bank__dot"></span>Connected</span>') +
-              bankRow('Account ID',
-                '<button type="button" class="hd-copy hd-copy--id mono" data-copy="' + escapeHtml(acct) + '" title="Copy account ID">' +
-                  '<span data-detail-text>' + escapeHtml(acct) + '</span>' + bankCopyIcon + '</button>') +
-              bankRow('Payout schedule', escapeHtml(h.payout_schedule || '—')) +
-              bankRow('Next payout', escapeHtml(h.next_payout_date ? (formatHumanDate(h.next_payout_date) || '—') : '—')) +
-              bankRow('Pending', escapeHtml(h.pending_payout != null ? formatHotelMoney(h.pending_payout, currency) : '—')) +
-              bankRow('Bank account', h.bank_account_last4
-                ? '<span class="mono">•••• ' + escapeHtml(String(h.bank_account_last4)) + '</span>'
-                : '—') +
-            '</dl>';
+              bankRow('Connection', '<span class="hd-bank__live"><span class="hd-bank__dot"></span>Payouts enabled</span>') +
+              bankRow('Account ID', acctIdHtml(stripeAcct || '—')) +
+              bankRow('Verified on', escapeHtml(h.stripe_onboarded_at ? (formatHumanDate((h.stripe_onboarded_at || '').slice(0, 10)) || '—') : '—')) +
+            '</dl>' +
+            '<div class="hd-bank__actions"><button type="button" class="btn btn--ghost btn--sm" id="hdConnectRefresh">Refresh status</button></div>';
+        } else if (stripeAcct) {
+          bankTag.className = 'hd-bank__tag hd-statpill hd-statpill--amber';
+          bankTag.textContent = 'In review';
+          bankBody.innerHTML =
+            '<dl class="hd-side__list">' +
+              bankRow('Connection', '<span class="hd-bank__live"><span class="hd-bank__dot"></span>Onboarding incomplete</span>') +
+              bankRow('Account ID', acctIdHtml(stripeAcct)) +
+            '</dl>' +
+            '<p class="hd-bank__hint">The hotel hasn\'t finished Stripe\'s verification. Send them the link again or refresh once they\'re done.</p>' +
+            '<div class="hd-bank__actions">' +
+              '<button type="button" class="btn btn--primary btn--sm" id="hdConnectOnboard">Continue setup</button>' +
+              '<button type="button" class="btn btn--ghost btn--sm" id="hdConnectRefresh">Refresh status</button>' +
+            '</div>';
         } else {
           bankTag.className = 'hd-bank__tag hd-statpill hd-statpill--amber';
-          bankTag.textContent = 'Pending';
-          bankBody.innerHTML = '<div class="hd-empty">Stripe Connect not configured</div>';
+          bankTag.textContent = 'Not connected';
+          bankBody.innerHTML =
+            '<p class="hd-bank__hint">No bank account connected. Generate a Stripe onboarding link and send it to the hotel — they enter their banking details on Stripe\'s secure form.</p>' +
+            '<div class="hd-bank__actions"><button type="button" class="btn btn--primary btn--sm" id="hdConnectOnboard">Connect bank account</button></div>';
         }
+
+        const onboardBtn = bankBody.querySelector('#hdConnectOnboard');
+        if (onboardBtn) {
+          onboardBtn.onclick = async () => {
+            onboardBtn.disabled = true;
+            onboardBtn.textContent = 'Generating link…';
+            try {
+              const res = await fetch(BOKUN_API_BASE + '/api/admin/hotels/' + encodeURIComponent(h.id) + '/connect/onboard', {
+                method: 'POST',
+                headers: { Authorization: 'Bearer ' + session.access_token },
+              });
+              const data = await res.json();
+              if (!res.ok || !data.url) throw new Error((data && data.message) || (data && data.error) || 'onboard_failed');
+              // Open Stripe-hosted onboarding in a new tab; admin sends
+              // this URL to the hotel (or completes it for sandbox tests).
+              window.open(data.url, '_blank', 'noopener');
+              bankBody.innerHTML =
+                '<p class="hd-bank__hint">Onboarding link opened in a new tab. Use <strong>Copy link</strong> to send it to the hotel. Once they finish Stripe\'s form, click <strong>Refresh status</strong>.</p>' +
+                '<div class="hd-bank__actions">' +
+                  '<button type="button" class="btn btn--ghost btn--sm" id="hdConnectCopy">Copy link</button>' +
+                  '<button type="button" class="btn btn--ghost btn--sm" id="hdConnectRefresh2">Refresh status</button>' +
+                '</div>';
+              const copyBtn = bankBody.querySelector('#hdConnectCopy');
+              if (copyBtn) copyBtn.onclick = () => {
+                if (navigator.clipboard) navigator.clipboard.writeText(data.url);
+                copyBtn.textContent = 'Copied';
+              };
+              const r2 = bankBody.querySelector('#hdConnectRefresh2');
+              if (r2) r2.onclick = () => refreshConnect();
+            } catch (err) {
+              onboardBtn.disabled = false;
+              onboardBtn.textContent = 'Connect bank account';
+              alert('Could not start onboarding: ' + (err && err.message || err));
+            }
+          };
+        }
+        const refreshConnect = async () => {
+          try {
+            const res = await fetch(BOKUN_API_BASE + '/api/admin/hotels/' + encodeURIComponent(h.id) + '/connect/status', {
+              headers: { Authorization: 'Bearer ' + session.access_token },
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error((data && data.message) || (data && data.error) || 'status_failed');
+            // Reload so every Connect-derived surface (badge, payouts
+            // card, hero stat) re-renders from the reconciled columns.
+            location.reload();
+          } catch (err) {
+            alert('Could not refresh status: ' + (err && err.message || err));
+          }
+        };
+        const refreshBtn = bankBody.querySelector('#hdConnectRefresh');
+        if (refreshBtn) refreshBtn.onclick = refreshConnect;
+
         const setBankOpen = (open) => {
           bankBody.hidden = !open;
           bankCard.classList.toggle('is-open', open);

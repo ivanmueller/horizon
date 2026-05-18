@@ -159,6 +159,14 @@ export default {
       if (
         request.method === "POST" &&
         segs[0] === "api" &&
+        segs[1] === "stripe" &&
+        segs[2] === "webhook"
+      ) {
+        return await handleStripeWebhook(request, env);
+      }
+      if (
+        request.method === "POST" &&
+        segs[0] === "api" &&
         segs[1] === "booking" &&
         segs[2] === "initiate"
       ) {
@@ -224,6 +232,17 @@ export default {
         // GET /api/admin/hotels/:id/short-links
         if (request.method === "GET" && segs[3] && segs[4] === "short-links") {
           return await handleAdminHotelShortLinksList(segs[3], request, env);
+        }
+        // Stripe Connect — bank-account onboarding for payouts.
+        // POST /api/admin/hotels/:id/connect/onboard → { url, account_id }
+        // GET  /api/admin/hotels/:id/connect/status  → live status
+        if (segs[3] && segs[4] === "connect") {
+          if (request.method === "POST" && segs[5] === "onboard") {
+            return await handleAdminHotelConnectOnboard(segs[3], request, env);
+          }
+          if (request.method === "GET" && segs[5] === "status") {
+            return await handleAdminHotelConnectStatus(segs[3], request, env);
+          }
         }
       }
 
@@ -828,6 +847,7 @@ const HOTEL_FIELDS =
   "tracking_prefix,commission_pct,kickback_pool_pct,notes,created_at,updated_at," +
   "contract_start_date,property_type,star_rating,country," +
   "platform_fee_pct," +
+  "stripe_connect_account_id,stripe_payouts_enabled,stripe_onboarded_at," +
   "address,phone,primary_contact_name,primary_contact_email,website";
 const STAFF_FIELDS =
   "id,hotel_id,name,tracking_code,sequence_number,kickback_pct," +
@@ -2351,6 +2371,267 @@ async function handleBookingState(id, env, request) {
 // Returns { clientSecret, customerId, setupIntentId } — the page uses
 // clientSecret to mount Stripe Elements, then submits the resulting pm_xxx
 // to /api/checkout/submit as paymentToken.token.
+// ── Stripe Connect — hotel bank-account onboarding (Phase 3) ──────────────
+// Hotels receive referral commission via a Stripe Express
+// (transfers-only) connected account. They never take card payments;
+// Horizon is merchant of record and later Transfers the net commission
+// to this account. Bank details are collected by Stripe's hosted
+// onboarding form behind an Account Link — never by us (KYC: Stripe
+// won't let the API pre-fill bank/identity data, by design).
+//
+// The "verified" badge on the hotel profile is driven solely by
+// stripe_payouts_enabled, which is only ever set by Stripe itself —
+// the account.updated webhook, or an on-demand status refresh that
+// re-reads the account. A client can never assert it.
+
+// Resolve the hotel and (if needed) create the Express account, then
+// return a fresh Stripe-hosted onboarding URL. Idempotent: re-running
+// reuses the existing account and just mints a new link, so "refresh
+// an expired link" is simply clicking the button again.
+async function handleAdminHotelConnectOnboard(hotelId, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(hotelId)) return jsonResponse({ error: "invalid hotel id" }, 400, request);
+  if (!env.STRIPE_SECRET_KEY) {
+    return jsonResponse({ error: "STRIPE_SECRET_KEY not configured" }, 500, request);
+  }
+
+  const rows = await supabaseSelect(
+    env,
+    `hotels?id=eq.${encodeURIComponent(hotelId)}` +
+      `&select=id,code,name,primary_contact_email,stripe_connect_account_id`,
+  );
+  if (!rows.length) return jsonResponse({ error: "hotel not found" }, 404, request);
+  const hotel = rows[0];
+
+  let accountId = hotel.stripe_connect_account_id;
+  try {
+    if (!accountId) {
+      // Express, transfers-only. card_payments is deliberately NOT
+      // requested — hotels never charge cards, they only receive
+      // platform Transfers. controller[*] makes Horizon the platform
+      // that owns fees/losses (separate charges & transfers model).
+      const acctParams = {
+        type: "express",
+        country: "CA",
+        "capabilities[transfers][requested]": "true",
+        "controller[stripe_dashboard][type]": "express",
+        "controller[fees][payer]": "application",
+        "controller[losses][payments]": "application",
+        "metadata[hotel_id]": hotel.id,
+        "metadata[hotel_code]": hotel.code || "",
+      };
+      if (hotel.primary_contact_email) acctParams.email = hotel.primary_contact_email;
+      const account = await stripeRequest("POST", "/v1/accounts", acctParams, env);
+      accountId = account.id;
+      await supabaseUpdate(
+        env,
+        `hotels?id=eq.${encodeURIComponent(hotelId)}`,
+        { stripe_connect_account_id: accountId },
+      );
+    }
+
+    const base = (env.PUBLIC_SITE_BASE || "https://gowithhorizon.com").replace(/\/$/, "");
+    const link = await stripeRequest(
+      "POST",
+      "/v1/account_links",
+      {
+        account: accountId,
+        // Account Links are short-lived & single-use. Both routes are
+        // simple static status pages; re-minting is an admin re-click.
+        refresh_url: `${base}/connect/refresh/?h=${encodeURIComponent(hotelId)}`,
+        return_url: `${base}/connect/return/?h=${encodeURIComponent(hotelId)}`,
+        type: "account_onboarding",
+      },
+      env,
+    );
+
+    logMutation(request, auth.claims, "connect_onboard", "hotel", hotelId, {
+      account_id: accountId,
+    });
+    return jsonResponse({ url: link.url, account_id: accountId }, 200, request);
+  } catch (err) {
+    console.error("Stripe Connect onboard error:", err.stack || err);
+    return jsonResponse(
+      { error: "stripe", message: err.message || "Could not start onboarding" },
+      502,
+      request,
+    );
+  }
+}
+
+// Re-read the Stripe account and reconcile stripe_payouts_enabled.
+// Lets an admin force a status check without waiting for the webhook
+// (useful before webhooks are wired in sandbox, and as a manual
+// "refresh" affordance in the profile).
+async function handleAdminHotelConnectStatus(hotelId, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(hotelId)) return jsonResponse({ error: "invalid hotel id" }, 400, request);
+  if (!env.STRIPE_SECRET_KEY) {
+    return jsonResponse({ error: "STRIPE_SECRET_KEY not configured" }, 500, request);
+  }
+
+  const rows = await supabaseSelect(
+    env,
+    `hotels?id=eq.${encodeURIComponent(hotelId)}` +
+      `&select=id,stripe_connect_account_id,stripe_payouts_enabled,stripe_onboarded_at`,
+  );
+  if (!rows.length) return jsonResponse({ error: "hotel not found" }, 404, request);
+  const hotel = rows[0];
+  if (!hotel.stripe_connect_account_id) {
+    return jsonResponse({ connected: false, payouts_enabled: false }, 200, request);
+  }
+
+  try {
+    const account = await stripeRequest(
+      "GET",
+      `/v1/accounts/${encodeURIComponent(hotel.stripe_connect_account_id)}`,
+      null,
+      env,
+    );
+    const enabled = Boolean(account.payouts_enabled && account.details_submitted);
+    await applyConnectAccountState(env, hotel, enabled);
+    return jsonResponse(
+      {
+        connected: true,
+        payouts_enabled: enabled,
+        account_id: hotel.stripe_connect_account_id,
+        requirements_due:
+          (account.requirements && account.requirements.currently_due) || [],
+      },
+      200,
+      request,
+    );
+  } catch (err) {
+    console.error("Stripe Connect status error:", err.stack || err);
+    return jsonResponse(
+      { error: "stripe", message: err.message || "Could not fetch account" },
+      502,
+      request,
+    );
+  }
+}
+
+// Persist a payouts-enabled transition. Sets stripe_onboarded_at the
+// first time the account goes live and never clears it (it's a
+// historical "first verified" marker, not a live mirror). No-ops when
+// the state already matches so we don't churn updated_at.
+async function applyConnectAccountState(env, hotel, enabled) {
+  if (Boolean(hotel.stripe_payouts_enabled) === Boolean(enabled)) return;
+  const patch = { stripe_payouts_enabled: enabled };
+  if (enabled && !hotel.stripe_onboarded_at) {
+    patch.stripe_onboarded_at = new Date().toISOString();
+  }
+  await supabaseUpdate(
+    env,
+    `hotels?id=eq.${encodeURIComponent(hotel.id)}`,
+    patch,
+  );
+  console.log(
+    "CONNECT_STATE_CHANGE",
+    JSON.stringify({ hotel_id: hotel.id, payouts_enabled: enabled }),
+  );
+}
+
+// Stripe webhook. Verifies the `stripe-signature` header (HMAC-SHA256
+// over `${t}.${rawBody}` with STRIPE_WEBHOOK_SECRET) before trusting
+// anything. Handles account.updated to flip stripe_payouts_enabled.
+// Always 200s on a valid-but-unhandled event so Stripe doesn't retry;
+// 400 only on a signature failure.
+async function handleStripeWebhook(request, env) {
+  if (!env.STRIPE_WEBHOOK_SECRET) {
+    console.error("Stripe webhook hit but STRIPE_WEBHOOK_SECRET unset");
+    return new Response("webhook not configured", { status: 500 });
+  }
+  const sig = request.headers.get("stripe-signature") || "";
+  const raw = await request.text();
+
+  const ok = await verifyStripeSignature(raw, sig, env.STRIPE_WEBHOOK_SECRET);
+  if (!ok) {
+    return new Response("bad signature", { status: 400 });
+  }
+
+  let event;
+  try {
+    event = JSON.parse(raw);
+  } catch {
+    return new Response("bad json", { status: 400 });
+  }
+
+  try {
+    if (event.type === "account.updated") {
+      const account = event.data && event.data.object;
+      if (account && account.id) {
+        const rows = await supabaseSelect(
+          env,
+          `hotels?stripe_connect_account_id=eq.${encodeURIComponent(account.id)}` +
+            `&select=id,stripe_payouts_enabled,stripe_onboarded_at`,
+        );
+        if (rows.length) {
+          const enabled = Boolean(account.payouts_enabled && account.details_submitted);
+          await applyConnectAccountState(env, rows[0], enabled);
+        }
+      }
+    }
+  } catch (err) {
+    // Log and still 200 — Stripe retries 5xx, and a transient
+    // Supabase blip shouldn't wedge the webhook. The status refresh
+    // endpoint is the reconciliation backstop.
+    console.error("Stripe webhook handling error:", err.stack || err);
+  }
+  return new Response(JSON.stringify({ received: true }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+// Constant-time-ish HMAC-SHA256 verification of Stripe's signature
+// header. Format: "t=<ts>,v1=<hexsig>[,v1=<hexsig>...]". We accept if
+// any v1 matches HMAC(secret, `${t}.${payload}`). Timestamp tolerance
+// is intentionally loose (10 min) — replay protection beyond signature
+// validity isn't load-bearing for account.updated.
+async function verifyStripeSignature(payload, header, secret) {
+  if (!header) return false;
+  let t = null;
+  const v1 = [];
+  for (const part of header.split(",")) {
+    const [k, val] = part.split("=");
+    if (k === "t") t = val;
+    else if (k === "v1") v1.push(val);
+  }
+  if (!t || !v1.length) return false;
+  if (Math.abs(Math.floor(Date.now() / 1000) - Number(t)) > 600) return false;
+
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const mac = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(`${t}.${payload}`),
+  );
+  const expected = [...new Uint8Array(mac)]
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  // Length-safe compare across all provided v1 candidates.
+  let match = false;
+  for (const cand of v1) {
+    if (cand.length === expected.length) {
+      let diff = 0;
+      for (let i = 0; i < expected.length; i++) {
+        diff |= cand.charCodeAt(i) ^ expected.charCodeAt(i);
+      }
+      if (diff === 0) match = true;
+    }
+  }
+  return match;
+}
+
 async function handleStripeSetupIntent(request, env) {
   if (!env.STRIPE_SECRET_KEY) {
     return jsonResponse({ error: "STRIPE_SECRET_KEY not configured" }, 500, request);
