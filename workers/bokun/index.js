@@ -943,7 +943,116 @@ async function handleAdminBookingPatch(id, request, env) {
   }
 
   logMutation(request, auth.claims, "update", "booking", id, { status });
-  return jsonResponse({ ok: true, booking: updated[0] }, 200, request);
+
+  // Phase 4 — reconcile the commission accrual with the new booking
+  // status. Non-blocking: the admin's status change must succeed even
+  // if ledger reconciliation hiccups; failures log loudly and surface
+  // as a warning so they're recoverable.
+  let ledgerWarning = null;
+  try {
+    ledgerWarning = await reconcileLedgerForBooking(env, id, status, auth.claims, request);
+  } catch (err) {
+    console.error(
+      "LEDGER_RECONCILE_FAILED",
+      JSON.stringify({ booking_id: id, status, error: err && err.message }),
+    );
+    ledgerWarning = "commission ledger reconciliation failed — see logs";
+  }
+
+  const payload = { ok: true, booking: updated[0] };
+  if (ledgerWarning) payload.ledger_warning = ledgerWarning;
+  return jsonResponse(payload, 200, request);
+}
+
+// Keeps commission_ledger consistent with a booking's status.
+//
+// Design note — commission_ledger.booking_id is UNIQUE (one accrual
+// per booking), so a refund cannot be modelled as a second negative
+// row. That's intentional: payouts only run AFTER the tour date /
+// refund window closes (Phase 5 eligibility), so a normal refund
+// happens while the row is still 'accrued' and is handled by a clean
+// status flip. The only way to reach 'paid' then refund is an
+// exceptional out-of-band refund or chargeback — that needs a
+// payout-level clawback (netting against the next batch), which is
+// Phase 5's concern. Here we DETECT and loudly flag it rather than
+// write schema-violating half-correct data.
+//
+// Transitions (idempotent — repeat calls with the same status no-op):
+//   cancelled|refunded|pending_refund:
+//     accrued  → reversed   (won't be paid)
+//     paid     → flag CLAWBACK_REQUIRED, leave row intact
+//     reversed|excluded → no-op
+//   confirmed (reinstatement of an unpaid obligation):
+//     reversed → accrued
+//     other    → no-op
+async function reconcileLedgerForBooking(env, bookingDbId, newStatus, claims, request) {
+  const rows = await supabaseSelect(
+    env,
+    `commission_ledger?booking_id=eq.${encodeURIComponent(bookingDbId)}` +
+      `&select=id,status,net_payable,payout_id`,
+  );
+  if (!rows.length) return null; // pre-Phase-2 booking, or never accrued
+  const ledger = rows[0];
+
+  const isReversing =
+    newStatus === "cancelled" ||
+    newStatus === "refunded" ||
+    newStatus === "pending_refund";
+
+  if (isReversing) {
+    if (ledger.status === "accrued") {
+      await supabaseUpdate(
+        env,
+        `commission_ledger?id=eq.${encodeURIComponent(ledger.id)}`,
+        { status: "reversed" },
+      );
+      logMutation(
+        request,
+        claims,
+        "reverse",
+        "commission_ledger",
+        ledger.id,
+        { booking_id: bookingDbId, reason: newStatus },
+      );
+      return null;
+    }
+    if (ledger.status === "paid") {
+      // Money already left the platform. Needs a payout-level
+      // clawback (Phase 5). Flag, don't mutate.
+      console.error(
+        "CLAWBACK_REQUIRED",
+        JSON.stringify({
+          booking_id: bookingDbId,
+          ledger_id: ledger.id,
+          payout_id: ledger.payout_id,
+          net_payable: ledger.net_payable,
+          new_status: newStatus,
+        }),
+      );
+      return (
+        "booking was already paid out — a clawback is required and has " +
+        "been flagged for the next payout reconciliation"
+      );
+    }
+    return null; // reversed/excluded — already handled
+  }
+
+  if (newStatus === "confirmed" && ledger.status === "reversed") {
+    await supabaseUpdate(
+      env,
+      `commission_ledger?id=eq.${encodeURIComponent(ledger.id)}`,
+      { status: "accrued" },
+    );
+    logMutation(
+      request,
+      claims,
+      "reinstate",
+      "commission_ledger",
+      ledger.id,
+      { booking_id: bookingDbId },
+    );
+  }
+  return null;
 }
 
 // ── Hotels / staff / managers CRUD (/admin/hotels/) ────────────────────────
