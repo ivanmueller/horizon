@@ -1801,7 +1801,36 @@
     });
 
     /* ── Bookings route ──────────────────────────────────── */
-    const BOKUN_API_BASE = 'https://horizon-bokun.ivan-mueller02.workers.dev';
+    // Environment targeting. Defaults HARD to production. Staging is
+    // opt-in via ?env=staging (persisted per-tab in sessionStorage)
+    // and is an ALLOWLIST — never an arbitrary URL, so this can't be
+    // turned into an open redirect / SSRF lever. A fixed banner makes
+    // staging unmistakable so no one operates against it thinking
+    // it's prod. Normal users never pass ?env and see zero change.
+    const API_ENVS = {
+      production: 'https://horizon-bokun.ivan-mueller02.workers.dev',
+      staging:    'https://horizon-bokun-staging.ivan-mueller02.workers.dev',
+    };
+    (function () {
+      const p = new URLSearchParams(location.search).get('env');
+      if (p === 'production' || p === 'staging') {
+        try { sessionStorage.setItem('horizonApiEnv', p); } catch (e) {}
+      }
+    })();
+    let _apiEnv = 'production';
+    try {
+      if (sessionStorage.getItem('horizonApiEnv') === 'staging') _apiEnv = 'staging';
+    } catch (e) {}
+    const BOKUN_API_BASE = API_ENVS[_apiEnv];
+    if (_apiEnv !== 'production') {
+      const _b = document.createElement('div');
+      _b.textContent = 'STAGING — test environment · not live data · ?env=production to exit';
+      _b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:2147483647;background:#B45309;color:#fff;font:600 13px/2.4 system-ui,-apple-system,sans-serif;text-align:center;letter-spacing:.04em;';
+      (document.body
+        ? Promise.resolve()
+        : new Promise(function (r) { document.addEventListener('DOMContentLoaded', r); })
+      ).then(function () { document.body.appendChild(_b); });
+    }
 
     /* ── QR code helpers ─────────────────────────────────── */
     // Returns a configured QRCodeStyling instance. Does NOT append to DOM —
