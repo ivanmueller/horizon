@@ -3883,21 +3883,27 @@
               const copyTitle = sl ? 'Copy short link' : 'Copy placement code';
               const deployedDate = p.deployed_at
                 ? String(p.deployed_at).slice(0, 10) : '';
-              const actCell = (p.status === 'retired')
-                ? '<td class="hd-links__act-cell">' +
-                    '<button type="button" class="sl-act-btn" data-pl-edit="1"' +
-                      ' data-pl-id="' + escapeHtml(p.id) + '"' +
-                      ' aria-label="Edit placement">Edit</button>' +
-                  '</td>'
-                : '<td class="hd-links__act-cell">' +
-                    '<button type="button" class="sl-act-btn" data-pl-edit="1"' +
-                      ' data-pl-id="' + escapeHtml(p.id) + '"' +
-                      ' aria-label="Edit placement">Edit</button>' +
-                    '<button type="button" class="sl-act-btn sl-act-btn--danger"' +
-                      ' data-pl-retire="1" data-pl-id="' + escapeHtml(p.id) + '"' +
-                      ' data-pl-name="' + escapeHtml(p.name || '') + '"' +
-                      ' aria-label="Retire placement">Retire</button>' +
-                  '</td>';
+              const plEditIcon =
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+              const plTrashIcon =
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
+              const editBtnHtml =
+                '<button type="button" class="pl-act pl-act--edit" data-pl-edit="1"' +
+                  ' data-pl-id="' + escapeHtml(p.id) + '"' +
+                  ' title="Edit" aria-label="Edit placement">' + plEditIcon + '</button>';
+              const retireBtnHtml = (p.status === 'retired') ? '' :
+                '<button type="button" class="pl-act pl-act--retire" data-pl-retire="1"' +
+                  ' data-pl-id="' + escapeHtml(p.id) + '"' +
+                  ' data-pl-name="' + escapeHtml(p.name || '') + '"' +
+                  ' title="Retire" aria-label="Retire placement">' + plTrashIcon + '</button>';
+              const actCell =
+                '<td class="hd-links__act-cell">' +
+                  '<div class="pl-actions">' +
+                    editBtnHtml + retireBtnHtml +
+                    '<button type="button" class="pl-act pl-act--menu" data-pl-menu="1"' +
+                      ' aria-label="Placement actions" aria-haspopup="true">⋯</button>' +
+                  '</div>' +
+                '</td>';
               return (
                 '<tr data-placement-row="' + escapeHtml(p.id) + '"' +
                   ' data-pl-type="' + escapeHtml(p.placement_type || '') + '"' +
@@ -4900,6 +4906,13 @@
           const retireBtn = e.target.closest('[data-pl-retire]');
           if (retireBtn) {
             retirePlacement(retireBtn.dataset.plId, retireBtn.dataset.plName);
+            return;
+          }
+          // Touch / no-hover fallback: the kebab toggles the cluster.
+          const menuBtn = e.target.closest('[data-pl-menu]');
+          if (menuBtn) {
+            const grp = menuBtn.closest('.pl-actions');
+            if (grp) grp.classList.toggle('pl-actions--open');
           }
         });
       }
