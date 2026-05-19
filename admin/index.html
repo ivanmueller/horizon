@@ -625,8 +625,8 @@
       .limit(1)
       .maybeSingle();
     if (!adminCheck.data) {
-      window.location.replace(connectUrl('/dashboard/hotel/'));
-      throw new Error('redirecting to /dashboard/hotel/');
+      window.location.replace(connectUrl('/'));
+      throw new Error('redirecting to the partner portal');
     }
 
     if (window.location.hash && window.location.hash.indexOf('access_token=') !== -1) {

@@ -4,15 +4,18 @@ Two surfaces, one sign-in flow, two allowlists:
 
 | Surface | Host (canonical) | Who | Allowlist table |
 |---|---|---|---|
-| Partner portal | `connect.gowithhorizon.com/dashboard/hotel/` | Hotel managers | `hotel_users` |
+| Partner portal | `connect.gowithhorizon.com/` | Hotel managers | `hotel_users` |
 | Ops console | `admin.gowithhorizon.com/` | Horizon team | `horizon_admins` |
 
-> **Hosts.** The Connect/admin subdomain split is live. The hotel
-> portal and the shared login live on **`connect.gowithhorizon.com`**;
-> the internal ops console is **rooted** at `admin.gowithhorizon.com`
-> (no `/admin/` prefix — `admin.gowithhorizon.com/hotels/`, not
-> `/admin/hotels/`). Old `gowithhorizon.com/admin/*` and
-> `gowithhorizon.com/dashboard/*` URLs 301 to the new hosts, so the
+> **Hosts.** The Connect/admin subdomain split is live. The shared
+> login lives on **`connect.gowithhorizon.com`**, where the hotel
+> portal is **rooted** at `connect.gowithhorizon.com/` (not
+> `/dashboard/hotel/`; `/dashboard/login|setup|otp/` stay under
+> `/dashboard/`). The internal ops console is **rooted** at
+> `admin.gowithhorizon.com/` (no `/admin/` prefix —
+> `admin.gowithhorizon.com/hotels/`, not `/admin/hotels/`). Old
+> `gowithhorizon.com/admin/*` and `gowithhorizon.com/dashboard/*`
+> URLs (including `/dashboard/hotel/`) 301 to the new hosts, so the
 > `/admin/…` and `/dashboard/…` path shorthand used elsewhere in this
 > doc still resolves — it just redirects. The session cookie is scoped
 > to `.gowithhorizon.com`, so one sign-in covers both subdomains.

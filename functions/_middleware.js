@@ -66,11 +66,8 @@ export async function onRequest(context) {
     return env.ASSETS.fetch(new URL('/admin/index.html', url.origin));
   }
 
-  // ── Hotel partner portal host ──────────────────────────────────────
+  // ── Hotel partner portal host (served at root) ─────────────────────
   if (host === 'connect.gowithhorizon.com') {
-    if (url.pathname === '/') {
-      return Response.redirect(CONNECT_ORIGIN + '/dashboard/login/', 302);
-    }
     // The ops console doesn't belong here — send it to the admin host,
     // dropping the legacy /admin prefix so the user lands on the clean
     // rooted URL directly.
@@ -79,6 +76,17 @@ export async function onRequest(context) {
         ADMIN_ORIGIN + stripAdminPrefix(url.pathname) + url.search,
         301,
       );
+    }
+    // Legacy /dashboard/hotel/ → clean root. The portal is a single
+    // page (?hotel=<slug> query, no path routes), so only the root
+    // serves its shell; login/setup/otp stay under /dashboard/.
+    if (url.pathname === '/dashboard/hotel' || url.pathname === '/dashboard/hotel/') {
+      return Response.redirect(CONNECT_ORIGIN + '/' + url.search, 301);
+    }
+    if (url.pathname === '/') {
+      // The portal shell self-gates: no session → it redirects to
+      // /dashboard/login/; admins → the ops host.
+      return env.ASSETS.fetch(new URL('/dashboard/hotel/index.html', url.origin));
     }
     return next();
   }

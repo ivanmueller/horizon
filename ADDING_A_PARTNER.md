@@ -75,8 +75,8 @@ staff turnover via Short.io retargeting later.
 
 That's it. The hotel is live: walk-in bookings via
 `?hotel=moraine-lodge` will record under the hotel pool, and the
-`connect.gowithhorizon.com/dashboard/hotel/?hotel=moraine-lodge`
-partner dashboard plus the internal `admin.gowithhorizon.com`
+`connect.gowithhorizon.com/?hotel=moraine-lodge`
+partner portal plus the internal `admin.gowithhorizon.com`
 console will show their bookings as they come in.
 
 ## Workflow — kickback hotel (with per-employee commissions)
@@ -149,7 +149,7 @@ new staff member (they'll get a fresh sequence number).
 ## Inviting a manager (hotel-side dashboard access)
 
 Managers are people the hotel chooses to give access to their
-own dashboard at `connect.gowithhorizon.com/dashboard/hotel/?hotel=<slug>` — typically the
+own portal at `connect.gowithhorizon.com/?hotel=<slug>` — typically the
 GM or whoever runs the front desk. They see *only* their hotel's
 bookings + invoices, never anyone else's.
 
