@@ -117,6 +117,7 @@ const TTL_PRODUCT = 3600; // 1h — product config rarely changes
 const TTL_PICKUP = 3600; // 1h — pickup places rarely change
 const TTL_AVAIL = 300; // 5min — overridable with ?fresh=1
 const TTL_BOOKING = 15 * 60; // 15min — checkout spot-hold window
+const TTL_ATTR = 30 * 24 * 60 * 60; // 30d — referral funnel, decoupled from the spot-hold
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default {
@@ -427,6 +428,48 @@ async function handleCheckoutSubmit(request, env) {
 //
 // This is purely a state pouch for the surface handoff. The real Bokun hold
 // still happens at /api/checkout/options time, exactly as before.
+//
+// Phase 1b: the inbound referral funnel (window.HORIZON.funnel) is
+// sanitised and stored under a SEPARATE attr:<booking_id> key with a
+// 30-day TTL — decoupled from the 15-min spot-hold so the full
+// touchpoint history outlives a single checkout attempt.
+function sanitizeFunnel(raw) {
+  if (!raw || typeof raw !== "object" || !Array.isArray(raw.touchpoints)) {
+    return null;
+  }
+  const HOTEL_SLUG_RE = /^[a-z0-9-]{2,40}$/;
+  const STREAMS = ["hotel-slug", "hotel", "employee", "placement", "unknown"];
+  const out = [];
+  for (const t of raw.touchpoints) {
+    if (!t || typeof t !== "object") continue;
+    const stream = STREAMS.includes(t.stream) ? t.stream : null;
+    const code = typeof t.code === "string" ? t.code.trim().toLowerCase() : "";
+    if (!stream || !code) continue;
+    const codeOk =
+      stream === "hotel-slug"
+        ? HOTEL_SLUG_RE.test(code)
+        : TRACKING_CODE_RE.test(code);
+    if (!codeOk) continue;
+    const ts = Number(t.ts);
+    out.push({
+      code,
+      stream,
+      ts: Number.isFinite(ts) ? ts : null,
+      page: typeof t.page === "string" ? t.page.slice(0, 256) : null,
+      kind: t.kind === "ref" ? "ref" : undefined,
+    });
+    if (out.length >= 25) break; // §5.2 cap
+  }
+  if (!out.length) return null;
+  const firstTs = Number(raw.first_ts);
+  const lastTs = Number(raw.last_ts);
+  return {
+    touchpoints: out,
+    first_ts: Number.isFinite(firstTs) ? firstTs : out[0].ts,
+    last_ts: Number.isFinite(lastTs) ? lastTs : out[out.length - 1].ts,
+  };
+}
+
 async function handleBookingInitiate(request, env) {
   if (!env.BOOKINGS) {
     return jsonResponse(
@@ -489,6 +532,18 @@ async function handleBookingInitiate(request, env) {
   await env.BOOKINGS.put(`booking:${bookingId}`, JSON.stringify(state), {
     expirationTtl: TTL_BOOKING,
   });
+
+  // Referral funnel — separate key, 30-day TTL. Best-effort: a malformed
+  // or absent funnel never blocks a booking (attribution still falls back
+  // to state.hotel / state.ref exactly as before Phase 1b).
+  const funnel = sanitizeFunnel(body.funnel);
+  if (funnel) {
+    await env.BOOKINGS.put(
+      `attr:${bookingId}`,
+      JSON.stringify({ booking_id: bookingId, ...funnel, created_at: now }),
+      { expirationTtl: TTL_ATTR },
+    );
+  }
 
   return jsonResponse({ booking_id: bookingId, expires_at: expiresAt }, 200, request);
 }
