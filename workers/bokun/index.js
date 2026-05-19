@@ -1594,8 +1594,18 @@ async function handleAdminPlacementAssetSignUpload(placementId, request, env) {
       filename,
     }, 200, request);
   } catch (err) {
-    console.error("placement asset sign-upload failed:", err.message);
-    return jsonResponse({ error: "could not create upload URL" }, 502, request);
+    console.error("placement asset sign-upload failed:", err.message, err.body);
+    // Surface the underlying Supabase Storage error so a missing
+    // bucket / disabled storage / auth issue is diagnosable instead
+    // of a blanket "could not create upload URL".
+    const detail = err && err.body
+      ? (typeof err.body === "string" ? err.body : (err.body.message || err.body.error || JSON.stringify(err.body)))
+      : (err && err.message);
+    return jsonResponse({
+      error: "could not create upload URL",
+      detail: detail || null,
+      status: (err && err.status) || null,
+    }, 502, request);
   }
 }
 

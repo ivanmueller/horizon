@@ -485,7 +485,6 @@
       <div class="pl-mat">
         <div class="pl-mat__head">
           <h3 class="pl-mat__title">Materials &amp; QR</h3>
-          <button type="button" class="btn btn--sm" id="plAssetsDownloadAll">Download all</button>
         </div>
         <div class="alert alert--bad" id="plAssetsError" hidden></div>
         <div class="pl-mat__qr">
@@ -2144,9 +2143,7 @@
     const plEditSubmit = document.getElementById('plEditSubmit');
     /* ── Placement asset manager ─────────────────────────── */
     const PL_ASSET_KINDS = [
-      { kind: 'design',      label: 'Design' },
-      { kind: 'print_ready', label: 'Print-ready' },
-      { kind: 'qr',          label: 'QR' },
+      { kind: 'design', label: 'Design' },
     ];
     const PL_ASSET_STATUSES = ['designed', 'printed', 'deployed', 'retired'];
     // Signed URLs are short-lived; cache per asset id for the session
@@ -2193,7 +2190,12 @@
         },
       );
       const signed = await signRes.json();
-      if (!signRes.ok) throw new Error((signed && signed.error) || 'sign_failed');
+      if (!signRes.ok) {
+        throw new Error(
+          ((signed && signed.error) || 'sign_failed') +
+          (signed && signed.detail ? ' — ' + signed.detail : ''),
+        );
+      }
 
       onStep && onStep('Uploading…');
       const putRes = await fetch(signed.upload_url, {
@@ -2311,9 +2313,7 @@
       const p = findPlacementById(_plAssetsId);
       const sel = document.getElementById('plEditStatus');
       const assets = p && Array.isArray(p.assets) ? p.assets : [];
-      const hasMaterial = assets.some(
-        (a) => (a.kind === 'design' || a.kind === 'print_ready'),
-      );
+      const hasMaterial = assets.some((a) => a.kind === 'design');
       if (sel && sel.value === 'pending' && !hasMaterial) {
         plEditStatusHint.textContent =
           'Add a design or print-ready file below before activating.';
@@ -2332,10 +2332,20 @@
         plEditQr.innerHTML = '<div class="muted pl-mat__qrnone">No short link yet</div>';
         return;
       }
-      const qr = makeQRInstance(_plEditQrUrl, 150);
-      if (qr) qr.append(plEditQr);
-      else plEditQr.innerHTML = '<div class="muted pl-mat__qrnone">QR unavailable</div>';
+      const qr = makeQRInstance(_plEditQrUrl, 220);
+      if (qr) {
+        qr.append(plEditQr);
+        plEditQr.classList.add('pl-mat__qrbox--clickable');
+        plEditQr.title = 'Click to enlarge';
+      } else {
+        plEditQr.innerHTML = '<div class="muted pl-mat__qrnone">QR unavailable</div>';
+      }
     }
+    plEditQr && plEditQr.addEventListener('click', () => {
+      if (!_plEditQrUrl) return;
+      const p = findPlacementById(_plAssetsId);
+      openQRModal(_plEditQrUrl, (p && p.name) || 'Placement QR', _plEditQrUrl);
+    });
 
     // Mount the materials + QR for a placement inside the Edit modal.
     function renderPlEditMaterials(placementId) {
@@ -2429,49 +2439,6 @@
       return { placement: null, shortUrl: null };
     }
 
-    // Bundle every recorded asset (latest + history) plus a freshly
-    // rendered QR PNG into one ZIP.
-    const plAssetsDownloadAll = document.getElementById('plAssetsDownloadAll');
-    plAssetsDownloadAll && plAssetsDownloadAll.addEventListener('click', async () => {
-      const ctx = findPlacementCtx(_plAssetsId);
-      const p = ctx.placement;
-      if (!p) return;
-      if (typeof JSZip === 'undefined') {
-        plAssetsError.textContent = 'ZIP library not loaded yet — try again in a moment.';
-        plAssetsError.hidden = false;
-        return;
-      }
-      plAssetsError.hidden = true;
-      plAssetsDownloadAll.disabled = true;
-      const orig = plAssetsDownloadAll.textContent;
-      plAssetsDownloadAll.textContent = 'Preparing…';
-      try {
-        const zip = new JSZip();
-        const assets = Array.isArray(p.assets) ? p.assets : [];
-        for (const a of assets) {
-          const u = await plAssetUrl(_plAssetsId, a.id);
-          const blob = await (await fetch(u)).blob();
-          zip.file(a.kind + '/v' + (a.version || 1) + '-' + (a.filename || 'file'), blob);
-        }
-        if (ctx.shortUrl && typeof makeQRInstance === 'function') {
-          const qr = makeQRInstance(ctx.shortUrl, 1024);
-          const qrBlob = qr && (await qr.getRawData('png'));
-          if (qrBlob) zip.file('qr/' + (p.code || 'placement') + '.png', qrBlob);
-        }
-        const out = await zip.generateAsync({ type: 'blob' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(out);
-        a.download = 'placement-' + (p.code || p.id) + '.zip';
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        URL.revokeObjectURL(a.href);
-      } catch (err) {
-        plAssetsError.textContent = 'Could not build ZIP: ' + (err.message || 'try again');
-        plAssetsError.hidden = false;
-      } finally {
-        plAssetsDownloadAll.disabled = false;
-        plAssetsDownloadAll.textContent = orig;
-      }
-    });
 
     /* ── Placement analytics ─────────────────────────────── */
     let _plStatsId = null;
