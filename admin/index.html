@@ -629,7 +629,10 @@
       throw new Error('redirecting to the partner portal');
     }
 
-    if (window.location.hash && window.location.hash.indexOf('access_token=') !== -1) {
+    // Clear auth-token residue and any bare "#", but preserve a
+    // legacy "#/route" hash — the one-time migration below converts
+    // those to path URLs.
+    if (window.location.hash && !/^#\/[a-z]/.test(window.location.hash)) {
       history.replaceState(null, '', window.location.pathname + window.location.search);
     }
 

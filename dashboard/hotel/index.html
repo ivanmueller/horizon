@@ -648,7 +648,7 @@
     // afterwards — at that point the hash is already gone — but
     // Google OAuth still hands us a hash directly, so the strip is
     // worth keeping.
-    if (window.location.hash && window.location.hash.indexOf('access_token=') !== -1) {
+    if (window.location.hash) {
       history.replaceState(null, '', window.location.pathname + window.location.search);
     }
 
