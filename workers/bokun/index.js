@@ -265,6 +265,9 @@ export default {
           if (request.method === "GET" && segs[5] && segs[6] === "url") {
             return await handleAdminPlacementAssetUrl(segs[3], segs[5], request, env);
           }
+          if (request.method === "PATCH" && segs[5] && !segs[6]) {
+            return await handleAdminPlacementAssetUpdate(segs[3], segs[5], request, env);
+          }
         }
         if (request.method === "POST" && !segs[3]) return await handleAdminPlacementCreate(request, env);
         if (request.method === "PATCH" && segs[3] && !segs[4]) return await handleAdminPlacementUpdate(segs[3], request, env);
@@ -1673,6 +1676,37 @@ async function handleAdminPlacementAssetUrl(placementId, assetId, request, env) 
     console.error("placement asset sign-download failed:", err.message);
     return jsonResponse({ error: "could not sign asset URL" }, 502, request);
   }
+}
+
+const PLACEMENT_ASSET_STATUSES = new Set(["designed", "printed", "deployed", "retired"]);
+
+// Advance an asset version through its lifecycle (designed → printed →
+// deployed, or retired). Status is the only mutable field — the file
+// itself is immutable; a new file is a new version row.
+async function handleAdminPlacementAssetUpdate(placementId, assetId, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(placementId) || !UUID_RE.test(assetId)) {
+    return jsonResponse({ error: "invalid id" }, 400, request);
+  }
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+  const status = typeof body.status === "string" ? body.status : "";
+  if (!PLACEMENT_ASSET_STATUSES.has(status)) {
+    return jsonResponse({ error: "invalid status" }, 400, request);
+  }
+  const updated = await supabaseUpdate(
+    env,
+    `placement_assets?id=eq.${encodeURIComponent(assetId)}` +
+      `&placement_id=eq.${encodeURIComponent(placementId)}`,
+    { status },
+    { returnRow: true },
+  );
+  if (!Array.isArray(updated) || !updated.length) {
+    return jsonResponse({ error: "asset not found" }, 404, request);
+  }
+  logMutation(request, auth.claims, "update", "placement_asset", assetId, { status });
+  return jsonResponse({ asset: updated[0] }, 200, request);
 }
 
 async function handleAdminHotelUserCreate(request, env) {

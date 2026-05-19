@@ -2918,14 +2918,76 @@ select.hd-bankf__input { appearance: auto; }
   pointer-events: auto;
 }
 
-/* Minimal placement asset upload control (Phase 3). */
-.pl-asset-up {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+/* Placement asset manager (Phase 4). */
+.modal__card--wide { max-width: 720px; }
+
+/* Row: design thumbnail next to the placement name. */
+.pl-name { display: flex; align-items: center; gap: var(--s3); }
+.pl-thumb {
+  flex: 0 0 auto;
+  width: 36px; height: 36px;
+  padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: var(--t-xs); font-weight: 600;
+  transition: border-color var(--motion-fast) var(--motion-ease-out);
 }
-.pl-asset-up .input[type="file"] { flex: 1 1 auto; min-width: 0; }
-.pl-asset-up .btn { flex: 0 0 auto; }
+.pl-thumb:hover { border-color: var(--border-strong); }
+.pl-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pl-thumb--add {
+  border-style: dashed;
+  font-size: 18px; font-weight: 400;
+  color: var(--text-muted);
+}
+.pl-thumb--err { color: var(--text-muted); }
+
+/* Modal: one section per asset kind. */
+.pl-asset { padding: var(--s4) 0; border-top: 1px solid var(--border); }
+.pl-asset:first-child { border-top: 0; padding-top: 0; }
+.pl-asset__head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: var(--s3);
+}
+.pl-asset__title {
+  font-size: var(--t-sm); font-weight: 600; color: var(--text);
+}
+.pl-asset__upbtn { cursor: pointer; }
+.pl-asset__row { display: flex; gap: var(--s4); align-items: flex-start; }
+.pl-asset__preview {
+  flex: 0 0 auto;
+  width: 96px; height: 96px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  color: var(--text-muted);
+}
+.pl-asset__preview img { width: 100%; height: 100%; object-fit: contain; }
+.pl-asset__preview--add {
+  border-style: dashed;
+  cursor: pointer;
+  font-size: var(--t-xs); font-weight: 500;
+  color: var(--accent);
+  transition: border-color var(--motion-fast) var(--motion-ease-out);
+}
+.pl-asset__preview--add:hover { border-color: var(--accent); }
+.pl-asset__ext { font-size: var(--t-sm); font-weight: 600; }
+.pl-asset__detail { flex: 1 1 auto; min-width: 0; }
+.pl-asset__table { width: 100%; }
+.pl-asset__fn {
+  max-width: 220px; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.input--sm { padding: 2px 6px; height: 28px; font-size: var(--t-xs); }
+
+/* Inline confirm cancel link that appears next to the armed button */
+.sl-confirm { margin-left: 6px; }
 
 /* Inline confirm cancel link that appears next to the armed button */
 .sl-confirm { margin-left: 6px; }
