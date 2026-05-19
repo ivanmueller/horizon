@@ -219,6 +219,14 @@ export default {
         return await handleAdminSummary(url, env, request);
       }
       if (
+        request.method === "POST" &&
+        segs[0] === "api" &&
+        segs[1] === "admin" &&
+        segs[2] === "recompute-attribution"
+      ) {
+        return await handleAdminRecomputeAttribution(request, env);
+      }
+      if (
         request.method === "PATCH" &&
         segs[0] === "api" &&
         segs[1] === "admin" &&
@@ -826,7 +834,11 @@ async function handleDashboardBookings(url, env, request) {
     "id,booking_id,confirmation_code,tour_id,tour_title,date,time," +
     "adults,youth,infants,amount,currency,lead_name,lead_email," +
     "status,created_at,updated_at," +
-    "staff:hotel_staff(id,name,tracking_code,kickback_pct)";
+    "attribution_policy_used,first_touch_code,credited_position," +
+    "staff:hotel_staff(id,name,tracking_code,kickback_pct)," +
+    "touchpoints:booking_touchpoints(" +
+    "position,code,stream_type,touched_at,is_credited," +
+    "touch_staff:hotel_staff(name,tracking_code))";
   let q =
     `bookings?hotel_id=eq.${h.id}` +
     `&select=${fields}` +
@@ -841,6 +853,9 @@ async function handleDashboardBookings(url, env, request) {
   const records = rows.map((r) => ({
     ...r,
     amount: r.amount != null ? Number(r.amount) : null,
+    touchpoints: Array.isArray(r.touchpoints)
+      ? r.touchpoints.slice().sort((a, b) => a.position - b.position)
+      : [],
   }));
 
   // KPIs only count confirmed — cancelled and refunded bookings show in
@@ -875,6 +890,107 @@ async function handleDashboardBookings(url, env, request) {
     200,
     request,
   );
+}
+
+// ── Retroactive attribution recompute ──────────────────────────────────────
+// Replays resolveCredit over the stored funnel for every booking at a hotel
+// using that hotel's CURRENT attribution_policy, then rewrites the credited
+// staff_id + audit columns + is_credited flags where they changed. This is
+// what makes a policy switch non-destructive (§3): the immutable
+// booking_touchpoints rows are never mutated, only the derived credit.
+// Horizon-admin gated; scoped to one hotel per call to stay bounded.
+async function handleAdminRecomputeAttribution(request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+  const hotel = typeof body.hotel === "string" ? body.hotel.trim().toLowerCase() : "";
+  if (!hotel || !/^[a-z0-9-]{2,40}$/.test(hotel)) {
+    return jsonResponse({ error: "hotel slug required" }, 400, request);
+  }
+
+  const hotelRows = await supabaseSelect(
+    env,
+    `hotels?code=eq.${encodeURIComponent(hotel)}&select=id,attribution_policy`,
+  );
+  if (!hotelRows.length) {
+    return jsonResponse({ error: `unknown hotel slug: ${hotel}` }, 404, request);
+  }
+  const hotelId = hotelRows[0].id;
+  const policy = hotelRows[0].attribution_policy || "employee_last_then_hotel_first";
+
+  const bookings = await supabaseSelect(
+    env,
+    `bookings?hotel_id=eq.${hotelId}` +
+      `&select=confirmation_code,staff_id,credited_position,` +
+      `touchpoints:booking_touchpoints(position,code,stream_type)` +
+      `&limit=2000`,
+  );
+
+  // One staff lookup for every employee code across all funnels.
+  const empCodes = new Set();
+  for (const b of bookings) {
+    for (const t of b.touchpoints || []) {
+      if (t.stream_type === "employee" && t.code) empCodes.add(t.code);
+    }
+  }
+  const staffByCode = new Map();
+  if (empCodes.size) {
+    const inList = [...empCodes].map((c) => encodeURIComponent(c)).join(",");
+    const rows = await supabaseSelect(
+      env,
+      `hotel_staff?tracking_code=in.(${inList})&select=id,hotel_id,tracking_code`,
+    );
+    for (const s of rows) {
+      if (s.hotel_id === hotelId) staffByCode.set(s.tracking_code, s.id);
+    }
+  }
+
+  let scanned = 0;
+  let updated = 0;
+  for (const b of bookings) {
+    const tps = (b.touchpoints || []).slice().sort((a, c) => a.position - c.position);
+    if (!tps.length) continue;
+    scanned += 1;
+    const annotated = tps.map((t) => ({
+      code: t.code,
+      stream: t.stream_type,
+      position: t.position,
+      staff_id: t.stream_type === "employee" ? staffByCode.get(t.code) || null : null,
+    }));
+    const credit = resolveCredit(annotated, policy);
+    if (!credit) continue;
+
+    const changed =
+      (b.staff_id || null) !== (credit.staff_id || null) ||
+      b.credited_position !== credit.credited_position;
+    if (!changed) continue;
+
+    await supabaseUpdate(
+      env,
+      `bookings?confirmation_code=eq.${encodeURIComponent(b.confirmation_code)}`,
+      {
+        staff_id: credit.staff_id,
+        attribution_policy_used: credit.policy_used,
+        first_touch_code: credit.first_touch_code,
+        credited_position: credit.credited_position,
+      },
+    );
+    // Re-flag the credited touch: clear all, then set the winner.
+    const confFilter = `confirmation_code=eq.${encodeURIComponent(b.confirmation_code)}`;
+    await supabaseUpdate(env, `booking_touchpoints?${confFilter}`, {
+      is_credited: false,
+    });
+    await supabaseUpdate(
+      env,
+      `booking_touchpoints?${confFilter}&position=eq.${credit.credited_position}`,
+      { is_credited: true },
+    );
+    updated += 1;
+  }
+
+  return jsonResponse({ hotel, policy, scanned, updated }, 200, request);
 }
 
 // ── Horizon admin (internal) ───────────────────────────────────────────────
