@@ -215,6 +215,21 @@ export default {
         return await handleAdminBookingPatch(segs[3], request, env);
       }
 
+      // ── Manual payout records ───────────────────────────────────
+      // Hand-entered "we paid hotel X $Y on date Z" log. No
+      // automation — just the paid/unpaid record.
+      if (segs[0] === "api" && segs[1] === "admin" && segs[2] === "payouts") {
+        if (request.method === "GET" && !segs[3]) {
+          return await handleAdminPayoutsList(url, env, request);
+        }
+        if (request.method === "POST" && !segs[3]) {
+          return await handleAdminPayoutCreate(request, env);
+        }
+        if (request.method === "DELETE" && segs[3]) {
+          return await handleAdminPayoutDelete(segs[3], request, env);
+        }
+      }
+
       // ── Hotels CRUD ─────────────────────────────────────────────
       if (segs[0] === "api" && segs[1] === "admin" && segs[2] === "hotels") {
         if (request.method === "GET" && !segs[3])  return await handleAdminHotelsList(env, request);
@@ -821,6 +836,113 @@ async function handleAdminBookingPatch(id, request, env) {
   logMutation(request, auth.claims, "update", "booking", id, { status });
 
   return jsonResponse({ ok: true, booking: updated[0] }, 200, request);
+}
+
+// ── Manual payout records ──────────────────────────────────────────────────
+// A hand-entered log of commission actually paid to a hotel (Interac
+// e-Transfer / EFT / other). No accrual, no automation, no Stripe —
+// the admin records each payment after sending it so the dashboard
+// can show outstanding vs. paid. Correcting a typo = delete + re-add.
+
+const PAYOUT_METHODS = new Set(["etransfer", "eft", "other"]);
+
+async function handleAdminPayoutsList(url, env, request) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const hotelId = (url.searchParams.get("hotel_id") || "").trim();
+  let q =
+    "payouts?select=id,hotel_id,period,amount,currency,paid_at,method," +
+    "reference,note,created_at&order=paid_at.desc,created_at.desc";
+  if (hotelId) {
+    if (!UUID_RE.test(hotelId)) {
+      return jsonResponse({ error: "invalid hotel_id" }, 400, request);
+    }
+    q += `&hotel_id=eq.${encodeURIComponent(hotelId)}`;
+  }
+  const rows = await supabaseSelect(env, q);
+  const payouts = (Array.isArray(rows) ? rows : []).map((r) => ({
+    ...r,
+    amount: r.amount != null ? Number(r.amount) : null,
+  }));
+  return jsonResponse({ payouts }, 200, request);
+}
+
+async function handleAdminPayoutCreate(request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+
+  const hotelId = typeof body.hotel_id === "string" ? body.hotel_id.trim() : "";
+  if (!UUID_RE.test(hotelId)) {
+    return jsonResponse({ error: "valid hotel_id required" }, 400, request);
+  }
+  const amount = typeof body.amount === "number" ? body.amount : NaN;
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return jsonResponse({ error: "amount must be a positive number" }, 400, request);
+  }
+  const paidAt = typeof body.paid_at === "string" ? body.paid_at.trim() : "";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(paidAt)) {
+    return jsonResponse({ error: "paid_at must be YYYY-MM-DD" }, 400, request);
+  }
+  const row = {
+    hotel_id: hotelId,
+    amount: Math.round(amount * 100) / 100,
+    paid_at: paidAt,
+  };
+  if (typeof body.period === "string" && body.period.trim()) {
+    if (!/^\d{4}-\d{2}$/.test(body.period.trim())) {
+      return jsonResponse({ error: "period must be YYYY-MM" }, 400, request);
+    }
+    row.period = body.period.trim();
+  }
+  if (body.method != null && body.method !== "") {
+    if (!PAYOUT_METHODS.has(body.method)) {
+      return jsonResponse(
+        { error: "method must be etransfer, eft, or other" }, 400, request,
+      );
+    }
+    row.method = body.method;
+  }
+  if (typeof body.currency === "string" && body.currency.trim()) {
+    row.currency = body.currency.trim().toUpperCase().slice(0, 3);
+  }
+  const ref = typeof body.reference === "string" ? body.reference.trim() : "";
+  if (ref) row.reference = ref.slice(0, 200);
+  const note = typeof body.note === "string" ? body.note.trim() : "";
+  if (note) row.note = note.slice(0, 1000);
+
+  // Confirm the hotel exists so a typo'd id can't orphan a payment.
+  const hotelRows = await supabaseSelect(
+    env, `hotels?id=eq.${encodeURIComponent(hotelId)}&select=id`,
+  );
+  if (!hotelRows.length) {
+    return jsonResponse({ error: "hotel not found" }, 404, request);
+  }
+
+  const inserted = await supabaseInsert(env, "payouts", [row], { returnRow: true });
+  const created = Array.isArray(inserted) ? inserted[0] : inserted;
+  logMutation(request, auth.claims, "create", "payout", created && created.id, {
+    hotel_id: hotelId, amount: row.amount, paid_at: paidAt,
+  });
+  return jsonResponse({ payout: created }, 201, request);
+}
+
+async function handleAdminPayoutDelete(id, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(id)) {
+    return jsonResponse({ error: "invalid payout id" }, 400, request);
+  }
+  const deleted = await supabaseRequest(
+    env, "DELETE", `/payouts?id=eq.${encodeURIComponent(id)}`,
+    { prefer: "return=representation" },
+  );
+  if (!Array.isArray(deleted) || deleted.length === 0) {
+    return jsonResponse({ error: "payout not found" }, 404, request);
+  }
+  logMutation(request, auth.claims, "delete", "payout", id);
+  return jsonResponse({ ok: true }, 200, request);
 }
 
 // ── Hotels / staff / managers CRUD (/admin/hotels/) ────────────────────────

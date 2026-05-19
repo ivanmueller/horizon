@@ -3733,13 +3733,145 @@
       // real CTA card (vs. a quiet empty state). Updates the existing
       // node from the route HTML; the button wires below.
       const payoutsBody = els.container.querySelector('#hdPayoutsBody');
-      // Pilot phase: commission is paid manually. The payout column
-      // reads from whether manual banking has been recorded.
+      // Pilot phase: commission is paid manually. This is a
+      // hand-entered record of payments actually sent — no accrual,
+      // no automation. The admin records each payment after sending.
       const bankingSet = !!h.payout_method;
-      if (payoutsBody && !bankingSet) {
-        payoutsBody.innerHTML = '<div class="hd-empty">Banking not set up</div>';
-      } else if (payoutsBody && bankingSet) {
-        payoutsBody.innerHTML = '<div class="hd-empty">No invoices yet</div>';
+      if (payoutsBody) {
+        const methodLabel = (m) =>
+          m === 'etransfer' ? 'e-Transfer' : m === 'eft' ? 'EFT' : m === 'other' ? 'Other' : '—';
+
+        const renderPayouts = async () => {
+          if (!bankingSet) {
+            payoutsBody.innerHTML =
+              '<div class="hd-empty">Add payout banking above before recording payments.</div>';
+            return;
+          }
+          payoutsBody.innerHTML = '<div class="hd-empty">Loading…</div>';
+          let list = [];
+          try {
+            const res = await fetch(BOKUN_API_BASE + '/api/admin/payouts?hotel_id=' + encodeURIComponent(h.id), {
+              headers: { Authorization: 'Bearer ' + session.access_token },
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error((data && (data.message || data.error)) || 'load_failed');
+            list = Array.isArray(data.payouts) ? data.payouts : [];
+          } catch (err) {
+            payoutsBody.innerHTML = '<div class="hd-empty">Could not load payments: ' +
+              escapeHtml(String(err && err.message || err)) + '</div>';
+            return;
+          }
+          const total = list.reduce((a, p) => a + (Number(p.amount) || 0), 0);
+          let rows;
+          if (!list.length) {
+            rows = '<p class="hd-bank__hint">No payments recorded yet.</p>';
+          } else {
+            rows = '<dl class="hd-side__list">' + list.map((p) =>
+              '<div class="hd-side__row"><dt class="hd-side__label">' +
+                escapeHtml(formatHumanDate((p.paid_at || '').slice(0, 10)) || p.paid_at || '—') +
+                ' · ' + escapeHtml(methodLabel(p.method)) +
+                (p.period ? ' · ' + escapeHtml(p.period) : '') + '</dt>' +
+              '<dd class="hd-side__value">' + escapeHtml(formatHotelMoney(p.amount || 0, currency)) +
+                (p.reference ? ' <span class="hd-pay__ref">' + escapeHtml(p.reference) + '</span>' : '') +
+                (p.note ? '<br><span class="hd-pay__note">' + escapeHtml(p.note) + '</span>' : '') +
+                ' <button type="button" class="hd-pay__del" data-del="' + escapeHtml(p.id) + '" title="Delete this record">✕</button>' +
+              '</dd></div>').join('') + '</dl>' +
+              '<p class="hd-bank__hint">Total recorded: <strong>' +
+                escapeHtml(formatHotelMoney(total, currency)) + '</strong></p>';
+          }
+          payoutsBody.innerHTML = rows +
+            '<div class="hd-bank__actions"><button type="button" class="btn btn--primary btn--sm" id="hdPayAdd">Record a payment</button></div>';
+
+          payoutsBody.querySelectorAll('[data-del]').forEach((b) => {
+            b.onclick = async () => {
+              if (!confirm('Delete this payment record? This only removes the record, not any money sent.')) return;
+              b.disabled = true;
+              try {
+                const res = await fetch(BOKUN_API_BASE + '/api/admin/payouts/' + encodeURIComponent(b.dataset.del), {
+                  method: 'DELETE',
+                  headers: { Authorization: 'Bearer ' + session.access_token },
+                });
+                if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.message || d.error || 'delete_failed'); }
+                renderPayouts();
+              } catch (err) {
+                b.disabled = false;
+                alert('Could not delete: ' + (err && err.message || err));
+              }
+            };
+          });
+
+          const addBtn = payoutsBody.querySelector('#hdPayAdd');
+          if (addBtn) addBtn.onclick = () => {
+            const today = new Date().toISOString().slice(0, 10);
+            payoutsBody.innerHTML =
+              '<div class="hd-bankf">' +
+                '<label class="hd-bankf__field"><span class="hd-bankf__label">Amount paid (' + escapeHtml(currency) + ')</span>' +
+                  '<input class="hd-bankf__input" id="hdPayAmt" inputmode="decimal" placeholder="0.00"></label>' +
+                '<label class="hd-bankf__field"><span class="hd-bankf__label">Date paid</span>' +
+                  '<input class="hd-bankf__input" id="hdPayDate" type="date" value="' + today + '"></label>' +
+                '<label class="hd-bankf__field"><span class="hd-bankf__label">Method</span>' +
+                  '<select class="hd-bankf__input" id="hdPayMethod">' +
+                    '<option value="' + (h.payout_method === 'eft' ? 'eft' : 'etransfer') + '">' +
+                      (h.payout_method === 'eft' ? 'EFT' : 'e-Transfer') + ' (on file)</option>' +
+                    '<option value="etransfer">e-Transfer</option>' +
+                    '<option value="eft">EFT</option>' +
+                    '<option value="other">Other</option>' +
+                  '</select></label>' +
+                '<label class="hd-bankf__field"><span class="hd-bankf__label">Period covered (optional, YYYY-MM)</span>' +
+                  '<input class="hd-bankf__input" id="hdPayPeriod" placeholder="2026-05" maxlength="7"></label>' +
+                '<label class="hd-bankf__field"><span class="hd-bankf__label">Reference (optional)</span>' +
+                  '<input class="hd-bankf__input" id="hdPayRef" maxlength="200" placeholder="e-Transfer confirmation #"></label>' +
+                '<label class="hd-bankf__field"><span class="hd-bankf__label">Note (optional)</span>' +
+                  '<input class="hd-bankf__input" id="hdPayNote" maxlength="1000"></label>' +
+                '<p class="hd-bankf__err" id="hdPayErr" hidden></p>' +
+                '<div class="hd-bank__actions">' +
+                  '<button type="button" class="btn btn--primary btn--sm" id="hdPaySave">Save payment</button>' +
+                  '<button type="button" class="btn btn--ghost btn--sm" id="hdPayCancel">Cancel</button>' +
+                '</div>' +
+              '</div>';
+            const errEl = payoutsBody.querySelector('#hdPayErr');
+            const showErr = (m) => { errEl.textContent = m; errEl.hidden = false; };
+            payoutsBody.querySelector('#hdPayCancel').onclick = () => renderPayouts();
+            const saveBtn = payoutsBody.querySelector('#hdPaySave');
+            saveBtn.onclick = async () => {
+              errEl.hidden = true;
+              const amt = parseFloat(payoutsBody.querySelector('#hdPayAmt').value);
+              if (!Number.isFinite(amt) || amt <= 0) return showErr('Enter a positive amount.');
+              const date = payoutsBody.querySelector('#hdPayDate').value;
+              if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return showErr('Pick the date paid.');
+              const period = payoutsBody.querySelector('#hdPayPeriod').value.trim();
+              if (period && !/^\d{4}-\d{2}$/.test(period)) return showErr('Period must be YYYY-MM.');
+              const payload = {
+                hotel_id: h.id,
+                amount: Math.round(amt * 100) / 100,
+                paid_at: date,
+                method: payoutsBody.querySelector('#hdPayMethod').value,
+              };
+              if (period) payload.period = period;
+              const ref = payoutsBody.querySelector('#hdPayRef').value.trim();
+              if (ref) payload.reference = ref;
+              const note = payoutsBody.querySelector('#hdPayNote').value.trim();
+              if (note) payload.note = note;
+              saveBtn.disabled = true;
+              saveBtn.textContent = 'Saving…';
+              try {
+                const res = await fetch(BOKUN_API_BASE + '/api/admin/payouts', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+                  body: JSON.stringify(payload),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error((data && (data.message || data.error)) || 'save_failed');
+                renderPayouts();
+              } catch (err) {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save payment';
+                showErr('Could not save: ' + (err && err.message || err));
+              }
+            };
+          };
+        };
+        renderPayouts();
       }
 
       // ── Banking information accordion ────────────────────
