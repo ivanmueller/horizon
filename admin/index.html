@@ -528,22 +528,28 @@
         </select>
       </div>
 
-      <div class="drawer-form__row">
-        <label class="drawer-form__label" for="plEditAssetFile">Design file
-          <span class="drawer-form__optional">(optional)</span></label>
-        <div class="pl-asset-up">
-          <input class="input" type="file" id="plEditAssetFile"
-                 accept="image/*,application/pdf">
-          <button type="button" class="btn btn--sm" id="plEditAssetBtn">Upload</button>
-        </div>
-        <span class="drawer-form__hint" id="plEditAssetStatus">Uploads are versioned — a new upload never overwrites the previous file.</span>
-      </div>
-
       <div class="modal__actions">
         <button type="button" class="btn" id="plEditCancel">Cancel</button>
         <button type="submit" class="btn btn--primary" id="plEditSubmit">Save changes</button>
       </div>
     </form>
+  </div>
+
+  <!-- ── Placement asset manager modal ─────────────────────── -->
+  <div class="modal" id="plAssetsModal" hidden>
+    <div class="modal__card modal__card--wide">
+      <div class="modal__head">
+        <h2 class="modal__title">Assets — <span id="plAssetsName">placement</span></h2>
+        <button type="button" class="modal__close" id="plAssetsClose" aria-label="Close">×</button>
+      </div>
+      <div class="alert alert--bad" id="plAssetsError" hidden></div>
+      <div id="plAssetsBody">
+        <div class="muted">Loading…</div>
+      </div>
+      <div class="modal__actions">
+        <button type="button" class="btn" id="plAssetsDone">Done</button>
+      </div>
+    </div>
   </div>
 
   <!-- ── Generic danger confirmation modal ────────────────────
@@ -2191,75 +2197,244 @@
     const plEditDeployed = document.getElementById('plEditDeployed');
     const plEditStatus = document.getElementById('plEditStatus');
     const plEditSubmit = document.getElementById('plEditSubmit');
-    const plEditAssetFile   = document.getElementById('plEditAssetFile');
-    const plEditAssetBtn    = document.getElementById('plEditAssetBtn');
-    const plEditAssetStatus = document.getElementById('plEditAssetStatus');
-    const PL_ASSET_HINT = 'Uploads are versioned — a new upload never overwrites the previous file.';
+    /* ── Placement asset manager ─────────────────────────── */
+    const PL_ASSET_KINDS = [
+      { kind: 'design',      label: 'Design' },
+      { kind: 'print_ready', label: 'Print-ready' },
+      { kind: 'qr',          label: 'QR' },
+    ];
+    const PL_ASSET_STATUSES = ['designed', 'printed', 'deployed', 'retired'];
+    // Signed URLs are short-lived; cache per asset id for the session
+    // so repeated thumbnail/preview renders don't re-mint every time.
+    const _plAssetUrlCache = new Map();
+    let _plAssetsId = null; // placement id the modal is showing
 
-    // Minimal upload action (Phase 3 plumbing): sign → PUT to Storage
-    // → record the row. The rich asset panel / thumbnails come later.
-    async function uploadPlacementAsset() {
-      if (!_plEditId) return;
-      const file = plEditAssetFile.files && plEditAssetFile.files[0];
-      if (!file) {
-        plEditAssetStatus.textContent = 'Choose a file first.';
-        return;
+    const plAssetsModal = document.getElementById('plAssetsModal');
+    const plAssetsName  = document.getElementById('plAssetsName');
+    const plAssetsBody  = document.getElementById('plAssetsBody');
+    const plAssetsError = document.getElementById('plAssetsError');
+
+    function findPlacementById(id) {
+      for (const h of (hotelsCache || [])) {
+        for (const p of (h.placements || [])) {
+          if (p.id === id) return p;
+        }
       }
-      plEditAssetBtn.disabled = true;
+      return null;
+    }
+
+    async function plAssetUrl(placementId, assetId) {
+      if (_plAssetUrlCache.has(assetId)) return _plAssetUrlCache.get(assetId);
+      const res = await fetch(
+        BOKUN_API_BASE + '/api/admin/placements/' + encodeURIComponent(placementId) +
+          '/assets/' + encodeURIComponent(assetId) + '/url',
+        { headers: { Authorization: 'Bearer ' + session.access_token } },
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error((data && data.error) || 'url_failed');
+      _plAssetUrlCache.set(assetId, data.url);
+      return data.url;
+    }
+
+    // sign → PUT to Storage → record. Reused by the table thumbnail
+    // "Add design", and the per-kind "Upload new version" controls.
+    async function plUploadAsset(placementId, kind, file, onStep) {
       const authH = { Authorization: 'Bearer ' + session.access_token };
-      try {
-        plEditAssetStatus.textContent = 'Preparing upload…';
-        const signRes = await fetch(
-          BOKUN_API_BASE + '/api/admin/placements/' + encodeURIComponent(_plEditId) + '/assets/sign-upload',
-          {
-            method: 'POST',
-            headers: Object.assign({ 'Content-Type': 'application/json' }, authH),
-            body: JSON.stringify({
-              kind: 'design',
-              filename: file.name,
-              content_type: file.type || null,
-            }),
-          },
+      onStep && onStep('Preparing upload…');
+      const signRes = await fetch(
+        BOKUN_API_BASE + '/api/admin/placements/' + encodeURIComponent(placementId) + '/assets/sign-upload',
+        {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, authH),
+          body: JSON.stringify({ kind, filename: file.name, content_type: file.type || null }),
+        },
+      );
+      const signed = await signRes.json();
+      if (!signRes.ok) throw new Error((signed && signed.error) || 'sign_failed');
+
+      onStep && onStep('Uploading…');
+      const putRes = await fetch(signed.upload_url, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type || 'application/octet-stream' },
+        body: file,
+      });
+      if (!putRes.ok) throw new Error('upload_failed');
+
+      onStep && onStep('Finalizing…');
+      const recRes = await fetch(
+        BOKUN_API_BASE + '/api/admin/placements/' + encodeURIComponent(placementId) + '/assets',
+        {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, authH),
+          body: JSON.stringify({
+            kind,
+            filename: signed.filename || file.name,
+            storage_path: signed.storage_path,
+            content_type: file.type || null,
+            byte_size: file.size,
+          }),
+        },
+      );
+      const rec = await recRes.json();
+      if (!recRes.ok) throw new Error((rec && rec.error) || 'record_failed');
+      return rec.asset;
+    }
+
+    function isImageType(ct) { return typeof ct === 'string' && ct.indexOf('image/') === 0; }
+
+    function renderPlAssets() {
+      const p = findPlacementById(_plAssetsId);
+      if (!p) { plAssetsBody.innerHTML = '<div class="muted">Placement not found.</div>'; return; }
+      plAssetsName.textContent = p.name || p.code || 'placement';
+      const assets = Array.isArray(p.assets) ? p.assets : [];
+      const sections = PL_ASSET_KINDS.map((k) => {
+        const versions = assets
+          .filter((a) => a.kind === k.kind)
+          .sort((a, b) => (b.version || 0) - (a.version || 0));
+        const latest = versions[0] || null;
+
+        // Preview tile: image thumb when previewable, file glyph
+        // otherwise; dashed "Add" affordance when nothing uploaded.
+        let preview;
+        if (latest && isImageType(latest.content_type)) {
+          preview = '<div class="pl-asset__preview"><img alt="" data-asset-img="' +
+            escapeHtml(latest.id) + '"></div>';
+        } else if (latest) {
+          preview = '<div class="pl-asset__preview pl-asset__preview--file">' +
+            '<span class="pl-asset__ext">' +
+            escapeHtml((latest.filename || 'file').split('.').pop().slice(0, 5).toUpperCase()) +
+            '</span></div>';
+        } else {
+          preview = '<button type="button" class="pl-asset__preview pl-asset__preview--add"' +
+            ' data-pl-asset-add="' + escapeHtml(k.kind) + '">' +
+            (k.kind === 'design' ? 'Add design →' : 'Add file →') + '</button>';
+        }
+
+        const versionRows = versions.map((a) => {
+          const opts = PL_ASSET_STATUSES.map((s) =>
+            '<option value="' + s + '"' + (a.status === s ? ' selected' : '') + '>' +
+            s.charAt(0).toUpperCase() + s.slice(1) + '</option>').join('');
+          return (
+            '<tr>' +
+              '<td class="mono">v' + (a.version || '?') + '</td>' +
+              '<td class="pl-asset__fn" title="' + escapeHtml(a.filename || '') + '">' +
+                escapeHtml(a.filename || '—') + '</td>' +
+              '<td class="muted">' + escapeHtml(formatHumanDateTime(a.uploaded_at) || '—') + '</td>' +
+              '<td><select class="input input--sm pl-asset-status" data-asset-id="' +
+                escapeHtml(a.id) + '">' + opts + '</select></td>' +
+              '<td><button type="button" class="sl-act-btn" data-asset-dl="' +
+                escapeHtml(a.id) + '">Download</button></td>' +
+            '</tr>'
+          );
+        }).join('');
+
+        return (
+          '<section class="pl-asset">' +
+            '<header class="pl-asset__head"><h3 class="pl-asset__title">' + k.label + '</h3>' +
+              '<label class="btn btn--sm pl-asset__upbtn">' +
+                (versions.length ? 'Upload new version' : 'Upload') +
+                '<input type="file" accept="image/*,application/pdf" hidden' +
+                  ' data-pl-asset-up="' + k.kind + '"></label>' +
+            '</header>' +
+            '<div class="pl-asset__row">' + preview +
+              '<div class="pl-asset__detail">' +
+                (versions.length
+                  ? '<table class="bk-table pl-asset__table"><thead><tr>' +
+                      '<th>Ver</th><th>File</th><th>Uploaded</th><th>Status</th><th></th>' +
+                    '</tr></thead><tbody>' + versionRows + '</tbody></table>'
+                  : '<div class="hd-empty">No ' + k.label.toLowerCase() + ' uploaded yet.</div>') +
+              '</div>' +
+            '</div>' +
+          '</section>'
         );
-        const signed = await signRes.json();
-        if (!signRes.ok) throw new Error((signed && signed.error) || 'sign_failed');
+      }).join('');
+      plAssetsBody.innerHTML = sections;
 
-        plEditAssetStatus.textContent = 'Uploading…';
-        const putRes = await fetch(signed.upload_url, {
-          method: 'PUT',
-          headers: { 'Content-Type': file.type || 'application/octet-stream' },
-          body: file,
-        });
-        if (!putRes.ok) throw new Error('upload_failed');
+      // Lazily resolve signed URLs for any image previews.
+      plAssetsBody.querySelectorAll('[data-asset-img]').forEach((img) => {
+        plAssetUrl(_plAssetsId, img.dataset.assetImg)
+          .then((u) => { img.src = u; })
+          .catch(() => { img.closest('.pl-asset__preview').classList.add('pl-asset__preview--err'); });
+      });
+    }
 
-        plEditAssetStatus.textContent = 'Finalizing…';
-        const recRes = await fetch(
-          BOKUN_API_BASE + '/api/admin/placements/' + encodeURIComponent(_plEditId) + '/assets',
-          {
-            method: 'POST',
-            headers: Object.assign({ 'Content-Type': 'application/json' }, authH),
-            body: JSON.stringify({
-              kind: 'design',
-              filename: signed.filename || file.name,
-              storage_path: signed.storage_path,
-              content_type: file.type || null,
-              byte_size: file.size,
-            }),
-          },
-        );
-        const rec = await recRes.json();
-        if (!recRes.ok) throw new Error((rec && rec.error) || 'record_failed');
-
-        plEditAssetStatus.textContent = 'Uploaded ✓ (version ' + (rec.asset && rec.asset.version) + ')';
-        plEditAssetFile.value = '';
-        reloadHotelsCacheAndRefresh();
-      } catch (err) {
-        plEditAssetStatus.textContent = 'Upload failed: ' + (err.message || 'please try again');
-      } finally {
-        plEditAssetBtn.disabled = false;
+    function openPlAssets(placementId, focusKind) {
+      _plAssetsId = placementId;
+      plAssetsError.hidden = true;
+      renderPlAssets();
+      plAssetsModal.hidden = false;
+      if (focusKind) {
+        const inp = plAssetsBody.querySelector('[data-pl-asset-up="' + focusKind + '"]');
+        if (inp) inp.click();
       }
     }
-    plEditAssetBtn && plEditAssetBtn.addEventListener('click', uploadPlacementAsset);
+    function closePlAssets() { plAssetsModal.hidden = true; }
+
+    plAssetsModal && plAssetsModal.addEventListener('click', (e) => {
+      if (e.target === plAssetsModal) closePlAssets();
+    });
+    document.getElementById('plAssetsClose') && (document.getElementById('plAssetsClose').onclick = closePlAssets);
+    document.getElementById('plAssetsDone')  && (document.getElementById('plAssetsDone').onclick  = closePlAssets);
+
+    // Delegated: upload (file input change), add-affordance, status
+    // change, download.
+    plAssetsBody && plAssetsBody.addEventListener('change', async (e) => {
+      const upInput = e.target.closest('[data-pl-asset-up]');
+      if (upInput && upInput.files && upInput.files[0]) {
+        const kind = upInput.dataset.plAssetUp;
+        plAssetsError.hidden = true;
+        try {
+          await plUploadAsset(_plAssetsId, kind, upInput.files[0]);
+          await reloadHotelsCacheAndRefresh();
+          renderPlAssets();
+        } catch (err) {
+          plAssetsError.textContent = 'Upload failed: ' + (err.message || 'please try again');
+          plAssetsError.hidden = false;
+        }
+        return;
+      }
+      const statusSel = e.target.closest('.pl-asset-status');
+      if (statusSel) {
+        plAssetsError.hidden = true;
+        try {
+          const res = await fetch(
+            BOKUN_API_BASE + '/api/admin/placements/' + encodeURIComponent(_plAssetsId) +
+              '/assets/' + encodeURIComponent(statusSel.dataset.assetId),
+            {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+              body: JSON.stringify({ status: statusSel.value }),
+            },
+          );
+          const data = await res.json();
+          if (!res.ok) throw new Error((data && data.error) || 'status_failed');
+          await reloadHotelsCacheAndRefresh();
+          renderPlAssets();
+        } catch (err) {
+          plAssetsError.textContent = 'Could not update status: ' + (err.message || 'try again');
+          plAssetsError.hidden = false;
+        }
+      }
+    });
+    plAssetsBody && plAssetsBody.addEventListener('click', async (e) => {
+      const addBtn = e.target.closest('[data-pl-asset-add]');
+      if (addBtn) {
+        const inp = plAssetsBody.querySelector('[data-pl-asset-up="' + addBtn.dataset.plAssetAdd + '"]');
+        if (inp) inp.click();
+        return;
+      }
+      const dlBtn = e.target.closest('[data-asset-dl]');
+      if (dlBtn) {
+        plAssetsError.hidden = true;
+        try {
+          const u = await plAssetUrl(_plAssetsId, dlBtn.dataset.assetDl);
+          window.open(u, '_blank', 'noopener');
+        } catch (err) {
+          plAssetsError.textContent = 'Could not open file: ' + (err.message || 'try again');
+          plAssetsError.hidden = false;
+        }
+      }
+    });
 
     // The tag placeholder tracks the selected type until the admin
     // types their own — never silently overwrite an explicit value.
@@ -2344,8 +2519,6 @@
       plEditQty.value         = row.dataset.plQty || '';
       plEditDeployed.value    = row.dataset.plDeployed || '';
       plEditStatus.value      = row.dataset.plStatus || 'draft';
-      if (plEditAssetFile) plEditAssetFile.value = '';
-      if (plEditAssetStatus) plEditAssetStatus.textContent = PL_ASSET_HINT;
       plEditModal.hidden = false;
     }
     function closePlEdit() { plEditModal.hidden = true; }
@@ -3956,6 +4129,27 @@
                     ? '<span class="bk-pill bk-pill--neutral">Retired</span>'
                     : '<span class="bk-pill bk-pill--neutral">Draft</span>');
               const code = p.code || '';
+              const designs = (Array.isArray(p.assets) ? p.assets : [])
+                .filter((a) => a.kind === 'design')
+                .sort((a, b) => (b.version || 0) - (a.version || 0));
+              const latestDesign = designs[0] || null;
+              let thumb;
+              if (latestDesign && typeof latestDesign.content_type === 'string'
+                  && latestDesign.content_type.indexOf('image/') === 0) {
+                thumb = '<button type="button" class="pl-thumb" data-pl-assets="' +
+                  escapeHtml(p.id) + '" title="Manage assets">' +
+                  '<img alt="" data-asset-img="' + escapeHtml(latestDesign.id) +
+                  '" data-pl-id="' + escapeHtml(p.id) + '"></button>';
+              } else if (latestDesign) {
+                thumb = '<button type="button" class="pl-thumb pl-thumb--file"' +
+                  ' data-pl-assets="' + escapeHtml(p.id) + '" title="Manage assets">' +
+                  escapeHtml((latestDesign.filename || 'file').split('.').pop().slice(0, 4).toUpperCase()) +
+                  '</button>';
+              } else {
+                thumb = '<button type="button" class="pl-thumb pl-thumb--add"' +
+                  ' data-pl-assets="' + escapeHtml(p.id) + '" data-pl-focus="design"' +
+                  ' title="Add design" aria-label="Add design">+</button>';
+              }
               const sl = shortByPath.get((code || '').toLowerCase()) || null;
               // The code is the visible token; the copy icon yields the
               // full shareable short URL (the code IS its path), so a
@@ -3997,7 +4191,9 @@
                   ' data-pl-status="' + escapeHtml(p.status || 'draft') + '"' +
                   ' data-pl-code="' + escapeHtml(code) + '">' +
                   '<td>' + statusPill + '</td>' +
-                  '<td class="hd-emp__name">' + escapeHtml(p.name || '—') + '</td>' +
+                  '<td><div class="pl-name">' + thumb +
+                    '<span class="hd-emp__name">' + escapeHtml(p.name || '—') + '</span>' +
+                  '</div></td>' +
                   '<td>' + escapeHtml(typeLabel) + '</td>' +
                   '<td><button type="button" class="hd-copy mono" data-copy="' + escapeHtml(copyVal) + '" title="' + copyTitle + '">' +
                       '<span>' + escapeHtml(code || '—') + '</span>' + plCopyIcon + '</button></td>' +
@@ -4017,6 +4213,12 @@
                 '<tbody>' + pRows + '</tbody>' +
               '</table>' +
             '</div></div>';
+          // Lazily resolve signed URLs for the row design thumbnails.
+          els.placementsBody.querySelectorAll('img[data-asset-img]').forEach((img) => {
+            plAssetUrl(img.dataset.plId, img.dataset.assetImg)
+              .then((u) => { img.src = u; })
+              .catch(() => { img.closest('.pl-thumb').classList.add('pl-thumb--err'); });
+          });
         }
       }
 
@@ -4988,6 +5190,12 @@
           const retireBtn = e.target.closest('[data-pl-retire]');
           if (retireBtn) {
             retirePlacement(retireBtn.dataset.plId, retireBtn.dataset.plName);
+            return;
+          }
+          // Thumbnail / "Add design" → open the asset manager.
+          const assetsBtn = e.target.closest('[data-pl-assets]');
+          if (assetsBtn) {
+            openPlAssets(assetsBtn.dataset.plAssets, assetsBtn.dataset.plFocus || null);
             return;
           }
           // Touch / no-hover fallback: the kebab toggles the cluster.
