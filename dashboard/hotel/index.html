@@ -549,6 +549,7 @@
   <script type="module">
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
     import { cookieStorage } from '/js/supabase-cookie-storage.js';
+    import { adminUrl } from '/js/hosts.js';
 
     var BOKUN_API_BASE = 'https://horizon-bokun.ivan-mueller02.workers.dev';
 
@@ -634,7 +635,7 @@
       .limit(1)
       .maybeSingle();
     if (adminCheck.data) {
-      window.location.replace('/admin/');
+      window.location.replace(adminUrl('/admin/'));
       throw new Error('redirecting to /admin/');
     }
 
