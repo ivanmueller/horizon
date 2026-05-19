@@ -249,6 +249,13 @@ export default {
         if (request.method === "DELETE" && segs[3]) return await handleAdminStaffTerminate(segs[3], request, env);
       }
 
+      // ── Placements CRUD ─────────────────────────────────────────
+      if (segs[0] === "api" && segs[1] === "admin" && segs[2] === "placements") {
+        if (request.method === "POST" && !segs[3]) return await handleAdminPlacementCreate(request, env);
+        if (request.method === "PATCH" && segs[3]) return await handleAdminPlacementUpdate(segs[3], request, env);
+        if (request.method === "DELETE" && segs[3]) return await handleAdminPlacementRetire(segs[3], request, env);
+      }
+
       // ── Short.io short_links CRUD ───────────────────────────────
       if (segs[0] === "api" && segs[1] === "admin" && segs[2] === "short-links") {
         if (request.method === "GET"  && !segs[3]) return await handleAdminGlobalShortLinks(url, env, request);
@@ -1111,6 +1118,14 @@ function hotelTargetUrl(env, hotelCode) {
 function staffTargetUrl(env, hotelCode, trackingCode) {
   return `${hotelTargetUrl(env, hotelCode)}?ref=${encodeURIComponent(trackingCode)}`;
 }
+// A placement redirects to the hotel master URL with its own code as
+// ?ref. The code carries a "-pNN" suffix that never matches a
+// hotel_staff row, so checkout resolves it to hotel-pool attribution
+// (no employee, no kickback) — identical URL shape to staff, distinct
+// attribution outcome by construction.
+function placementTargetUrl(env, hotelCode, code) {
+  return `${hotelTargetUrl(env, hotelCode)}?ref=${encodeURIComponent(code)}`;
+}
 
 // Hotel insert wrapper. Generates a unique tracking_prefix and seeds
 // default_tracking_code from it. Retries on the (unlikely) prefix
@@ -1229,6 +1244,69 @@ async function insertStaffWithSequence(env, row, maxAttempts = 5) {
       if (
         isUniqueViolation(err, "sequence_number") ||
         isUniqueViolation(err, "tracking_code")
+      ) {
+        continue;
+      }
+      throw err;
+    }
+  }
+  const e = new Error(`could not allocate sequence_number for hotel ${row.hotel_id} after ${maxAttempts} attempts`);
+  e.cause = lastErr;
+  throw e;
+}
+
+// Placement insert wrapper. Mirrors insertStaffWithSequence: computes
+// the next per-hotel sequence_number, mints the "htl-<prefix>-pNN"
+// code, inserts, then best-effort mints the Short.io link. The
+// (hotel_id, sequence_number) unique index catches concurrent
+// inserts; on collision we re-read max and retry.
+async function insertPlacementWithSequence(env, row, maxAttempts = 5) {
+  const hotelRows = await supabaseSelect(
+    env,
+    `hotels?id=eq.${encodeURIComponent(row.hotel_id)}&select=tracking_prefix,code,name`,
+  );
+  if (!hotelRows.length) {
+    const e = new Error("hotel not found");
+    e.status = 404;
+    throw e;
+  }
+  const prefix = hotelRows[0].tracking_prefix;
+  if (!prefix || !TRACKING_PREFIX_RE.test(prefix)) {
+    throw new Error(`hotel ${row.hotel_id} has no valid tracking_prefix`);
+  }
+  const hotel = hotelRows[0];
+
+  let lastErr;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const maxRows = await supabaseSelect(
+      env,
+      `placements?hotel_id=eq.${encodeURIComponent(row.hotel_id)}` +
+        `&select=sequence_number&order=sequence_number.desc&limit=1`,
+    );
+    const nextSeq = (maxRows.length && maxRows[0].sequence_number ? maxRows[0].sequence_number : 0) + 1;
+    const candidate = {
+      ...row,
+      sequence_number: nextSeq,
+      code: `${prefix}-p${String(nextSeq).padStart(2, "0")}`,
+    };
+    try {
+      const inserted = await supabaseInsert(env, "placements", [candidate], { returnRow: true });
+      const placement = inserted[0];
+      let shortLinkWarning = null;
+      ({ error: shortLinkWarning } = await mintShortLinkAndRecord(env, {
+        shortPath: trackingCodeToShortPath(placement.code),
+        targetUrl: placementTargetUrl(env, hotel.code, placement.code),
+        title: `${hotel.name} — ${placement.name}`,
+        linkType: "placement",
+        hotelId: row.hotel_id,
+        label: placement.name,
+      }));
+      return { placement, shortLinkWarning };
+    } catch (err) {
+      lastErr = err;
+      if (
+        isUniqueViolation(err, "sequence_number") ||
+        isUniqueViolation(err, "code")
       ) {
         continue;
       }
@@ -1377,6 +1455,69 @@ async function handleAdminStaffTerminate(id, request, env) {
   return jsonResponse({ staff: normaliseStaff(updated[0]) }, 200, request);
 }
 
+async function handleAdminPlacementCreate(request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+
+  const v = validatePlacement(body, { creating: true });
+  if (v.error) return jsonResponse({ error: v.error }, 400, request);
+
+  try {
+    const { placement, shortLinkWarning } = await insertPlacementWithSequence(env, v.row);
+    logMutation(request, auth.claims, "create", "placement", placement.id, {
+      hotel_id: v.row.hotel_id, code: placement.code, name: placement.name,
+    });
+    const payload = { placement };
+    if (shortLinkWarning) payload.short_link_warning = shortLinkWarning;
+    return jsonResponse(payload, 201, request);
+  } catch (err) {
+    if (err.status === 404) return jsonResponse({ error: err.message }, 404, request);
+    throw err;
+  }
+}
+
+async function handleAdminPlacementUpdate(id, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(id)) return jsonResponse({ error: "invalid placement id" }, 400, request);
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+
+  const v = validatePlacement(body, { creating: false });
+  if (v.error) return jsonResponse({ error: v.error }, 400, request);
+  delete v.row.hotel_id; // can't reassign a placement to a different hotel
+
+  const updated = await supabaseUpdate(
+    env, `placements?id=eq.${encodeURIComponent(id)}`, v.row, { returnRow: true },
+  );
+  if (!Array.isArray(updated) || !updated.length) {
+    return jsonResponse({ error: "placement not found" }, 404, request);
+  }
+  logMutation(request, auth.claims, "update", "placement", id, { fields: Object.keys(v.row) });
+  return jsonResponse({ placement: updated[0] }, 200, request);
+}
+
+async function handleAdminPlacementRetire(id, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(id)) return jsonResponse({ error: "invalid placement id" }, 400, request);
+
+  // Soft-delete: status flips to 'retired'. The Short.io redirect and
+  // short_links row stay alive so any printed QR keeps resolving and
+  // historical click data is preserved — same contract as staff.
+  const updated = await supabaseUpdate(
+    env, `placements?id=eq.${encodeURIComponent(id)}`,
+    { status: "retired" }, { returnRow: true },
+  );
+  if (!Array.isArray(updated) || !updated.length) {
+    return jsonResponse({ error: "placement not found" }, 404, request);
+  }
+  logMutation(request, auth.claims, "retire", "placement", id);
+  return jsonResponse({ placement: updated[0] }, 200, request);
+}
+
 async function handleAdminHotelUserCreate(request, env) {
   const auth = await requireHorizonAdmin(request, env);
   if (auth.error) return auth.error;
@@ -1492,8 +1633,24 @@ const SHORT_LINK_FIELDS =
 const PLACEMENT_FIELDS =
   "id,hotel_id,sequence_number,code,placement_type,name,tag,status," +
   "location_in_hotel,quantity_printed,deployed_at,created_at,updated_at";
-const SHORT_LINK_TYPES = new Set(["hotel", "staff", "campaign"]);
+const SHORT_LINK_TYPES = new Set(["hotel", "staff", "campaign", "placement"]);
 const SHORT_LINK_STATUSES = new Set(["active", "retired"]);
+
+const PLACEMENT_TYPES = new Set([
+  "rack_card", "table_tent", "welcome_packet",
+  "website_widget", "lobby_qr", "custom",
+]);
+const PLACEMENT_STATUSES = new Set(["draft", "active", "retired"]);
+// Default short display tag per type. Editable by the admin; purely
+// cosmetic — never used for attribution (the minted code is).
+const PLACEMENT_DEFAULT_TAGS = {
+  rack_card: "RACK",
+  table_tent: "TENT",
+  welcome_packet: "PACKET",
+  website_widget: "WEB",
+  lobby_qr: "LOBBY",
+  custom: "CUSTOM",
+};
 // Short.io path constraints — alphanumeric plus the common
 // separators. Conservative; tighten if you find Short.io rejecting
 // edge cases.
@@ -2334,6 +2491,65 @@ function validateStaff(body, { creating }) {
     if (!STAFF_STATUSES.has(body.status)) return { error: "status must be active or terminated" };
     row.status = body.status;
   }
+  return { row };
+}
+
+function validatePlacement(body, { creating }) {
+  const row = {};
+  if (creating) {
+    const hotel_id = typeof body.hotel_id === "string" ? body.hotel_id.trim() : "";
+    if (!UUID_RE.test(hotel_id)) return { error: "valid hotel_id required" };
+    row.hotel_id = hotel_id;
+  }
+  if (typeof body.name === "string" && body.name.trim()) {
+    row.name = body.name.trim();
+  } else if (creating) {
+    return { error: "name required" };
+  }
+  if (typeof body.placement_type === "string") {
+    if (!PLACEMENT_TYPES.has(body.placement_type)) {
+      return { error: "invalid placement_type" };
+    }
+    row.placement_type = body.placement_type;
+  } else if (creating) {
+    return { error: "placement_type required" };
+  }
+  // tag defaults from the type on create when the admin leaves it
+  // blank; explicit empty string clears it. Display-only.
+  if (typeof body.tag === "string") {
+    const tag = body.tag.trim().toUpperCase();
+    row.tag = tag || null;
+  } else if (creating) {
+    row.tag = PLACEMENT_DEFAULT_TAGS[row.placement_type] || null;
+  }
+  if (typeof body.location_in_hotel === "string") {
+    const loc = body.location_in_hotel.trim();
+    row.location_in_hotel = loc || null;
+  }
+  if (body.quantity_printed === null) {
+    row.quantity_printed = null;
+  } else if (typeof body.quantity_printed === "number") {
+    if (!Number.isInteger(body.quantity_printed) || body.quantity_printed < 0) {
+      return { error: "quantity_printed must be a non-negative integer" };
+    }
+    row.quantity_printed = body.quantity_printed;
+  }
+  if (body.deployed_at === null) {
+    row.deployed_at = null;
+  } else if (typeof body.deployed_at === "string" && body.deployed_at.trim()) {
+    const t = Date.parse(body.deployed_at);
+    if (Number.isNaN(t)) return { error: "deployed_at must be a valid date" };
+    row.deployed_at = new Date(t).toISOString();
+  }
+  if (typeof body.status === "string") {
+    if (!PLACEMENT_STATUSES.has(body.status)) {
+      return { error: "status must be draft, active, or retired" };
+    }
+    row.status = body.status;
+  }
+  // code and sequence_number are auto-managed by
+  // insertPlacementWithSequence and locked thereafter — never accept
+  // them from the client.
   return { row };
 }
 
