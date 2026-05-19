@@ -283,6 +283,43 @@
     .hd-table td.hd-num { text-align: right; font-variant-numeric: tabular-nums; }
     .hd-table th.hd-num { text-align: right; }
     .hd-table tbody tr:hover td { background: rgba(255, 107, 74, 0.03); }
+    .hd-funnel-toggle {
+      border: 0; background: none; padding: 0; cursor: pointer;
+      font: inherit; color: #b8472b; text-align: left;
+    }
+    .hd-funnel-toggle:hover { text-decoration: underline; }
+    .hd-funnel-count {
+      display: inline-block; padding: 0 6px; border-radius: 999px;
+      background: rgba(255, 107, 74, 0.12); font-size: 0.72rem;
+    }
+    .hd-funnel-row td { background: rgba(0, 0, 0, 0.02); padding: 16px 24px; }
+    .hd-funnel-list { list-style: none; margin: 0 0 12px; padding: 0; }
+    .hd-funnel-step {
+      display: flex; align-items: baseline; gap: 12px;
+      padding: 6px 0; font-size: 0.85rem;
+    }
+    .hd-funnel-step--credited { font-weight: 500; }
+    .hd-funnel-step__n {
+      width: 22px; height: 22px; flex: none; border-radius: 999px;
+      background: rgba(0, 0, 0, 0.08); text-align: center; line-height: 22px;
+      font-size: 0.72rem;
+    }
+    .hd-funnel-step--credited .hd-funnel-step__n {
+      background: #b8472b; color: #fff;
+    }
+    .hd-funnel-step__code {
+      font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+      font-size: 0.76rem; color: #666;
+    }
+    .hd-funnel-step__when { color: #888; font-size: 0.78rem; }
+    .hd-funnel-step__badge {
+      padding: 1px 8px; border-radius: 999px; background: #b8472b;
+      color: #fff; font-size: 0.7rem;
+    }
+    .hd-funnel-meta {
+      display: flex; flex-wrap: wrap; gap: 20px;
+      font-size: 0.8rem; color: #555;
+    }
     .hd-table__code {
       font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
       font-size: 0.78rem;
@@ -522,6 +559,7 @@
               <th class="hd-num">Travelers</th>
               <th class="hd-num">Amount</th>
               <th class="hd-num">Commission</th>
+              <th>Source</th>
               <th>Confirmation</th>
             </tr>
           </thead>
@@ -787,6 +825,17 @@
 
       els.refresh.addEventListener('click', loadBookings);
 
+      // Delegated funnel toggle — survives table re-renders.
+      els.tableBody.addEventListener('click', function (e) {
+        var btn = e.target.closest && e.target.closest('.hd-funnel-toggle');
+        if (!btn) return;
+        var row = document.getElementById('hd-funnel-' + btn.dataset.funnel);
+        if (!row) return;
+        var open = row.hidden;
+        row.hidden = !open;
+        btn.setAttribute('aria-expanded', String(open));
+      });
+
       // ── Fetch + render ─────────────────────────────────────────────
       function loadBookings() {
         var qs = '?hotel=' + encodeURIComponent(hotelSlug);
@@ -848,10 +897,11 @@
         var commissionPct = (hotelRecord && hotelRecord.commission_pct) || 0;
 
         var frag = document.createDocumentFragment();
-        records.forEach(function (r) {
+        records.forEach(function (r, idx) {
           var tr = document.createElement('tr');
           var travelers = (r.adults || 0) + (r.youth || 0) + (r.infants || 0);
           var commission = (r.amount || 0) * commissionPct / 100;
+          var tps = Array.isArray(r.touchpoints) ? r.touchpoints : [];
           tr.innerHTML =
             '<td>' + escapeHtml(formatShortDate(r.created_at)) + '</td>' +
             '<td>' + escapeHtml(formatTourDate(r.date)) + '</td>' +
@@ -860,10 +910,98 @@
             '<td class="hd-num">' + travelers + '</td>' +
             '<td class="hd-num">' + escapeHtml(r.amount != null ? formatMoney(r.amount) : '—') + '</td>' +
             '<td class="hd-num">' + escapeHtml(r.amount != null ? formatMoney(commission) : '—') + '</td>' +
+            '<td>' + sourceCell(r, tps, idx) + '</td>' +
             '<td><span class="hd-table__code">' + escapeHtml(r.confirmation_code || '—') + '</span></td>';
           frag.appendChild(tr);
+
+          if (tps.length) {
+            var detail = document.createElement('tr');
+            detail.className = 'hd-funnel-row';
+            detail.id = 'hd-funnel-' + idx;
+            detail.hidden = true;
+            var cell = document.createElement('td');
+            cell.colSpan = 9;
+            cell.innerHTML = funnelDetail(r, tps);
+            detail.appendChild(cell);
+            frag.appendChild(detail);
+          }
         });
         els.tableBody.appendChild(frag);
+      }
+
+      // Credited touch summary + a toggle to reveal the full funnel.
+      function sourceCell(r, tps, idx) {
+        var credited = creditedTouch(r, tps);
+        var label = credited ? streamLabel(credited) : '—';
+        if (!tps.length) return escapeHtml(label);
+        return '<button type="button" class="hd-funnel-toggle" ' +
+          'data-funnel="' + idx + '" aria-expanded="false">' +
+          escapeHtml(label) +
+          (tps.length > 1 ? ' <span class="hd-funnel-count">+' +
+            (tps.length - 1) + '</span>' : '') +
+          ' ▾</button>';
+      }
+
+      function creditedTouch(r, tps) {
+        for (var i = 0; i < tps.length; i++) {
+          if (tps[i].is_credited) return tps[i];
+        }
+        if (r.credited_position != null) {
+          for (var j = 0; j < tps.length; j++) {
+            if (tps[j].position === r.credited_position) return tps[j];
+          }
+        }
+        return tps.length ? tps[tps.length - 1] : null;
+      }
+
+      function streamLabel(t) {
+        if (t.stream_type === 'employee') {
+          var nm = t.touch_staff && t.touch_staff.name;
+          return nm ? ('Employee · ' + nm) : 'Employee';
+        }
+        if (t.stream_type === 'placement') return 'Placement';
+        if (t.stream_type === 'hotel-slug') return 'Hotel card';
+        if (t.stream_type === 'hotel') return 'Hotel link';
+        return 'Direct';
+      }
+
+      function funnelDetail(r, tps) {
+        var firstTs = tps[0] && tps[0].touched_at
+          ? new Date(tps[0].touched_at).getTime() : null;
+        var bookedTs = r.created_at || null;
+        var lag = (firstTs && bookedTs)
+          ? formatLag(bookedTs - firstTs) : null;
+        var steps = tps.map(function (t, i) {
+          var when = t.touched_at ? formatShortDate(new Date(t.touched_at).getTime()) : '—';
+          return '<li class="hd-funnel-step' +
+            (t.is_credited ? ' hd-funnel-step--credited' : '') + '">' +
+            '<span class="hd-funnel-step__n">' + (i + 1) + '</span>' +
+            '<span class="hd-funnel-step__label">' + escapeHtml(streamLabel(t)) + '</span>' +
+            '<span class="hd-funnel-step__code">' + escapeHtml(t.code || '') + '</span>' +
+            '<span class="hd-funnel-step__when">' + escapeHtml(when) + '</span>' +
+            (t.is_credited ? '<span class="hd-funnel-step__badge">Credited</span>' : '') +
+            '</li>';
+        }).join('');
+        var meta =
+          '<div class="hd-funnel-meta">' +
+          '<span><strong>First touch:</strong> ' +
+          escapeHtml(r.first_touch_code || (tps[0] && tps[0].code) || '—') + '</span>' +
+          (lag ? '<span><strong>Time to book:</strong> ' + escapeHtml(lag) + '</span>' : '') +
+          (r.attribution_policy_used
+            ? '<span><strong>Policy:</strong> ' + escapeHtml(r.attribution_policy_used) + '</span>'
+            : '') +
+          '</div>';
+        return '<div class="hd-funnel"><ol class="hd-funnel-list">' +
+          steps + '</ol>' + meta + '</div>';
+      }
+
+      function formatLag(ms) {
+        if (ms == null || ms < 0) return null;
+        var mins = Math.round(ms / 60000);
+        if (mins < 60) return mins + ' min';
+        var hrs = Math.round(mins / 60);
+        if (hrs < 48) return hrs + ' hr';
+        return Math.round(hrs / 24) + ' days';
       }
 
       // ── Helpers ────────────────────────────────────────────────────

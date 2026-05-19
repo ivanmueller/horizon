@@ -32,7 +32,13 @@ create table booking_touchpoints (
   created_at         timestamptz not null default now(),
   -- Idempotency for the page's fire-and-forget retries: the same funnel
   -- replayed produces the same (confirmation_code, position) pairs.
-  unique (confirmation_code, position)
+  unique (confirmation_code, position),
+  -- The booking row is always inserted before its touchpoints, and
+  -- bookings.confirmation_code is unique — so a real FK both enforces
+  -- integrity and lets PostgREST embed the funnel into the bookings query.
+  constraint booking_touchpoints_conf_fk
+    foreign key (confirmation_code)
+    references bookings (confirmation_code) on delete cascade
 );
 
 create index booking_touchpoints_conf_idx    on booking_touchpoints (confirmation_code);

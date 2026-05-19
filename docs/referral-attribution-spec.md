@@ -232,11 +232,26 @@ first_touch_code, credited_touchpoint_id)`, flag the winning touchpoint
 `is_credited = true`. Existing collision guard (`staff.hotel_id == hotel_id`)
 is applied inside `resolveCredit`.
 
-## 7. Dashboard (read-only, phase 2)
+## 7. Dashboard + recompute (Phase 2 — IMPLEMENTED)
 
-Not built in phase 1; schema supports it. Funnel view per booking: ordered
-touchpoint timeline, first vs. credited touch, conversion lag, stream mix.
-Roll-up: "X% of pool-hotel bookings had a prior employee touch", etc.
+- **Funnel view** (`dashboard/hotel/index.html`): bookings table gains a
+  **Source** column showing the credited stream/employee with an expandable
+  per-booking touchpoint timeline (ordered steps, credited badge, first
+  touch, time-to-book, policy used). Driven by the embedded
+  `touchpoints` + audit columns now returned by `/api/dashboard/bookings`.
+- **Retroactive recompute** (`POST /api/admin/recompute-attribution`,
+  horizon-admin gated, body `{ hotel }`): replays `resolveCredit` over the
+  immutable `booking_touchpoints` using the hotel's *current*
+  `attribution_policy`, rewrites `bookings.staff_id` + audit columns +
+  `is_credited` flags only where they changed. Makes a policy switch
+  non-destructive (§3). Scoped per-hotel per call to stay bounded.
+
+> **§6.2b — added.** `booking_touchpoints` gains
+> `constraint booking_touchpoints_conf_fk foreign key (confirmation_code)
+> references bookings (confirmation_code) on delete cascade`. The booking
+> row is always inserted before its touchpoints and
+> `bookings.confirmation_code` is unique, so the FK enforces integrity and
+> lets PostgREST embed the funnel directly into the bookings query.
 
 ## 8. Rollout plan
 
