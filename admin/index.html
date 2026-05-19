@@ -3860,6 +3860,8 @@
               shortByPath.set(l.short_path, l);
             }
           }
+          const plCopyIcon =
+            '<svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
           const pRows = placements
             .slice()
             .sort((a, b) => (a.sequence_number || 0) - (b.sequence_number || 0))
@@ -3873,13 +3875,12 @@
                     : '<span class="bk-pill bk-pill--neutral">Draft</span>');
               const code = p.code || '';
               const sl = shortByPath.get((code || '').toLowerCase()) || null;
-              const shortCell = sl
-                ? '<td class="hd-links__url"><button type="button" class="hd-copy hd-copy--url" data-copy="' + escapeHtml(sl.short_url) + '" title="' + escapeHtml(sl.short_url) + '">' +
-                    '<span class="hd-trunc mono">' + escapeHtml(sl.short_url) + '</span></button></td>'
-                : '<td class="muted" title="No short link yet — minted when the placement is created.">—</td>';
-              const tagCell = p.tag
-                ? '<span class="bk-pill bk-pill--neutral">' + escapeHtml(p.tag) + '</span>'
-                : '<span class="muted">—</span>';
+              // The code is the visible token; the copy icon yields the
+              // full shareable short URL (the code IS its path), so a
+              // separate Short URL column would be redundant. Falls back
+              // to copying the code when no link is minted yet.
+              const copyVal = sl ? sl.short_url : code;
+              const copyTitle = sl ? 'Copy short link' : 'Copy placement code';
               const deployedDate = p.deployed_at
                 ? String(p.deployed_at).slice(0, 10) : '';
               const actCell = (p.status === 'retired')
@@ -3909,10 +3910,8 @@
                   ' data-pl-code="' + escapeHtml(code) + '">' +
                   '<td class="hd-emp__name">' + escapeHtml(p.name || '—') + '</td>' +
                   '<td>' + escapeHtml(typeLabel) + '</td>' +
-                  '<td>' + tagCell + '</td>' +
-                  '<td><button type="button" class="hd-copy mono" data-copy="' + escapeHtml(code) + '" title="Copy placement code">' +
-                      '<span>' + escapeHtml(code || '—') + '</span></button></td>' +
-                  shortCell +
+                  '<td><button type="button" class="hd-copy mono" data-copy="' + escapeHtml(copyVal) + '" title="' + copyTitle + '">' +
+                      '<span>' + escapeHtml(code || '—') + '</span>' + plCopyIcon + '</button></td>' +
                   '<td>' + statusPill + '</td>' +
                   '<td class="num hd-num">' + (sl ? (sl.click_count_cached || 0) : 0) + '</td>' +
                   actCell +
@@ -3923,8 +3922,8 @@
             '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
               '<table class="bk-table">' +
                 '<thead><tr>' +
-                  '<th>Placement</th><th>Type</th><th>Tag</th><th>Code</th>' +
-                  '<th>Short URL</th><th>Status</th><th class="num">Clicks</th><th></th>' +
+                  '<th>Placement</th><th>Type</th><th>Code</th>' +
+                  '<th>Status</th><th class="num">Clicks</th><th></th>' +
                 '</tr></thead>' +
                 '<tbody>' + pRows + '</tbody>' +
               '</table>' +
