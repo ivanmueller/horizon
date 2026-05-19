@@ -2941,13 +2941,15 @@ select.hd-bankf__input { appearance: auto; }
 }
 .pl-mat__qrbox {
   flex: 0 0 auto;
-  width: 96px; height: 96px;
+  width: 140px; height: 140px;
   display: flex; align-items: center; justify-content: center;
   background: #fff;
   border: 1px solid var(--border);
   border-radius: var(--r-sm);
 }
-.pl-mat__qrbox canvas, .pl-mat__qrbox svg { width: 84px; height: 84px; }
+.pl-mat__qrbox canvas, .pl-mat__qrbox svg { width: 124px; height: 124px; }
+.pl-mat__qrbox--clickable { cursor: zoom-in; transition: border-color var(--motion-fast) var(--motion-ease-out); }
+.pl-mat__qrbox--clickable:hover { border-color: var(--border-strong); }
 .pl-mat__qrnone { font-size: var(--t-xs); }
 .pl-mat__qrside { flex: 1 1 auto; min-width: 0; }
 .pl-mat__qrlabel { font-weight: 600; font-size: var(--t-sm); }
