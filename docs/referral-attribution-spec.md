@@ -243,14 +243,10 @@ Roll-up: "X% of pool-hotel bookings had a prior employee touch", etc.
 Phase 1a is independently shippable and removes the highest-impact revenue
 risk first.
 
-## 9. Open questions for sign-off
+## 9. Sign-off — LOCKED 2026-05-19
 
-1. Confirm default policy §4.1 (employee-priority, last-employee, else
-   first-hotel) as the launch behaviour.
-2. Confirm 30-day sliding TTL (§5.3).
-3. Cookie scope: apex domain incl. all subdomains acceptable? (Needed so a
-   `partners.` or `link.` hop doesn't lose the funnel.)
-4. Touchpoint cap of 25 (§5.2) acceptable, or unbounded with size-based
-   trimming only?
-5. Should placement (`-pNN`) ever be allowed to *credit* (vs. funnel-only) for
-   marketing-attribution hotels — future policy value?
+1. ✅ Default policy §4.1 (employee-priority, last-employee, else first-hotel).
+2. ✅ 30-day sliding TTL (§5.3).
+3. ✅ Cookie scope: apex domain incl. all subdomains.
+4. ✅ Touchpoint cap = 25 (§5.2); first-touch preserved separately past cap.
+5. ✅ Placement (`-pNN`) is **funnel-only / non-crediting** in Phase 1.
