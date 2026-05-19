@@ -1929,8 +1929,8 @@ const PLACEMENT_ASSET_FIELDS =
   "id,placement_id,kind,filename,storage_path,content_type,byte_size," +
   "version,status,uploaded_at,created_at,updated_at";
 const PLACEMENT_FIELDS =
-  "id,hotel_id,sequence_number,code,placement_type,name,tag,status," +
-  "location_in_hotel,quantity_printed,deployed_at,created_at,updated_at";
+  "id,hotel_id,sequence_number,code,placement_type,name,status," +
+  "location_in_hotel,deployed_at,created_at,updated_at";
 const PLACEMENT_ASSETS_BUCKET = "placement-assets";
 const PLACEMENT_ASSET_KINDS = new Set(["design", "print_ready", "qr"]);
 const SHORT_LINK_TYPES = new Set(["hotel", "staff", "campaign", "placement"]);
@@ -1941,16 +1941,6 @@ const PLACEMENT_TYPES = new Set([
   "website_widget", "lobby_qr", "custom",
 ]);
 const PLACEMENT_STATUSES = new Set(["draft", "active", "retired"]);
-// Default short display tag per type. Editable by the admin; purely
-// cosmetic — never used for attribution (the minted code is).
-const PLACEMENT_DEFAULT_TAGS = {
-  rack_card: "RACK",
-  table_tent: "TENT",
-  welcome_packet: "PACKET",
-  website_widget: "WEB",
-  lobby_qr: "LOBBY",
-  custom: "CUSTOM",
-};
 // Short.io path constraints — alphanumeric plus the common
 // separators. Conservative; tighten if you find Short.io rejecting
 // edge cases.
@@ -2841,25 +2831,9 @@ function validatePlacement(body, { creating }) {
   } else if (creating) {
     return { error: "placement_type required" };
   }
-  // tag defaults from the type on create when the admin leaves it
-  // blank; explicit empty string clears it. Display-only.
-  if (typeof body.tag === "string") {
-    const tag = body.tag.trim().toUpperCase();
-    row.tag = tag || null;
-  } else if (creating) {
-    row.tag = PLACEMENT_DEFAULT_TAGS[row.placement_type] || null;
-  }
   if (typeof body.location_in_hotel === "string") {
     const loc = body.location_in_hotel.trim();
     row.location_in_hotel = loc || null;
-  }
-  if (body.quantity_printed === null) {
-    row.quantity_printed = null;
-  } else if (typeof body.quantity_printed === "number") {
-    if (!Number.isInteger(body.quantity_printed) || body.quantity_printed < 0) {
-      return { error: "quantity_printed must be a non-negative integer" };
-    }
-    row.quantity_printed = body.quantity_printed;
   }
   if (body.deployed_at === null) {
     row.deployed_at = null;
@@ -2873,6 +2847,9 @@ function validatePlacement(body, { creating }) {
       return { error: "status must be draft, active, or retired" };
     }
     row.status = body.status;
+  } else if (creating) {
+    // Streamlined create flow: a new placement is live immediately.
+    row.status = "active";
   }
   // code and sequence_number are auto-managed by
   // insertPlacementWithSequence and locked thereafter — never accept
