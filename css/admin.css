@@ -2918,6 +2918,15 @@ select.hd-bankf__input { appearance: auto; }
   pointer-events: auto;
 }
 
+/* Minimal placement asset upload control (Phase 3). */
+.pl-asset-up {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pl-asset-up .input[type="file"] { flex: 1 1 auto; min-width: 0; }
+.pl-asset-up .btn { flex: 0 0 auto; }
+
 /* Inline confirm cancel link that appears next to the armed button */
 .sl-confirm { margin-left: 6px; }
 .sl-confirm__cancel {

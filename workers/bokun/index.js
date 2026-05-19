@@ -89,7 +89,10 @@
 // needed for either path.
 
 import { bokunFetch } from "./bokun-auth.js";
-import { supabaseRequest, supabaseSelect, supabaseInsert, supabaseUpdate } from "./supabase.js";
+import {
+  supabaseRequest, supabaseSelect, supabaseInsert, supabaseUpdate,
+  supabaseStorageSignUpload, supabaseStorageSignDownload,
+} from "./supabase.js";
 import {
   createShortLink,
   updateShortLink,
@@ -251,9 +254,21 @@ export default {
 
       // ── Placements CRUD ─────────────────────────────────────────
       if (segs[0] === "api" && segs[1] === "admin" && segs[2] === "placements") {
+        // Assets: /placements/:id/assets[/sign-upload | /:assetId/url]
+        if (segs[3] && segs[4] === "assets") {
+          if (request.method === "POST" && segs[5] === "sign-upload") {
+            return await handleAdminPlacementAssetSignUpload(segs[3], request, env);
+          }
+          if (request.method === "POST" && !segs[5]) {
+            return await handleAdminPlacementAssetRecord(segs[3], request, env);
+          }
+          if (request.method === "GET" && segs[5] && segs[6] === "url") {
+            return await handleAdminPlacementAssetUrl(segs[3], segs[5], request, env);
+          }
+        }
         if (request.method === "POST" && !segs[3]) return await handleAdminPlacementCreate(request, env);
-        if (request.method === "PATCH" && segs[3]) return await handleAdminPlacementUpdate(segs[3], request, env);
-        if (request.method === "DELETE" && segs[3]) return await handleAdminPlacementRetire(segs[3], request, env);
+        if (request.method === "PATCH" && segs[3] && !segs[4]) return await handleAdminPlacementUpdate(segs[3], request, env);
+        if (request.method === "DELETE" && segs[3] && !segs[4]) return await handleAdminPlacementRetire(segs[3], request, env);
       }
 
       // ── Short.io short_links CRUD ───────────────────────────────
@@ -1327,7 +1342,8 @@ async function handleAdminHotelsList(env, request) {
     `,staff:hotel_staff(${STAFF_FIELDS})` +
     `,managers:hotel_users(${MANAGER_FIELDS})` +
     `,short_links:short_links(${SHORT_LINK_FIELDS})` +
-    `,placements:placements(${PLACEMENT_FIELDS})`;
+    `,placements:placements(${PLACEMENT_FIELDS},` +
+      `assets:placement_assets(${PLACEMENT_ASSET_FIELDS}))`;
   const rows = await supabaseSelect(env, `hotels?select=${select}&order=code.asc`);
   return jsonResponse({ hotels: rows.map(normaliseHotel) }, 200, request);
 }
@@ -1518,6 +1534,147 @@ async function handleAdminPlacementRetire(id, request, env) {
   return jsonResponse({ placement: updated[0] }, 200, request);
 }
 
+// Sanitise an uploaded filename for use inside a storage object key:
+// keep it readable but strip anything that isn't safe in a path.
+function safeAssetFilename(name) {
+  const base = String(name || "file").split(/[\\/]/).pop().trim();
+  const cleaned = base.replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "");
+  return cleaned.slice(0, 120) || "file";
+}
+
+async function placementOr404(env, id, request) {
+  if (!UUID_RE.test(id)) {
+    return { error: jsonResponse({ error: "invalid placement id" }, 400, request) };
+  }
+  const rows = await supabaseSelect(
+    env, `placements?id=eq.${encodeURIComponent(id)}&select=id`,
+  );
+  if (!rows.length) {
+    return { error: jsonResponse({ error: "placement not found" }, 404, request) };
+  }
+  return { placement: rows[0] };
+}
+
+// Step 1 of an upload: mint a one-shot signed URL the browser PUTs
+// the file to directly. No DB row yet — the row is recorded in step 2
+// only after the upload succeeds, so a failed upload leaves no
+// dangling asset record.
+async function handleAdminPlacementAssetSignUpload(placementId, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const guard = await placementOr404(env, placementId, request);
+  if (guard.error) return guard.error;
+
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+  const kind = typeof body.kind === "string" ? body.kind : "";
+  if (!PLACEMENT_ASSET_KINDS.has(kind)) {
+    return jsonResponse({ error: "invalid kind" }, 400, request);
+  }
+  const filename = safeAssetFilename(body.filename);
+  // Object key: <placement>/<kind>/<ts>-<filename>. The timestamp
+  // keeps versions side by side instead of overwriting.
+  const objectPath = `${placementId}/${kind}/${Date.now()}-${filename}`;
+
+  try {
+    const signed = await supabaseStorageSignUpload(env, PLACEMENT_ASSETS_BUCKET, objectPath);
+    return jsonResponse({
+      upload_url: signed.url,
+      token: signed.token,
+      storage_path: objectPath,
+      filename,
+    }, 200, request);
+  } catch (err) {
+    console.error("placement asset sign-upload failed:", err.message);
+    return jsonResponse({ error: "could not create upload URL" }, 502, request);
+  }
+}
+
+// Step 2: record the uploaded object. Computes the next per-(placement,
+// kind) version so re-uploads keep history instead of clobbering.
+async function handleAdminPlacementAssetRecord(placementId, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const guard = await placementOr404(env, placementId, request);
+  if (guard.error) return guard.error;
+
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+  const kind = typeof body.kind === "string" ? body.kind : "";
+  if (!PLACEMENT_ASSET_KINDS.has(kind)) {
+    return jsonResponse({ error: "invalid kind" }, 400, request);
+  }
+  const storage_path = typeof body.storage_path === "string" ? body.storage_path.trim() : "";
+  if (!storage_path || !storage_path.startsWith(`${placementId}/`)) {
+    return jsonResponse({ error: "invalid storage_path" }, 400, request);
+  }
+  const filename = safeAssetFilename(body.filename);
+  const content_type = typeof body.content_type === "string" ? body.content_type.slice(0, 160) : null;
+  const byte_size = Number.isInteger(body.byte_size) && body.byte_size >= 0 ? body.byte_size : null;
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const maxRows = await supabaseSelect(
+      env,
+      `placement_assets?placement_id=eq.${encodeURIComponent(placementId)}` +
+        `&kind=eq.${encodeURIComponent(kind)}` +
+        `&select=version&order=version.desc&limit=1`,
+    );
+    const nextVer = (maxRows.length && maxRows[0].version ? maxRows[0].version : 0) + 1;
+    try {
+      const inserted = await supabaseInsert(env, "placement_assets", [{
+        placement_id: placementId,
+        kind,
+        filename,
+        storage_path,
+        content_type,
+        byte_size,
+        version: nextVer,
+      }], { returnRow: true });
+      logMutation(request, auth.claims, "create", "placement_asset", inserted[0].id, {
+        placement_id: placementId, kind, version: nextVer,
+      });
+      return jsonResponse({ asset: inserted[0] }, 201, request);
+    } catch (err) {
+      if (isUniqueViolation(err, "version")) continue;
+      if (isUniqueViolation(err, "storage_path")) {
+        return jsonResponse({ error: "asset already recorded" }, 409, request);
+      }
+      throw err;
+    }
+  }
+  return jsonResponse({ error: "could not allocate asset version" }, 409, request);
+}
+
+// Mint a short-lived signed GET URL for previewing/downloading a
+// recorded asset. The bucket is private; this is the only way a
+// browser ever reads it.
+async function handleAdminPlacementAssetUrl(placementId, assetId, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(placementId) || !UUID_RE.test(assetId)) {
+    return jsonResponse({ error: "invalid id" }, 400, request);
+  }
+  const rows = await supabaseSelect(
+    env,
+    `placement_assets?id=eq.${encodeURIComponent(assetId)}` +
+      `&placement_id=eq.${encodeURIComponent(placementId)}` +
+      `&select=id,storage_path,filename`,
+  );
+  if (!rows.length) {
+    return jsonResponse({ error: "asset not found" }, 404, request);
+  }
+  try {
+    const url = await supabaseStorageSignDownload(
+      env, PLACEMENT_ASSETS_BUCKET, rows[0].storage_path, 3600,
+    );
+    if (!url) return jsonResponse({ error: "could not sign asset URL" }, 502, request);
+    return jsonResponse({ url, filename: rows[0].filename }, 200, request);
+  } catch (err) {
+    console.error("placement asset sign-download failed:", err.message);
+    return jsonResponse({ error: "could not sign asset URL" }, 502, request);
+  }
+}
+
 async function handleAdminHotelUserCreate(request, env) {
   const auth = await requireHorizonAdmin(request, env);
   if (auth.error) return auth.error;
@@ -1630,9 +1787,14 @@ const SHORT_LINK_FIELDS =
   "id,short_io_id,domain,short_path,short_url,target_url,link_type," +
   "hotel_id,staff_id,label,notes,status,click_count_cached," +
   "last_clicked_at,created_at,updated_at";
+const PLACEMENT_ASSET_FIELDS =
+  "id,placement_id,kind,filename,storage_path,content_type,byte_size," +
+  "version,status,uploaded_at,created_at,updated_at";
 const PLACEMENT_FIELDS =
   "id,hotel_id,sequence_number,code,placement_type,name,tag,status," +
   "location_in_hotel,quantity_printed,deployed_at,created_at,updated_at";
+const PLACEMENT_ASSETS_BUCKET = "placement-assets";
+const PLACEMENT_ASSET_KINDS = new Set(["design", "print_ready", "qr"]);
 const SHORT_LINK_TYPES = new Set(["hotel", "staff", "campaign", "placement"]);
 const SHORT_LINK_STATUSES = new Set(["active", "retired"]);
 
