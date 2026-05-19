@@ -2433,6 +2433,28 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   color: var(--bad-fg);
 }
 .hd-bankf__err[hidden] { display: none; }
+select.hd-bankf__input { appearance: auto; }
+
+/* Manual payment records list. */
+.hd-pay__ref {
+  font-size: var(--t-xs);
+  color: var(--text-soft, #6b6b66);
+}
+.hd-pay__note {
+  font-size: var(--t-xs);
+  color: var(--text-soft, #6b6b66);
+}
+.hd-pay__del {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--bad-fg);
+  font-size: var(--t-xs);
+  padding: 0 4px;
+  line-height: 1;
+}
+.hd-pay__del:hover { text-decoration: underline; }
+.hd-pay__del:disabled { opacity: .5; cursor: default; }
 
 /* Stripe-style rows: label bolded above the value, tight inner
    gap, generous outer spacing between fields. The whole sidebar
