@@ -569,8 +569,9 @@
         .eq('status', 'active')
         .limit(1)
         .maybeSingle();
-      // Login lives on the Connect host; admins cross to the ops host.
-      return adminRow ? adminUrl('/admin/') : '/dashboard/hotel/';
+      // Login lives on the Connect host; admins cross to the ops host,
+      // hotel managers land on the rooted portal (connect root).
+      return adminRow ? adminUrl('/admin/') : '/';
     }
 
     const { data: { session } } = await supabase.auth.getSession();

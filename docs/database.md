@@ -20,7 +20,7 @@ the partner-dashboard and admin auth flows (`0003_auth_setup.sql` +
 | `hotel_staff`     | Concierge / employees with optional per-employee kickback.          |
 | `bookings`        | Confirmed Bokun bookings. One row per successful checkout.          |
 | `hotel_users`     | Email → hotel mapping for partner-dashboard sign-in.                |
-| `horizon_admins`  | Email allowlist for the internal Horizon admin dashboard at `/admin/`. |
+| `horizon_admins`  | Email allowlist for the internal Horizon ops console at `admin.gowithhorizon.com`. |
 
 Each booking links to a hotel (required) and optionally to a staff
 member (the person who'll get the kickback). The link to staff is
@@ -108,7 +108,8 @@ in any frontend bundle or commit.
 ### 3. Seed partners
 
 For a fresh project with no partners yet, just sign in at
-`/admin/` (after adding your email to `horizon_admins`) and click
+`admin.gowithhorizon.com` (after adding your email to
+`horizon_admins`) and click
 **+ Add hotel**. See [`ADDING_A_PARTNER.md`](../ADDING_A_PARTNER.md)
 for the full UI walkthrough.
 

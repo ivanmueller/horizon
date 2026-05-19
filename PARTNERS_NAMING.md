@@ -83,7 +83,7 @@ attached to that historical row and is never reissued to a different person.
 ## Source of truth
 
 The Supabase `hotels` and `hotel_staff` tables. Admins edit them
-through the UI at `/admin/hotels/` (see
+through the UI at `admin.gowithhorizon.com/hotels/` (see
 [`ADDING_A_PARTNER.md`](./ADDING_A_PARTNER.md) for the workflow).
 
 `partners.json` at the repo root is a build artifact, not source —
