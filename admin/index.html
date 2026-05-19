@@ -508,6 +508,80 @@
     </form>
   </div>
 
+  <!-- ── Staff (employee) modal — handles add + edit ───────── -->
+  <div class="modal" id="staffModal" hidden>
+    <form class="modal__card" id="staffModalForm" novalidate>
+      <div class="modal__head">
+        <h2 class="modal__title" id="staffModalTitle">Add employee</h2>
+        <button type="button" class="modal__close" id="staffModalClose" aria-label="Close">&times;</button>
+      </div>
+      <div class="alert alert--bad" id="staffModalError" hidden></div>
+
+      <div class="drawer-form__row">
+        <label class="drawer-form__label" for="staffModalName">Name <span class="drawer-form__req">required</span></label>
+        <input class="input" id="staffModalName" type="text" required maxlength="120"
+               placeholder="Jane Smith" autocomplete="off">
+        <span class="drawer-form__hint" id="staffModalNameHint">The tracking code (used in QR codes) is auto-assigned on creation.</span>
+      </div>
+
+      <div class="drawer-form__row" id="staffModalTrackingRow" hidden>
+        <label class="drawer-form__label" for="staffModalTracking">Tracking code <span class="drawer-form__req">permanent</span></label>
+        <input class="input" id="staffModalTracking" type="text" disabled
+               style="font-family: var(--font-mono); font-size: 0.9em;">
+        <span class="drawer-form__hint">Auto-assigned at creation. Encoded in this employee's QR code.</span>
+      </div>
+
+      <div class="drawer-form__row">
+        <label class="drawer-form__label" for="staffModalKickback">Kickback %</label>
+        <input class="input" id="staffModalKickback" type="number" min="0" max="100" step="0.1"
+               placeholder="5">
+      </div>
+
+      <div class="modal__actions">
+        <button type="button" class="btn" id="staffModalCancel">Cancel</button>
+        <button type="submit" class="btn btn--primary" id="staffModalSubmit">Add employee</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── Manager modal — handles invite + edit ─────────────── -->
+  <div class="modal" id="mgrModal" hidden>
+    <form class="modal__card" id="mgrModalForm" novalidate>
+      <div class="modal__head">
+        <h2 class="modal__title" id="mgrModalTitle">Invite manager</h2>
+        <button type="button" class="modal__close" id="mgrModalClose" aria-label="Close">&times;</button>
+      </div>
+      <div class="alert alert--bad" id="mgrModalError" hidden></div>
+
+      <div class="drawer-form__row">
+        <label class="drawer-form__label" for="mgrModalName">Name <span class="drawer-form__req">required</span></label>
+        <input class="input" id="mgrModalName" type="text" required maxlength="120"
+               placeholder="Anna Liang" autocomplete="off">
+      </div>
+
+      <div class="drawer-form__row">
+        <label class="drawer-form__label" for="mgrModalEmail">Email <span class="drawer-form__req" id="mgrModalEmailReq">required &middot; permanent</span></label>
+        <input class="input" id="mgrModalEmail" type="email" required
+               autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+               placeholder="manager@hotel.com">
+        <span class="drawer-form__hint" id="mgrModalEmailHint">An invite email will be sent. They'll set a password on first sign-in.</span>
+      </div>
+
+      <div class="drawer-form__row">
+        <label class="drawer-form__label" for="mgrModalRole">Role</label>
+        <select class="input" id="mgrModalRole">
+          <option value="manager">manager (can view bookings + invoices)</option>
+          <option value="admin">admin (can also manage staff at this hotel)</option>
+        </select>
+      </div>
+
+      <div class="modal__actions">
+        <button type="button" class="btn" id="mgrModalCancel">Cancel</button>
+        <button type="submit" class="btn btn--primary" id="mgrModalSubmit">Send invite</button>
+      </div>
+    </form>
+  </div>
+
   <!-- ── Placement analytics modal ─────────────────────────── -->
   <div class="modal" id="plStatsModal" hidden>
     <div class="modal__card modal__card--xl">
@@ -4540,6 +4614,7 @@
           const refCode = s.tracking_code || '';
           return (
             '<tr data-staff-row="' + escapeHtml(s.id) + '">' +
+              '<td>' + statusPill + '</td>' +
               '<td class="hd-emp">' +
                 '<span class="hd-avatar" aria-hidden="true">' + escapeHtml(initials) + '</span>' +
                 '<span class="hd-emp__name">' + escapeHtml(s.name || '—') + '</span>' +
@@ -4549,7 +4624,6 @@
                   '<span>' + escapeHtml(refCode || '—') + '</span>' +
                   '<svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
               '</button></td>' +
-              '<td>' + statusPill + '</td>' +
               '<td class="num hd-num">0</td>' +
               '<td class="num hd-num">' + rateCell + '</td>' +
               '<td class="num hd-num">' + escapeHtml(earned) + '</td>' +
@@ -4564,7 +4638,7 @@
           '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
             '<table class="bk-table">' +
               '<thead><tr>' +
-                '<th>Employee</th><th>Referral code</th><th>Status</th>' +
+                '<th>Status</th><th>Employee</th><th>Referral code</th>' +
                 '<th class="num">Bookings</th><th class="num">Rate</th><th class="num">Commission</th>' +
                 '<th>Last booking</th><th></th>' +
               '</tr></thead>' +
@@ -5240,30 +5314,17 @@
         }
       }
 
-      // Wire Add Employee buttons → open the drawer scoped to the staff
-      // form only (drawerMode = 'employee'). Both the header CTA and the
-      // section [+] route through the same focused drawer so the user
-      // lands directly on the inline employee-create form without the
-      // hotel overview, managers, or danger zone in view.
-      const openAddStaff = () => {
-        drawerStaffForm = 'add';
-        openHotelDrawer(h, 'employee');
-        // openHotelDrawer resets drawerStaffForm before render, so set
-        // it again and re-render. (Keeps the existing API intact.)
-        drawerStaffForm = 'add';
-        renderAndWireDrawer(h);
-      };
+      // Wire Add Employee buttons → centered modal (see openStaffModalAdd).
+      // The hero "+ Add Employee", the section "+", and the employee
+      // kebab edit all route through the same staff modal. The drawer
+      // is reserved for hotel-profile concerns triggered by the ⋯.
+      const openAddStaff = () => openStaffModalAdd(h);
       els.addBtnHead.onclick    = openAddStaff;
       els.addBtnSection.onclick = openAddStaff;
 
-      // Wire Add Manager → drawer scoped to the manager form only.
+      // Wire Add Manager → manager modal.
       if (els.addBtnMgr) {
-        els.addBtnMgr.onclick = () => {
-          drawerManagerForm = 'add';
-          openHotelDrawer(h, 'manager');
-          drawerManagerForm = 'add';
-          renderAndWireDrawer(h);
-        };
+        els.addBtnMgr.onclick = () => openMgrModalInvite(h);
       }
 
       // Wire the hero ⋯ → drawer scoped to hotel overview + danger zone.
@@ -5273,32 +5334,24 @@
         els.moreBtn.onclick = () => openHotelDrawer(h, 'profile');
       }
 
-
-      // Edit row → open the drawer with the inline edit form pre-opened
-      // for that staff record. Same data model, same submit endpoint.
+      // Employee row kebab → staff modal in edit mode.
+      const staffById = new Map((h.staff || []).map((s) => [s.id, s]));
       els.empBody.querySelectorAll('[data-staff-edit-id]').forEach((btn) => {
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
-          const id = btn.dataset.staffEditId;
-          drawerStaffForm = { editId: id };
-          openHotelDrawer(h, 'employee');
-          drawerStaffForm = { editId: id };
-          renderAndWireDrawer(h);
+          const staff = staffById.get(btn.dataset.staffEditId);
+          if (staff) openStaffModalEdit(h, staff);
         });
       });
 
-      // Managers — wire row kebabs. The section markup is rendered
-      // earlier in this function (see renderHotelManagers call above)
-      // so the buttons exist by the time we reach this block.
+      // Manager row kebab → manager modal in edit mode.
       if (els.mgrBody) {
+        const mgrById = new Map((h.managers || []).map((m) => [m.id, m]));
         els.mgrBody.querySelectorAll('[data-manager-edit-id]').forEach((btn) => {
           btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            const id = btn.dataset.managerEditId;
-            drawerManagerForm = { editId: id };
-            openHotelDrawer(h, 'manager');
-            drawerManagerForm = { editId: id };
-            renderAndWireDrawer(h);
+            const mgr = mgrById.get(btn.dataset.managerEditId);
+            if (mgr) openMgrModalEdit(h, mgr);
           });
         });
       }
@@ -5351,8 +5404,12 @@
         return;
       }
       const rows = managers.map((m) => {
+        const name     = m.name || '';
         const email    = m.email || '—';
-        const initials = email.slice(0, 2).toUpperCase();
+        const primary  = name || email;
+        const initials = (name
+          ? name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('')
+          : email.slice(0, 2).toUpperCase()) || '?';
         const role     = m.role || 'manager';
         const statusPill = m.status === 'active'
           ? '<span class="bk-pill bk-pill--ok">Active</span>'
@@ -5362,17 +5419,18 @@
           : '<span class="muted">Never</span>';
         return (
           '<tr data-manager-row="' + escapeHtml(m.id) + '">' +
+            '<td>' + statusPill + '</td>' +
             '<td class="hd-emp">' +
               '<span class="hd-avatar" aria-hidden="true">' + escapeHtml(initials) + '</span>' +
-              '<span class="hd-emp__name">' + escapeHtml(email) + '</span>' +
+              '<span class="hd-emp__name">' + escapeHtml(primary) + '</span>' +
             '</td>' +
+            '<td class="muted">' + escapeHtml(email) + '</td>' +
             '<td class="muted">' + escapeHtml(role) + '</td>' +
-            '<td>' + statusPill + '</td>' +
             '<td class="muted">' + lastSeen + '</td>' +
             '<td class="bk-table__kebab">' +
               '<button type="button" class="bk-kebab"' +
                 ' data-manager-edit-id="' + escapeHtml(m.id) + '"' +
-                ' aria-label="Edit ' + escapeHtml(email) + '">⋯</button>' +
+                ' aria-label="Edit ' + escapeHtml(primary) + '">⋯</button>' +
             '</td>' +
           '</tr>'
         );
@@ -5381,7 +5439,7 @@
         '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
           '<table class="bk-table">' +
             '<thead><tr>' +
-              '<th>Email</th><th>Role</th><th>Status</th><th>Last sign-in</th><th></th>' +
+              '<th>Status</th><th>Name</th><th>Email</th><th>Role</th><th>Last sign-in</th><th></th>' +
             '</tr></thead>' +
             '<tbody>' + rows + '</tbody>' +
           '</table>' +
@@ -6344,10 +6402,11 @@
         </section>
       `;
 
-      // Filter sections by mode so a section-scoped + button can open a
-      // focused drawer instead of the unified hotel view.
-      if (drawerMode === 'employee') return staffSection;
-      if (drawerMode === 'manager')  return managersSection;
+      // Employee + manager management runs through centered modals on
+      // the page, so the drawer's only remaining job is 'profile' mode
+      // (hotel overview + danger). The legacy 'all' view is kept as the
+      // default in case any older caller still hits openHotelDrawer
+      // without a mode argument.
       if (drawerMode === 'profile')  return overview + dangerZone;
       return overview + staffSection + managersSection + dangerZone;
     }
@@ -6941,6 +7000,227 @@
       flashHotelsNotice('Manager access revoked.');
       reloadHotelsCacheAndRefresh();
     }
+
+    /* ── Staff modal (Add/Edit employee) ─────────────────── */
+    // Centered modal replaces the drawer-based form. Hooks the
+    // same /api/admin/hotel-staff endpoints; only the surface
+    // changed. Hotel context lives in _staffModalHotel; staff
+    // id (when editing) lives in _staffModalEditId.
+    let _staffModalHotel = null;
+    let _staffModalEditId = null;
+    const staffModal        = document.getElementById('staffModal');
+    const staffModalForm    = document.getElementById('staffModalForm');
+    const staffModalTitle   = document.getElementById('staffModalTitle');
+    const staffModalError   = document.getElementById('staffModalError');
+    const staffModalName    = document.getElementById('staffModalName');
+    const staffModalNameHint    = document.getElementById('staffModalNameHint');
+    const staffModalTracking    = document.getElementById('staffModalTracking');
+    const staffModalTrackingRow = document.getElementById('staffModalTrackingRow');
+    const staffModalKickback    = document.getElementById('staffModalKickback');
+    const staffModalSubmit  = document.getElementById('staffModalSubmit');
+
+    function openStaffModalAdd(hotel) {
+      _staffModalHotel  = hotel;
+      _staffModalEditId = null;
+      staffModalTitle.textContent       = 'Add employee';
+      staffModalSubmit.textContent      = 'Add employee';
+      staffModalSubmit.disabled         = false;
+      staffModalError.hidden            = true;
+      staffModalName.value              = '';
+      staffModalKickback.value          = '';
+      staffModalTrackingRow.hidden      = true;
+      staffModalNameHint.hidden         = false;
+      staffModal.hidden = false;
+      staffModalName.focus();
+    }
+    function openStaffModalEdit(hotel, staff) {
+      _staffModalHotel  = hotel;
+      _staffModalEditId = staff.id;
+      staffModalTitle.textContent       = 'Edit ' + (staff.name || 'employee');
+      staffModalSubmit.textContent      = 'Save changes';
+      staffModalSubmit.disabled         = false;
+      staffModalError.hidden            = true;
+      staffModalName.value              = staff.name || '';
+      staffModalKickback.value          = staff.kickback_pct != null ? String(staff.kickback_pct) : '';
+      staffModalTracking.value          = staff.tracking_code || '—';
+      staffModalTrackingRow.hidden      = false;
+      staffModalNameHint.hidden         = true;
+      staffModal.hidden = false;
+      staffModalName.focus();
+    }
+    function closeStaffModal() { staffModal.hidden = true; }
+
+    staffModal && staffModal.addEventListener('click', (e) => {
+      if (e.target === staffModal) closeStaffModal();
+    });
+    document.getElementById('staffModalClose')  && (document.getElementById('staffModalClose').onclick  = closeStaffModal);
+    document.getElementById('staffModalCancel') && (document.getElementById('staffModalCancel').onclick = closeStaffModal);
+
+    staffModalForm && staffModalForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!_staffModalHotel) return;
+      const name     = staffModalName.value.trim();
+      const kickback = staffModalKickback.value.trim();
+      if (!name) {
+        return showInline(staffModalError, 'Name is required.');
+      }
+      const body = { name };
+      if (kickback !== '') body.kickback_pct = Number(kickback);
+
+      staffModalSubmit.disabled    = true;
+      staffModalSubmit.textContent = _staffModalEditId ? 'Saving…' : 'Adding…';
+      staffModalError.hidden = true;
+
+      const isEdit = !!_staffModalEditId;
+      const url = isEdit
+        ? BOKUN_API_BASE + '/api/admin/hotel-staff/' + encodeURIComponent(_staffModalEditId)
+        : BOKUN_API_BASE + '/api/admin/hotel-staff';
+      if (!isEdit) body.hotel_id = _staffModalHotel.id;
+
+      try {
+        const res = await fetch(url, {
+          method: isEdit ? 'PATCH' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + session.access_token,
+          },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error((data && data.error) || (isEdit ? 'Save failed' : 'Add failed') + ' (HTTP ' + res.status + ').');
+        }
+        closeStaffModal();
+        triggerRepublish();
+        const warn = data && data.short_link_warning;
+        if (warn) {
+          flashHotelsNotice(
+            (isEdit ? 'Employee saved' : 'Employee added') + ', but the personal short link failed to mint: ' + warn,
+            { persist: true },
+          );
+        } else {
+          flashHotelsNotice(isEdit ? 'Employee saved.' : 'Employee added. Republishing partners.json (~30s)…');
+        }
+        reloadHotelsCacheAndRefresh();
+      } catch (err) {
+        showInline(staffModalError, err.message || 'Unknown error');
+        staffModalSubmit.disabled    = false;
+        staffModalSubmit.textContent = isEdit ? 'Save changes' : 'Add employee';
+      }
+    });
+
+    /* ── Manager modal (Invite / Edit manager) ──────────── */
+    let _mgrModalHotel  = null;
+    let _mgrModalEditId = null;
+    const mgrModal        = document.getElementById('mgrModal');
+    const mgrModalForm    = document.getElementById('mgrModalForm');
+    const mgrModalTitle   = document.getElementById('mgrModalTitle');
+    const mgrModalError   = document.getElementById('mgrModalError');
+    const mgrModalName    = document.getElementById('mgrModalName');
+    const mgrModalEmail   = document.getElementById('mgrModalEmail');
+    const mgrModalEmailHint = document.getElementById('mgrModalEmailHint');
+    const mgrModalEmailReq  = document.getElementById('mgrModalEmailReq');
+    const mgrModalRole    = document.getElementById('mgrModalRole');
+    const mgrModalSubmit  = document.getElementById('mgrModalSubmit');
+
+    function openMgrModalInvite(hotel) {
+      _mgrModalHotel  = hotel;
+      _mgrModalEditId = null;
+      mgrModalTitle.textContent    = 'Invite manager';
+      mgrModalSubmit.textContent   = 'Send invite';
+      mgrModalSubmit.disabled      = false;
+      mgrModalError.hidden         = true;
+      mgrModalName.value           = '';
+      mgrModalEmail.value          = '';
+      mgrModalEmail.disabled       = false;
+      mgrModalEmailHint.hidden     = false;
+      mgrModalEmailReq.textContent = 'required · permanent';
+      mgrModalRole.value           = 'manager';
+      mgrModal.hidden = false;
+      mgrModalName.focus();
+    }
+    function openMgrModalEdit(hotel, manager) {
+      _mgrModalHotel  = hotel;
+      _mgrModalEditId = manager.id;
+      mgrModalTitle.textContent    = 'Edit ' + (manager.name || manager.email || 'manager');
+      mgrModalSubmit.textContent   = 'Save changes';
+      mgrModalSubmit.disabled      = false;
+      mgrModalError.hidden         = true;
+      mgrModalName.value           = manager.name || '';
+      mgrModalEmail.value          = manager.email || '';
+      mgrModalEmail.disabled       = true;
+      mgrModalEmailHint.hidden     = true;
+      mgrModalEmailReq.textContent = 'permanent';
+      mgrModalRole.value           = manager.role || 'manager';
+      mgrModal.hidden = false;
+      mgrModalName.focus();
+    }
+    function closeMgrModal() { mgrModal.hidden = true; }
+
+    mgrModal && mgrModal.addEventListener('click', (e) => {
+      if (e.target === mgrModal) closeMgrModal();
+    });
+    document.getElementById('mgrModalClose')  && (document.getElementById('mgrModalClose').onclick  = closeMgrModal);
+    document.getElementById('mgrModalCancel') && (document.getElementById('mgrModalCancel').onclick = closeMgrModal);
+
+    mgrModalForm && mgrModalForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!_mgrModalHotel) return;
+      const name  = mgrModalName.value.trim();
+      const email = mgrModalEmail.value.trim();
+      const role  = mgrModalRole.value;
+
+      if (!name) {
+        return showInline(mgrModalError, 'Name is required.');
+      }
+      const isEdit = !!_mgrModalEditId;
+      if (!isEdit && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return showInline(mgrModalError, 'Enter a valid email address.');
+      }
+
+      mgrModalSubmit.disabled    = true;
+      mgrModalSubmit.textContent = isEdit ? 'Saving…' : 'Inviting…';
+      mgrModalError.hidden = true;
+
+      const url = isEdit
+        ? BOKUN_API_BASE + '/api/admin/hotel-users/' + encodeURIComponent(_mgrModalEditId)
+        : BOKUN_API_BASE + '/api/admin/hotel-users';
+      const body = isEdit
+        ? { name, role }
+        : { hotel_id: _mgrModalHotel.id, name, email, role };
+
+      try {
+        const res = await fetch(url, {
+          method: isEdit ? 'PATCH' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + session.access_token,
+          },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const msg = (data && data.error) ||
+            (res.status === 409 ? `${email} is already an active manager for this hotel.` :
+                                  (isEdit ? 'Save failed' : 'Invite failed') + ' (HTTP ' + res.status + ').');
+          throw new Error(msg);
+        }
+        closeMgrModal();
+        if (isEdit) {
+          flashHotelsNotice('Manager saved.');
+        } else {
+          const inviteMsg = data.invite_sent
+            ? `Invite sent to ${email}. They'll receive an email to set their password.`
+            : `${email} added. They already have an account and can sign in at connect.gowithhorizon.com/login/.`;
+          flashHotelsNotice(inviteMsg);
+        }
+        reloadHotelsCacheAndRefresh();
+      } catch (err) {
+        showInline(mgrModalError, err.message || 'Unknown error');
+        mgrModalSubmit.disabled    = false;
+        mgrModalSubmit.textContent = isEdit ? 'Save changes' : 'Send invite';
+      }
+    });
 
     /* ── Period / range / formatting helpers ─────────────── */
     function startOfDay(d) { const c = new Date(d); c.setHours(0, 0, 0, 0); return c; }

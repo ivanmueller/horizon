@@ -1300,7 +1300,7 @@ const HOTEL_FIELDS =
 const STAFF_FIELDS =
   "id,hotel_id,name,tracking_code,sequence_number,kickback_pct," +
   "status,created_at,updated_at";
-const MANAGER_FIELDS = "id,email,hotel_id,role,status,created_at,updated_at";
+const MANAGER_FIELDS = "id,email,name,hotel_id,role,status,created_at,updated_at";
 
 const HOTEL_TYPES = new Set(["kickback", "pool"]);
 const HOTEL_LOCATIONS = new Set(["Banff", "Canmore"]);
@@ -2141,12 +2141,14 @@ async function handleAdminHotelUserCreate(request, env) {
   if (!EMAIL_RE.test(email)) return jsonResponse({ error: "valid email required" }, 400, request);
   const hotel_id = typeof body.hotel_id === "string" ? body.hotel_id.trim() : "";
   if (!UUID_RE.test(hotel_id)) return jsonResponse({ error: "valid hotel_id required" }, 400, request);
+  const name = typeof body.name === "string" ? body.name.trim() : "";
+  if (!name) return jsonResponse({ error: "name required" }, 400, request);
   const role = body.role === "admin" ? "admin" : "manager";
 
   try {
     const inserted = await supabaseInsert(
       env, "hotel_users",
-      [{ email, hotel_id, role, status: "active" }],
+      [{ email, name, hotel_id, role, status: "active" }],
       { returnRow: true },
     );
     const invite_sent = await sendManagerInvite(env, email);
@@ -2211,6 +2213,11 @@ async function handleAdminHotelUserUpdate(id, request, env) {
       return jsonResponse({ error: "role must be manager or admin" }, 400, request);
     }
     patch.role = body.role;
+  }
+  if (typeof body.name === "string") {
+    const trimmed = body.name.trim();
+    if (!trimmed) return jsonResponse({ error: "name cannot be empty" }, 400, request);
+    patch.name = trimmed;
   }
   if (Object.keys(patch).length === 0) {
     return jsonResponse({ error: "no editable fields in body" }, 400, request);
