@@ -6,7 +6,7 @@
   <title>Horizon admin</title>
   <meta name="description" content="Internal commission dashboard — Horizon team only.">
   <meta name="robots" content="noindex,nofollow">
-  <link rel="canonical" href="https://gowithhorizon.com/admin/">
+  <link rel="canonical" href="https://admin.gowithhorizon.com/admin/">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@700&display=swap" rel="stylesheet">
@@ -601,6 +601,7 @@
   <script type="module">
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
     import { cookieStorage } from '/js/supabase-cookie-storage.js';
+    import { connectUrl } from '/js/hosts.js';
 
     /* ── Supabase client ─────────────────────────────────── */
     const SUPABASE_URL  = 'https://lxdltzrntphnkhsniwin.supabase.co';
@@ -613,7 +614,7 @@
     const sessionResp = await supabase.auth.getSession();
     const session = sessionResp.data && sessionResp.data.session;
     if (!session) {
-      window.location.replace('/dashboard/login/');
+      window.location.replace(connectUrl('/dashboard/login/'));
       throw new Error('redirecting to /dashboard/login/');
     }
 
@@ -624,7 +625,7 @@
       .limit(1)
       .maybeSingle();
     if (!adminCheck.data) {
-      window.location.replace('/dashboard/hotel/');
+      window.location.replace(connectUrl('/dashboard/hotel/'));
       throw new Error('redirecting to /dashboard/hotel/');
     }
 
@@ -1869,7 +1870,7 @@
     signoutBtn.addEventListener('click', async () => {
       signoutBtn.disabled = true;
       await supabase.auth.signOut();
-      window.location.replace('/dashboard/login/');
+      window.location.replace(connectUrl('/dashboard/login/'));
     });
 
     /* ── Account modal ───────────────────────────────────── */
@@ -3568,7 +3569,7 @@
       })
         .then(res => {
           if (res.status === 401) {
-            window.location.replace('/dashboard/login/');
+            window.location.replace(connectUrl('/dashboard/login/'));
             throw new Error('unauthorized');
           }
           if (res.status === 403) {
@@ -3736,7 +3737,7 @@
       })
         .then(r => {
           if (r.status === 401) {
-            window.location.replace('/dashboard/login/');
+            window.location.replace(connectUrl('/dashboard/login/'));
             throw new Error('unauthorized');
           }
           return r.json().then(b => ({ ok: r.ok, body: b }));
@@ -4251,7 +4252,7 @@
         headers: { Authorization: 'Bearer ' + session.access_token },
       })
         .then((r) => {
-          if (r.status === 401) { window.location.replace('/dashboard/login/'); throw new Error('unauthorized'); }
+          if (r.status === 401) { window.location.replace(connectUrl('/dashboard/login/')); throw new Error('unauthorized'); }
           return r.json().then((b) => ({ ok: r.ok, body: b }));
         })
         .then((res) => {
@@ -4288,7 +4289,7 @@
         body: JSON.stringify(body),
       })
         .then((r) => {
-          if (r.status === 401) { window.location.replace('/dashboard/login/'); throw new Error('unauthorized'); }
+          if (r.status === 401) { window.location.replace(connectUrl('/dashboard/login/')); throw new Error('unauthorized'); }
           return r.json().then((b) => ({ ok: r.ok, body: b }));
         })
         .then((res) => {
@@ -5491,7 +5492,7 @@
         headers: { Authorization: 'Bearer ' + session.access_token },
       })
         .then((r) => {
-          if (r.status === 401) { window.location.replace('/dashboard/login/'); throw new Error('unauthorized'); }
+          if (r.status === 401) { window.location.replace(connectUrl('/dashboard/login/')); throw new Error('unauthorized'); }
           return r.json().then((b) => ({ ok: r.ok, body: b }));
         })
         .then((res) => {
@@ -5729,7 +5730,7 @@
         headers: { Authorization: 'Bearer ' + session.access_token },
       })
         .then((r) => {
-          if (r.status === 401) { window.location.replace('/dashboard/login/'); throw new Error('unauthorized'); }
+          if (r.status === 401) { window.location.replace(connectUrl('/dashboard/login/')); throw new Error('unauthorized'); }
           return r.json().then((b) => ({ ok: r.ok, body: b }));
         })
         .then((res) => {
