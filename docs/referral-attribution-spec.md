@@ -272,3 +272,36 @@ risk first.
 3. ✅ Cookie scope: apex domain incl. all subdomains.
 4. ✅ Touchpoint cap = 25 (§5.2); first-touch preserved separately past cap.
 5. ✅ Placement (`-pNN`) is **funnel-only / non-crediting** in Phase 1.
+
+## 10. Hardening — done now vs. deliberately deferred
+
+Right-sized for current stage (low volume, few hotels). The bar applied:
+*does it break the scan → book → attributed → visible flow now?*
+
+**Done now (on the money path, cheap):**
+- ✅ **Tests for `resolveCredit`** — `workers/bokun/resolveCredit.test.mjs`,
+  10 cases incl. the override scenario, policy variants, terminated-staff
+  fallback. `npm test`.
+- ✅ **Dual-capture-path verification (#6)** —
+  `workers/bokun/referralCapture.test.mjs`. Proven safe: the legacy Banff
+  inline block's regex *rejects* hyphenated `htl-` codes and so never set
+  them (latent pre-existing bug); `referral.js` now captures them. Where
+  the inline block *does* set a (legacy underscore) code, `referral.js`
+  does not override it and still records the funnel. No attribution is
+  dropped. Consolidating the two paths is cosmetic — deferred.
+
+**Deliberately deferred (real, but not blocking core flow at this stage):**
+- ⏳ **Recompute scalability** — current endpoint does serial Supabase
+  writes; only bites on a high-volume hotel recompute. **Hard rule: the
+  admin recompute button does NOT ship until this is batched + a dry-run
+  preview + an audit row exist.** The endpoint sitting unused is safe.
+- ⏳ **Cross-device stitching** — phone-scan → laptop-book loses
+  attribution. Same failure mode as today (not a regression). Revisit via
+  `lead_email` server-side stitching as a fast-follow.
+- ⏳ **Attribution-fraud controls** (employee self-append gaming
+  last-touch) — needs incentivised employees + volume first.
+- ⏳ **Safari ITP 7-day cap on script-set cookies** — primary store is
+  localStorage (unaffected); cookie is fallback only. Spec wording note,
+  no code change.
+- ⏳ **Observability** (capture/restore/override/recompute events) —
+  matters at first payout dispute, not first booking.

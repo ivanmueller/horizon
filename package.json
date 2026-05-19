@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Horizon Tours static site + worker. Repo-root package.json exists for Node scripts that need npm dependencies (the static site itself has none).",
   "scripts": {
+    "test": "node --test \"workers/**/*.test.mjs\"",
     "build:partners": "node scripts/build/generate-partners-json.mjs",
     "invoices": "node --env-file=scripts/supabase/.env scripts/horizon/generate-invoices.mjs"
   },

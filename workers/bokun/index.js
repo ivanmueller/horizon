@@ -562,7 +562,7 @@ async function handleBookingInitiate(request, env) {
 // deterministic (no DB, no clock) so it can be replayed to recompute
 // historical credit if a hotel switches policy.
 //   touchpoints: ordered [{ code, stream, position, staff_id }]
-function resolveCredit(touchpoints, policy) {
+export function resolveCredit(touchpoints, policy) {
   if (!touchpoints.length) return null;
   let chosen;
   if (policy === "first_touch_wins") {
