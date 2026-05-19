@@ -52,7 +52,7 @@ if [[ -n "$EMP" ]]; then
     {\"code\":\"$HOTEL\",\"stream\":\"hotel-slug\",\"ts\":$T0,\"page\":\"/tours/test/\"},
     {\"code\":\"$EMP\",\"stream\":\"employee\",\"ts\":$T1,\"page\":\"/tours/test/\",\"kind\":\"ref\"}
   ]"
-  REF="$EMP"
+  REF="\"$EMP\""
   EXPECT="employee \"$EMP\" credited (is_credited at position 1), first_touch_code=$HOTEL"
 else
   TOUCHPOINTS="[
@@ -61,33 +61,40 @@ else
   REF="null"
   EXPECT="hotel-pool attribution (staff_id NULL), first_touch_code=$HOTEL"
 fi
-[[ "$REF" != "null" ]] && REF="\"$REF\""
 
 echo "→ Step 1: /api/booking/initiate (no payment — just the state pouch)"
-INIT=$(curl -fsS -X POST "$API_BASE/api/booking/initiate" \
+INIT=$(curl -sS -X POST "$API_BASE/api/booking/initiate" \
   -H 'Content-Type: application/json' \
   -d "{
     \"tour_id\": 12345, \"date\": \"2026-07-01\", \"adults\": 2,
     \"hotel\": \"$HOTEL\", \"ref\": $REF,
     \"funnel\": { \"first_ts\": $T0, \"last_ts\": $T1, \"touchpoints\": $TOUCHPOINTS }
-  }")
-BID=$(printf '%s' "$INIT" | grep -o '"booking_id":"[^"]*"' | cut -d'"' -f4)
+  }" || true)
+echo "  raw: $INIT"
+BID=$(printf '%s' "$INIT" | grep -o '"booking_id":"[^"]*"' | cut -d'"' -f4 || true)
 if [[ -z "$BID" ]]; then
-  echo "  ✗ no booking_id returned: $INIT" >&2
+  echo "  ✗ no booking_id — initiate rejected the request (see raw above)." >&2
+  echo "    Common cause: the worker validates the payload, not the hotel" >&2
+  echo "    slug, at this step — so this is usually a network/JSON error." >&2
   exit 1
 fi
 echo "  booking_id = $BID"
 
 echo "→ Step 2: /api/dashboard/record (simulates the post-confirmation ledger write)"
-REC=$(curl -fsS -X POST "$API_BASE/api/dashboard/record" \
+REC=$(curl -sS -X POST "$API_BASE/api/dashboard/record" \
   -H 'Content-Type: application/json' \
   -d "{
     \"booking_id\": \"$BID\", \"confirmation_code\": \"$CONF\", \"hotel\": \"$HOTEL\",
     \"tour_id\": 12345, \"tour_title\": \"TEST tour\", \"date\": \"2026-07-01\",
     \"adults\": 2, \"amount\": 199.0, \"currency\": \"CAD\",
     \"lead_name\": \"Test Guest\", \"lead_email\": \"test@example.com\"
-  }")
+  }" || true)
 echo "  response = $REC"
+if ! printf '%s' "$REC" | grep -q '"ok":true'; then
+  echo "  ✗ record did not return ok. Most likely the hotel slug" >&2
+  echo "    '$HOTEL' is not in hotels.code, or confirmation_code clashed." >&2
+  exit 1
+fi
 
 cat <<EOF
 
