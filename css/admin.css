@@ -2989,7 +2989,10 @@ select.hd-bankf__input { appearance: auto; }
   word-break: break-all; margin-bottom: var(--s3);
 }
 /* Date-range dropdown, right-aligned like Short.io's. */
-.pl-an__toolbar { display: flex; justify-content: flex-end; margin-bottom: var(--s4); }
+.pl-an__toolbar {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  margin-bottom: var(--s4);
+}
 .pl-an__daterange {
   display: inline-flex; flex-direction: column; gap: 2px;
 }
@@ -3039,7 +3042,14 @@ select.hd-bankf__input { appearance: auto; }
   display: flex; justify-content: space-between; align-items: baseline;
   font-size: var(--t-xs);
 }
-.pl-an-bar__name { color: var(--text); }
+.pl-an-bar__name {
+  color: var(--text);
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.pl-an-bar__ic {
+  width: 14px; height: 14px; flex: 0 0 auto;
+  color: var(--text-muted);
+}
 .pl-an-bar__val {
   color: var(--text-muted); font-variant-numeric: tabular-nums;
 }
