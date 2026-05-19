@@ -1066,6 +1066,8 @@ const HOTEL_FIELDS =
   "contract_start_date,property_type,star_rating,country," +
   "platform_fee_pct," +
   "stripe_connect_account_id,stripe_payouts_enabled,stripe_onboarded_at," +
+  "payout_method,payout_account_holder,payout_etransfer_email," +
+  "payout_eft_institution,payout_eft_transit,payout_eft_account,payout_updated_at," +
   "address,phone,primary_contact_name,primary_contact_email,website";
 const STAFF_FIELDS =
   "id,hotel_id,name,tracking_code,sequence_number,kickback_pct," +
@@ -2371,6 +2373,45 @@ function validateHotel(body, { creating }) {
   textField("primary_contact_name");
   textField("primary_contact_email");
   textField("website");
+
+  // ── Manual payout banking (pilot phase — migration 0016) ──────────
+  // Admin-entered. Each field is independently nullable so a partial
+  // PATCH (e.g. just switching method) is valid; the UI enforces the
+  // method↔fields pairing. Any banking field touched stamps
+  // payout_updated_at so "last updated" is honest.
+  let bankingTouched = false;
+  const bankText = (key, re, errMsg) => {
+    if (!(key in body)) return null;
+    bankingTouched = true;
+    if (body[key] === null || body[key] === "") {
+      row[key] = null;
+      return null;
+    }
+    if (typeof body[key] !== "string") return errMsg;
+    const t = body[key].trim();
+    if (re && !re.test(t)) return errMsg;
+    row[key] = t;
+    return null;
+  };
+
+  if ("payout_method" in body) {
+    bankingTouched = true;
+    if (body.payout_method === null || body.payout_method === "") {
+      row.payout_method = null;
+    } else if (body.payout_method === "etransfer" || body.payout_method === "eft") {
+      row.payout_method = body.payout_method;
+    } else {
+      return { error: "payout_method must be 'etransfer', 'eft', or null" };
+    }
+  }
+  const bankErr =
+    bankText("payout_account_holder", null, "invalid account holder") ||
+    bankText("payout_etransfer_email", EMAIL_RE, "payout_etransfer_email must be a valid email") ||
+    bankText("payout_eft_institution", /^\d{3}$/, "institution number must be 3 digits") ||
+    bankText("payout_eft_transit", /^\d{5}$/, "transit number must be 5 digits") ||
+    bankText("payout_eft_account", /^\d{4,17}$/, "account number must be 4–17 digits");
+  if (bankErr) return { error: bankErr };
+  if (bankingTouched) row.payout_updated_at = new Date().toISOString();
 
   return { row };
 }
