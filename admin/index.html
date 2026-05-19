@@ -417,42 +417,7 @@
         <label class="drawer-form__label" for="plCreateName">Name</label>
         <input class="input" type="text" id="plCreateName"
                placeholder="e.g. Lobby rack card" maxlength="120" autocomplete="off">
-      </div>
-
-      <div class="drawer-form__row">
-        <label class="drawer-form__label" for="plCreateTag">Tag
-          <span class="drawer-form__optional">(optional)</span></label>
-        <input class="input mono" type="text" id="plCreateTag"
-               placeholder="RACK" maxlength="24" autocomplete="off" spellcheck="false">
-        <span class="drawer-form__hint">Short display label only — never used for attribution. Defaults from the type.</span>
-      </div>
-
-      <div class="drawer-form__row">
-        <label class="drawer-form__label" for="plCreateLocation">Location in hotel
-          <span class="drawer-form__optional">(optional)</span></label>
-        <input class="input" type="text" id="plCreateLocation"
-               placeholder="e.g. Front desk, west wall" maxlength="160">
-      </div>
-
-      <div class="drawer-form__row">
-        <label class="drawer-form__label" for="plCreateQty">Quantity printed
-          <span class="drawer-form__optional">(optional)</span></label>
-        <input class="input" type="number" id="plCreateQty" min="0" step="1"
-               placeholder="e.g. 50">
-      </div>
-
-      <div class="drawer-form__row">
-        <label class="drawer-form__label" for="plCreateDeployed">Deployed on
-          <span class="drawer-form__optional">(optional)</span></label>
-        <input class="input" type="date" id="plCreateDeployed">
-      </div>
-
-      <div class="drawer-form__row">
-        <label class="drawer-form__label" for="plCreateStatus">Status</label>
-        <select class="input" id="plCreateStatus">
-          <option value="draft">Draft</option>
-          <option value="active">Active</option>
-        </select>
+        <span class="drawer-form__hint">It goes live immediately. Add location / deploy date later via Edit.</span>
       </div>
 
       <div class="modal__actions">
@@ -495,22 +460,10 @@
       </div>
 
       <div class="drawer-form__row">
-        <label class="drawer-form__label" for="plEditTag">Tag
-          <span class="drawer-form__optional">(optional)</span></label>
-        <input class="input mono" type="text" id="plEditTag" maxlength="24"
-               autocomplete="off" spellcheck="false">
-      </div>
-
-      <div class="drawer-form__row">
         <label class="drawer-form__label" for="plEditLocation">Location in hotel
           <span class="drawer-form__optional">(optional)</span></label>
-        <input class="input" type="text" id="plEditLocation" maxlength="160">
-      </div>
-
-      <div class="drawer-form__row">
-        <label class="drawer-form__label" for="plEditQty">Quantity printed
-          <span class="drawer-form__optional">(optional)</span></label>
-        <input class="input" type="number" id="plEditQty" min="0" step="1">
+        <input class="input" type="text" id="plEditLocation" maxlength="160"
+               placeholder="e.g. Front desk, west wall">
       </div>
 
       <div class="drawer-form__row">
@@ -2169,21 +2122,11 @@
     let _plHotelRef = null; // current hotel object
     let _plEditId   = null; // placement UUID being edited
 
-    const PLACEMENT_DEFAULT_TAGS = {
-      rack_card: 'RACK', table_tent: 'TENT', welcome_packet: 'PACKET',
-      website_widget: 'WEB', lobby_qr: 'LOBBY', custom: 'CUSTOM',
-    };
-
     const plCreateModal  = document.getElementById('plCreateModal');
     const plCreateForm   = document.getElementById('plCreateForm');
     const plCreateError  = document.getElementById('plCreateError');
     const plCreateType   = document.getElementById('plCreateType');
     const plCreateName   = document.getElementById('plCreateName');
-    const plCreateTag    = document.getElementById('plCreateTag');
-    const plCreateLocation = document.getElementById('plCreateLocation');
-    const plCreateQty    = document.getElementById('plCreateQty');
-    const plCreateDeployed = document.getElementById('plCreateDeployed');
-    const plCreateStatus = document.getElementById('plCreateStatus');
     const plCreateSubmit = document.getElementById('plCreateSubmit');
 
     const plEditModal  = document.getElementById('plEditModal');
@@ -2192,9 +2135,7 @@
     const plEditCode   = document.getElementById('plEditCode');
     const plEditType   = document.getElementById('plEditType');
     const plEditName   = document.getElementById('plEditName');
-    const plEditTag    = document.getElementById('plEditTag');
     const plEditLocation = document.getElementById('plEditLocation');
-    const plEditQty    = document.getElementById('plEditQty');
     const plEditDeployed = document.getElementById('plEditDeployed');
     const plEditStatus = document.getElementById('plEditStatus');
     const plEditSubmit = document.getElementById('plEditSubmit');
@@ -2830,19 +2771,12 @@
       }
     });
 
-    // The tag placeholder tracks the selected type until the admin
-    // types their own — never silently overwrite an explicit value.
-    plCreateType && plCreateType.addEventListener('change', () => {
-      plCreateTag.placeholder = PLACEMENT_DEFAULT_TAGS[plCreateType.value] || '';
-    });
-
     function openPlCreate(h) {
       _plHotelRef = h;
       plCreateForm.reset();
       plCreateError.hidden = true;
       plCreateSubmit.disabled = false;
       plCreateSubmit.textContent = 'Create placement';
-      plCreateTag.placeholder = PLACEMENT_DEFAULT_TAGS[plCreateType.value] || '';
       plCreateModal.hidden = false;
     }
     function closePlCreate() { plCreateModal.hidden = true; }
@@ -2866,18 +2800,13 @@
       plCreateSubmit.disabled = true;
       plCreateSubmit.textContent = 'Creating…';
 
+      // Streamlined: just type + name. Code/link auto-minted, status
+      // auto-active server-side; location/deploy date set later in Edit.
       const body = {
         hotel_id:       _plHotelRef.id,
         placement_type: plCreateType.value,
         name,
-        status:         plCreateStatus.value,
       };
-      const tag = plCreateTag.value.trim();
-      if (tag) body.tag = tag;
-      const loc = plCreateLocation.value.trim();
-      if (loc) body.location_in_hotel = loc;
-      if (plCreateQty.value !== '') body.quantity_printed = Number(plCreateQty.value);
-      if (plCreateDeployed.value) body.deployed_at = plCreateDeployed.value;
 
       try {
         const res = await fetch(BOKUN_API_BASE + '/api/admin/placements', {
@@ -2908,9 +2837,7 @@
       plEditCode.textContent  = row.dataset.plCode || '—';
       plEditType.value        = row.dataset.plType || 'custom';
       plEditName.value        = row.dataset.plName || '';
-      plEditTag.value         = row.dataset.plTag || '';
       plEditLocation.value    = row.dataset.plLocation || '';
-      plEditQty.value         = row.dataset.plQty || '';
       plEditDeployed.value    = row.dataset.plDeployed || '';
       plEditStatus.value      = row.dataset.plStatus || 'draft';
       plEditModal.hidden = false;
@@ -2937,13 +2864,11 @@
       plEditSubmit.textContent = 'Saving…';
 
       // Send the editable fields. Empty strings clear optional values
-      // (the worker maps "" → null); the tag is uppercased server-side.
+      // (the worker maps "" → null).
       const body = {
         placement_type:    plEditType.value,
         name,
-        tag:               plEditTag.value.trim(),
         location_in_hotel: plEditLocation.value.trim(),
-        quantity_printed:  plEditQty.value === '' ? null : Number(plEditQty.value),
         deployed_at:       plEditDeployed.value ? plEditDeployed.value : null,
         status:            plEditStatus.value,
       };
@@ -4592,9 +4517,7 @@
                 '<tr data-placement-row="' + escapeHtml(p.id) + '"' +
                   ' data-pl-type="' + escapeHtml(p.placement_type || '') + '"' +
                   ' data-pl-name="' + escapeHtml(p.name || '') + '"' +
-                  ' data-pl-tag="' + escapeHtml(p.tag || '') + '"' +
                   ' data-pl-location="' + escapeHtml(p.location_in_hotel || '') + '"' +
-                  ' data-pl-qty="' + escapeHtml(p.quantity_printed != null ? String(p.quantity_printed) : '') + '"' +
                   ' data-pl-deployed="' + escapeHtml(deployedDate) + '"' +
                   ' data-pl-status="' + escapeHtml(p.status || 'draft') + '"' +
                   ' data-pl-code="' + escapeHtml(code) + '">' +
