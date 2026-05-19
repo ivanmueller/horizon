@@ -648,6 +648,13 @@
       { id: 'invoices',        label: 'Invoices',        group: 'finance', icon: iconFile },
     ];
 
+    // The ops console is served at the root of admin.gowithhorizon.com
+    // (URLs like /short-links/). Everywhere else — the apex fallback,
+    // *.pages.dev previews, localhost — it still lives under /admin/.
+    // ADMIN_BASE is the only place that distinction lives. Declared
+    // before the nav build below because pathFor() reads it there.
+    const ADMIN_BASE = window.location.hostname === 'admin.gowithhorizon.com' ? '' : '/admin';
+
     const navMain    = document.getElementById('navMain');
     const navFinance = document.getElementById('navFinance');
     const navItems   = {};
@@ -685,12 +692,6 @@
         badge.hidden = true;
       }
     }
-
-    // The ops console is served at the root of admin.gowithhorizon.com
-    // (URLs like /short-links/). Everywhere else — the apex fallback,
-    // *.pages.dev previews, localhost — it still lives under /admin/.
-    // ADMIN_BASE is the only place that distinction lives.
-    const ADMIN_BASE = window.location.hostname === 'admin.gowithhorizon.com' ? '' : '/admin';
 
     function pathFor(routeId, opts) {
       if (routeId === 'home') return ADMIN_BASE + '/';
