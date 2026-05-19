@@ -1544,19 +1544,6 @@
 
                 <section class="hd-section">
                   <header class="hd-section__head">
-                    <h2 class="hd-section__title">Referral Links</h2>
-                    <div class="hd-section__head-actions">
-                      <button type="button" class="btn btn--sm" id="hdLinksSyncBtn">Sync clicks</button>
-                      <button type="button" class="bk-iconbtn hd-section__add" id="hdLinksAdd" aria-label="Add link">+</button>
-                    </div>
-                  </header>
-                  <div class="hd-section__body" id="hdLinksBody">
-                    <div class="hd-empty">No links</div>
-                  </div>
-                </section>
-
-                <section class="hd-section">
-                  <header class="hd-section__head">
                     <h2 class="hd-section__title">Bookings</h2>
                     <button type="button" class="hd-section__link" disabled>View all</button>
                   </header>
@@ -4072,7 +4059,6 @@
         refUrl:       container.querySelector('#hotelDetailRefUrl'),
         empBody:      container.querySelector('#hdEmployeesBody'),
         placementsBody: container.querySelector('#hdPlacementsBody'),
-        linksBody:    container.querySelector('#hdLinksBody'),
         details:      container.querySelector('#hdDetails'),
         heroStat:     container.querySelector('#hotelDetailHeroStat'),
         notes:        container.querySelector('#hdNotes'),
@@ -4467,16 +4453,11 @@
           '</div></div>';
       }
 
-      // Referral Links — master hotel link + one row per active
-      // employee. Short URL (Short.io, encoded in the QR) is the
-      // canonical artifact; the long URL is shown as a secondary
-      // column for debugging / fallback. Click counts come from
-      // Short.io's stats API once the Phase 5 cron sync lands.
-      const baseUrl = window.location.origin;
-      const masterLink = baseUrl + '/partners/' + (h.code || '') + '/';
-      // Index short_links by hotel-level + staff_id for O(1) lookup
-      // while rendering rows. The worker embeds them on the hotels
-      // list (handleAdminHotelsList) so no extra round-trip here.
+      // Short-link lookups for this hotel. The Referral Links table
+      // was removed (placements + the Employees table cover its rows);
+      // these are still needed by the title master-URL widget, the
+      // hero setup status, and the QR export below. The worker embeds
+      // short_links on the hotels list so there's no extra round-trip.
       const shortLinks = Array.isArray(h.short_links) ? h.short_links : [];
       const hotelShort = shortLinks.find(
         (l) => l.status === 'active' && l.link_type === 'hotel' && !l.staff_id
@@ -4484,168 +4465,6 @@
       const staffShortByStaffId = new Map();
       for (const l of shortLinks) {
         if (l.status === 'active' && l.staff_id) staffShortByStaffId.set(l.staff_id, l);
-      }
-      const linkRows = [
-        {
-          code:          h.default_tracking_code || h.code,
-          short:         hotelShort ? hotelShort.short_url   : null,
-          url:           masterLink,
-          label:         'Master',
-          mono:          true,
-          sl_id:           hotelShort ? hotelShort.id                   : null,
-          sl_target_url:   hotelShort ? hotelShort.target_url           : masterLink,
-          sl_label:        hotelShort ? (hotelShort.label || '')        : '',
-          sl_notes:        hotelShort ? (hotelShort.notes || '')        : '',
-          sl_clicks:       hotelShort ? (hotelShort.click_count_cached || 0) : 0,
-          sl_last_clicked: hotelShort ? (hotelShort.last_clicked_at || null)  : null,
-        },
-      ].concat(
-        staff.filter((s) => s.status === 'active').map((s) => {
-          const sl  = staffShortByStaffId.get(s.id) || null;
-          const url = masterLink + '?ref=' + encodeURIComponent(s.tracking_code || '');
-          return {
-            code:          s.tracking_code,
-            short:         sl ? sl.short_url   : null,
-            url,
-            label:         s.name,
-            mono:          true,
-            sl_id:         sl ? sl.id          : null,
-            sl_target_url:   sl ? sl.target_url            : url,
-            sl_label:        sl ? (sl.label || '')         : '',
-            sl_notes:        sl ? (sl.notes || '')         : '',
-            sl_clicks:       sl ? (sl.click_count_cached || 0) : 0,
-            sl_last_clicked: sl ? (sl.last_clicked_at || null)  : null,
-          };
-        })
-      );
-      const copyIconSvg =
-        '<svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-          '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>' +
-          '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>' +
-        '</svg>';
-      els.linksBody.innerHTML =
-        '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
-          '<table class="bk-table hd-links-table">' +
-            '<colgroup>' +
-              '<col class="hd-links__code-col">' +
-              '<col class="hd-links__url-col">' +
-              '<col class="hd-links__url-col">' +
-              '<col class="hd-links__num-col">' +
-              '<col class="hd-links__num-col">' +
-              '<col class="hd-links__time-col">' +
-              '<col class="hd-links__qr-col">' +
-              '<col class="hd-links__act-col">' +
-            '</colgroup>' +
-            '<thead><tr><th>Code</th><th>Short URL</th><th>Full URL</th>' +
-              '<th class="num">Clicks</th><th class="num">Conversions</th><th>Last clicked</th>' +
-              '<th>QR</th><th></th>' +
-            '</tr></thead>' +
-            '<tbody>' +
-              linkRows.map((r) => {
-                const shortCell = r.short
-                  ? '<td class="hd-links__url"><button type="button" class="hd-copy hd-copy--url" data-copy="' + escapeHtml(r.short) + '" title="' + escapeHtml(r.short) + '">' +
-                      '<span class="hd-trunc mono">' + escapeHtml(r.short) + '</span>' + copyIconSvg + '</button></td>'
-                  : '<td class="muted" title="No short link yet — will be auto-created once SHORT_IO_API_KEY is configured.">—</td>';
-                // QR encodes the short URL only. If no short link exists
-                // yet (Short.io was down at creation), suppress the QR
-                // entirely — printing a QR against the long URL would
-                // defeat the retarget-safety the architecture provides.
-                const qrCell = r.short
-                  ? '<td class="hd-links__qr-cell">' +
-                    '<button type="button" class="hd-qr-btn" aria-label="View QR code for ' + escapeHtml(r.label || r.code || '') + '"' +
-                      ' data-qr-url="' + escapeHtml(r.short) + '"' +
-                      ' data-qr-label="' + escapeHtml(r.label || r.code || '') + '"' +
-                      ' data-qr-sub="' + escapeHtml(r.short) + '">' +
-                      '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">' +
-                        '<rect x="1" y="1" width="5" height="5" rx="0.5"/>' +
-                        '<rect x="1" y="10" width="5" height="5" rx="0.5"/>' +
-                        '<rect x="10" y="1" width="5" height="5" rx="0.5"/>' +
-                        '<rect x="3" y="3" width="1" height="1" fill="currentColor" stroke="none"/>' +
-                        '<rect x="3" y="12" width="1" height="1" fill="currentColor" stroke="none"/>' +
-                        '<rect x="12" y="3" width="1" height="1" fill="currentColor" stroke="none"/>' +
-                        '<rect x="10" y="10" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
-                        '<rect x="12.5" y="10" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
-                        '<rect x="10" y="12.5" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
-                        '<rect x="12.5" y="12.5" width="1.5" height="1.5" fill="currentColor" stroke="none"/>' +
-                      '</svg>' +
-                    '</button></td>'
-                  : '<td class="muted hd-links__qr-cell" title="No short link yet — QR will be available once a link is minted.">—</td>';
-                // Actions cell — only show Edit/Retire when the row has a
-                // persisted short_link record (sl_id is set).
-                const actCell = r.sl_id
-                  ? '<td class="hd-links__act-cell">' +
-                      '<button type="button" class="sl-act-btn"' +
-                        ' data-sl-edit="1"' +
-                        ' data-sl-id="'         + escapeHtml(r.sl_id)         + '"' +
-                        ' data-sl-short-url="'  + escapeHtml(r.short || '')   + '"' +
-                        ' data-sl-target-url="' + escapeHtml(r.sl_target_url || '') + '"' +
-                        ' data-sl-label="'      + escapeHtml(r.sl_label || '') + '"' +
-                        ' data-sl-notes="'      + escapeHtml(r.sl_notes || '') + '"' +
-                        ' aria-label="Edit link">Edit</button>' +
-                      '<button type="button" class="sl-act-btn sl-act-btn--danger"' +
-                        ' data-sl-retire="1"' +
-                        ' data-sl-id="' + escapeHtml(r.sl_id) + '"' +
-                        ' aria-label="Retire link">Retire</button>' +
-                    '</td>'
-                  : '<td class="muted hd-links__act-cell">—</td>';
-                return '<tr>' +
-                  '<td><button type="button" class="hd-copy mono" data-copy="' + escapeHtml(r.code || '') + '" title="Copy code">' +
-                      '<span>' + escapeHtml(r.code || '—') + '</span>' + copyIconSvg + '</button></td>' +
-                  shortCell +
-                  '<td class="hd-links__url"><button type="button" class="hd-copy hd-copy--url" data-copy="' + escapeHtml(r.url) + '" title="' + escapeHtml(r.url) + '">' +
-                      '<span class="hd-trunc">' + escapeHtml(r.url) + '</span>' + copyIconSvg + '</button></td>' +
-                  '<td class="num hd-num">' + (r.sl_clicks || 0) + '</td>' +
-                  '<td class="num hd-num muted">—</td>' +
-                  (r.sl_last_clicked
-                    ? '<td class="hd-num" title="' + escapeHtml(r.sl_last_clicked) + '">' +
-                        escapeHtml(formatHumanDateTime(r.sl_last_clicked)) + '</td>'
-                    : '<td class="muted">—</td>') +
-                  qrCell +
-                  actCell +
-                '</tr>';
-              }).join('') +
-            '</tbody>' +
-          '</table>' +
-        '</div></div>';
-
-      // Single delegated click handler for the entire Referral Links
-      // table (QR preview, Edit, Retire). Guard with _wired so
-      // repeated renderHotelDetail calls don't stack listeners.
-      if (!els.linksBody._wired) {
-        els.linksBody._wired = true;
-        els.linksBody.addEventListener('click', (e) => {
-          // QR preview button
-          const qrBtn = e.target.closest('[data-qr-url]');
-          if (qrBtn) {
-            openQRModal(qrBtn.dataset.qrUrl, qrBtn.dataset.qrLabel, qrBtn.dataset.qrSub);
-            return;
-          }
-          // Edit button
-          const editBtn = e.target.closest('[data-sl-edit]');
-          if (editBtn) {
-            openSlEdit({
-              id:         editBtn.dataset.slId,
-              short_url:  editBtn.dataset.slShortUrl,
-              target_url: editBtn.dataset.slTargetUrl,
-              label:      editBtn.dataset.slLabel || '',
-              notes:      editBtn.dataset.slNotes || '',
-            });
-            return;
-          }
-          // Retire — two-step inline confirm
-          const retireBtn = e.target.closest('[data-sl-retire]');
-          if (retireBtn) {
-            retireSlLink(retireBtn.dataset.slId, retireBtn);
-            return;
-          }
-          // Cancel confirm (sibling dismiss)
-          const cancelConfirm = e.target.closest('[data-sl-retire-cancel]');
-          if (cancelConfirm) {
-            const cell = cancelConfirm.closest('td');
-            if (cell) resetRetireCell(cell);
-            return;
-          }
-        });
       }
 
       // Invoices & Payouts — promote the not-connected state into a
@@ -5308,41 +5127,6 @@
       els.addBtnHead.onclick    = openAddStaff;
       els.addBtnSection.onclick = openAddStaff;
 
-      // + Add link button — opens Create short link modal.
-      const linksAddBtn  = els.container.querySelector('#hdLinksAdd');
-      const linksSyncBtn = els.container.querySelector('#hdLinksSyncBtn');
-      if (linksAddBtn) {
-        linksAddBtn.onclick = () => openSlCreate(h, staff);
-        _slHotelRef = h;
-        _slStaffRef = staff;
-      }
-      if (linksSyncBtn) {
-        linksSyncBtn.onclick = async () => {
-          linksSyncBtn.disabled = true;
-          linksSyncBtn.textContent = 'Syncing…';
-          try {
-            const res = await fetch(BOKUN_API_BASE + '/api/admin/sync-clicks', {
-              method: 'POST',
-              headers: { Authorization: 'Bearer ' + session.access_token },
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error((data && data.error) || 'sync_failed');
-            linksSyncBtn.textContent = 'Synced ✓';
-            // Reload the table to show fresh counts.
-            reloadHotelsCacheAndRefresh();
-          } catch (err) {
-            linksSyncBtn.textContent = 'Sync failed';
-            console.error('sync-clicks failed', err);
-          } finally {
-            setTimeout(() => {
-              if (linksSyncBtn) {
-                linksSyncBtn.disabled = false;
-                linksSyncBtn.textContent = 'Sync clicks';
-              }
-            }, 3000);
-          }
-        };
-      }
 
       // Edit row → open the drawer with the inline edit form pre-opened
       // for that staff record. Same data model, same submit endpoint.
@@ -5588,27 +5372,6 @@
       setHero('commission', fm(203.20));
       setHero('bookings',   '5');
       setHero('conversion', '6.2%');
-
-      // ── Referral Links — patch the click/conversion/last-clicked
-      // cells in place. The rows themselves come from the staff
-      // renderer, so we look them up by the code in the first
-      // mono-copy cell.
-      const linkData = {
-        'FAIRMONT_LL':    { clicks: 47, conv: 1, last: 'Jun 12, 2026' },
-        'FAIRMONT_LL_JS': { clicks: 89, conv: 4, last: 'Jun 18, 2026' },
-      };
-      els.linksBody.querySelectorAll('tbody tr').forEach((tr) => {
-        const codeBtn = tr.querySelector('button.mono');
-        const code = codeBtn ? codeBtn.dataset.copy : '';
-        const data = linkData[code];
-        if (!data) return;
-        const cells = tr.querySelectorAll('td');
-        if (cells.length < 5) return;
-        cells[2].textContent = data.clicks;
-        cells[3].textContent = data.conv;
-        cells[4].textContent = data.last;
-        cells[4].classList.remove('muted');
-      });
 
       // ── Employees — patch Jane Smith's bookings / commission /
       // last-booking cells.
