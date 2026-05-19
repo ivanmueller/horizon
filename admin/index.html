@@ -1499,6 +1499,16 @@
                   </div>
                 </section>
 
+                <section class="hd-section" id="hdManagersSection">
+                  <header class="hd-section__head">
+                    <h2 class="hd-section__title">Managers</h2>
+                    <button type="button" class="bk-iconbtn hd-section__add" id="hdMgrAdd" aria-label="Add manager">+</button>
+                  </header>
+                  <div class="hd-section__body" id="hdManagersBody">
+                    <div class="hd-empty">No managers yet.</div>
+                  </div>
+                </section>
+
                 <section class="hd-section" id="hdEmployeesSection">
                   <header class="hd-section__head">
                     <h2 class="hd-section__title">Employees &amp; Referral Codes</h2>
@@ -4224,6 +4234,9 @@
         notesMeta:    container.querySelector('#hdNotesMeta'),
         addBtnHead:   container.querySelector('#hdAddEmployee'),
         addBtnSection:container.querySelector('#hdEmpAdd'),
+        mgrBody:      container.querySelector('#hdManagersBody'),
+        addBtnMgr:    container.querySelector('#hdMgrAdd'),
+        moreBtn:      container.querySelector('#hdMore'),
       };
 
       // Back link → SPA navigate (no full reload). Cmd/Ctrl-click still
@@ -4559,6 +4572,14 @@
             '</table>' +
           '</div></div>';
       }
+
+      // Managers — page-level section, rendered into #hdManagersBody.
+      // Mirrors the Employees pattern but reads from h.managers
+      // (hotel_users rows) and shows email + role + last login. A
+      // manager who also has a tracking_code shows in both this section
+      // and the Employees section above; that's accurate modeling, not
+      // duplication.
+      renderHotelManagers(h, els);
 
       // Short-link lookups for this hotel. The Referral Links table
       // was removed (placements + the Employees table cover its rows);
@@ -5219,13 +5240,14 @@
         }
       }
 
-      // Wire Add Employee buttons → open the existing pop-out drawer.
-      // Both the header CTA and the section [+] route through the same
-      // openHotelDrawer pre-positioned to the staff "Add" form so the
-      // user lands directly on the inline employee-create form.
+      // Wire Add Employee buttons → open the drawer scoped to the staff
+      // form only (drawerMode = 'employee'). Both the header CTA and the
+      // section [+] route through the same focused drawer so the user
+      // lands directly on the inline employee-create form without the
+      // hotel overview, managers, or danger zone in view.
       const openAddStaff = () => {
         drawerStaffForm = 'add';
-        openHotelDrawer(h);
+        openHotelDrawer(h, 'employee');
         // openHotelDrawer resets drawerStaffForm before render, so set
         // it again and re-render. (Keeps the existing API intact.)
         drawerStaffForm = 'add';
@@ -5233,6 +5255,23 @@
       };
       els.addBtnHead.onclick    = openAddStaff;
       els.addBtnSection.onclick = openAddStaff;
+
+      // Wire Add Manager → drawer scoped to the manager form only.
+      if (els.addBtnMgr) {
+        els.addBtnMgr.onclick = () => {
+          drawerManagerForm = 'add';
+          openHotelDrawer(h, 'manager');
+          drawerManagerForm = 'add';
+          renderAndWireDrawer(h);
+        };
+      }
+
+      // Wire the hero ⋯ → drawer scoped to hotel overview + danger zone.
+      // Staff and manager management live on the page now, so the More
+      // menu surfaces only profile-level concerns.
+      if (els.moreBtn) {
+        els.moreBtn.onclick = () => openHotelDrawer(h, 'profile');
+      }
 
 
       // Edit row → open the drawer with the inline edit form pre-opened
@@ -5242,11 +5281,27 @@
           e.stopPropagation();
           const id = btn.dataset.staffEditId;
           drawerStaffForm = { editId: id };
-          openHotelDrawer(h);
+          openHotelDrawer(h, 'employee');
           drawerStaffForm = { editId: id };
           renderAndWireDrawer(h);
         });
       });
+
+      // Managers — wire row kebabs. The section markup is rendered
+      // earlier in this function (see renderHotelManagers call above)
+      // so the buttons exist by the time we reach this block.
+      if (els.mgrBody) {
+        els.mgrBody.querySelectorAll('[data-manager-edit-id]').forEach((btn) => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = btn.dataset.managerEditId;
+            drawerManagerForm = { editId: id };
+            openHotelDrawer(h, 'manager');
+            drawerManagerForm = { editId: id };
+            renderAndWireDrawer(h);
+          });
+        });
+      }
 
       // Placements — Add button + delegated Edit/Retire. The body is
       // re-rendered on every renderHotelDetail call, so the listener
@@ -5280,6 +5335,57 @@
           }
         });
       }
+    }
+
+    // Managers — render the page-level section into #hdManagersBody.
+    // Reads from h.managers (already shaped by the worker as hotel_users
+    // rows with id, email, role, status, created_at, last_sign_in_at).
+    // Mirrors the Employees pattern: kebab on each row opens the
+    // focused drawer (drawerMode='manager') for edit; revoke prompts
+    // confirmation. A manager with no login activity yet shows "—".
+    function renderHotelManagers(h, els) {
+      if (!els.mgrBody) return;
+      const managers = (h.managers || []).filter((m) => m.status !== 'revoked');
+      if (!managers.length) {
+        els.mgrBody.innerHTML = '<div class="hd-empty">No managers yet.</div>';
+        return;
+      }
+      const rows = managers.map((m) => {
+        const email    = m.email || '—';
+        const initials = email.slice(0, 2).toUpperCase();
+        const role     = m.role || 'manager';
+        const statusPill = m.status === 'active'
+          ? '<span class="bk-pill bk-pill--ok">Active</span>'
+          : '<span class="bk-pill bk-pill--neutral">' + escapeHtml(m.status || '—') + '</span>';
+        const lastSeen = m.last_sign_in_at
+          ? escapeHtml(formatHumanDate(String(m.last_sign_in_at).slice(0, 10)) || '—')
+          : '<span class="muted">Never</span>';
+        return (
+          '<tr data-manager-row="' + escapeHtml(m.id) + '">' +
+            '<td class="hd-emp">' +
+              '<span class="hd-avatar" aria-hidden="true">' + escapeHtml(initials) + '</span>' +
+              '<span class="hd-emp__name">' + escapeHtml(email) + '</span>' +
+            '</td>' +
+            '<td class="muted">' + escapeHtml(role) + '</td>' +
+            '<td>' + statusPill + '</td>' +
+            '<td class="muted">' + lastSeen + '</td>' +
+            '<td class="bk-table__kebab">' +
+              '<button type="button" class="bk-kebab"' +
+                ' data-manager-edit-id="' + escapeHtml(m.id) + '"' +
+                ' aria-label="Edit ' + escapeHtml(email) + '">⋯</button>' +
+            '</td>' +
+          '</tr>'
+        );
+      }).join('');
+      els.mgrBody.innerHTML =
+        '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
+          '<table class="bk-table">' +
+            '<thead><tr>' +
+              '<th>Email</th><th>Role</th><th>Status</th><th>Last sign-in</th><th></th>' +
+            '</tr></thead>' +
+            '<tbody>' + rows + '</tbody>' +
+          '</table>' +
+        '</div></div>';
     }
 
     // Demo-only data for the Fairmont reference hotel. Populates the
@@ -5707,11 +5813,18 @@
     let drawerCurrentHotelId = null;
     let drawerStaffForm      = null;  // null | 'add' | { editId: <staff.id> }
     let drawerManagerForm    = null;  // null | 'add' | { editId: <manager.id> }
+    // Controls which sections render inside the hotel drawer. The page-level
+    // + buttons scope the drawer to a single concern: 'employee' opens the
+    // staff form, 'manager' opens the manager form, 'profile' shows hotel
+    // overview + danger zone. 'all' is the legacy unified view, preserved
+    // as the default so any caller that doesn't pass a mode keeps working.
+    let drawerMode           = 'all';  // 'all' | 'employee' | 'manager' | 'profile'
 
-    function openHotelDrawer(hotel) {
+    function openHotelDrawer(hotel, mode) {
       drawerCurrentHotelId = hotel.id;
       drawerStaffForm = null;
       drawerManagerForm = null;
+      drawerMode = mode || 'all';
       hotelDrawerTitle.textContent = hotel.name;
       hotelDrawerSub.textContent = hotel.code;
       renderAndWireDrawer(hotel);
@@ -5765,13 +5878,17 @@
       hotelDrawerBody.innerHTML = renderHotelDrawerBody(hotel);
       if (panel) panel.scrollTop = scrollTop;
 
-      // ── Hotel-overview form
+      // ── Hotel-overview form (omitted when drawerMode focuses on a
+      // single section, so all overview wiring is guarded)
       const form = hotelDrawerBody.querySelector('#heForm');
-      form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        submitHotelEdit(form, hotel);
-      });
-      hotelDrawerBody.querySelector('#heCancel').addEventListener('click', closeHotelDrawer);
+      if (form) {
+        form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          submitHotelEdit(form, hotel);
+        });
+        const cancelBtn = hotelDrawerBody.querySelector('#heCancel');
+        if (cancelBtn) cancelBtn.addEventListener('click', closeHotelDrawer);
+      }
 
       const terminateBtn = hotelDrawerBody.querySelector('#heTerminate');
       if (terminateBtn) {
@@ -6227,6 +6344,11 @@
         </section>
       `;
 
+      // Filter sections by mode so a section-scoped + button can open a
+      // focused drawer instead of the unified hotel view.
+      if (drawerMode === 'employee') return staffSection;
+      if (drawerMode === 'manager')  return managersSection;
+      if (drawerMode === 'profile')  return overview + dangerZone;
       return overview + staffSection + managersSection + dangerZone;
     }
 
