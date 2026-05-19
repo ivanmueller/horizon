@@ -2141,10 +2141,7 @@
     const plEditDeployed = document.getElementById('plEditDeployed');
     const plEditStatus = document.getElementById('plEditStatus');
     const plEditSubmit = document.getElementById('plEditSubmit');
-    /* ── Placement asset manager ─────────────────────────── */
-    const PL_ASSET_KINDS = [
-      { kind: 'design', label: 'Design' },
-    ];
+    /* ── Placement design material ───────────────────────── */
     const PL_ASSET_STATUSES = ['designed', 'printed', 'deployed', 'retired'];
     // Signed URLs are short-lived; cache per asset id for the session
     // so repeated thumbnail/preview renders don't re-mint every time.
@@ -2227,78 +2224,68 @@
 
     function isImageType(ct) { return typeof ct === 'string' && ct.indexOf('image/') === 0; }
 
+    // Single compact Design block, laid out exactly like the QR block
+    // above it (same-size tile + side panel) so the section stays
+    // inside the modal and reads consistently. Shows the latest
+    // version; uploading creates a new one server-side.
     function renderPlAssets() {
       const p = findPlacementById(_plAssetsId);
       if (!p) { plAssetsBody.innerHTML = '<div class="muted">Placement not found.</div>'; return; }
-      const assets = Array.isArray(p.assets) ? p.assets : [];
-      const sections = PL_ASSET_KINDS.map((k) => {
-        const versions = assets
-          .filter((a) => a.kind === k.kind)
-          .sort((a, b) => (b.version || 0) - (a.version || 0));
-        const latest = versions[0] || null;
+      const versions = (Array.isArray(p.assets) ? p.assets : [])
+        .filter((a) => a.kind === 'design')
+        .sort((a, b) => (b.version || 0) - (a.version || 0));
+      const latest = versions[0] || null;
+      const upInput =
+        '<input type="file" accept="image/*,application/pdf" hidden data-pl-asset-up="design">';
 
-        // Preview tile: image thumb when previewable, file glyph
-        // otherwise; dashed "Add" affordance when nothing uploaded.
-        let preview;
-        if (latest && isImageType(latest.content_type)) {
-          preview = '<div class="pl-asset__preview"><img alt="" data-asset-img="' +
-            escapeHtml(latest.id) + '"></div>';
-        } else if (latest) {
-          preview = '<div class="pl-asset__preview pl-asset__preview--file">' +
-            '<span class="pl-asset__ext">' +
-            escapeHtml((latest.filename || 'file').split('.').pop().slice(0, 5).toUpperCase()) +
-            '</span></div>';
-        } else {
-          preview = '<button type="button" class="pl-asset__preview pl-asset__preview--add"' +
-            ' data-pl-asset-add="' + escapeHtml(k.kind) + '">' +
-            (k.kind === 'design' ? 'Add design →' : 'Add file →') + '</button>';
-        }
+      let box, side;
+      if (latest && isImageType(latest.content_type)) {
+        box = '<div class="pl-mat__qrbox"><img alt="" data-asset-img="' +
+          escapeHtml(latest.id) + '"></div>';
+      } else if (latest) {
+        box = '<div class="pl-mat__qrbox"><span class="pl-asset__ext">' +
+          escapeHtml((latest.filename || 'file').split('.').pop().slice(0, 5).toUpperCase()) +
+          '</span></div>';
+      } else {
+        box = '<button type="button" class="pl-mat__qrbox pl-mat__qrbox--add"' +
+          ' data-pl-asset-add="design">+</button>';
+      }
 
-        const versionRows = versions.map((a) => {
-          const opts = PL_ASSET_STATUSES.map((s) =>
-            '<option value="' + s + '"' + (a.status === s ? ' selected' : '') + '>' +
-            s.charAt(0).toUpperCase() + s.slice(1) + '</option>').join('');
-          return (
-            '<tr>' +
-              '<td class="mono">v' + (a.version || '?') + '</td>' +
-              '<td class="pl-asset__fn" title="' + escapeHtml(a.filename || '') + '">' +
-                escapeHtml(a.filename || '—') + '</td>' +
-              '<td class="muted">' + escapeHtml(formatHumanDateTime(a.uploaded_at) || '—') + '</td>' +
-              '<td><select class="input input--sm pl-asset-status" data-asset-id="' +
-                escapeHtml(a.id) + '">' + opts + '</select></td>' +
-              '<td><button type="button" class="sl-act-btn" data-asset-dl="' +
-                escapeHtml(a.id) + '">Download</button></td>' +
-            '</tr>'
-          );
-        }).join('');
+      if (latest) {
+        const opts = PL_ASSET_STATUSES.map((s) =>
+          '<option value="' + s + '"' + (latest.status === s ? ' selected' : '') + '>' +
+          s.charAt(0).toUpperCase() + s.slice(1) + '</option>').join('');
+        side =
+          '<div class="pl-mat__qrlabel">Design <span class="muted">v' + (latest.version || 1) + '</span></div>' +
+          '<div class="pl-mat__qrhint" title="' + escapeHtml(latest.filename || '') + '">' +
+            escapeHtml(latest.filename || '—') + ' · ' +
+            escapeHtml(formatHumanDateTime(latest.uploaded_at) || '—') + '</div>' +
+          '<div class="pl-mat__qrbtns">' +
+            '<select class="input input--sm pl-asset-status" data-asset-id="' +
+              escapeHtml(latest.id) + '">' + opts + '</select>' +
+            '<button type="button" class="btn btn--sm" data-asset-dl="' +
+              escapeHtml(latest.id) + '">Download</button>' +
+            '<label class="btn btn--sm pl-asset__upbtn">Upload new version' + upInput + '</label>' +
+          '</div>';
+      } else {
+        side =
+          '<div class="pl-mat__qrlabel">Design</div>' +
+          '<div class="pl-mat__qrhint">No design uploaded yet.</div>' +
+          '<div class="pl-mat__qrbtns">' +
+            '<label class="btn btn--sm pl-asset__upbtn">Upload design' + upInput + '</label>' +
+          '</div>';
+      }
 
-        return (
-          '<section class="pl-asset">' +
-            '<header class="pl-asset__head"><h3 class="pl-asset__title">' + k.label + '</h3>' +
-              '<label class="btn btn--sm pl-asset__upbtn">' +
-                (versions.length ? 'Upload new version' : 'Upload') +
-                '<input type="file" accept="image/*,application/pdf" hidden' +
-                  ' data-pl-asset-up="' + k.kind + '"></label>' +
-            '</header>' +
-            '<div class="pl-asset__row">' + preview +
-              '<div class="pl-asset__detail">' +
-                (versions.length
-                  ? '<table class="bk-table pl-asset__table"><thead><tr>' +
-                      '<th>Ver</th><th>File</th><th>Uploaded</th><th>Status</th><th></th>' +
-                    '</tr></thead><tbody>' + versionRows + '</tbody></table>'
-                  : '<div class="hd-empty">No ' + k.label.toLowerCase() + ' uploaded yet.</div>') +
-              '</div>' +
-            '</div>' +
-          '</section>'
-        );
-      }).join('');
-      plAssetsBody.innerHTML = sections;
+      plAssetsBody.innerHTML =
+        '<div class="pl-mat__sub">Design</div>' +
+        '<div class="pl-mat__qr">' + box +
+          '<div class="pl-mat__qrside">' + side + '</div>' +
+        '</div>';
 
-      // Lazily resolve signed URLs for any image previews.
       plAssetsBody.querySelectorAll('[data-asset-img]').forEach((img) => {
         plAssetUrl(_plAssetsId, img.dataset.assetImg)
           .then((u) => { img.src = u; })
-          .catch(() => { img.closest('.pl-asset__preview').classList.add('pl-asset__preview--err'); });
+          .catch(() => { img.closest('.pl-mat__qrbox').classList.add('pl-mat__qrbox--err'); });
       });
     }
 
@@ -2333,19 +2320,9 @@
         return;
       }
       const qr = makeQRInstance(_plEditQrUrl, 220);
-      if (qr) {
-        qr.append(plEditQr);
-        plEditQr.classList.add('pl-mat__qrbox--clickable');
-        plEditQr.title = 'Click to enlarge';
-      } else {
-        plEditQr.innerHTML = '<div class="muted pl-mat__qrnone">QR unavailable</div>';
-      }
+      if (qr) qr.append(plEditQr);
+      else plEditQr.innerHTML = '<div class="muted pl-mat__qrnone">QR unavailable</div>';
     }
-    plEditQr && plEditQr.addEventListener('click', () => {
-      if (!_plEditQrUrl) return;
-      const p = findPlacementById(_plAssetsId);
-      openQRModal(_plEditQrUrl, (p && p.name) || 'Placement QR', _plEditQrUrl);
-    });
 
     // Mount the materials + QR for a placement inside the Edit modal.
     function renderPlEditMaterials(placementId) {
