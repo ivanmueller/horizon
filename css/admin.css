@@ -2990,7 +2990,8 @@ select.hd-bankf__input { appearance: auto; }
 }
 /* Date-range dropdown, right-aligned like Short.io's. */
 .pl-an__toolbar {
-  display: flex; justify-content: space-between; align-items: flex-end;
+  display: flex; justify-content: flex-end; align-items: flex-end;
+  gap: var(--s3);
   margin-bottom: var(--s4);
 }
 .pl-an__daterange {
@@ -3048,7 +3049,6 @@ select.hd-bankf__input { appearance: auto; }
 }
 .pl-an-bar__ic {
   width: 14px; height: 14px; flex: 0 0 auto;
-  color: var(--text-muted);
 }
 .pl-an-bar__val {
   color: var(--text-muted); font-variant-numeric: tabular-nums;
