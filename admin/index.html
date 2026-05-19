@@ -528,6 +528,17 @@
         </select>
       </div>
 
+      <div class="drawer-form__row">
+        <label class="drawer-form__label" for="plEditAssetFile">Design file
+          <span class="drawer-form__optional">(optional)</span></label>
+        <div class="pl-asset-up">
+          <input class="input" type="file" id="plEditAssetFile"
+                 accept="image/*,application/pdf">
+          <button type="button" class="btn btn--sm" id="plEditAssetBtn">Upload</button>
+        </div>
+        <span class="drawer-form__hint" id="plEditAssetStatus">Uploads are versioned — a new upload never overwrites the previous file.</span>
+      </div>
+
       <div class="modal__actions">
         <button type="button" class="btn" id="plEditCancel">Cancel</button>
         <button type="submit" class="btn btn--primary" id="plEditSubmit">Save changes</button>
@@ -2180,6 +2191,75 @@
     const plEditDeployed = document.getElementById('plEditDeployed');
     const plEditStatus = document.getElementById('plEditStatus');
     const plEditSubmit = document.getElementById('plEditSubmit');
+    const plEditAssetFile   = document.getElementById('plEditAssetFile');
+    const plEditAssetBtn    = document.getElementById('plEditAssetBtn');
+    const plEditAssetStatus = document.getElementById('plEditAssetStatus');
+    const PL_ASSET_HINT = 'Uploads are versioned — a new upload never overwrites the previous file.';
+
+    // Minimal upload action (Phase 3 plumbing): sign → PUT to Storage
+    // → record the row. The rich asset panel / thumbnails come later.
+    async function uploadPlacementAsset() {
+      if (!_plEditId) return;
+      const file = plEditAssetFile.files && plEditAssetFile.files[0];
+      if (!file) {
+        plEditAssetStatus.textContent = 'Choose a file first.';
+        return;
+      }
+      plEditAssetBtn.disabled = true;
+      const authH = { Authorization: 'Bearer ' + session.access_token };
+      try {
+        plEditAssetStatus.textContent = 'Preparing upload…';
+        const signRes = await fetch(
+          BOKUN_API_BASE + '/api/admin/placements/' + encodeURIComponent(_plEditId) + '/assets/sign-upload',
+          {
+            method: 'POST',
+            headers: Object.assign({ 'Content-Type': 'application/json' }, authH),
+            body: JSON.stringify({
+              kind: 'design',
+              filename: file.name,
+              content_type: file.type || null,
+            }),
+          },
+        );
+        const signed = await signRes.json();
+        if (!signRes.ok) throw new Error((signed && signed.error) || 'sign_failed');
+
+        plEditAssetStatus.textContent = 'Uploading…';
+        const putRes = await fetch(signed.upload_url, {
+          method: 'PUT',
+          headers: { 'Content-Type': file.type || 'application/octet-stream' },
+          body: file,
+        });
+        if (!putRes.ok) throw new Error('upload_failed');
+
+        plEditAssetStatus.textContent = 'Finalizing…';
+        const recRes = await fetch(
+          BOKUN_API_BASE + '/api/admin/placements/' + encodeURIComponent(_plEditId) + '/assets',
+          {
+            method: 'POST',
+            headers: Object.assign({ 'Content-Type': 'application/json' }, authH),
+            body: JSON.stringify({
+              kind: 'design',
+              filename: signed.filename || file.name,
+              storage_path: signed.storage_path,
+              content_type: file.type || null,
+              byte_size: file.size,
+            }),
+          },
+        );
+        const rec = await recRes.json();
+        if (!recRes.ok) throw new Error((rec && rec.error) || 'record_failed');
+
+        plEditAssetStatus.textContent = 'Uploaded ✓ (version ' + (rec.asset && rec.asset.version) + ')';
+        plEditAssetFile.value = '';
+        reloadHotelsCacheAndRefresh();
+      } catch (err) {
+        plEditAssetStatus.textContent = 'Upload failed: ' + (err.message || 'please try again');
+      } finally {
+        plEditAssetBtn.disabled = false;
+      }
+    }
+    plEditAssetBtn && plEditAssetBtn.addEventListener('click', uploadPlacementAsset);
 
     // The tag placeholder tracks the selected type until the admin
     // types their own — never silently overwrite an explicit value.
@@ -2264,6 +2344,8 @@
       plEditQty.value         = row.dataset.plQty || '';
       plEditDeployed.value    = row.dataset.plDeployed || '';
       plEditStatus.value      = row.dataset.plStatus || 'draft';
+      if (plEditAssetFile) plEditAssetFile.value = '';
+      if (plEditAssetStatus) plEditAssetStatus.textContent = PL_ASSET_HINT;
       plEditModal.hidden = false;
     }
     function closePlEdit() { plEditModal.hidden = true; }
