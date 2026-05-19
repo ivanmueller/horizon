@@ -2918,30 +2918,44 @@ select.hd-bankf__input { appearance: auto; }
 .modal__card--wide { max-width: 720px; }
 .modal__card--xl   { max-width: 920px; }
 
-/* Row: design thumbnail next to the placement name. */
-.pl-name { display: flex; align-items: center; gap: var(--s3); }
-.pl-thumb {
-  flex: 0 0 auto;
-  width: 36px; height: 36px;
-  padding: 0;
-  display: inline-flex; align-items: center; justify-content: center;
+/* Materials & QR section inside the Edit modal. */
+.pl-mat {
+  margin-top: var(--s4);
+  padding-top: var(--s4);
+  border-top: 1px solid var(--border);
+}
+.pl-mat__head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: var(--s3);
+}
+.pl-mat__title {
+  font-size: var(--t-sm); font-weight: 600; color: var(--text);
+}
+.pl-mat__qr {
+  display: flex; gap: var(--s4); align-items: center;
+  padding: var(--s3);
   background: var(--bg-subtle);
   border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  margin-bottom: var(--s3);
+}
+.pl-mat__qrbox {
+  flex: 0 0 auto;
+  width: 96px; height: 96px;
+  display: flex; align-items: center; justify-content: center;
+  background: #fff;
+  border: 1px solid var(--border);
   border-radius: var(--r-sm);
-  overflow: hidden;
-  cursor: pointer;
-  color: var(--text-muted);
-  font-size: var(--t-xs); font-weight: 600;
-  transition: border-color var(--motion-fast) var(--motion-ease-out);
 }
-.pl-thumb:hover { border-color: var(--border-strong); }
-.pl-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.pl-thumb--add {
-  border-style: dashed;
-  font-size: 18px; font-weight: 400;
-  color: var(--text-muted);
+.pl-mat__qrbox canvas, .pl-mat__qrbox svg { width: 84px; height: 84px; }
+.pl-mat__qrnone { font-size: var(--t-xs); }
+.pl-mat__qrside { flex: 1 1 auto; min-width: 0; }
+.pl-mat__qrlabel { font-weight: 600; font-size: var(--t-sm); }
+.pl-mat__qrhint {
+  color: var(--text-muted); font-size: var(--t-xs);
+  margin: 2px 0 var(--s2);
 }
-.pl-thumb--err { color: var(--text-muted); }
+.pl-mat__qrbtns { display: flex; gap: 6px; }
 
 /* Modal: one section per asset kind. */
 .pl-asset { padding: var(--s4) 0; border-top: 1px solid var(--border); }

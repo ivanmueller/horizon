@@ -1940,7 +1940,7 @@ const PLACEMENT_TYPES = new Set([
   "rack_card", "table_tent", "welcome_packet",
   "website_widget", "lobby_qr", "custom",
 ]);
-const PLACEMENT_STATUSES = new Set(["draft", "active", "retired"]);
+const PLACEMENT_STATUSES = new Set(["pending", "active", "retired"]);
 // Short.io path constraints — alphanumeric plus the common
 // separators. Conservative; tighten if you find Short.io rejecting
 // edge cases.
@@ -2844,12 +2844,13 @@ function validatePlacement(body, { creating }) {
   }
   if (typeof body.status === "string") {
     if (!PLACEMENT_STATUSES.has(body.status)) {
-      return { error: "status must be draft, active, or retired" };
+      return { error: "status must be pending, active, or retired" };
     }
     row.status = body.status;
   } else if (creating) {
-    // Streamlined create flow: a new placement is live immediately.
-    row.status = "active";
+    // New placements start Pending until the material is verified
+    // (printed / widget generated); activated manually in Edit.
+    row.status = "pending";
   }
   // code and sequence_number are auto-managed by
   // insertPlacementWithSequence and locked thereafter — never accept
