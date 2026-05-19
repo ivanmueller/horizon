@@ -2664,10 +2664,14 @@
       if (k.indexOf('safari') > -1) {
         return '<svg class="pl-an-bar__ic" viewBox="0 0 24 24" aria-hidden="true">' +
           '<circle cx="12" cy="12" r="11" fill="#1A8CFF"/>' +
-          '<circle cx="12" cy="12" r="8.4" fill="none" stroke="#fff" stroke-opacity="0.55" stroke-width="0.8"/>' +
-          '<polygon points="12,12 17.8,6.2 13.6,10.4" fill="#fff"/>' +
-          '<polygon points="12,12 6.2,17.8 10.4,13.6" fill="#F5453B"/>' +
-          '<circle cx="12" cy="12" r="0.9" fill="#fff"/>' +
+          '<circle cx="12" cy="12" r="8.6" fill="none" stroke="#fff" stroke-opacity="0.45" stroke-width="0.7"/>' +
+          '<g stroke="#fff" stroke-opacity="0.85" stroke-width="1" stroke-linecap="round">' +
+            '<line x1="12" y1="1.6" x2="12" y2="3.4"/><line x1="12" y1="20.6" x2="12" y2="22.4"/>' +
+            '<line x1="1.6" y1="12" x2="3.4" y2="12"/><line x1="20.6" y1="12" x2="22.4" y2="12"/>' +
+          '</g>' +
+          '<polygon points="16.2,7.8 13.27,13.27 10.73,10.73" fill="#F5453B"/>' +
+          '<polygon points="7.8,16.2 13.27,13.27 10.73,10.73" fill="#fff"/>' +
+          '<circle cx="12" cy="12" r="0.85" fill="#fff"/>' +
           '</svg>';
       }
       if (k.indexOf('firefox') > -1) {
