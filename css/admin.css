@@ -2853,37 +2853,51 @@ select.hd-bankf__input { appearance: auto; }
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 4px;
   white-space: nowrap;
+  /* Resting state: no box — just the bare kebab. The container chrome
+     (border, radius, bg, shadow) only appears on hover/focus. */
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  background: transparent;
+  box-shadow: none;
+  transition: background-color var(--motion-fast) var(--motion-ease-out),
+              border-color     var(--motion-fast) var(--motion-ease-out),
+              box-shadow       var(--motion-fast) var(--motion-ease-out);
+}
+.pl-actions:hover,
+.pl-actions:focus-within,
+.pl-actions--open {
+  background: #fff;
+  border-color: var(--border);
+  box-shadow: 0 1px 3px rgba(20, 30, 50, 0.12);
 }
 .pl-act {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 30px;
   padding: 0;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: var(--r-sm);
+  background: transparent;
+  border: 0;
   color: var(--text-muted);
   cursor: pointer;
   transition: background-color var(--motion-fast) var(--motion-ease-out),
               color            var(--motion-fast) var(--motion-ease-out),
-              border-color     var(--motion-fast) var(--motion-ease-out),
               opacity          var(--motion-fast) var(--motion-ease-out),
               transform        var(--motion-fast) var(--motion-ease-out);
 }
 .pl-act svg { width: 16px; height: 16px; }
-.pl-act:hover {
-  background: var(--bg-subtle);
-  color: var(--text);
-  border-color: var(--border-strong);
-}
-.pl-act--retire:hover {
-  background: #fff0ee;
-  color: #b91c1c;
-  border-color: #f1a29a;
+.pl-act:first-child  { border-top-left-radius: var(--r-md); border-bottom-left-radius: var(--r-md); }
+.pl-act:last-child   { border-top-right-radius: var(--r-md); border-bottom-right-radius: var(--r-md); }
+.pl-act:hover { background: var(--bg-subtle); color: var(--text); }
+.pl-act--retire:hover { background: #fff0ee; color: #b91c1c; }
+/* Thin dividers between segments — only drawn in the revealed state
+   so a stray line never shows next to the bare resting kebab. */
+.pl-actions:hover .pl-act + .pl-act,
+.pl-actions:focus-within .pl-act + .pl-act,
+.pl-actions--open .pl-act + .pl-act {
+  border-left: 1px solid var(--border);
 }
 /* Hidden at rest — sit to the left of the kebab and slide in only
    when the kebab/cluster itself is hovered or focused. */
