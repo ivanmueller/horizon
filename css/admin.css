@@ -2845,6 +2845,54 @@ select.hd-bankf__input { appearance: auto; }
   border-color: #f1a29a;
   font-weight: 600;
 }
+/* Placement row actions — resting state shows only the kebab; the
+   edit + retire icons fade in on row hover (or keyboard focus, or a
+   kebab tap on touch). transform/opacity only, motion tokens only. */
+.pl-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  white-space: nowrap;
+}
+.pl-act {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color var(--motion-fast) var(--motion-ease-out),
+              color            var(--motion-fast) var(--motion-ease-out),
+              opacity          var(--motion-fast) var(--motion-ease-out),
+              transform        var(--motion-fast) var(--motion-ease-out);
+}
+.pl-act svg { width: 16px; height: 16px; }
+.pl-act:hover { background: var(--bg-subtle); color: var(--text); }
+.pl-act--retire:hover { background: #fff0ee; color: #b91c1c; }
+/* Hidden at rest — sit to the left of the kebab and slide in. */
+.pl-act--edit,
+.pl-act--retire {
+  opacity: 0;
+  transform: translateX(6px);
+  pointer-events: none;
+}
+.bk-table tr:hover .pl-act--edit,
+.bk-table tr:hover .pl-act--retire,
+.pl-actions:focus-within .pl-act--edit,
+.pl-actions:focus-within .pl-act--retire,
+.pl-actions--open .pl-act--edit,
+.pl-actions--open .pl-act--retire {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
 /* Inline confirm cancel link that appears next to the armed button */
 .sl-confirm { margin-left: 6px; }
 .sl-confirm__cancel {
