@@ -20,7 +20,15 @@
 # Example:
 #   scripts/horizon/test-attribution.sh -H fairmont-ll -e htl-7q4k9-e001
 
-set -euo pipefail
+echo "== test-attribution.sh starting (rev: self-healing) =="
+
+if [ -z "${BASH_VERSION:-}" ]; then
+  echo "ERROR: run with bash, not sh:  bash $0 -H <slug>" >&2
+  exit 1
+fi
+
+set -uo pipefail
+trap 'echo "EXIT code $? at line $LINENO" >&2' EXIT
 
 API_BASE="https://horizon-bokun.ivan-mueller02.workers.dev"
 HOTEL=""
