@@ -2846,13 +2846,14 @@ select.hd-bankf__input { appearance: auto; }
   font-weight: 600;
 }
 /* Placement row actions — resting state shows only the kebab; the
-   edit + retire icons fade in on row hover (or keyboard focus, or a
-   kebab tap on touch). transform/opacity only, motion tokens only. */
+   edit + retire icons fade in when the kebab/cluster is hovered (or
+   keyboard focus, or a kebab tap on touch). transform/opacity only,
+   motion tokens only. */
 .pl-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 2px;
+  gap: 4px;
   white-space: nowrap;
 }
 .pl-act {
@@ -2862,28 +2863,38 @@ select.hd-bankf__input { appearance: auto; }
   width: 28px;
   height: 28px;
   padding: 0;
-  background: transparent;
-  border: 0;
+  background: #fff;
+  border: 1px solid var(--border);
   border-radius: var(--r-sm);
   color: var(--text-muted);
   cursor: pointer;
   transition: background-color var(--motion-fast) var(--motion-ease-out),
               color            var(--motion-fast) var(--motion-ease-out),
+              border-color     var(--motion-fast) var(--motion-ease-out),
               opacity          var(--motion-fast) var(--motion-ease-out),
               transform        var(--motion-fast) var(--motion-ease-out);
 }
 .pl-act svg { width: 16px; height: 16px; }
-.pl-act:hover { background: var(--bg-subtle); color: var(--text); }
-.pl-act--retire:hover { background: #fff0ee; color: #b91c1c; }
-/* Hidden at rest — sit to the left of the kebab and slide in. */
+.pl-act:hover {
+  background: var(--bg-subtle);
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+.pl-act--retire:hover {
+  background: #fff0ee;
+  color: #b91c1c;
+  border-color: #f1a29a;
+}
+/* Hidden at rest — sit to the left of the kebab and slide in only
+   when the kebab/cluster itself is hovered or focused. */
 .pl-act--edit,
 .pl-act--retire {
   opacity: 0;
   transform: translateX(6px);
   pointer-events: none;
 }
-.bk-table tr:hover .pl-act--edit,
-.bk-table tr:hover .pl-act--retire,
+.pl-actions:hover .pl-act--edit,
+.pl-actions:hover .pl-act--retire,
 .pl-actions:focus-within .pl-act--edit,
 .pl-actions:focus-within .pl-act--retire,
 .pl-actions--open .pl-act--edit,
