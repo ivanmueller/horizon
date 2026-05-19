@@ -275,6 +275,10 @@ export default {
         if (segs[3] && segs[4] === "stats" && !segs[5] && request.method === "GET") {
           return await handleAdminPlacementStats(segs[3], request, env);
         }
+        // TEMPORARY discovery: /placements/:id/stats/raw
+        if (segs[3] && segs[4] === "stats" && segs[5] === "raw" && request.method === "GET") {
+          return await handleAdminPlacementStatsRaw(segs[3], request, env);
+        }
         if (request.method === "POST" && !segs[3]) return await handleAdminPlacementCreate(request, env);
         if (request.method === "PATCH" && segs[3] && !segs[4]) return await handleAdminPlacementUpdate(segs[3], request, env);
         if (request.method === "DELETE" && segs[3] && !segs[4]) return await handleAdminPlacementRetire(segs[3], request, env);
@@ -1766,6 +1770,56 @@ async function handleAdminPlacementStats(placementId, request, env) {
     last24: val(results[3]),
     last_clicked: totalNorm.lastClickDate || link.last_clicked_at || null,
   }, 200, request);
+}
+
+// TEMPORARY (discovery): returns Short.io's UNMODIFIED statistics JSON
+// for a placement's short link so we can see the real payload shape
+// before building the analytics dashboard against it. Call with
+// ?period=last30 (also accepts last7 / last24 / total). Remove once
+// the dashboard is wired to the confirmed shape.
+async function handleAdminPlacementStatsRaw(placementId, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const guard = await placementOr404(env, placementId, request);
+  if (guard.error) return guard.error;
+
+  const url = new URL(request.url);
+  const period = url.searchParams.get("period") || "last30";
+
+  const pRows = await supabaseSelect(
+    env, `placements?id=eq.${encodeURIComponent(placementId)}&select=code`,
+  );
+  const code = (pRows[0] && pRows[0].code ? pRows[0].code : "").toLowerCase();
+  const links = code
+    ? await supabaseSelect(
+        env,
+        `short_links?short_path=eq.${encodeURIComponent(code)}` +
+          `&select=short_io_id,short_url&limit=1`,
+      )
+    : [];
+  const link = links[0] || null;
+  if (!link) {
+    return jsonResponse({ error: "no short link for this placement" }, 404, request);
+  }
+  if (!isShortIoConfigured(env)) {
+    return jsonResponse({ error: "Short.io not configured on the worker" }, 503, request);
+  }
+  try {
+    const raw = await getLinkStats(env, link.short_io_id, period);
+    return jsonResponse({
+      short_io_id: link.short_io_id,
+      short_url: link.short_url,
+      period,
+      raw,
+    }, 200, request);
+  } catch (err) {
+    return jsonResponse({
+      error: "Short.io stats call failed",
+      detail: err && err.message,
+      status: err && err.status,
+      body: err && err.body,
+    }, 502, request);
+  }
 }
 
 async function handleAdminHotelUserCreate(request, env) {
