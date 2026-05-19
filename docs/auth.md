@@ -2,17 +2,27 @@
 
 Two surfaces, one sign-in flow, two allowlists:
 
-| Surface              | Who              | Allowlist table   |
-|----------------------|------------------|-------------------|
-| `/dashboard/hotel/`  | Hotel managers   | `hotel_users`     |
-| `/admin/`            | Horizon team     | `horizon_admins`  |
+| Surface | Host (canonical) | Who | Allowlist table |
+|---|---|---|---|
+| Partner portal | `connect.gowithhorizon.com/dashboard/hotel/` | Hotel managers | `hotel_users` |
+| Ops console | `admin.gowithhorizon.com/` | Horizon team | `horizon_admins` |
 
-Both surfaces sit behind the same `/dashboard/login/` page (magic
-link, Google, or email + password). After sign-in, the page checks
-`horizon_admins` first — if the user has an active row there, they
-go to `/admin/`; otherwise they go to `/dashboard/hotel/`. Each
+> **Hosts.** The Connect/admin subdomain split is live. The hotel
+> portal and the shared login live on **`connect.gowithhorizon.com`**;
+> the internal ops console is **rooted** at `admin.gowithhorizon.com`
+> (no `/admin/` prefix — `admin.gowithhorizon.com/hotels/`, not
+> `/admin/hotels/`). Old `gowithhorizon.com/admin/*` and
+> `gowithhorizon.com/dashboard/*` URLs 301 to the new hosts, so the
+> `/admin/…` and `/dashboard/…` path shorthand used elsewhere in this
+> doc still resolves — it just redirects. The session cookie is scoped
+> to `.gowithhorizon.com`, so one sign-in covers both subdomains.
+
+Both surfaces sit behind the same `connect.gowithhorizon.com/dashboard/login/`
+page (magic link, Google, or email + password). After sign-in, the page
+checks `horizon_admins` first — if the user has an active row there, they
+go to the ops console; otherwise they go to the partner portal. Each
 dashboard re-checks on its own boot too, so a direct visit to the
-"wrong" page redirects cleanly.
+"wrong" surface redirects cleanly (cross-host where needed).
 
 Sign-in itself doesn't grant any access — the SQL row in the
 appropriate allowlist table does. A user with neither a
@@ -34,10 +44,12 @@ End-to-end, magic-link path:
 
 1. Manager opens `/dashboard/login/`, enters their email, clicks **Send magic link**.
 2. Supabase emails them a one-shot URL like
-   `https://gowithhorizon.com/dashboard/setup/#access_token=…&type=magiclink`.
+   `https://connect.gowithhorizon.com/dashboard/setup/#access_token=…&type=magiclink`.
 3. They click it. `/dashboard/setup/` loads, `supabase-js` parses
-   the URL hash and stores the session in `localStorage`. The hash
-   is stripped from the URL bar.
+   the URL hash and stores the session in a cookie scoped to
+   `.gowithhorizon.com` (so it's shared across the connect/admin
+   subdomains — see "Session storage" below). The hash is stripped
+   from the URL bar.
 4. Manager picks a password (twice for confirm) and clicks **Save
    password & continue**. The page calls
    `supabase.auth.updateUser({ password })`, flips
@@ -82,6 +94,19 @@ The defense-in-depth picture:
 - **`hotel_users` check on the worker** scopes per-request access:
   a valid JWT for `manager@hotel-a.com` can't read hotel B's
   bookings even if they pass `?hotel=hotel-b`.
+
+## Session storage
+
+`supabase-js` is configured with a custom cookie storage adapter
+(`js/supabase-cookie-storage.js`) instead of the default
+`localStorage`. The session cookie is scoped to `Domain=.gowithhorizon.com`
+(host-only on `localhost` / `*.pages.dev`), so a single sign-in is
+shared across `connect.gowithhorizon.com` and `admin.gowithhorizon.com`.
+Oversized session payloads are transparently split across numbered
+chunk cookies. The adapter still reads through to any legacy
+`localStorage` session once, so the subdomain cutover didn't sign
+existing users out. All five auth surfaces (login, setup, otp,
+hotel, admin) use it.
 
 ## Granting a hotel manager access
 
@@ -154,10 +179,13 @@ In the Supabase dashboard, **Authentication → Providers**:
 
 **Authentication → URL Configuration**:
 
-- **Site URL**: `https://gowithhorizon.com`
-- **Redirect URLs** (allowlist): `https://gowithhorizon.com/dashboard/hotel/`,
-  `http://localhost:*/dashboard/hotel/` (for local dev), and any
-  Cloudflare Pages preview URL pattern you use.
+- **Site URL**: `https://connect.gowithhorizon.com`
+- **Redirect URLs** (allowlist): `https://connect.gowithhorizon.com/**`
+  (covers `/dashboard/setup/`, `/dashboard/otp/`, `/dashboard/hotel/`
+  and OAuth returns), `http://localhost:*/dashboard/hotel/` (for local
+  dev), and any Cloudflare Pages preview URL pattern you use. The
+  legacy `https://gowithhorizon.com/**` entries can stay during the
+  migration soak and be removed in the Phase 3 cleanup.
 
 **Authentication → Email Templates**:
 

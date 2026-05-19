@@ -1,7 +1,9 @@
 # Adding a new partner
 
-Onboarding a hotel and its staff is now done from the admin
-dashboard at **`/admin/hotels/`** — no SQL, no JSON edits, no PRs.
+Onboarding a hotel and its staff is now done from the ops console
+at **`admin.gowithhorizon.com/hotels/`** — no SQL, no JSON edits, no
+PRs. (The console is rooted on its own subdomain; old
+`gowithhorizon.com/admin/hotels/` links 301 there.)
 This doc walks the UI flow end-to-end and explains what's
 happening underneath.
 
@@ -44,8 +46,9 @@ staff turnover via Short.io retargeting later.
 
 ## Workflow — pool hotel (no per-employee kickbacks)
 
-1. Sign in at `/admin/` (Google OAuth or magic link). You need to
-   be in the `horizon_admins` allowlist.
+1. Sign in at `admin.gowithhorizon.com` (Google OAuth or magic
+   link; login is served from `connect.gowithhorizon.com`). You need
+   to be in the `horizon_admins` allowlist.
 2. Click **Hotels** in the sidebar → **+ Add hotel** in the
    top-right.
 3. Fill out the form:
@@ -72,9 +75,9 @@ staff turnover via Short.io retargeting later.
 
 That's it. The hotel is live: walk-in bookings via
 `?hotel=moraine-lodge` will record under the hotel pool, and the
-`/dashboard/hotel/?hotel=moraine-lodge` partner dashboard plus the
-internal `/admin/` dashboard will show their bookings as they come
-in.
+`connect.gowithhorizon.com/dashboard/hotel/?hotel=moraine-lodge`
+partner dashboard plus the internal `admin.gowithhorizon.com`
+console will show their bookings as they come in.
 
 ## Workflow — kickback hotel (with per-employee commissions)
 
@@ -146,7 +149,7 @@ new staff member (they'll get a fresh sequence number).
 ## Inviting a manager (hotel-side dashboard access)
 
 Managers are people the hotel chooses to give access to their
-own dashboard at `/dashboard/hotel/?hotel=<slug>` — typically the
+own dashboard at `connect.gowithhorizon.com/dashboard/hotel/?hotel=<slug>` — typically the
 GM or whoever runs the front desk. They see *only* their hotel's
 bookings + invoices, never anyone else's.
 
@@ -158,7 +161,8 @@ bookings + invoices, never anyone else's.
 3. Hit **Send invite**.
 
 There's no automatic email yet (custom SMTP is on the roadmap).
-For now, just tell them to go to `/dashboard/login/` and sign in
+For now, just tell them to go to
+`connect.gowithhorizon.com/dashboard/login/` and sign in
 with that email — magic link or Google OAuth both work.
 
 Manager changes do *not* trigger a republish — they're an auth
