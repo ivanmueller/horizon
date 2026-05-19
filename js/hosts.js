@@ -10,10 +10,11 @@
 //   1. connect.gowithhorizon.com + admin.gowithhorizon.com are added as
 //      custom domains on the Pages project and resolve.
 //   2. Those origins are in the Supabase Auth Site URL / Redirect URLs.
-// While `false`, every helper returns a same-origin relative path, so
-// behaviour is byte-for-byte what it is today — this whole phase is a
-// no-op until the one line below flips. Flip it in a single deploy.
-export const SUBDOMAINS_LIVE = false;
+// Flipped true at cutover (2026-05-19): connect./admin. are live Pages
+// custom domains and in Supabase's allowlist. The apex now permanently
+// 301s /admin/* and /dashboard/* to the subdomains and client redirects
+// emit absolute cross-host URLs. Rollback = set back to `false`.
+export const SUBDOMAINS_LIVE = true;
 
 export const APEX_ORIGIN    = 'https://gowithhorizon.com';
 export const CONNECT_ORIGIN = 'https://connect.gowithhorizon.com';
