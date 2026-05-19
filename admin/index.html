@@ -3775,120 +3775,149 @@
       }
 
       // ── Banking information accordion ────────────────────
-      // Reuses the stripeConnected signal above. Not connected
-      // → "Pending" tag + Connect CTA, open by default (an
-      // admin needs to act). Connected → "Verified" tag + a
-      // Stripe-style label/value list, collapsed by default
-      // (nothing to do). State is local to this render. The
-      // backing columns don't exist yet, so this reads "not
-      // connected" for every hotel until they land — the same
-      // honest end-state as the Payouts card.
+      // Pilot phase: no Stripe Connect onboarding. An admin
+      // records the hotel's manual payout details (Interac
+      // e-Transfer or EFT) here; Horizon pays commission by
+      // hand from these. Backed by the hotels.payout_* columns
+      // (migration 0016). Not set → amber "Not set" + open by
+      // default (admin needs to act). Set → green method tag,
+      // masked read view, collapsed by default.
       const bankCard   = els.container.querySelector('#hdBankingCard');
       const bankToggle = els.container.querySelector('#hdBankingToggle');
       const bankBody   = els.container.querySelector('#hdBankingBody');
       const bankTag    = els.container.querySelector('#hdBankingTag');
       if (bankCard && bankToggle && bankBody && bankTag) {
-        const bankCopyIcon = '<svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
         const bankRow = (label, valueHtml) =>
           '<div class="hd-side__row"><dt class="hd-side__label">' + label + '</dt>' +
           '<dd class="hd-side__value">' + valueHtml + '</dd></div>';
-        const acctIdHtml = (acct) =>
-          '<button type="button" class="hd-copy hd-copy--id mono" data-copy="' + escapeHtml(acct) + '" title="Copy account ID">' +
-            '<span data-detail-text>' + escapeHtml(acct) + '</span>' + bankCopyIcon + '</button>';
+        const maskAcct = (a) => {
+          a = String(a || '');
+          return a.length > 4 ? '••••' + a.slice(-4) : (a || '—');
+        };
+        const fieldHtml = (id, label, val, attrs) =>
+          '<label class="hd-bankf__field"><span class="hd-bankf__label">' + label + '</span>' +
+          '<input class="hd-bankf__input" id="' + id + '" value="' + escapeHtml(val || '') + '" ' +
+          (attrs || '') + '></label>';
 
-        // Three honest states:
-        //   no account            → Not connected (amber) + Connect CTA
-        //   account, !payouts      → In review (amber) + Continue setup
-        //   payouts_enabled        → Verified (green) + account details
-        if (stripeConnected) {
-          bankTag.className = 'hd-bank__tag hd-statpill hd-statpill--green';
-          bankTag.textContent = 'Verified';
-          bankBody.innerHTML =
-            '<dl class="hd-side__list">' +
-              bankRow('Connection', '<span class="hd-bank__live"><span class="hd-bank__dot"></span>Payouts enabled</span>') +
-              bankRow('Account ID', acctIdHtml(stripeAcct || '—')) +
-              bankRow('Verified on', escapeHtml(h.stripe_onboarded_at ? (formatHumanDate((h.stripe_onboarded_at || '').slice(0, 10)) || '—') : '—')) +
-            '</dl>' +
-            '<div class="hd-bank__actions"><button type="button" class="btn btn--ghost btn--sm" id="hdConnectRefresh">Refresh status</button></div>';
-        } else if (stripeAcct) {
+        const renderBanking = (editing) => {
+          const method = h.payout_method || null;
+          if (method && !editing) {
+            bankTag.className = 'hd-bank__tag hd-statpill hd-statpill--green';
+            bankTag.textContent = method === 'etransfer' ? 'e-Transfer' : 'EFT';
+            let rows = bankRow('Method', method === 'etransfer' ? 'Interac e-Transfer' : 'EFT / direct deposit') +
+              bankRow('Account holder', escapeHtml(h.payout_account_holder || '—'));
+            if (method === 'etransfer') {
+              rows += bankRow('e-Transfer email', escapeHtml(h.payout_etransfer_email || '—'));
+            } else {
+              rows += bankRow('Institution', escapeHtml(h.payout_eft_institution || '—')) +
+                bankRow('Transit', escapeHtml(h.payout_eft_transit || '—')) +
+                bankRow('Account', escapeHtml(maskAcct(h.payout_eft_account)));
+            }
+            rows += bankRow('Updated', escapeHtml(h.payout_updated_at ? (formatHumanDate((h.payout_updated_at || '').slice(0,10)) || '—') : '—'));
+            bankBody.innerHTML =
+              '<dl class="hd-side__list">' + rows + '</dl>' +
+              '<p class="hd-bank__hint">Pay this hotel\'s commission manually from your bank using the details above.</p>' +
+              '<div class="hd-bank__actions"><button type="button" class="btn btn--ghost btn--sm" id="hdBankEdit">Edit details</button></div>';
+            const eb = bankBody.querySelector('#hdBankEdit');
+            if (eb) eb.onclick = () => renderBanking(true);
+            return;
+          }
+          // Form (no method set, or editing).
           bankTag.className = 'hd-bank__tag hd-statpill hd-statpill--amber';
-          bankTag.textContent = 'In review';
+          bankTag.textContent = method ? (method === 'etransfer' ? 'e-Transfer' : 'EFT') : 'Not set';
+          const m = method || 'etransfer';
           bankBody.innerHTML =
-            '<dl class="hd-side__list">' +
-              bankRow('Connection', '<span class="hd-bank__live"><span class="hd-bank__dot"></span>Onboarding incomplete</span>') +
-              bankRow('Account ID', acctIdHtml(stripeAcct)) +
-            '</dl>' +
-            '<p class="hd-bank__hint">The hotel hasn\'t finished Stripe\'s verification. Send them the link again or refresh once they\'re done.</p>' +
-            '<div class="hd-bank__actions">' +
-              '<button type="button" class="btn btn--primary btn--sm" id="hdConnectOnboard">Continue setup</button>' +
-              '<button type="button" class="btn btn--ghost btn--sm" id="hdConnectRefresh">Refresh status</button>' +
+            '<div class="hd-bankf">' +
+              '<div class="hd-bankf__seg" role="tablist">' +
+                '<button type="button" class="btn btn--sm hd-bankf__seg-btn" data-m="etransfer">Interac e-Transfer</button>' +
+                '<button type="button" class="btn btn--sm hd-bankf__seg-btn" data-m="eft">EFT / direct deposit</button>' +
+              '</div>' +
+              fieldHtml('hdBankHolder', 'Account holder name', h.payout_account_holder, 'maxlength="120"') +
+              '<div id="hdBankEtransfer">' +
+                fieldHtml('hdBankEmail', 'Interac e-Transfer email', h.payout_etransfer_email, 'type="email" maxlength="200"') +
+              '</div>' +
+              '<div id="hdBankEft">' +
+                fieldHtml('hdBankInst', 'Institution number (3 digits)', h.payout_eft_institution, 'inputmode="numeric" maxlength="3"') +
+                fieldHtml('hdBankTransit', 'Transit number (5 digits)', h.payout_eft_transit, 'inputmode="numeric" maxlength="5"') +
+                fieldHtml('hdBankAcct', 'Account number', h.payout_eft_account, 'inputmode="numeric" maxlength="17"') +
+              '</div>' +
+              '<p class="hd-bankf__err" id="hdBankErr" hidden></p>' +
+              '<div class="hd-bank__actions">' +
+                '<button type="button" class="btn btn--primary btn--sm" id="hdBankSave">Save details</button>' +
+                (method ? '<button type="button" class="btn btn--ghost btn--sm" id="hdBankCancel">Cancel</button>' : '') +
+              '</div>' +
             '</div>';
-        } else {
-          bankTag.className = 'hd-bank__tag hd-statpill hd-statpill--amber';
-          bankTag.textContent = 'Not connected';
-          bankBody.innerHTML =
-            '<p class="hd-bank__hint">No bank account connected. Generate a Stripe onboarding link and send it to the hotel — they enter their banking details on Stripe\'s secure form.</p>' +
-            '<div class="hd-bank__actions"><button type="button" class="btn btn--primary btn--sm" id="hdConnectOnboard">Connect bank account</button></div>';
-        }
-
-        const onboardBtn = bankBody.querySelector('#hdConnectOnboard');
-        if (onboardBtn) {
-          onboardBtn.onclick = async () => {
-            onboardBtn.disabled = true;
-            onboardBtn.textContent = 'Generating link…';
+          let sel = m;
+          const segBtns = bankBody.querySelectorAll('.hd-bankf__seg-btn');
+          const etDiv = bankBody.querySelector('#hdBankEtransfer');
+          const eftDiv = bankBody.querySelector('#hdBankEft');
+          const applySel = () => {
+            segBtns.forEach((b) => b.classList.toggle('is-active', b.dataset.m === sel));
+            etDiv.hidden = sel !== 'etransfer';
+            eftDiv.hidden = sel !== 'eft';
+          };
+          segBtns.forEach((b) => { b.onclick = () => { sel = b.dataset.m; applySel(); }; });
+          applySel();
+          const cancelBtn = bankBody.querySelector('#hdBankCancel');
+          if (cancelBtn) cancelBtn.onclick = () => renderBanking(false);
+          const errEl = bankBody.querySelector('#hdBankErr');
+          const showErr = (msg) => { errEl.textContent = msg; errEl.hidden = false; };
+          const saveBtn = bankBody.querySelector('#hdBankSave');
+          saveBtn.onclick = async () => {
+            errEl.hidden = true;
+            const holder = bankBody.querySelector('#hdBankHolder').value.trim();
+            // Build a clean patch: the selected method's fields are
+            // sent, the other method's are nulled so stale data
+            // never lingers.
+            const patch = { payout_method: sel, payout_account_holder: holder || null };
+            if (sel === 'etransfer') {
+              const email = bankBody.querySelector('#hdBankEmail').value.trim();
+              if (!email) return showErr('Enter the e-Transfer email.');
+              patch.payout_etransfer_email = email;
+              patch.payout_eft_institution = null;
+              patch.payout_eft_transit = null;
+              patch.payout_eft_account = null;
+            } else {
+              const inst = bankBody.querySelector('#hdBankInst').value.trim();
+              const tr = bankBody.querySelector('#hdBankTransit').value.trim();
+              const ac = bankBody.querySelector('#hdBankAcct').value.trim();
+              if (!/^\d{3}$/.test(inst)) return showErr('Institution number must be 3 digits.');
+              if (!/^\d{5}$/.test(tr)) return showErr('Transit number must be 5 digits.');
+              if (!/^\d{4,17}$/.test(ac)) return showErr('Account number must be 4–17 digits.');
+              patch.payout_eft_institution = inst;
+              patch.payout_eft_transit = tr;
+              patch.payout_eft_account = ac;
+              patch.payout_etransfer_email = null;
+            }
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving…';
             try {
-              const res = await fetch(BOKUN_API_BASE + '/api/admin/hotels/' + encodeURIComponent(h.id) + '/connect/onboard', {
-                method: 'POST',
-                headers: { Authorization: 'Bearer ' + session.access_token },
+              const res = await fetch(BOKUN_API_BASE + '/api/admin/hotels/' + encodeURIComponent(h.id), {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+                body: JSON.stringify(patch),
               });
               const data = await res.json();
-              if (!res.ok || !data.url) throw new Error((data && data.message) || (data && data.error) || 'onboard_failed');
-              // Open Stripe-hosted onboarding in a new tab; admin sends
-              // this URL to the hotel (or completes it for sandbox tests).
-              window.open(data.url, '_blank', 'noopener');
-              bankBody.innerHTML =
-                '<p class="hd-bank__hint">Onboarding link opened in a new tab. Use <strong>Copy link</strong> to send it to the hotel. Once they finish Stripe\'s form, click <strong>Refresh status</strong>.</p>' +
-                '<div class="hd-bank__actions">' +
-                  '<button type="button" class="btn btn--ghost btn--sm" id="hdConnectCopy">Copy link</button>' +
-                  '<button type="button" class="btn btn--ghost btn--sm" id="hdConnectRefresh2">Refresh status</button>' +
-                '</div>';
-              const copyBtn = bankBody.querySelector('#hdConnectCopy');
-              if (copyBtn) copyBtn.onclick = () => {
-                if (navigator.clipboard) navigator.clipboard.writeText(data.url);
-                copyBtn.textContent = 'Copied';
-              };
-              const r2 = bankBody.querySelector('#hdConnectRefresh2');
-              if (r2) r2.onclick = () => refreshConnect();
+              if (!res.ok) throw new Error((data && (data.message || data.error)) || 'save_failed');
+              Object.assign(h, data.hotel || patch);
+              renderBanking(false);
             } catch (err) {
-              onboardBtn.disabled = false;
-              onboardBtn.textContent = 'Connect bank account';
-              alert('Could not start onboarding: ' + (err && err.message || err));
+              saveBtn.disabled = false;
+              saveBtn.textContent = 'Save details';
+              showErr('Could not save: ' + (err && err.message || err));
             }
           };
-        }
-        const refreshConnect = async () => {
-          try {
-            const res = await fetch(BOKUN_API_BASE + '/api/admin/hotels/' + encodeURIComponent(h.id) + '/connect/status', {
-              headers: { Authorization: 'Bearer ' + session.access_token },
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error((data && data.message) || (data && data.error) || 'status_failed');
-            // Reload so every Connect-derived surface (badge, payouts
-            // card, hero stat) re-renders from the reconciled columns.
-            location.reload();
-          } catch (err) {
-            alert('Could not refresh status: ' + (err && err.message || err));
-          }
         };
-        const refreshBtn = bankBody.querySelector('#hdConnectRefresh');
-        if (refreshBtn) refreshBtn.onclick = refreshConnect;
+        renderBanking(false);
 
         const setBankOpen = (open) => {
           bankBody.hidden = !open;
           bankCard.classList.toggle('is-open', open);
           bankToggle.setAttribute('aria-expanded', String(open));
         };
-        setBankOpen(!stripeConnected);
+        // Open by default when nothing is recorded yet (admin needs
+        // to act); collapsed once details exist.
+        setBankOpen(!h.payout_method);
         bankToggle.onclick = () => setBankOpen(bankBody.hidden);
       }
 

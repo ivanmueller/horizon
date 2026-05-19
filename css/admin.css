@@ -2398,6 +2398,42 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   flex-shrink: 0;
 }
 
+/* Manual payout banking form (pilot phase). */
+.hd-bankf { display: flex; flex-direction: column; gap: var(--s3); }
+.hd-bankf__seg { display: flex; gap: var(--s2); }
+.hd-bankf__seg-btn.is-active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.hd-bankf__field { display: flex; flex-direction: column; gap: var(--s1); }
+.hd-bankf__label {
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--text);
+}
+.hd-bankf__input {
+  font: inherit;
+  font-size: var(--t-sm);
+  padding: 7px var(--s3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--bg);
+  color: var(--text);
+}
+.hd-bankf__input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.hd-bankf__input[hidden], #hdBankEtransfer[hidden], #hdBankEft[hidden] { display: none; }
+.hd-bankf__err {
+  margin: 0;
+  font-size: var(--t-sm);
+  color: var(--bad-fg);
+}
+.hd-bankf__err[hidden] { display: none; }
+
 /* Stripe-style rows: label bolded above the value, tight inner
    gap, generous outer spacing between fields. The whole sidebar
    reads like a definition list rather than a table. */
