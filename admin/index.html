@@ -6703,7 +6703,7 @@
       saveBtn.disabled = true;
       saveBtn.textContent = 'Adding…';
 
-      fetch(BOKUN_API_BASE + '/api/admin/staff', {
+      fetch(BOKUN_API_BASE + '/api/admin/hotel-staff', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -6756,7 +6756,7 @@
       saveBtn.disabled = true;
       saveBtn.textContent = 'Saving…';
 
-      fetch(BOKUN_API_BASE + '/api/admin/staff/' + encodeURIComponent(staffId), {
+      fetch(BOKUN_API_BASE + '/api/admin/hotel-staff/' + encodeURIComponent(staffId), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -6785,7 +6785,7 @@
     }
 
     async function revokeStaff(hotel, staffId) {
-      const res = await fetch(BOKUN_API_BASE + '/api/admin/staff/' + encodeURIComponent(staffId), {
+      const res = await fetch(BOKUN_API_BASE + '/api/admin/hotel-staff/' + encodeURIComponent(staffId), {
         method: 'DELETE',
         headers: { Authorization: 'Bearer ' + session.access_token },
       });
