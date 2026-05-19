@@ -1344,6 +1344,15 @@
             <div class="hd-body">
               <main class="hd-main">
 
+                <section class="hd-section" id="hdPlacementsSection">
+                  <header class="hd-section__head">
+                    <h2 class="hd-section__title">Placements tracking</h2>
+                  </header>
+                  <div class="hd-section__body" id="hdPlacementsBody">
+                    <div class="hd-empty">No placements yet.</div>
+                  </div>
+                </section>
+
                 <section class="hd-section" id="hdEmployeesSection">
                   <header class="hd-section__head">
                     <h2 class="hd-section__title">Employees &amp; Referral Codes</h2>
@@ -3301,6 +3310,7 @@
         setup:        container.querySelector('#hotelDetailSetup'),
         refUrl:       container.querySelector('#hotelDetailRefUrl'),
         empBody:      container.querySelector('#hdEmployeesBody'),
+        placementsBody: container.querySelector('#hdPlacementsBody'),
         linksBody:    container.querySelector('#hdLinksBody'),
         details:      container.querySelector('#hdDetails'),
         heroStat:     container.querySelector('#hotelDetailHeroStat'),
@@ -3486,6 +3496,78 @@
       // hotelShort / masterShortUrl are already resolved.
 
       const currency = hotelCurrency(h);
+
+      // Placements tracking — passive, hotel-level marketing surfaces
+      // (rack cards, table tents, welcome-packet inserts, website
+      // widgets). Read-only in Phase 1: create/edit/retire and asset
+      // management land in later phases. A placement attributes to the
+      // hotel pool — no employee, no kickback — so there is no rate or
+      // commission column here, unlike the employees table.
+      const PLACEMENT_TYPE_LABELS = {
+        rack_card:      'Rack card',
+        table_tent:     'Table tent',
+        welcome_packet: 'Welcome packet',
+        website_widget: 'Website widget',
+        lobby_qr:       'Lobby QR',
+        custom:         'Custom',
+      };
+      const placements = Array.isArray(h.placements) ? h.placements : [];
+      if (els.placementsBody) {
+        if (!placements.length) {
+          els.placementsBody.innerHTML =
+            '<div class="hd-empty">No placements yet.</div>';
+        } else {
+          const shortByPath = new Map();
+          for (const l of (Array.isArray(h.short_links) ? h.short_links : [])) {
+            if (l.status === 'active' && l.short_path) {
+              shortByPath.set(l.short_path, l);
+            }
+          }
+          const pRows = placements
+            .slice()
+            .sort((a, b) => (a.sequence_number || 0) - (b.sequence_number || 0))
+            .map((p) => {
+              const typeLabel = PLACEMENT_TYPE_LABELS[p.placement_type]
+                || (p.placement_type || '—');
+              const statusPill = p.status === 'active'
+                ? '<span class="bk-pill bk-pill--ok">Active</span>'
+                : (p.status === 'retired'
+                    ? '<span class="bk-pill bk-pill--neutral">Retired</span>'
+                    : '<span class="bk-pill bk-pill--neutral">Draft</span>');
+              const code = p.code || '';
+              const sl = shortByPath.get((code || '').toLowerCase()) || null;
+              const shortCell = sl
+                ? '<td class="hd-links__url"><button type="button" class="hd-copy hd-copy--url" data-copy="' + escapeHtml(sl.short_url) + '" title="' + escapeHtml(sl.short_url) + '">' +
+                    '<span class="hd-trunc mono">' + escapeHtml(sl.short_url) + '</span></button></td>'
+                : '<td class="muted" title="No short link yet — minted when the placement is created.">—</td>';
+              const tagCell = p.tag
+                ? '<span class="bk-pill bk-pill--neutral">' + escapeHtml(p.tag) + '</span>'
+                : '<span class="muted">—</span>';
+              return (
+                '<tr data-placement-row="' + escapeHtml(p.id) + '">' +
+                  '<td class="hd-emp__name">' + escapeHtml(p.name || '—') + '</td>' +
+                  '<td>' + escapeHtml(typeLabel) + '</td>' +
+                  '<td>' + tagCell + '</td>' +
+                  '<td><button type="button" class="hd-copy mono" data-copy="' + escapeHtml(code) + '" title="Copy placement code">' +
+                      '<span>' + escapeHtml(code || '—') + '</span></button></td>' +
+                  shortCell +
+                  '<td>' + statusPill + '</td>' +
+                  '<td class="num hd-num">' + (sl ? (sl.click_count_cached || 0) : 0) + '</td>' +
+                '</tr>'
+              );
+            }).join('');
+          els.placementsBody.innerHTML =
+            '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
+              '<table class="bk-table">' +
+                '<thead><tr>' +
+                  '<th>Placement</th><th>Type</th><th>Tag</th><th>Code</th>' +
+                  '<th>Short URL</th><th>Status</th><th class="num">Clicks</th>' +
+                '</tr></thead>' +
+                '<tbody>' + pRows + '</tbody>' +
+              '</table>' +
+            '</div></div>';
+        }
+      }
 
       // Employees & Referral Codes — primary working section. Reads
       // straight from h.staff (same source as the drawer) so the two
