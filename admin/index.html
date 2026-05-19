@@ -429,7 +429,7 @@
 
   <!-- ── Edit placement modal ──────────────────────────────── -->
   <div class="modal" id="plEditModal" hidden>
-    <form class="modal__card" id="plEditForm" novalidate>
+    <form class="modal__card modal__card--wide" id="plEditForm" novalidate>
       <div class="modal__head">
         <h2 class="modal__title">Edit placement</h2>
         <button type="button" class="modal__close" id="plEditClose" aria-label="Close">×</button>
@@ -475,10 +475,31 @@
       <div class="drawer-form__row">
         <label class="drawer-form__label" for="plEditStatus">Status</label>
         <select class="input" id="plEditStatus">
-          <option value="draft">Draft</option>
+          <option value="pending">Pending</option>
           <option value="active">Active</option>
           <option value="retired">Retired</option>
         </select>
+        <span class="drawer-form__hint" id="plEditStatusHint" hidden></span>
+      </div>
+
+      <div class="pl-mat">
+        <div class="pl-mat__head">
+          <h3 class="pl-mat__title">Materials &amp; QR</h3>
+          <button type="button" class="btn btn--sm" id="plAssetsDownloadAll">Download all</button>
+        </div>
+        <div class="alert alert--bad" id="plAssetsError" hidden></div>
+        <div class="pl-mat__qr">
+          <div class="pl-mat__qrbox" id="plEditQr"></div>
+          <div class="pl-mat__qrside">
+            <div class="pl-mat__qrlabel">Placement QR</div>
+            <div class="pl-mat__qrhint">Encodes the short link. Reprint-safe — the destination can change without a new QR.</div>
+            <div class="pl-mat__qrbtns">
+              <button type="button" class="btn btn--sm" id="plEditQrPng">Download PNG</button>
+              <button type="button" class="btn btn--sm" id="plEditQrSvg">Download SVG</button>
+            </div>
+          </div>
+        </div>
+        <div id="plAssetsBody"><div class="muted">Loading…</div></div>
       </div>
 
       <div class="modal__actions">
@@ -486,24 +507,6 @@
         <button type="submit" class="btn btn--primary" id="plEditSubmit">Save changes</button>
       </div>
     </form>
-  </div>
-
-  <!-- ── Placement asset manager modal ─────────────────────── -->
-  <div class="modal" id="plAssetsModal" hidden>
-    <div class="modal__card modal__card--wide">
-      <div class="modal__head">
-        <h2 class="modal__title">Assets — <span id="plAssetsName">placement</span></h2>
-        <button type="button" class="modal__close" id="plAssetsClose" aria-label="Close">×</button>
-      </div>
-      <div class="alert alert--bad" id="plAssetsError" hidden></div>
-      <div id="plAssetsBody">
-        <div class="muted">Loading…</div>
-      </div>
-      <div class="modal__actions">
-        <button type="button" class="btn" id="plAssetsDownloadAll">Download all</button>
-        <button type="button" class="btn" id="plAssetsDone">Done</button>
-      </div>
-    </div>
   </div>
 
   <!-- ── Placement analytics modal ─────────────────────────── -->
@@ -2149,10 +2152,8 @@
     // Signed URLs are short-lived; cache per asset id for the session
     // so repeated thumbnail/preview renders don't re-mint every time.
     const _plAssetUrlCache = new Map();
-    let _plAssetsId = null; // placement id the modal is showing
+    let _plAssetsId = null; // placement whose materials are shown (in Edit)
 
-    const plAssetsModal = document.getElementById('plAssetsModal');
-    const plAssetsName  = document.getElementById('plAssetsName');
     const plAssetsBody  = document.getElementById('plAssetsBody');
     const plAssetsError = document.getElementById('plAssetsError');
 
@@ -2227,7 +2228,6 @@
     function renderPlAssets() {
       const p = findPlacementById(_plAssetsId);
       if (!p) { plAssetsBody.innerHTML = '<div class="muted">Placement not found.</div>'; return; }
-      plAssetsName.textContent = p.name || p.code || 'placement';
       const assets = Array.isArray(p.assets) ? p.assets : [];
       const sections = PL_ASSET_KINDS.map((k) => {
         const versions = assets
@@ -2300,23 +2300,58 @@
       });
     }
 
-    function openPlAssets(placementId, focusKind) {
+    const plEditQr      = document.getElementById('plEditQr');
+    const plEditStatusHint = document.getElementById('plEditStatusHint');
+    let _plEditQrUrl = null;
+
+    // Pending placements aren't live until a material exists. Advisory
+    // only — the admin can still flip to Active manually.
+    function updatePlStatusHint() {
+      if (!plEditStatusHint) return;
+      const p = findPlacementById(_plAssetsId);
+      const sel = document.getElementById('plEditStatus');
+      const assets = p && Array.isArray(p.assets) ? p.assets : [];
+      const hasMaterial = assets.some(
+        (a) => (a.kind === 'design' || a.kind === 'print_ready'),
+      );
+      if (sel && sel.value === 'pending' && !hasMaterial) {
+        plEditStatusHint.textContent =
+          'Add a design or print-ready file below before activating.';
+        plEditStatusHint.hidden = false;
+      } else {
+        plEditStatusHint.hidden = true;
+      }
+    }
+
+    function renderPlEditQr() {
+      if (!plEditQr) return;
+      const ctx = findPlacementCtx(_plAssetsId);
+      _plEditQrUrl = ctx.shortUrl || null;
+      plEditQr.innerHTML = '';
+      if (!_plEditQrUrl) {
+        plEditQr.innerHTML = '<div class="muted pl-mat__qrnone">No short link yet</div>';
+        return;
+      }
+      const qr = makeQRInstance(_plEditQrUrl, 150);
+      if (qr) qr.append(plEditQr);
+      else plEditQr.innerHTML = '<div class="muted pl-mat__qrnone">QR unavailable</div>';
+    }
+
+    // Mount the materials + QR for a placement inside the Edit modal.
+    function renderPlEditMaterials(placementId) {
       _plAssetsId = placementId;
       plAssetsError.hidden = true;
       renderPlAssets();
-      plAssetsModal.hidden = false;
-      if (focusKind) {
-        const inp = plAssetsBody.querySelector('[data-pl-asset-up="' + focusKind + '"]');
-        if (inp) inp.click();
-      }
+      renderPlEditQr();
+      updatePlStatusHint();
     }
-    function closePlAssets() { plAssetsModal.hidden = true; }
 
-    plAssetsModal && plAssetsModal.addEventListener('click', (e) => {
-      if (e.target === plAssetsModal) closePlAssets();
+    document.getElementById('plEditQrPng') && (document.getElementById('plEditQrPng').onclick = () => {
+      if (_plEditQrUrl) downloadQRPng(_plEditQrUrl, 'horizon-qr-' + (_plAssetsId || 'placement'));
     });
-    document.getElementById('plAssetsClose') && (document.getElementById('plAssetsClose').onclick = closePlAssets);
-    document.getElementById('plAssetsDone')  && (document.getElementById('plAssetsDone').onclick  = closePlAssets);
+    document.getElementById('plEditQrSvg') && (document.getElementById('plEditQrSvg').onclick = () => {
+      if (_plEditQrUrl) downloadQRSvg(_plEditQrUrl, 'horizon-qr-' + (_plAssetsId || 'placement'));
+    });
 
     // Delegated: upload (file input change), add-affordance, status
     // change, download.
@@ -2328,7 +2363,7 @@
         try {
           await plUploadAsset(_plAssetsId, kind, upInput.files[0]);
           await reloadHotelsCacheAndRefresh();
-          renderPlAssets();
+          renderPlAssets(); updatePlStatusHint();
         } catch (err) {
           plAssetsError.textContent = 'Upload failed: ' + (err.message || 'please try again');
           plAssetsError.hidden = false;
@@ -2351,7 +2386,7 @@
           const data = await res.json();
           if (!res.ok) throw new Error((data && data.error) || 'status_failed');
           await reloadHotelsCacheAndRefresh();
-          renderPlAssets();
+          renderPlAssets(); updatePlStatusHint();
         } catch (err) {
           plAssetsError.textContent = 'Could not update status: ' + (err.message || 'try again');
           plAssetsError.hidden = false;
@@ -2839,10 +2874,12 @@
       plEditName.value        = row.dataset.plName || '';
       plEditLocation.value    = row.dataset.plLocation || '';
       plEditDeployed.value    = row.dataset.plDeployed || '';
-      plEditStatus.value      = row.dataset.plStatus || 'draft';
+      plEditStatus.value      = row.dataset.plStatus || 'pending';
       plEditModal.hidden = false;
+      renderPlEditMaterials(_plEditId);
     }
     function closePlEdit() { plEditModal.hidden = true; }
+    plEditStatus && plEditStatus.addEventListener('change', updatePlStatusHint);
 
     plEditModal && plEditModal.addEventListener('click', (e) => {
       if (e.target === plEditModal) closePlEdit();
@@ -4413,14 +4450,6 @@
       // management land in later phases. A placement attributes to the
       // hotel pool — no employee, no kickback — so there is no rate or
       // commission column here, unlike the employees table.
-      const PLACEMENT_TYPE_LABELS = {
-        rack_card:      'Rack card',
-        table_tent:     'Table tent',
-        welcome_packet: 'Welcome packet',
-        website_widget: 'Website widget',
-        lobby_qr:       'Lobby QR',
-        custom:         'Custom',
-      };
       const placements = Array.isArray(h.placements) ? h.placements : [];
       if (els.placementsBody) {
         if (!placements.length) {
@@ -4439,40 +4468,15 @@
             .slice()
             .sort((a, b) => (a.sequence_number || 0) - (b.sequence_number || 0))
             .map((p) => {
-              const typeLabel = PLACEMENT_TYPE_LABELS[p.placement_type]
-                || (p.placement_type || '—');
               const statusPill = p.status === 'active'
                 ? '<span class="bk-pill bk-pill--ok">Active</span>'
                 : (p.status === 'retired'
                     ? '<span class="bk-pill bk-pill--neutral">Retired</span>'
-                    : '<span class="bk-pill bk-pill--neutral">Draft</span>');
+                    : '<span class="bk-pill bk-pill--warn">Pending</span>');
               const code = p.code || '';
-              const designs = (Array.isArray(p.assets) ? p.assets : [])
-                .filter((a) => a.kind === 'design')
-                .sort((a, b) => (b.version || 0) - (a.version || 0));
-              const latestDesign = designs[0] || null;
-              let thumb;
-              if (latestDesign && typeof latestDesign.content_type === 'string'
-                  && latestDesign.content_type.indexOf('image/') === 0) {
-                thumb = '<button type="button" class="pl-thumb" data-pl-assets="' +
-                  escapeHtml(p.id) + '" title="Manage assets">' +
-                  '<img alt="" data-asset-img="' + escapeHtml(latestDesign.id) +
-                  '" data-pl-id="' + escapeHtml(p.id) + '"></button>';
-              } else if (latestDesign) {
-                thumb = '<button type="button" class="pl-thumb pl-thumb--file"' +
-                  ' data-pl-assets="' + escapeHtml(p.id) + '" title="Manage assets">' +
-                  escapeHtml((latestDesign.filename || 'file').split('.').pop().slice(0, 4).toUpperCase()) +
-                  '</button>';
-              } else {
-                thumb = '<button type="button" class="pl-thumb pl-thumb--add"' +
-                  ' data-pl-assets="' + escapeHtml(p.id) + '" data-pl-focus="design"' +
-                  ' title="Add design" aria-label="Add design">+</button>';
-              }
               const sl = shortByPath.get((code || '').toLowerCase()) || null;
               // The code is the visible token; the copy icon yields the
-              // full shareable short URL (the code IS its path), so a
-              // separate Short URL column would be redundant. Falls back
-              // to copying the code when no link is minted yet.
+              // full shareable short URL (the code IS its path).
               const copyVal = sl ? sl.short_url : code;
               const copyTitle = sl ? 'Copy short link' : 'Copy placement code';
               const deployedDate = p.deployed_at
@@ -4481,8 +4485,6 @@
                 '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>';
               const plTrashIcon =
                 '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
-              const plQrIcon =
-                '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1" y="1" width="5" height="5" rx="0.5"/><rect x="1" y="10" width="5" height="5" rx="0.5"/><rect x="10" y="1" width="5" height="5" rx="0.5"/><rect x="10" y="10" width="1.5" height="1.5" fill="currentColor" stroke="none"/><rect x="13.5" y="13.5" width="1.5" height="1.5" fill="currentColor" stroke="none"/><rect x="10" y="13.5" width="1.5" height="1.5" fill="currentColor" stroke="none"/><rect x="13.5" y="10" width="1.5" height="1.5" fill="currentColor" stroke="none"/></svg>';
               const plStatsIcon =
                 '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="20" x2="6" y2="13"/><line x1="12" y1="20" x2="12" y2="7"/><line x1="18" y1="20" x2="18" y2="10"/></svg>';
               const editBtnHtml =
@@ -4494,12 +4496,6 @@
                   ' data-pl-id="' + escapeHtml(p.id) + '"' +
                   ' data-pl-name="' + escapeHtml(p.name || '') + '"' +
                   ' title="Retire" aria-label="Retire placement">' + plTrashIcon + '</button>';
-              const qrBtnHtml = sl
-                ? '<button type="button" class="pl-act pl-act--qr" data-pl-qr="1"' +
-                    ' data-pl-qr-url="' + escapeHtml(sl.short_url) + '"' +
-                    ' data-pl-qr-label="' + escapeHtml(p.name || code) + '"' +
-                    ' title="Show QR" aria-label="Show QR code">' + plQrIcon + '</button>'
-                : '';
               const statsBtnHtml =
                 '<button type="button" class="pl-act pl-act--stats" data-pl-stats="1"' +
                   ' data-pl-id="' + escapeHtml(p.id) + '"' +
@@ -4508,7 +4504,7 @@
               const actCell =
                 '<td class="hd-links__act-cell">' +
                   '<div class="pl-actions">' +
-                    editBtnHtml + qrBtnHtml + statsBtnHtml + retireBtnHtml +
+                    editBtnHtml + statsBtnHtml + retireBtnHtml +
                     '<button type="button" class="pl-act pl-act--menu" data-pl-menu="1"' +
                       ' aria-label="Placement actions" aria-haspopup="true">⋯</button>' +
                   '</div>' +
@@ -4519,13 +4515,10 @@
                   ' data-pl-name="' + escapeHtml(p.name || '') + '"' +
                   ' data-pl-location="' + escapeHtml(p.location_in_hotel || '') + '"' +
                   ' data-pl-deployed="' + escapeHtml(deployedDate) + '"' +
-                  ' data-pl-status="' + escapeHtml(p.status || 'draft') + '"' +
+                  ' data-pl-status="' + escapeHtml(p.status || 'pending') + '"' +
                   ' data-pl-code="' + escapeHtml(code) + '">' +
                   '<td>' + statusPill + '</td>' +
-                  '<td><div class="pl-name">' + thumb +
-                    '<span class="hd-emp__name">' + escapeHtml(p.name || '—') + '</span>' +
-                  '</div></td>' +
-                  '<td>' + escapeHtml(typeLabel) + '</td>' +
+                  '<td class="hd-emp__name">' + escapeHtml(p.name || '—') + '</td>' +
                   '<td><button type="button" class="hd-copy mono" data-copy="' + escapeHtml(copyVal) + '" title="' + copyTitle + '">' +
                       '<span>' + escapeHtml(code || '—') + '</span>' + plCopyIcon + '</button></td>' +
                   '<td class="num hd-num">' + (sl ? (sl.click_count_cached || 0) : 0) + '</td>' +
@@ -4538,18 +4531,12 @@
             '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
               '<table class="bk-table">' +
                 '<thead><tr>' +
-                  '<th>Status</th><th>Placement</th><th>Type</th><th>Code</th>' +
+                  '<th>Status</th><th>Placement</th><th>Code</th>' +
                   '<th class="num">Clicks</th><th class="num">Conversion rate</th><th></th>' +
                 '</tr></thead>' +
                 '<tbody>' + pRows + '</tbody>' +
               '</table>' +
             '</div></div>';
-          // Lazily resolve signed URLs for the row design thumbnails.
-          els.placementsBody.querySelectorAll('img[data-asset-img]').forEach((img) => {
-            plAssetUrl(img.dataset.plId, img.dataset.assetImg)
-              .then((u) => { img.src = u; })
-              .catch(() => { img.closest('.pl-thumb').classList.add('pl-thumb--err'); });
-          });
         }
       }
 
@@ -5319,17 +5306,6 @@
           const retireBtn = e.target.closest('[data-pl-retire]');
           if (retireBtn) {
             retirePlacement(retireBtn.dataset.plId, retireBtn.dataset.plName);
-            return;
-          }
-          // Thumbnail / "Add design" → open the asset manager.
-          const assetsBtn = e.target.closest('[data-pl-assets]');
-          if (assetsBtn) {
-            openPlAssets(assetsBtn.dataset.plAssets, assetsBtn.dataset.plFocus || null);
-            return;
-          }
-          const qrBtn = e.target.closest('[data-pl-qr]');
-          if (qrBtn) {
-            openQRModal(qrBtn.dataset.plQrUrl, qrBtn.dataset.plQrLabel, qrBtn.dataset.plQrUrl);
             return;
           }
           const statsBtn = e.target.closest('[data-pl-stats]');
