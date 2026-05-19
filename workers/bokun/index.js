@@ -987,11 +987,15 @@ const PREFIX_LENGTH = 5;
 const TRACKING_PREFIX_RE = /^htl-[a-hjkmnp-z2-9]{5}$/;
 // Full tracking code: the bare prefix ("<prefix>") IS the hotel
 // default code; staff append "-eNNN" (3-digit zero-padded, room for
-// 999 per property — bump to 4 if a property ever needs it).
+// 999 per property — bump to 4 if a property ever needs it);
+// placements append "-pNN" (2-digit zero-padded, room for 99 passive
+// marketing surfaces per property). A "-pNN" code never matches a
+// hotel_staff row, so it resolves to hotel-pool attribution — exactly
+// what a passive placement should do (no employee, no kickback).
 // Lowercase + hyphen by construction, so the code IS the short-URL
 // path verbatim — there is no underscore↔hyphen translation layer
 // (see trackingCodeToShortPath). One format everywhere.
-const TRACKING_CODE_RE = /^htl-[a-hjkmnp-z2-9]{5}(-e\d{3})?$/;
+const TRACKING_CODE_RE = /^htl-[a-hjkmnp-z2-9]{5}(-e\d{3}|-p\d{2})?$/;
 
 function generateTrackingPrefix() {
   let s = PREFIX_TAG;
@@ -1244,7 +1248,8 @@ async function handleAdminHotelsList(env, request) {
     HOTEL_FIELDS +
     `,staff:hotel_staff(${STAFF_FIELDS})` +
     `,managers:hotel_users(${MANAGER_FIELDS})` +
-    `,short_links:short_links(${SHORT_LINK_FIELDS})`;
+    `,short_links:short_links(${SHORT_LINK_FIELDS})` +
+    `,placements:placements(${PLACEMENT_FIELDS})`;
   const rows = await supabaseSelect(env, `hotels?select=${select}&order=code.asc`);
   return jsonResponse({ hotels: rows.map(normaliseHotel) }, 200, request);
 }
@@ -1484,6 +1489,9 @@ const SHORT_LINK_FIELDS =
   "id,short_io_id,domain,short_path,short_url,target_url,link_type," +
   "hotel_id,staff_id,label,notes,status,click_count_cached," +
   "last_clicked_at,created_at,updated_at";
+const PLACEMENT_FIELDS =
+  "id,hotel_id,sequence_number,code,placement_type,name,tag,status," +
+  "location_in_hotel,quantity_printed,deployed_at,created_at,updated_at";
 const SHORT_LINK_TYPES = new Set(["hotel", "staff", "campaign"]);
 const SHORT_LINK_STATUSES = new Set(["active", "retired"]);
 // Short.io path constraints — alphanumeric plus the common
@@ -2338,6 +2346,7 @@ function normaliseHotel(h) {
     staff:    Array.isArray(h.staff)    ? h.staff.map(normaliseStaff)    : [],
     managers: Array.isArray(h.managers) ? h.managers                     : [],
     short_links: Array.isArray(h.short_links) ? h.short_links             : [],
+    placements:  Array.isArray(h.placements)  ? h.placements              : [],
   };
 }
 
