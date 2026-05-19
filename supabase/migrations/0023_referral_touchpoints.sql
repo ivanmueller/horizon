@@ -60,6 +60,42 @@ create index if not exists booking_touchpoints_conf_idx    on booking_touchpoint
 create index if not exists booking_touchpoints_booking_idx on booking_touchpoints (booking_id);
 create index if not exists booking_touchpoints_staff_idx   on booking_touchpoints (staff_id);
 
+-- Self-heal: if an earlier partial apply created booking_touchpoints
+-- WITHOUT these constraints, `create table if not exists` above would
+-- have skipped the table and left them missing. The FK is what lets
+-- PostgREST embed the funnel into /api/dashboard/bookings — without it
+-- that whole query 400s and the dashboard shows no bookings at all.
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'booking_touchpoints_conf_uniq'
+  ) and not exists (
+    -- skip if the inline unnamed unique from a clean create already exists
+    select 1 from pg_constraint c
+      where c.conrelid = 'public.booking_touchpoints'::regclass
+        and c.contype = 'u'
+  ) then
+    alter table booking_touchpoints
+      add constraint booking_touchpoints_conf_uniq
+      unique (confirmation_code, position);
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+      where conrelid = 'public.booking_touchpoints'::regclass and contype = 'f'
+        and confrelid = 'public.bookings'::regclass
+  ) then
+    alter table booking_touchpoints
+      add constraint booking_touchpoints_conf_fk
+      foreign key (confirmation_code)
+      references bookings (confirmation_code) on delete cascade;
+  end if;
+end $$;
+
+-- PostgREST caches the schema; tell it to pick up the new relationship
+-- so the dashboard embed resolves without waiting for the next reload.
+notify pgrst, 'reload schema';
+
 -- ── audit the credit decision on the booking itself ────────────────────────
 -- credited_position points at the winning booking_touchpoints row
 -- (confirmation_code + position). An int avoids a FK round-trip on the
