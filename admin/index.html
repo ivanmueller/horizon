@@ -1380,7 +1380,7 @@
                 <section class="hd-section" id="hdPayoutsSection">
                   <header class="hd-section__head">
                     <h2 class="hd-section__title">Invoices &amp; Payouts</h2>
-                    <button type="button" class="hd-section__link" disabled>View all</button>
+                    <button type="button" class="bk-iconbtn hd-section__add" id="hdPayAdd" aria-label="Record a payment">+</button>
                   </header>
                   <div class="hd-section__body" id="hdPayoutsBody">
                     <div class="hd-empty">Banking not set up</div>
@@ -3733,9 +3733,12 @@
       // real CTA card (vs. a quiet empty state). Updates the existing
       // node from the route HTML; the button wires below.
       const payoutsBody = els.container.querySelector('#hdPayoutsBody');
+      const payAddBtn = els.container.querySelector('#hdPayAdd');
       // Pilot phase: commission is paid manually. This is a
       // hand-entered record of payments actually sent — no accrual,
       // no automation. The admin records each payment after sending.
+      // The header "+" opens the form, matching Employees & Referral
+      // Codes; empty/list state is the shared dashed box.
       const bankingSet = !!h.payout_method;
       if (payoutsBody) {
         const methodLabel = (m) =>
@@ -3745,8 +3748,10 @@
           if (!bankingSet) {
             payoutsBody.innerHTML =
               '<div class="hd-empty">Add payout banking above before recording payments.</div>';
+            if (payAddBtn) payAddBtn.disabled = true;
             return;
           }
+          if (payAddBtn) payAddBtn.disabled = false;
           payoutsBody.innerHTML = '<div class="hd-empty">Loading…</div>';
           let list = [];
           try {
@@ -3761,12 +3766,13 @@
               escapeHtml(String(err && err.message || err)) + '</div>';
             return;
           }
-          const total = list.reduce((a, p) => a + (Number(p.amount) || 0), 0);
-          let rows;
           if (!list.length) {
-            rows = '<p class="hd-bank__hint">No payments recorded yet.</p>';
-          } else {
-            rows = '<dl class="hd-side__list">' + list.map((p) =>
+            payoutsBody.innerHTML =
+              '<div class="hd-empty">No payments recorded yet.</div>';
+            return;
+          }
+          const total = list.reduce((a, p) => a + (Number(p.amount) || 0), 0);
+          const rows = '<dl class="hd-side__list">' + list.map((p) =>
               '<div class="hd-side__row"><dt class="hd-side__label">' +
                 escapeHtml(formatHumanDate((p.paid_at || '').slice(0, 10)) || p.paid_at || '—') +
                 ' · ' + escapeHtml(methodLabel(p.method)) +
@@ -3778,9 +3784,7 @@
               '</dd></div>').join('') + '</dl>' +
               '<p class="hd-bank__hint">Total recorded: <strong>' +
                 escapeHtml(formatHotelMoney(total, currency)) + '</strong></p>';
-          }
-          payoutsBody.innerHTML = rows +
-            '<div class="hd-bank__actions"><button type="button" class="btn btn--primary btn--sm" id="hdPayAdd">Record a payment</button></div>';
+          payoutsBody.innerHTML = rows;
 
           payoutsBody.querySelectorAll('[data-del]').forEach((b) => {
             b.onclick = async () => {
@@ -3799,9 +3803,9 @@
               }
             };
           });
+        };
 
-          const addBtn = payoutsBody.querySelector('#hdPayAdd');
-          if (addBtn) addBtn.onclick = () => {
+        const openPayForm = () => {
             const today = new Date().toISOString().slice(0, 10);
             payoutsBody.innerHTML =
               '<div class="hd-bankf">' +
@@ -3869,8 +3873,9 @@
                 showErr('Could not save: ' + (err && err.message || err));
               }
             };
-          };
         };
+
+        if (payAddBtn) payAddBtn.onclick = openPayForm;
         renderPayouts();
       }
 
