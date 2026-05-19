@@ -548,6 +548,40 @@ async function handleBookingInitiate(request, env) {
   return jsonResponse({ booking_id: bookingId, expires_at: expiresAt }, 200, request);
 }
 
+// ── Credit resolution (pure) ───────────────────────────────────────────────
+// §4.1 default policy: employees outrank hotel/placement; among employees
+// the LAST wins; otherwise the FIRST hotel-level touch wins. Pure and
+// deterministic (no DB, no clock) so it can be replayed to recompute
+// historical credit if a hotel switches policy.
+//   touchpoints: ordered [{ code, stream, position, staff_id }]
+function resolveCredit(touchpoints, policy) {
+  if (!touchpoints.length) return null;
+  let chosen;
+  if (policy === "first_touch_wins") {
+    chosen = touchpoints[0];
+  } else if (policy === "last_touch_wins") {
+    chosen = touchpoints[touchpoints.length - 1];
+  } else {
+    // employee_last_then_hotel_first (default — also the fallback for any
+    // unrecognised policy string).
+    const employees = touchpoints.filter((t) => t.staff_id);
+    const hotelRefs = touchpoints.filter(
+      (t) => !t.staff_id && (t.stream === "hotel" || t.stream === "hotel-slug"),
+    );
+    chosen = employees.length
+      ? employees[employees.length - 1]
+      : hotelRefs.length
+        ? hotelRefs[0]
+        : touchpoints[0];
+  }
+  return {
+    credited_position: chosen.position,
+    staff_id: chosen.staff_id || null,
+    policy_used: policy,
+    first_touch_code: touchpoints[0].code,
+  };
+}
+
 // ── Hotel-manager dashboard ledger ─────────────────────────────────────────
 // Inserts a row into Supabase `bookings` after a confirmed Bokun booking.
 // Resolves hotel_id from the slug and (if a tracking code matches) staff_id
@@ -577,7 +611,7 @@ async function handleDashboardRecord(request, env) {
     supabaseSelect(
       env,
       `hotels?code=eq.${encodeURIComponent(hotel)}` +
-        `&select=id,type,commission_pct,platform_fee_pct`,
+        `&select=id,type,commission_pct,platform_fee_pct,attribution_policy`,
     ),
     trackingCode
       ? supabaseSelect(
@@ -597,12 +631,89 @@ async function handleDashboardRecord(request, env) {
   // bare htl-7q4k9) won't match any hotel_staff row and so resolve to
   // staff_id=null, which is the correct "hotel pool" attribution.
   const staffMatch = staffRows[0];
-  const staffId = staffMatch && staffMatch.hotel_id === hotelId ? staffMatch.id : null;
+  const legacyStaffId = staffMatch && staffMatch.hotel_id === hotelId ? staffMatch.id : null;
+
+  // ── Full-funnel attribution (Phase 1c) ───────────────────────────────────
+  // Read the sanitised funnel stored at initiate (attr:<booking_id>, 30-day
+  // TTL). When present it drives the credited staff_id + audit columns and
+  // the immutable booking_touchpoints rows. Best-effort: any failure here
+  // falls back to the legacy single-code attribution, never blocking the
+  // booking insert.
+  let staffId = legacyStaffId;
+  let auditPolicy = null;
+  let auditFirstTouch = null;
+  let auditCreditedPos = null;
+  let touchpointRows = null;
+  try {
+    const funnel =
+      bookingId && env.BOOKINGS
+        ? await env.BOOKINGS.get(`attr:${bookingId}`, "json")
+        : null;
+    const tps = funnel && Array.isArray(funnel.touchpoints) ? funnel.touchpoints : [];
+    if (tps.length) {
+      // Resolve every employee-stream code to a staff row in one query;
+      // collision-guarded to this booking's hotel (same rule as legacy).
+      const empCodes = [
+        ...new Set(
+          tps.filter((t) => t.stream === "employee" && t.code).map((t) => t.code),
+        ),
+      ];
+      const staffByCode = new Map();
+      if (empCodes.length) {
+        const inList = empCodes.map((c) => encodeURIComponent(c)).join(",");
+        const rows = await supabaseSelect(
+          env,
+          `hotel_staff?tracking_code=in.(${inList})&select=id,hotel_id,tracking_code`,
+        );
+        for (const s of rows) {
+          if (s.hotel_id === hotelId) staffByCode.set(s.tracking_code, s.id);
+        }
+      }
+
+      const annotated = tps.map((t, i) => ({
+        code: t.code,
+        stream: t.stream,
+        position: i,
+        ts: Number.isFinite(Number(t.ts)) ? Number(t.ts) : null,
+        staff_id:
+          t.stream === "employee" ? staffByCode.get(t.code) || null : null,
+      }));
+
+      const credit = resolveCredit(
+        annotated,
+        hotelRows[0].attribution_policy || "employee_last_then_hotel_first",
+      );
+      if (credit) {
+        staffId = credit.staff_id;
+        auditPolicy = credit.policy_used;
+        auditFirstTouch = credit.first_touch_code;
+        auditCreditedPos = credit.credited_position;
+      }
+
+      touchpointRows = annotated.map((t) => ({
+        booking_id:        bookingId || null,
+        confirmation_code: code,
+        position:          t.position,
+        code:              t.code,
+        stream_type:       t.stream,
+        hotel_id:          hotelId,
+        staff_id:          t.staff_id,
+        touched_at:        t.ts ? new Date(t.ts).toISOString() : null,
+        is_credited:       t.position === auditCreditedPos,
+      }));
+    }
+  } catch (e) {
+    // Funnel processing is non-critical — fall back to legacy attribution.
+    touchpointRows = null;
+  }
 
   const row = {
     booking_id:        bookingId || null,
     hotel_id:          hotelId,
     staff_id:          staffId,
+    attribution_policy_used: auditPolicy,
+    first_touch_code:        auditFirstTouch,
+    credited_position:       auditCreditedPos,
     confirmation_code: code,
     tour_id:           body.tour_id ?? null,
     tour_title:        typeof body.tour_title === "string" ? body.tour_title : null,
@@ -625,6 +736,25 @@ async function handleDashboardRecord(request, env) {
     body: [row],
     prefer: "resolution=ignore-duplicates,return=minimal",
   });
+
+  // Immutable funnel rows. Idempotent on (confirmation_code, position) so
+  // the page's fire-and-forget retries don't duplicate. Non-critical: a
+  // failure here must not fail the (already inserted) booking.
+  if (touchpointRows && touchpointRows.length) {
+    try {
+      await supabaseRequest(
+        env,
+        "POST",
+        "/booking_touchpoints?on_conflict=confirmation_code,position",
+        {
+          body: touchpointRows,
+          prefer: "resolution=ignore-duplicates,return=minimal",
+        },
+      );
+    } catch (e) {
+      /* booking already recorded — funnel rows are best-effort */
+    }
+  }
 
   return jsonResponse({ ok: true }, 200, request);
 }
