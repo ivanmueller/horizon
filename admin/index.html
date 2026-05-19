@@ -1383,7 +1383,7 @@
                     <button type="button" class="hd-section__link" disabled>View all</button>
                   </header>
                   <div class="hd-section__body" id="hdPayoutsBody">
-                    <div class="hd-empty">Stripe Connect not configured</div>
+                    <div class="hd-empty">Banking not set up</div>
                   </div>
                 </section>
 
@@ -1515,12 +1515,11 @@
                 </section>
 
                 <!-- ── Banking information ────────────────────────────
-                     Stripe Connect status, payout config + linked
-                     bank account. Accordion whose whole header is the
-                     toggle. No banking connected → open by default
-                     with a "Pending" tag (action needed); connected →
-                     collapsed with a "Verified" tag. Body is rendered
-                     in renderHotelDetail (mock until columns land). -->
+                     Manual payout details (Interac e-Transfer or EFT).
+                     Accordion whose whole header is the toggle. Not
+                     set → open by default with a "Not set" tag (action
+                     needed); set → collapsed with a method tag. Body
+                     is rendered in renderHotelDetail. -->
                 <section class="hd-card hd-bank" id="hdBankingCard">
                   <button type="button" class="hd-bank__head" id="hdBankingToggle" aria-expanded="true" aria-controls="hdBankingBody">
                     <span class="hd-bank__brand" aria-hidden="true">
@@ -1801,36 +1800,7 @@
     });
 
     /* ── Bookings route ──────────────────────────────────── */
-    // Environment targeting. Defaults HARD to production. Staging is
-    // opt-in via ?env=staging (persisted per-tab in sessionStorage)
-    // and is an ALLOWLIST — never an arbitrary URL, so this can't be
-    // turned into an open redirect / SSRF lever. A fixed banner makes
-    // staging unmistakable so no one operates against it thinking
-    // it's prod. Normal users never pass ?env and see zero change.
-    const API_ENVS = {
-      production: 'https://horizon-bokun.ivan-mueller02.workers.dev',
-      staging:    'https://horizon-bokun-staging.ivan-mueller02.workers.dev',
-    };
-    (function () {
-      const p = new URLSearchParams(location.search).get('env');
-      if (p === 'production' || p === 'staging') {
-        try { sessionStorage.setItem('horizonApiEnv', p); } catch (e) {}
-      }
-    })();
-    let _apiEnv = 'production';
-    try {
-      if (sessionStorage.getItem('horizonApiEnv') === 'staging') _apiEnv = 'staging';
-    } catch (e) {}
-    const BOKUN_API_BASE = API_ENVS[_apiEnv];
-    if (_apiEnv !== 'production') {
-      const _b = document.createElement('div');
-      _b.textContent = 'STAGING — test environment · not live data · ?env=production to exit';
-      _b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:2147483647;background:#B45309;color:#fff;font:600 13px/2.4 system-ui,-apple-system,sans-serif;text-align:center;letter-spacing:.04em;';
-      (document.body
-        ? Promise.resolve()
-        : new Promise(function (r) { document.addEventListener('DOMContentLoaded', r); })
-      ).then(function () { document.body.appendChild(_b); });
-    }
+    const BOKUN_API_BASE = 'https://horizon-bokun.ivan-mueller02.workers.dev';
 
     /* ── QR code helpers ─────────────────────────────────── */
     // Returns a configured QRCodeStyling instance. Does NOT append to DOM —
@@ -3763,21 +3733,18 @@
       // real CTA card (vs. a quiet empty state). Updates the existing
       // node from the route HTML; the button wires below.
       const payoutsBody = els.container.querySelector('#hdPayoutsBody');
-      // Phase 3: real Stripe Connect columns. "Connected" (and the
-      // Verified badge / payable gating) means Stripe has confirmed
-      // payouts are enabled — never asserted by the client.
-      const stripeAcct = h.stripe_connect_account_id || null;
-      const stripeConnected = !!stripeAcct && h.stripe_payouts_enabled === true;
-      if (payoutsBody && !stripeConnected) {
-        payoutsBody.innerHTML = '<div class="hd-empty">Stripe Connect not configured</div>';
-      } else if (payoutsBody && stripeConnected) {
+      // Pilot phase: commission is paid manually. The payout column
+      // reads from whether manual banking has been recorded.
+      const bankingSet = !!h.payout_method;
+      if (payoutsBody && !bankingSet) {
+        payoutsBody.innerHTML = '<div class="hd-empty">Banking not set up</div>';
+      } else if (payoutsBody && bankingSet) {
         payoutsBody.innerHTML = '<div class="hd-empty">No invoices yet</div>';
       }
 
       // ── Banking information accordion ────────────────────
-      // Pilot phase: no Stripe Connect onboarding. An admin
-      // records the hotel's manual payout details (Interac
-      // e-Transfer or EFT) here; Horizon pays commission by
+      // An admin records the hotel's manual payout details
+      // (Interac e-Transfer or EFT); Horizon pays commission by
       // hand from these. Backed by the hotels.payout_* columns
       // (migration 0016). Not set → amber "Not set" + open by
       // default (admin needs to act). Set → green method tag,
@@ -3922,9 +3889,7 @@
       }
 
       // Hero metric strip — current-state numbers, no trend charts.
-      // Payout reads "Setup required" until Stripe Connect is wired
-      // (stripe_account_id isn't a real column yet — see
-      // deriveHotelStatus notes).
+      // Payout reads "Setup required" until manual banking is recorded.
       const setHeroStat = (k, v) => {
         const n = els.heroStat && els.heroStat.querySelector('[data-herostat="' + k + '"]');
         if (n) n.textContent = v;
@@ -3932,7 +3897,7 @@
       setHeroStat('commission', formatHotelMoney(h.lifetime_commission || 0, currency));
       setHeroStat('bookings',   String(h.bookings_count || 0));
       setHeroStat('conversion', h.conversion_rate != null ? h.conversion_rate + '%' : '—');
-      setHeroStat('payout',     stripeConnected
+      setHeroStat('payout',     bankingSet
         ? formatHotelMoney(h.pending_payout || 0, currency)
         : 'Setup required');
 
@@ -4443,8 +4408,8 @@
         },
         {
           type: 'payout', icon: payoutIcon,
-          title: 'Stripe Connect account pending verification',
-          meta:  'Awaiting business documents from hotel',
+          title: 'Payout banking details added',
+          meta:  'Interac e-Transfer recipient on file',
           time:  '5d ago',
         },
         {
@@ -4704,15 +4669,12 @@
     //   'action' — the admin can go do it now (incomplete → ✗)
     //   'event'  — happens passively, can't be forced (incomplete → ○)
     //
-    // Stripe Connect + First booking have no backing columns yet
-    // (stripe_account_id / a booking count are referenced but never
-    // migrated). They read incomplete until that data exists, which
-    // means no hotel earns the green pill until then — the honest,
-    // intended consequence of showing the real end-state list. The
-    // checks light up automatically once the columns land.
+    // "First booking received" has no backing column yet (a booking
+    // count is referenced but not migrated) so it reads incomplete
+    // until that data exists — the honest end-state list. It lights
+    // up automatically once the column lands.
     function deriveHotelStatus(h, hotelShort) {
-      const stripeConnected = !!h.stripe_account_id &&
-        (h.stripe_status === 'connected' || h.stripe_status === 'active');
+      const bankingSet = !!h.payout_method;
       const hasBooking = (Number(h.bookings_count) || 0) > 0 || !!h.first_booking_at;
 
       const checklist = [
@@ -4725,9 +4687,9 @@
         { label: 'Primary contact added', kind: 'action',
           done: !!(h.primary_contact_name || h.primary_contact_email),
           hint: 'Next phase: this will jump to the Details card and open the primary-contact field for inline editing.' },
-        { label: 'Stripe Connect linked', kind: 'action',
-          done: stripeConnected,
-          hint: 'Next phase: this will scroll to Invoices & Payouts and start the Connect Stripe flow.' },
+        { label: 'Payout banking added', kind: 'action',
+          done: bankingSet,
+          hint: 'Next phase: this will open the Banking information card to record the hotel\'s payout details.' },
         { label: 'First booking received', kind: 'event',
           done: hasBooking,
           hint: '' },

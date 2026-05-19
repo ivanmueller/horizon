@@ -32,14 +32,6 @@ SHORT_IO_DOMAIN = "link.gowithhorizon.com"
 #   wrangler secret put BOKUN_ACCESS_KEY      # Bokun HMAC signing
 #   wrangler secret put BOKUN_SECRET_KEY      # Bokun HMAC signing
 #   wrangler secret put STRIPE_SECRET_KEY     # sk_test_... (then sk_live_... for prod)
-#   wrangler secret put STRIPE_WEBHOOK_SECRET # whsec_... — Stripe Dashboard →
-#                                              #   Developers → Webhooks → add
-#                                              #   endpoint POST /api/stripe/webhook,
-#                                              #   subscribe to account.updated.
-#                                              #   Connect onboarding/status no-ops
-#                                              #   gracefully until STRIPE_SECRET_KEY
-#                                              #   is set; the webhook 500s (logged)
-#                                              #   until this secret is set.
 #   wrangler secret put SUPABASE_SERVICE_KEY  # Supabase service_role; bypasses RLS
 #   wrangler secret put CF_PAGES_DEPLOY_HOOK  # CF Pages webhook URL for /api/admin/republish
 #   wrangler secret put SHORT_IO_API_KEY      # Short.io API key — generate at
@@ -87,49 +79,6 @@ SHORT_IO_DOMAIN = "link.gowithhorizon.com"
 #   4. wrangler deploy
 #
 [[kv_namespaces]]
-binding = "BOOKINGS"
-id      = "09014fdc2f54492993b27401f576c9a3"
-
-# ── Staging environment ────────────────────────────────────────────────────
-# A SEPARATE, independently-named worker for validating money-moving
-# code (Stripe Connect onboarding, Phase 5 payout transfers) with a
-# SANDBOX Stripe key — without ever touching the live worker. This
-# block is purely additive: it deploys a different worker
-# (`horizon-bokun-staging`) on its own *.workers.dev URL. Production
-# (the top-level config above) is never read or modified.
-#
-# Named environments do NOT inherit top-level [vars]/[triggers]/
-# [[kv_namespaces]] — everything staging needs is re-declared here
-# explicitly (no implicit surprises). No cron in staging on purpose:
-# the hourly Short.io click-sync would otherwise double-run against
-# shared data.
-#
-# Deploy:           wrangler deploy --env staging
-# Set secrets:      wrangler secret put --env staging STRIPE_SECRET_KEY     # SANDBOX sk_test_...
-#                   wrangler secret put --env staging STRIPE_WEBHOOK_SECRET # SANDBOX whsec_...
-#                   wrangler secret put --env staging SUPABASE_SERVICE_KEY
-#                   wrangler secret put --env staging BOKUN_ACCESS_KEY
-#                   wrangler secret put --env staging BOKUN_SECRET_KEY
-#                   wrangler secret put --env staging CF_PAGES_DEPLOY_HOOK   # optional
-#                   wrangler secret put --env staging SHORT_IO_API_KEY       # optional
-# Staging secrets are a separate namespace from production — setting
-# them here never touches the live worker's secrets.
-[env.staging]
-name = "horizon-bokun-staging"
-
-[env.staging.vars]
-BOKUN_API_BASE = "https://api.bokun.io"
-# Point at a dedicated staging Supabase project here if/when one
-# exists. Until then this reuses the live project — keep test data to
-# clearly-disposable rows (fake hotels/bookings) and clean up after.
-SUPABASE_URL   = "https://lxdltzrntphnkhsniwin.supabase.co"
-PUBLIC_SITE_BASE = "https://gowithhorizon.com"
-SHORT_IO_DOMAIN = "link.gowithhorizon.com"
-
-# Reuses the production BOOKINGS namespace — it only holds transient
-# 45-min checkout state, irrelevant to payout testing. Swap to a
-# dedicated namespace id if you want full isolation.
-[[env.staging.kv_namespaces]]
 binding = "BOOKINGS"
 id      = "09014fdc2f54492993b27401f576c9a3"
 
