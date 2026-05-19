@@ -562,7 +562,12 @@
       </div>
       <div class="alert alert--bad" id="plStatsError" hidden></div>
       <div id="plStatsBody"><div class="muted">Loading…</div></div>
+      <!-- TEMPORARY: discovery aid for building the analytics
+           dashboard. Dumps Short.io's raw JSON + copies it. Removed
+           once the dashboard is wired. -->
+      <pre id="plStatsRaw" class="pl-stats-raw" hidden></pre>
       <div class="modal__actions">
+        <button type="button" class="btn btn--sm" id="plStatsRawBtn">Raw stats (debug)</button>
         <button type="button" class="btn btn--sm" id="plStatsSync">Sync clicks</button>
         <button type="button" class="btn" id="plStatsDone">Done</button>
       </div>
@@ -2549,6 +2554,7 @@
       _plStatsId = id;
       plStatsName.textContent = name || 'placement';
       plStatsError.hidden = true;
+      { const r = document.getElementById('plStatsRaw'); if (r) { r.hidden = true; r.textContent = ''; } }
       plStatsModal.hidden = false;
       loadPlStats();
     }
@@ -2558,6 +2564,49 @@
     });
     document.getElementById('plStatsClose') && (document.getElementById('plStatsClose').onclick = closePlStats);
     document.getElementById('plStatsDone')  && (document.getElementById('plStatsDone').onclick  = closePlStats);
+
+    // TEMPORARY: fetch Short.io's raw stats JSON (last30 + total) using
+    // the in-page session — no manual token needed — render it and
+    // copy to clipboard so it can be pasted back for dashboard work.
+    const plStatsRaw = document.getElementById('plStatsRaw');
+    const plStatsRawBtn = document.getElementById('plStatsRawBtn');
+    plStatsRawBtn && plStatsRawBtn.addEventListener('click', async () => {
+      if (!_plStatsId) return;
+      plStatsRawBtn.disabled = true;
+      const orig = plStatsRawBtn.textContent;
+      plStatsRawBtn.textContent = 'Fetching…';
+      plStatsError.hidden = true;
+      try {
+        const get = async (period) => {
+          const r = await fetch(
+            BOKUN_API_BASE + '/api/admin/placements/' + encodeURIComponent(_plStatsId) +
+              '/stats/raw?period=' + encodeURIComponent(period),
+            { headers: { Authorization: 'Bearer ' + session.access_token } },
+          );
+          const j = await r.json();
+          if (!r.ok) throw new Error((j && (j.detail || j.error)) || 'raw_failed');
+          return j;
+        };
+        const [last30, total] = await Promise.all([get('last30'), get('total')]);
+        const text = JSON.stringify({ last30, total }, null, 2);
+        plStatsRaw.textContent = text;
+        plStatsRaw.hidden = false;
+        try {
+          await navigator.clipboard.writeText(text);
+          plStatsRawBtn.textContent = 'Copied ✓ — paste it back';
+        } catch (_) {
+          plStatsRawBtn.textContent = 'Shown below — copy it';
+        }
+      } catch (err) {
+        plStatsError.textContent = 'Raw stats failed: ' + (err.message || 'try again');
+        plStatsError.hidden = false;
+        plStatsRawBtn.textContent = orig;
+      } finally {
+        plStatsRawBtn.disabled = false;
+        setTimeout(() => { if (plStatsRawBtn) plStatsRawBtn.textContent = orig; }, 6000);
+      }
+    });
+
     plStatsSync && plStatsSync.addEventListener('click', async () => {
       plStatsSync.disabled = true;
       const orig = plStatsSync.textContent;
