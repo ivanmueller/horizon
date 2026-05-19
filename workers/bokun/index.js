@@ -1774,6 +1774,18 @@ async function handleAdminPlacementStats(placementId, request, env) {
         x: p.x,
         y: p.y != null && Number.isFinite(Number(p.y)) ? Number(p.y) : 0,
       }));
+    // Breakdown bar lists. Short.io returns raw.browser / raw.os as
+    // [{ browser|os, score }]; normalise to { name, score } and keep
+    // the top entries.
+    const breakdown = (arr, key) =>
+      (Array.isArray(arr) ? arr : [])
+        .map((e) => ({
+          name: e && e[key] ? String(e[key]) : "Unknown",
+          score: e && Number.isFinite(Number(e.score)) ? Number(e.score) : 0,
+        }))
+        .filter((e) => e.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 8);
     return jsonResponse({
       configured: true,
       short_url: link.short_url,
@@ -1781,6 +1793,8 @@ async function handleAdminPlacementStats(placementId, request, env) {
       total_clicks: norm.totalClicks != null ? norm.totalClicks : (link.click_count_cached || 0),
       human_clicks: human,
       series,
+      browsers: breakdown(raw && raw.browser, "browser"),
+      os: breakdown(raw && raw.os, "os"),
     }, 200, request);
   } catch (err) {
     console.error("placement stats failed:", err && err.message);
@@ -1792,6 +1806,8 @@ async function handleAdminPlacementStats(placementId, request, env) {
       total_clicks: link.click_count_cached || 0,
       human_clicks: null,
       series: [],
+      browsers: [],
+      os: [],
       error: "Short.io stats unavailable",
     }, 200, request);
   }

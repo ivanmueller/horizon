@@ -2916,6 +2916,7 @@ select.hd-bankf__input { appearance: auto; }
 
 /* Placement asset manager (Phase 4). */
 .modal__card--wide { max-width: 720px; }
+.modal__card--xl   { max-width: 920px; }
 
 /* Row: design thumbnail next to the placement name. */
 .pl-name { display: flex; align-items: center; gap: var(--s3); }
@@ -2987,25 +2988,17 @@ select.hd-bankf__input { appearance: auto; }
   color: var(--text-muted); font-size: var(--t-xs);
   word-break: break-all; margin-bottom: var(--s3);
 }
-.pl-an__range { display: flex; gap: 4px; margin-bottom: var(--s4); }
-.pl-an__rangebtn {
-  padding: 4px 10px;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  color: var(--text-muted);
-  font-size: var(--t-xs); font-weight: 500;
-  cursor: pointer;
-  transition: background-color var(--motion-fast) var(--motion-ease-out),
-              color var(--motion-fast) var(--motion-ease-out),
-              border-color var(--motion-fast) var(--motion-ease-out);
+/* Date-range dropdown, right-aligned like Short.io's. */
+.pl-an__toolbar { display: flex; justify-content: flex-end; margin-bottom: var(--s4); }
+.pl-an__daterange {
+  display: inline-flex; flex-direction: column; gap: 2px;
 }
-.pl-an__rangebtn:hover { border-color: var(--border-strong); color: var(--text); }
-.pl-an__rangebtn.is-active {
-  background: var(--accent-soft);
-  border-color: var(--accent);
-  color: var(--accent);
+.pl-an__daterange-lbl {
+  font-size: 11px; color: var(--text-muted);
+  padding-left: 2px;
 }
+.pl-an__select { min-width: 160px; }
+
 .pl-an__cards { display: flex; gap: var(--s3); margin-bottom: var(--s4); }
 .pl-an__card {
   flex: 1 1 0;
@@ -3021,12 +3014,47 @@ select.hd-bankf__input { appearance: auto; }
   font-variant-numeric: tabular-nums;
 }
 .pl-an-chart { width: 100%; }
-.pl-an-chart svg { width: 100%; height: 200px; display: block; }
-.pl-an-chart__area  { fill: var(--accent-soft); }
+.pl-an-chart svg { width: 100%; height: auto; display: block; }
+.pl-an-chart__area  { fill: url(#plAnGrad); }
+.pl-an-chart__g0 { stop-color: var(--accent); stop-opacity: 0.28; }
+.pl-an-chart__g1 { stop-color: var(--accent); stop-opacity: 0; }
 .pl-an-chart__line  { fill: none; stroke: var(--accent); stroke-width: 2; }
-.pl-an-chart__dot   { fill: var(--accent); }
-.pl-an-chart__axis  { stroke: var(--border); stroke-width: 1; }
+.pl-an-chart__grid  { stroke: var(--border); stroke-width: 1; }
 .pl-an-chart__lbl   { fill: var(--text-muted); font-size: 11px; }
+
+/* Breakdown bar lists (Top browsers / Top operating systems). */
+.pl-an__breakdowns {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: var(--s3); margin-top: var(--s4);
+}
+.pl-an__panel {
+  display: flex; flex-direction: column; gap: var(--s2);
+  padding: var(--s3);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+.pl-an-bar { display: flex; flex-direction: column; gap: 4px; }
+.pl-an-bar__top {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: var(--t-xs);
+}
+.pl-an-bar__name { color: var(--text); }
+.pl-an-bar__val {
+  color: var(--text-muted); font-variant-numeric: tabular-nums;
+}
+.pl-an-bar__track {
+  height: 6px; border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+.pl-an-bar__fill {
+  height: 100%; border-radius: 999px;
+  background: var(--accent);
+}
+@media (max-width: 640px) {
+  .pl-an__breakdowns { grid-template-columns: 1fr; }
+}
 
 /* Inline confirm cancel link that appears next to the armed button */
 .sl-confirm { margin-left: 6px; }

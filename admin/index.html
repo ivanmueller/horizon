@@ -555,7 +555,7 @@
 
   <!-- ── Placement analytics modal ─────────────────────────── -->
   <div class="modal" id="plStatsModal" hidden>
-    <div class="modal__card modal__card--wide">
+    <div class="modal__card modal__card--xl">
       <div class="modal__head">
         <h2 class="modal__title">Analytics — <span id="plStatsName">placement</span></h2>
         <button type="button" class="modal__close" id="plStatsClose" aria-label="Close">×</button>
@@ -2530,72 +2530,121 @@
       return PL_AN_MON[d.getUTCMonth()] + ' ' + d.getUTCDate();
     }
 
-    // Hand-drawn responsive SVG area chart — no chart dependency.
-    // Colours come from CSS (Horizon accent tokens), not inline hex.
+    // Catmull-Rom → cubic-bezier smoothing for a Short.io-style curve.
+    function plAnSmooth(p) {
+      if (p.length < 2) {
+        return p.length ? 'M' + p[0][0].toFixed(1) + ',' + p[0][1].toFixed(1) : '';
+      }
+      let d = 'M' + p[0][0].toFixed(1) + ',' + p[0][1].toFixed(1);
+      for (let i = 0; i < p.length - 1; i++) {
+        const p0 = p[i - 1] || p[i];
+        const p1 = p[i];
+        const p2 = p[i + 1];
+        const p3 = p[i + 2] || p2;
+        const c1x = p1[0] + (p2[0] - p0[0]) / 6;
+        const c1y = p1[1] + (p2[1] - p0[1]) / 6;
+        const c2x = p2[0] - (p3[0] - p1[0]) / 6;
+        const c2y = p2[1] - (p3[1] - p1[1]) / 6;
+        d += ' C' + c1x.toFixed(1) + ',' + c1y.toFixed(1) + ' ' +
+          c2x.toFixed(1) + ',' + c2y.toFixed(1) + ' ' +
+          p2[0].toFixed(1) + ',' + p2[1].toFixed(1);
+      }
+      return d;
+    }
+
+    // Smooth area chart with gridlines + y-axis labels, mirroring
+    // Short.io's. Colours come from CSS (Horizon accent tokens).
     function plAnChart(series) {
       if (!series.length) {
         return '<div class="hd-empty">No clicks recorded in this range yet.</div>';
       }
-      const W = 720, H = 200, padL = 6, padR = 6, padT = 12, padB = 22;
+      const W = 760, H = 220, padL = 30, padR = 10, padT = 14, padB = 26;
       const base = H - padB, top = padT;
       const n = series.length;
-      const ys = series.map((p) => p.y);
-      const maxY = Math.max(1, ...ys);
-      const xAt = (i) => n === 1 ? W / 2 : padL + (i / (n - 1)) * (W - padL - padR);
+      const maxY = Math.max(1, ...series.map((p) => p.y));
+      const xAt = (i) => n === 1
+        ? padL + (W - padL - padR) / 2
+        : padL + (i / (n - 1)) * (W - padL - padR);
       const yAt = (v) => base - (v / maxY) * (base - top);
       const pts = series.map((p, i) => [xAt(i), yAt(p.y)]);
-      const line = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
-      const area = 'M' + xAt(0).toFixed(1) + ',' + base + ' ' +
-        pts.map((p) => 'L' + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ') +
-        ' L' + xAt(n - 1).toFixed(1) + ',' + base + ' Z';
+      const line = plAnSmooth(pts);
+      const area = line +
+        ' L' + xAt(n - 1).toFixed(1) + ',' + base.toFixed(1) +
+        ' L' + xAt(0).toFixed(1) + ',' + base.toFixed(1) + ' Z';
 
-      // Hourly vs daily axis labels: infer from the first bucket gap.
+      const gl = 4;
+      let grid = '';
+      for (let g = 0; g <= gl; g++) {
+        const val = (maxY * g) / gl;
+        const y = yAt(val);
+        grid += '<line class="pl-an-chart__grid" x1="' + padL + '" y1="' + y.toFixed(1) +
+          '" x2="' + (W - padR) + '" y2="' + y.toFixed(1) + '"/>';
+        const lbl = maxY <= 5 ? Math.round(val * 10) / 10 : Math.round(val);
+        grid += '<text class="pl-an-chart__lbl" x="' + (padL - 6) + '" y="' +
+          (y + 3).toFixed(1) + '" text-anchor="end">' + lbl + '</text>';
+      }
+
       let hourly = false;
       if (n > 1) {
         const gap = new Date(series[1].x) - new Date(series[0].x);
         hourly = gap > 0 && gap <= 2 * 3600 * 1000;
       }
-      const labelEvery = Math.max(1, Math.ceil(n / 6));
+      const labelEvery = Math.max(1, Math.ceil(n / 7));
       let xLabels = '';
       for (let i = 0; i < n; i += labelEvery) {
         xLabels += '<text class="pl-an-chart__lbl" x="' + xAt(i).toFixed(1) +
-          '" y="' + (H - 6) + '" text-anchor="middle">' +
+          '" y="' + (H - 8) + '" text-anchor="middle">' +
           escapeHtml(plAnTick(series[i].x, hourly)) + '</text>';
       }
-      // Dots only at a readable density.
-      let dots = '';
-      if (n <= 31) {
-        dots = series.map((p, i) =>
-          '<circle class="pl-an-chart__dot" cx="' + xAt(i).toFixed(1) + '" cy="' +
-          yAt(p.y).toFixed(1) + '" r="2"><title>' +
-          escapeHtml(plAnTick(p.x, hourly)) + ': ' + p.y + '</title></circle>').join('');
-      }
       return '<div class="pl-an-chart">' +
-        '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" aria-label="Clicks over time">' +
-          '<line class="pl-an-chart__axis" x1="' + padL + '" y1="' + base +
-            '" x2="' + (W - padR) + '" y2="' + base + '"/>' +
-          '<text class="pl-an-chart__lbl" x="' + padL + '" y="' + (top - 2) +
-            '" text-anchor="start">' + maxY + '</text>' +
+        '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Clicks over time">' +
+          '<defs><linearGradient id="plAnGrad" x1="0" y1="0" x2="0" y2="1">' +
+            '<stop class="pl-an-chart__g0" offset="0"/>' +
+            '<stop class="pl-an-chart__g1" offset="1"/>' +
+          '</linearGradient></defs>' +
+          grid +
           '<path class="pl-an-chart__area" d="' + area + '"/>' +
           '<path class="pl-an-chart__line" d="' + line + '"/>' +
-          dots + xLabels +
+          xLabels +
         '</svg></div>';
     }
 
-    function plAnRangeBar() {
-      return '<div class="pl-an__range" role="tablist">' +
-        PL_AN_PERIODS.map((p) =>
-          '<button type="button" class="pl-an__rangebtn' +
-          (p.k === _plStatsPeriod ? ' is-active' : '') + '" data-pl-period="' + p.k + '">' +
-          p.label + '</button>').join('') +
-        '</div>';
+    function plAnDateRange() {
+      return '<div class="pl-an__toolbar">' +
+        '<label class="pl-an__daterange">' +
+          '<span class="pl-an__daterange-lbl">Date range</span>' +
+          '<select class="input pl-an__select" id="plStatsRangeSel">' +
+            PL_AN_PERIODS.map((p) =>
+              '<option value="' + p.k + '"' +
+              (p.k === _plStatsPeriod ? ' selected' : '') + '>' +
+              p.label + '</option>').join('') +
+          '</select>' +
+        '</label></div>';
+    }
+
+    function plAnBars(title, items) {
+      const list = Array.isArray(items) ? items : [];
+      const max = Math.max(1, ...list.map((i) => i.score));
+      const rows = list.length
+        ? list.map((it) =>
+            '<div class="pl-an-bar">' +
+              '<div class="pl-an-bar__top">' +
+                '<span class="pl-an-bar__name">' + escapeHtml(it.name) + '</span>' +
+                '<span class="pl-an-bar__val">' + it.score + '</span>' +
+              '</div>' +
+              '<div class="pl-an-bar__track"><div class="pl-an-bar__fill" style="width:' +
+                Math.max(4, Math.round((it.score / max) * 100)) + '%"></div></div>' +
+            '</div>').join('')
+        : '<div class="hd-empty">No data yet.</div>';
+      return '<div class="pl-an__panel">' +
+        '<span class="pl-an__k">' + title + '</span>' + rows + '</div>';
     }
 
     function renderPlStats(d) {
       plStatsUrl.textContent = d.short_url || '';
       const human = d.human_clicks == null ? '—' : d.human_clicks;
       plStatsBody.innerHTML =
-        plAnRangeBar() +
+        plAnDateRange() +
         '<div class="pl-an__cards">' +
           '<div class="pl-an__card"><span class="pl-an__k">Total clicks</span>' +
             '<span class="pl-an__v">' + (d.total_clicks == null ? '—' : d.total_clicks) + '</span></div>' +
@@ -2603,6 +2652,10 @@
             '<span class="pl-an__v">' + human + '</span></div>' +
         '</div>' +
         plAnChart(Array.isArray(d.series) ? d.series : []) +
+        '<div class="pl-an__breakdowns">' +
+          plAnBars('Top browsers', d.browsers) +
+          plAnBars('Top operating systems', d.os) +
+        '</div>' +
         (d.error
           ? '<div class="drawer-form__hint">' + escapeHtml(d.error) +
             ' — showing the last synced total.</div>'
@@ -2651,13 +2704,11 @@
     document.getElementById('plStatsClose') && (document.getElementById('plStatsClose').onclick = closePlStats);
     document.getElementById('plStatsDone')  && (document.getElementById('plStatsDone').onclick  = closePlStats);
 
-    // Range selector → reload that period.
-    plStatsBody && plStatsBody.addEventListener('click', (e) => {
-      const btn = e.target.closest('[data-pl-period]');
-      if (!btn) return;
-      const k = btn.dataset.plPeriod;
-      if (k === _plStatsPeriod) return;
-      _plStatsPeriod = k;
+    // Date-range dropdown → reload that period.
+    plStatsBody && plStatsBody.addEventListener('change', (e) => {
+      const sel = e.target.closest('#plStatsRangeSel');
+      if (!sel || sel.value === _plStatsPeriod) return;
+      _plStatsPeriod = sel.value;
       loadPlStats();
     });
 
