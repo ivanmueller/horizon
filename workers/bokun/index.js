@@ -104,6 +104,13 @@ import {
 } from "./short-io.js";
 
 const ALLOWED_ORIGIN = "https://gowithhorizon.com";
+// Connect (hotel portal) and the internal ops console live on their own
+// subdomains; both call this worker, so both origins are allowlisted.
+const ALLOWED_ORIGINS = [
+  ALLOWED_ORIGIN,
+  "https://connect.gowithhorizon.com",
+  "https://admin.gowithhorizon.com",
+];
 const CURRENCY = "CAD";
 
 const TTL_PRODUCT = 3600; // 1h — product config rarely changes
@@ -3222,7 +3229,7 @@ function logMutation(request, claims, action, entityType, entityId, extra) {
 function corsHeaders(request) {
   const origin = request?.headers?.get("Origin") || "";
   const allowed =
-    origin === ALLOWED_ORIGIN ||
+    ALLOWED_ORIGINS.includes(origin) ||
     origin.startsWith("http://localhost") ||
     origin.startsWith("http://127.0.0.1") ||
     origin.endsWith(".pages.dev");

@@ -548,6 +548,7 @@
   <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
   <script type="module">
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+    import { cookieStorage } from '/js/supabase-cookie-storage.js';
 
     var BOKUN_API_BASE = 'https://horizon-bokun.ivan-mueller02.workers.dev';
 
@@ -557,7 +558,7 @@
     var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4ZGx0enJudHBobmtoc25pd2luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNjA0OTAsImV4cCI6MjA5MjYzNjQ5MH0.toebJTpWH-_tRLOmwPCeTprGfQfH_JU_ZKgbqkGuz3M';
 
     var supabase = createClient(SUPABASE_URL, SUPABASE_ANON, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: cookieStorage },
     });
 
     var els = {
