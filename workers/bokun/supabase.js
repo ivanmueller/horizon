@@ -86,13 +86,18 @@ async function supabaseStorageRequest(env, method, path, body) {
   if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) {
     throw new Error("SUPABASE_URL and SUPABASE_SERVICE_KEY must be configured on the worker");
   }
+  const headers = {
+    apikey: env.SUPABASE_SERVICE_KEY,
+    Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+  };
+  // Only declare a JSON body when one is actually sent. The
+  // create-signed-upload-URL endpoint is a bodyless POST and Supabase
+  // Storage rejects it with "Body cannot be empty when content-type
+  // is set to 'application/json'" if the header is present regardless.
+  if (body !== undefined) headers["Content-Type"] = "application/json";
   const res = await fetch(`${env.SUPABASE_URL}/storage/v1${path}`, {
     method,
-    headers: {
-      apikey: env.SUPABASE_SERVICE_KEY,
-      Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
-      "Content-Type": "application/json",
-    },
+    headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
   const text = await res.text();
