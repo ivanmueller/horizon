@@ -7,20 +7,26 @@ Two surfaces, one sign-in flow, two allowlists:
 | Partner portal | `connect.gowithhorizon.com/` | Hotel managers | `hotel_users` |
 | Ops console | `admin.gowithhorizon.com/` | Horizon team | `horizon_admins` |
 
-> **Hosts.** The Connect/admin subdomain split is live. The shared
-> login lives on **`connect.gowithhorizon.com`**, where the hotel
-> portal is **rooted** at `connect.gowithhorizon.com/` (not
-> `/dashboard/hotel/`; `/dashboard/login|setup|otp/` stay under
-> `/dashboard/`). The internal ops console is **rooted** at
-> `admin.gowithhorizon.com/` (no `/admin/` prefix —
-> `admin.gowithhorizon.com/hotels/`, not `/admin/hotels/`). Old
-> `gowithhorizon.com/admin/*` and `gowithhorizon.com/dashboard/*`
-> URLs (including `/dashboard/hotel/`) 301 to the new hosts, so the
+> **Hosts.** The Connect/admin subdomain split is live, and all
+> surfaces are **rooted** (no `/dashboard/` or `/admin/` prefix):
+>
+> | Canonical | Was |
+> |---|---|
+> | `connect.gowithhorizon.com/` | `/dashboard/hotel/` |
+> | `connect.gowithhorizon.com/login/` | `/dashboard/login/` |
+> | `connect.gowithhorizon.com/setup/` | `/dashboard/setup/` |
+> | `connect.gowithhorizon.com/otp/` | `/dashboard/otp/` |
+> | `admin.gowithhorizon.com/` (+ `/hotels/`, …) | `/admin/…` |
+>
+> Old `gowithhorizon.com/admin/*` and `gowithhorizon.com/dashboard/*`
+> URLs 301 to the new hosts (and legacy `/dashboard/*` on the connect
+> host 301s to the rooted path — `#` fragments survive the redirect,
+> so already-sent invite/magic-link emails still work). So the
 > `/admin/…` and `/dashboard/…` path shorthand used elsewhere in this
 > doc still resolves — it just redirects. The session cookie is scoped
 > to `.gowithhorizon.com`, so one sign-in covers both subdomains.
 
-Both surfaces sit behind the same `connect.gowithhorizon.com/dashboard/login/`
+Both surfaces sit behind the same `connect.gowithhorizon.com/login/`
 page (magic link, Google, or email + password). After sign-in, the page
 checks `horizon_admins` first — if the user has an active row there, they
 go to the ops console; otherwise they go to the partner portal. Each
@@ -47,7 +53,7 @@ End-to-end, magic-link path:
 
 1. Manager opens `/dashboard/login/`, enters their email, clicks **Send magic link**.
 2. Supabase emails them a one-shot URL like
-   `https://connect.gowithhorizon.com/dashboard/setup/#access_token=…&type=magiclink`.
+   `https://connect.gowithhorizon.com/setup/#access_token=…&type=magiclink`.
 3. They click it. `/dashboard/setup/` loads, `supabase-js` parses
    the URL hash and stores the session in a cookie scoped to
    `.gowithhorizon.com` (so it's shared across the connect/admin

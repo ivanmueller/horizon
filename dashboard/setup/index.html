@@ -6,7 +6,7 @@
   <title>Set your password — Horizon partner dashboard</title>
   <meta name="description" content="Pick a password for future Horizon partner-dashboard sign-ins.">
   <meta name="robots" content="noindex,nofollow">
-  <link rel="canonical" href="https://gowithhorizon.com/dashboard/setup/">
+  <link rel="canonical" href="https://connect.gowithhorizon.com/setup/">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
@@ -262,7 +262,7 @@
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      window.location.replace('/dashboard/login/');
+      window.location.replace('/login/');
       throw new Error('redirecting to /dashboard/login/');
     }
 
@@ -313,7 +313,7 @@
     els.signout.addEventListener('click', async () => {
       els.signout.disabled = true;
       await supabase.auth.signOut();
-      window.location.replace('/dashboard/login/');
+      window.location.replace('/login/');
     });
   </script>
 

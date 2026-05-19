@@ -77,16 +77,29 @@ export async function onRequest(context) {
         301,
       );
     }
-    // Legacy /dashboard/hotel/ → clean root. The portal is a single
-    // page (?hotel=<slug> query, no path routes), so only the root
-    // serves its shell; login/setup/otp stay under /dashboard/.
-    if (url.pathname === '/dashboard/hotel' || url.pathname === '/dashboard/hotel/') {
-      return Response.redirect(CONNECT_ORIGIN + '/' + url.search, 301);
+    // Legacy /dashboard/<x>/ → clean rooted path. Query is preserved;
+    // URL #fragments (magic-link #access_token=…) survive 3xx in the
+    // browser automatically, so already-sent invite emails still work.
+    const legacy = {
+      '/dashboard/hotel': '/',      '/dashboard/hotel/': '/',
+      '/dashboard/login': '/login/', '/dashboard/login/': '/login/',
+      '/dashboard/setup': '/setup/', '/dashboard/setup/': '/setup/',
+      '/dashboard/otp':   '/otp/',   '/dashboard/otp/':   '/otp/',
+    };
+    if (legacy[url.pathname]) {
+      return Response.redirect(CONNECT_ORIGIN + legacy[url.pathname] + url.search, 301);
     }
-    if (url.pathname === '/') {
-      // The portal shell self-gates: no session → it redirects to
-      // /dashboard/login/; admins → the ops host.
-      return env.ASSETS.fetch(new URL('/dashboard/hotel/index.html', url.origin));
+    // Each clean path serves a single static shell. The portal (/) and
+    // each auth page self-gate in their own JS (no session → /login/,
+    // admins → the ops host), so no auth logic is needed here.
+    const shell = {
+      '/': '/dashboard/hotel/index.html',
+      '/login': '/dashboard/login/index.html', '/login/': '/dashboard/login/index.html',
+      '/setup': '/dashboard/setup/index.html', '/setup/': '/dashboard/setup/index.html',
+      '/otp':   '/dashboard/otp/index.html',   '/otp/':   '/dashboard/otp/index.html',
+    };
+    if (shell[url.pathname]) {
+      return env.ASSETS.fetch(new URL(shell[url.pathname], url.origin));
     }
     return next();
   }
