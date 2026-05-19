@@ -98,6 +98,7 @@ import {
   updateShortLink,
   isShortIoConfigured,
   trackingCodeToShortPath,
+  getLinkStats,
   ShortIoError,
 } from "./short-io.js";
 
@@ -254,7 +255,7 @@ export default {
 
       // ── Placements CRUD ─────────────────────────────────────────
       if (segs[0] === "api" && segs[1] === "admin" && segs[2] === "placements") {
-        // Assets: /placements/:id/assets[/sign-upload | /:assetId/url]
+        // Assets: /placements/:id/assets[/sign-upload | /:assetId[/url]]
         if (segs[3] && segs[4] === "assets") {
           if (request.method === "POST" && segs[5] === "sign-upload") {
             return await handleAdminPlacementAssetSignUpload(segs[3], request, env);
@@ -268,6 +269,10 @@ export default {
           if (request.method === "PATCH" && segs[5] && !segs[6]) {
             return await handleAdminPlacementAssetUpdate(segs[3], segs[5], request, env);
           }
+        }
+        // Analytics: /placements/:id/stats
+        if (segs[3] && segs[4] === "stats" && !segs[5] && request.method === "GET") {
+          return await handleAdminPlacementStats(segs[3], request, env);
         }
         if (request.method === "POST" && !segs[3]) return await handleAdminPlacementCreate(request, env);
         if (request.method === "PATCH" && segs[3] && !segs[4]) return await handleAdminPlacementUpdate(segs[3], request, env);
@@ -1707,6 +1712,63 @@ async function handleAdminPlacementAssetUpdate(placementId, assetId, request, en
   }
   logMutation(request, auth.claims, "update", "placement_asset", assetId, { status });
   return jsonResponse({ asset: updated[0] }, 200, request);
+}
+
+// Click analytics for a placement's short link, broken out by period
+// straight from Short.io (no local time-series store — this is a
+// read-through). Returns { configured, short_url, total, last30,
+// last7, last24, last_clicked }.
+async function handleAdminPlacementStats(placementId, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const guard = await placementOr404(env, placementId, request);
+  if (guard.error) return guard.error;
+
+  const pRows = await supabaseSelect(
+    env, `placements?id=eq.${encodeURIComponent(placementId)}&select=code`,
+  );
+  const code = (pRows[0] && pRows[0].code ? pRows[0].code : "").toLowerCase();
+  const links = code
+    ? await supabaseSelect(
+        env,
+        `short_links?short_path=eq.${encodeURIComponent(code)}` +
+          `&select=short_io_id,short_url,click_count_cached,last_clicked_at&limit=1`,
+      )
+    : [];
+  const link = links[0] || null;
+  if (!link) {
+    return jsonResponse({ configured: false }, 200, request);
+  }
+  if (!isShortIoConfigured(env)) {
+    return jsonResponse({
+      configured: false,
+      short_url: link.short_url,
+      total: link.click_count_cached || 0,
+      last_clicked: link.last_clicked_at || null,
+    }, 200, request);
+  }
+
+  const periods = ["total", "last30", "last7", "last24"];
+  const results = await Promise.allSettled(
+    periods.map((p) => getLinkStats(env, link.short_io_id, p)),
+  );
+  const val = (r) =>
+    r.status === "fulfilled" && r.value && typeof r.value.totalClicks === "number"
+      ? r.value.totalClicks
+      : null;
+  const totalRes = results[0];
+  return jsonResponse({
+    configured: true,
+    short_url: link.short_url,
+    total: val(totalRes),
+    last30: val(results[1]),
+    last7: val(results[2]),
+    last24: val(results[3]),
+    last_clicked:
+      (totalRes.status === "fulfilled" && totalRes.value && totalRes.value.lastClickDate)
+        ? totalRes.value.lastClickDate
+        : (link.last_clicked_at || null),
+  }, 200, request);
 }
 
 async function handleAdminHotelUserCreate(request, env) {

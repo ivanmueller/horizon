@@ -2901,18 +2901,14 @@ select.hd-bankf__input { appearance: auto; }
 }
 /* Hidden at rest — sit to the left of the kebab and slide in only
    when the kebab/cluster itself is hovered or focused. */
-.pl-act--edit,
-.pl-act--retire {
+.pl-act:not(.pl-act--menu) {
   opacity: 0;
   transform: translateX(6px);
   pointer-events: none;
 }
-.pl-actions:hover .pl-act--edit,
-.pl-actions:hover .pl-act--retire,
-.pl-actions:focus-within .pl-act--edit,
-.pl-actions:focus-within .pl-act--retire,
-.pl-actions--open .pl-act--edit,
-.pl-actions--open .pl-act--retire {
+.pl-actions:hover .pl-act:not(.pl-act--menu),
+.pl-actions:focus-within .pl-act:not(.pl-act--menu),
+.pl-actions--open .pl-act:not(.pl-act--menu) {
   opacity: 1;
   transform: none;
   pointer-events: auto;
@@ -2986,8 +2982,20 @@ select.hd-bankf__input { appearance: auto; }
 }
 .input--sm { padding: 2px 6px; height: 28px; font-size: var(--t-xs); }
 
-/* Inline confirm cancel link that appears next to the armed button */
-.sl-confirm { margin-left: 6px; }
+/* Placement analytics modal rows. */
+.pl-stat {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: var(--s2) 0;
+  border-bottom: 1px solid var(--border);
+}
+.pl-stat:last-of-type { border-bottom: 0; }
+.pl-stat__k { color: var(--text-muted); font-size: var(--t-sm); }
+.pl-stat__v { font-weight: 600; font-variant-numeric: tabular-nums; }
+.pl-stat--url {
+  display: block; padding: 0 0 var(--s3);
+  color: var(--text-muted); font-size: var(--t-xs);
+  word-break: break-all; border-bottom: 0;
+}
 
 /* Inline confirm cancel link that appears next to the armed button */
 .sl-confirm { margin-left: 6px; }
