@@ -200,8 +200,15 @@ create index booking_touchpoints_booking_idx on booking_touchpoints (booking_id)
 alter table bookings
   add column attribution_policy_used text,
   add column first_touch_code text,
-  add column credited_touchpoint_id uuid references booking_touchpoints(id);
+  add column credited_position int;   -- see §6.2a
 ```
+
+> **§6.2a — implemented deviation.** Shipped as `credited_position int`
+> (not `credited_touchpoint_id uuid`). The winning touch is identified by
+> `(confirmation_code, position)`; an int avoids an extra FK round-trip on
+> the fire-and-forget insert path and stays idempotent on retry.
+> `booking_touchpoints` carries `unique (confirmation_code, position)` so
+> retried records dedupe instead of duplicating.
 
 `bookings.hotel_id` / `staff_id` semantics are unchanged — they continue to
 hold the **credited** result, so every existing dashboard query, ledger
