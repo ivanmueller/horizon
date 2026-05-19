@@ -1,16 +1,7 @@
 # Cloudflare Pages — URL rewrites.
 #
-# /admin/ is a single-page app. SPA shell routing is handled by a
-# Pages Function at functions/admin/[[path]].js — it returns
-# /admin/index.html for any /admin/<route>/ path, so refreshes
-# don't 404.
-#
-# We tried the obvious _redirects approach first
-# (`/admin/*  /admin/index.html  200`) and explicit per-route
-# variants; CF's loop detector rejects both for trailing-slash
-# sources, which are the only form the SPA actually uses. See
-# the comment block in functions/admin/[[path]].js for the full
-# story.
-#
-# This file is intentionally empty until we have a non-SPA
-# redirect to set up.
+# Intentionally empty. All host/SPA routing is handled in
+# functions/_middleware.js (the Connect/admin subdomain split + the
+# ops-console SPA shell served at the admin host root). _redirects
+# can't do host-conditional rules, which is why this lives in the
+# middleware instead.

@@ -7,8 +7,7 @@
 //
 // The deployment is identical on all three; this middleware is what
 // makes each host show the right surface and bounces stragglers to the
-// correct host. It runs before static assets and before
-// functions/admin/[[path]].js.
+// correct host. It runs before static assets.
 //
 // Admin host detail: the ops-console SPA file physically lives at
 // /admin/index.html, but on admin.gowithhorizon.com we want clean
