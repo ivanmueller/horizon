@@ -2982,33 +2982,51 @@ select.hd-bankf__input { appearance: auto; }
 }
 .input--sm { padding: 2px 6px; height: 28px; font-size: var(--t-xs); }
 
-/* TEMPORARY: raw Short.io JSON dump for dashboard discovery. */
-.pl-stats-raw {
-  max-height: 240px; overflow: auto;
-  margin: var(--s3) 0 0;
+/* Placement analytics dashboard (in-platform Short.io view). */
+.pl-an__url {
+  color: var(--text-muted); font-size: var(--t-xs);
+  word-break: break-all; margin-bottom: var(--s3);
+}
+.pl-an__range { display: flex; gap: 4px; margin-bottom: var(--s4); }
+.pl-an__rangebtn {
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: var(--t-xs); font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--motion-fast) var(--motion-ease-out),
+              color var(--motion-fast) var(--motion-ease-out),
+              border-color var(--motion-fast) var(--motion-ease-out);
+}
+.pl-an__rangebtn:hover { border-color: var(--border-strong); color: var(--text); }
+.pl-an__rangebtn.is-active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.pl-an__cards { display: flex; gap: var(--s3); margin-bottom: var(--s4); }
+.pl-an__card {
+  flex: 1 1 0;
+  display: flex; flex-direction: column; gap: 2px;
   padding: var(--s3);
   background: var(--bg-subtle);
   border: 1px solid var(--border);
-  border-radius: var(--r-sm);
-  font-family: var(--font-mono);
-  font-size: var(--t-xs);
-  white-space: pre;
+  border-radius: var(--r-md);
 }
-
-/* Placement analytics modal rows. */
-.pl-stat {
-  display: flex; justify-content: space-between; align-items: baseline;
-  padding: var(--s2) 0;
-  border-bottom: 1px solid var(--border);
+.pl-an__k { color: var(--text-muted); font-size: var(--t-xs); }
+.pl-an__v {
+  font-size: var(--t-lg); font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
-.pl-stat:last-of-type { border-bottom: 0; }
-.pl-stat__k { color: var(--text-muted); font-size: var(--t-sm); }
-.pl-stat__v { font-weight: 600; font-variant-numeric: tabular-nums; }
-.pl-stat--url {
-  display: block; padding: 0 0 var(--s3);
-  color: var(--text-muted); font-size: var(--t-xs);
-  word-break: break-all; border-bottom: 0;
-}
+.pl-an-chart { width: 100%; }
+.pl-an-chart svg { width: 100%; height: 200px; display: block; }
+.pl-an-chart__area  { fill: var(--accent-soft); }
+.pl-an-chart__line  { fill: none; stroke: var(--accent); stroke-width: 2; }
+.pl-an-chart__dot   { fill: var(--accent); }
+.pl-an-chart__axis  { stroke: var(--border); stroke-width: 1; }
+.pl-an-chart__lbl   { fill: var(--text-muted); font-size: 11px; }
 
 /* Inline confirm cancel link that appears next to the armed button */
 .sl-confirm { margin-left: 6px; }
