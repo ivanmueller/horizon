@@ -162,7 +162,7 @@ bookings + invoices, never anyone else's.
 
 There's no automatic email yet (custom SMTP is on the roadmap).
 For now, just tell them to go to
-`connect.gowithhorizon.com/dashboard/login/` and sign in
+`connect.gowithhorizon.com/login/` and sign in
 with that email — magic link or Google OAuth both work.
 
 Manager changes do *not* trigger a republish — they're an auth

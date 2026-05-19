@@ -619,7 +619,7 @@
     var sessionResp = await supabase.auth.getSession();
     session = sessionResp.data && sessionResp.data.session;
     if (!session) {
-      window.location.replace('/dashboard/login/');
+      window.location.replace('/login/');
       throw new Error('redirecting to /dashboard/login/');
     }
 
@@ -710,7 +710,7 @@
     els.signout.addEventListener('click', async function () {
       els.signout.disabled = true;
       await supabase.auth.signOut();
-      window.location.replace('/dashboard/login/');
+      window.location.replace('/login/');
     });
 
     // ── Account modal (set / change password) ───────────────────────

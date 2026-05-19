@@ -614,7 +614,7 @@
     const sessionResp = await supabase.auth.getSession();
     const session = sessionResp.data && sessionResp.data.session;
     if (!session) {
-      window.location.replace(connectUrl('/dashboard/login/'));
+      window.location.replace(connectUrl('/login/'));
       throw new Error('redirecting to /dashboard/login/');
     }
 
@@ -1880,7 +1880,7 @@
     signoutBtn.addEventListener('click', async () => {
       signoutBtn.disabled = true;
       await supabase.auth.signOut();
-      window.location.replace(connectUrl('/dashboard/login/'));
+      window.location.replace(connectUrl('/login/'));
     });
 
     /* ── Account modal ───────────────────────────────────── */
@@ -3579,7 +3579,7 @@
       })
         .then(res => {
           if (res.status === 401) {
-            window.location.replace(connectUrl('/dashboard/login/'));
+            window.location.replace(connectUrl('/login/'));
             throw new Error('unauthorized');
           }
           if (res.status === 403) {
@@ -3747,7 +3747,7 @@
       })
         .then(r => {
           if (r.status === 401) {
-            window.location.replace(connectUrl('/dashboard/login/'));
+            window.location.replace(connectUrl('/login/'));
             throw new Error('unauthorized');
           }
           return r.json().then(b => ({ ok: r.ok, body: b }));
@@ -4262,7 +4262,7 @@
         headers: { Authorization: 'Bearer ' + session.access_token },
       })
         .then((r) => {
-          if (r.status === 401) { window.location.replace(connectUrl('/dashboard/login/')); throw new Error('unauthorized'); }
+          if (r.status === 401) { window.location.replace(connectUrl('/login/')); throw new Error('unauthorized'); }
           return r.json().then((b) => ({ ok: r.ok, body: b }));
         })
         .then((res) => {
@@ -4299,7 +4299,7 @@
         body: JSON.stringify(body),
       })
         .then((r) => {
-          if (r.status === 401) { window.location.replace(connectUrl('/dashboard/login/')); throw new Error('unauthorized'); }
+          if (r.status === 401) { window.location.replace(connectUrl('/login/')); throw new Error('unauthorized'); }
           return r.json().then((b) => ({ ok: r.ok, body: b }));
         })
         .then((res) => {
@@ -5502,7 +5502,7 @@
         headers: { Authorization: 'Bearer ' + session.access_token },
       })
         .then((r) => {
-          if (r.status === 401) { window.location.replace(connectUrl('/dashboard/login/')); throw new Error('unauthorized'); }
+          if (r.status === 401) { window.location.replace(connectUrl('/login/')); throw new Error('unauthorized'); }
           return r.json().then((b) => ({ ok: r.ok, body: b }));
         })
         .then((res) => {
@@ -5740,7 +5740,7 @@
         headers: { Authorization: 'Bearer ' + session.access_token },
       })
         .then((r) => {
-          if (r.status === 401) { window.location.replace(connectUrl('/dashboard/login/')); throw new Error('unauthorized'); }
+          if (r.status === 401) { window.location.replace(connectUrl('/login/')); throw new Error('unauthorized'); }
           return r.json().then((b) => ({ ok: r.ok, body: b }));
         })
         .then((res) => {
@@ -6747,7 +6747,7 @@
           drawerManagerForm = null;
           const inviteMsg = res.body.invite_sent
             ? `Invite sent to ${email}. They'll receive an email to set their password.`
-            : `${email} added. They already have an account and can sign in at /dashboard/login/.`;
+            : `${email} added. They already have an account and can sign in at connect.gowithhorizon.com/login/.`;
           flashHotelsNotice(inviteMsg);
           // No republish needed — managers are an auth concern, not
           // partners.json content.
