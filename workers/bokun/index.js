@@ -271,13 +271,9 @@ export default {
             return await handleAdminPlacementAssetUpdate(segs[3], segs[5], request, env);
           }
         }
-        // Analytics: /placements/:id/stats
+        // Analytics: /placements/:id/stats?period=last30|last7|last24|total
         if (segs[3] && segs[4] === "stats" && !segs[5] && request.method === "GET") {
           return await handleAdminPlacementStats(segs[3], request, env);
-        }
-        // TEMPORARY discovery: /placements/:id/stats/raw
-        if (segs[3] && segs[4] === "stats" && segs[5] === "raw" && request.method === "GET") {
-          return await handleAdminPlacementStatsRaw(segs[3], request, env);
         }
         if (request.method === "POST" && !segs[3]) return await handleAdminPlacementCreate(request, env);
         if (request.method === "PATCH" && segs[3] && !segs[4]) return await handleAdminPlacementUpdate(segs[3], request, env);
@@ -1719,15 +1715,23 @@ async function handleAdminPlacementAssetUpdate(placementId, assetId, request, en
   return jsonResponse({ asset: updated[0] }, 200, request);
 }
 
-// Click analytics for a placement's short link, broken out by period
-// straight from Short.io (no local time-series store — this is a
-// read-through). Returns { configured, short_url, total, last30,
-// last7, last24, last_clicked }.
+// Click analytics for a placement's short link — a read-through to
+// Short.io for one period (no local time-series store). Returns
+// { configured, short_url, period, total_clicks, human_clicks,
+//   series: [{ x: ISO, y: number }] }. Short.io picks the bucket
+// granularity per period (daily for last30/last7, hourly for
+// total/last24); the client labels the axis accordingly.
+const PLACEMENT_STAT_PERIODS = new Set(["last24", "last7", "last30", "total"]);
+
 async function handleAdminPlacementStats(placementId, request, env) {
   const auth = await requireHorizonAdmin(request, env);
   if (auth.error) return auth.error;
   const guard = await placementOr404(env, placementId, request);
   if (guard.error) return guard.error;
+
+  const url = new URL(request.url);
+  let period = url.searchParams.get("period") || "last30";
+  if (!PLACEMENT_STAT_PERIODS.has(period)) period = "last30";
 
   const pRows = await supabaseSelect(
     env, `placements?id=eq.${encodeURIComponent(placementId)}&select=code`,
@@ -1748,77 +1752,48 @@ async function handleAdminPlacementStats(placementId, request, env) {
     return jsonResponse({
       configured: false,
       short_url: link.short_url,
-      total: link.click_count_cached || 0,
-      last_clicked: link.last_clicked_at || null,
+      period,
+      total_clicks: link.click_count_cached || 0,
+      human_clicks: null,
+      series: [],
     }, 200, request);
   }
 
-  const periods = ["total", "last30", "last7", "last24"];
-  const results = await Promise.allSettled(
-    periods.map((p) => getLinkStats(env, link.short_io_id, p)),
-  );
-  const val = (r) =>
-    r.status === "fulfilled" ? normalizeLinkStats(r.value).totalClicks : null;
-  const totalNorm = results[0].status === "fulfilled"
-    ? normalizeLinkStats(results[0].value) : { totalClicks: null, lastClickDate: null };
-  return jsonResponse({
-    configured: true,
-    short_url: link.short_url,
-    total: totalNorm.totalClicks != null ? totalNorm.totalClicks : (link.click_count_cached || 0),
-    last30: val(results[1]),
-    last7: val(results[2]),
-    last24: val(results[3]),
-    last_clicked: totalNorm.lastClickDate || link.last_clicked_at || null,
-  }, 200, request);
-}
-
-// TEMPORARY (discovery): returns Short.io's UNMODIFIED statistics JSON
-// for a placement's short link so we can see the real payload shape
-// before building the analytics dashboard against it. Call with
-// ?period=last30 (also accepts last7 / last24 / total). Remove once
-// the dashboard is wired to the confirmed shape.
-async function handleAdminPlacementStatsRaw(placementId, request, env) {
-  const auth = await requireHorizonAdmin(request, env);
-  if (auth.error) return auth.error;
-  const guard = await placementOr404(env, placementId, request);
-  if (guard.error) return guard.error;
-
-  const url = new URL(request.url);
-  const period = url.searchParams.get("period") || "last30";
-
-  const pRows = await supabaseSelect(
-    env, `placements?id=eq.${encodeURIComponent(placementId)}&select=code`,
-  );
-  const code = (pRows[0] && pRows[0].code ? pRows[0].code : "").toLowerCase();
-  const links = code
-    ? await supabaseSelect(
-        env,
-        `short_links?short_path=eq.${encodeURIComponent(code)}` +
-          `&select=short_io_id,short_url&limit=1`,
-      )
-    : [];
-  const link = links[0] || null;
-  if (!link) {
-    return jsonResponse({ error: "no short link for this placement" }, 404, request);
-  }
-  if (!isShortIoConfigured(env)) {
-    return jsonResponse({ error: "Short.io not configured on the worker" }, 503, request);
-  }
   try {
     const raw = await getLinkStats(env, link.short_io_id, period);
+    const norm = normalizeLinkStats(raw);
+    const human = raw && raw.humanClicks != null && Number.isFinite(Number(raw.humanClicks))
+      ? Number(raw.humanClicks)
+      : null;
+    const ds = raw && raw.clickStatistics && Array.isArray(raw.clickStatistics.datasets)
+      ? raw.clickStatistics.datasets : [];
+    const points = ds.length && Array.isArray(ds[0].data) ? ds[0].data : [];
+    const series = points
+      .filter((p) => p && p.x)
+      .map((p) => ({
+        x: p.x,
+        y: p.y != null && Number.isFinite(Number(p.y)) ? Number(p.y) : 0,
+      }));
     return jsonResponse({
-      short_io_id: link.short_io_id,
+      configured: true,
       short_url: link.short_url,
       period,
-      raw,
+      total_clicks: norm.totalClicks != null ? norm.totalClicks : (link.click_count_cached || 0),
+      human_clicks: human,
+      series,
     }, 200, request);
   } catch (err) {
+    console.error("placement stats failed:", err && err.message);
+    // Degrade to the cached total rather than erroring the modal.
     return jsonResponse({
-      error: "Short.io stats call failed",
-      detail: err && err.message,
-      status: err && err.status,
-      body: err && err.body,
-    }, 502, request);
+      configured: true,
+      short_url: link.short_url,
+      period,
+      total_clicks: link.click_count_cached || 0,
+      human_clicks: null,
+      series: [],
+      error: "Short.io stats unavailable",
+    }, 200, request);
   }
 }
 

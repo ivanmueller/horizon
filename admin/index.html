@@ -555,19 +555,15 @@
 
   <!-- ── Placement analytics modal ─────────────────────────── -->
   <div class="modal" id="plStatsModal" hidden>
-    <div class="modal__card">
+    <div class="modal__card modal__card--wide">
       <div class="modal__head">
         <h2 class="modal__title">Analytics — <span id="plStatsName">placement</span></h2>
         <button type="button" class="modal__close" id="plStatsClose" aria-label="Close">×</button>
       </div>
+      <div class="pl-an__url mono" id="plStatsUrl"></div>
       <div class="alert alert--bad" id="plStatsError" hidden></div>
       <div id="plStatsBody"><div class="muted">Loading…</div></div>
-      <!-- TEMPORARY: discovery aid for building the analytics
-           dashboard. Dumps Short.io's raw JSON + copies it. Removed
-           once the dashboard is wired. -->
-      <pre id="plStatsRaw" class="pl-stats-raw" hidden></pre>
       <div class="modal__actions">
-        <button type="button" class="btn btn--sm" id="plStatsRawBtn">Raw stats (debug)</button>
         <button type="button" class="btn btn--sm" id="plStatsSync">Sync clicks</button>
         <button type="button" class="btn" id="plStatsDone">Done</button>
       </div>
@@ -2507,42 +2503,131 @@
 
     /* ── Placement analytics ─────────────────────────────── */
     let _plStatsId = null;
+    let _plStatsPeriod = 'last30';
     const plStatsModal = document.getElementById('plStatsModal');
     const plStatsName  = document.getElementById('plStatsName');
+    const plStatsUrl   = document.getElementById('plStatsUrl');
     const plStatsBody  = document.getElementById('plStatsBody');
     const plStatsError = document.getElementById('plStatsError');
     const plStatsSync  = document.getElementById('plStatsSync');
+    const PL_AN_PERIODS = [
+      { k: 'last24', label: '24 hours' },
+      { k: 'last7',  label: '7 days' },
+      { k: 'last30', label: '30 days' },
+      { k: 'total',  label: 'All time' },
+    ];
+    const PL_AN_MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-    function plStatLine(label, val) {
-      return '<div class="pl-stat"><span class="pl-stat__k">' + label +
-        '</span><span class="pl-stat__v">' +
-        (val == null ? '—' : escapeHtml(String(val))) + '</span></div>';
+    function plAnTick(iso, hourly) {
+      const d = new Date(iso);
+      if (isNaN(d)) return '';
+      if (hourly) {
+        const h = d.getUTCHours();
+        const ap = h < 12 ? 'am' : 'pm';
+        const h12 = ((h + 11) % 12) + 1;
+        return h12 + ap;
+      }
+      return PL_AN_MON[d.getUTCMonth()] + ' ' + d.getUTCDate();
+    }
+
+    // Hand-drawn responsive SVG area chart — no chart dependency.
+    // Colours come from CSS (Horizon accent tokens), not inline hex.
+    function plAnChart(series) {
+      if (!series.length) {
+        return '<div class="hd-empty">No clicks recorded in this range yet.</div>';
+      }
+      const W = 720, H = 200, padL = 6, padR = 6, padT = 12, padB = 22;
+      const base = H - padB, top = padT;
+      const n = series.length;
+      const ys = series.map((p) => p.y);
+      const maxY = Math.max(1, ...ys);
+      const xAt = (i) => n === 1 ? W / 2 : padL + (i / (n - 1)) * (W - padL - padR);
+      const yAt = (v) => base - (v / maxY) * (base - top);
+      const pts = series.map((p, i) => [xAt(i), yAt(p.y)]);
+      const line = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+      const area = 'M' + xAt(0).toFixed(1) + ',' + base + ' ' +
+        pts.map((p) => 'L' + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ') +
+        ' L' + xAt(n - 1).toFixed(1) + ',' + base + ' Z';
+
+      // Hourly vs daily axis labels: infer from the first bucket gap.
+      let hourly = false;
+      if (n > 1) {
+        const gap = new Date(series[1].x) - new Date(series[0].x);
+        hourly = gap > 0 && gap <= 2 * 3600 * 1000;
+      }
+      const labelEvery = Math.max(1, Math.ceil(n / 6));
+      let xLabels = '';
+      for (let i = 0; i < n; i += labelEvery) {
+        xLabels += '<text class="pl-an-chart__lbl" x="' + xAt(i).toFixed(1) +
+          '" y="' + (H - 6) + '" text-anchor="middle">' +
+          escapeHtml(plAnTick(series[i].x, hourly)) + '</text>';
+      }
+      // Dots only at a readable density.
+      let dots = '';
+      if (n <= 31) {
+        dots = series.map((p, i) =>
+          '<circle class="pl-an-chart__dot" cx="' + xAt(i).toFixed(1) + '" cy="' +
+          yAt(p.y).toFixed(1) + '" r="2"><title>' +
+          escapeHtml(plAnTick(p.x, hourly)) + ': ' + p.y + '</title></circle>').join('');
+      }
+      return '<div class="pl-an-chart">' +
+        '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" aria-label="Clicks over time">' +
+          '<line class="pl-an-chart__axis" x1="' + padL + '" y1="' + base +
+            '" x2="' + (W - padR) + '" y2="' + base + '"/>' +
+          '<text class="pl-an-chart__lbl" x="' + padL + '" y="' + (top - 2) +
+            '" text-anchor="start">' + maxY + '</text>' +
+          '<path class="pl-an-chart__area" d="' + area + '"/>' +
+          '<path class="pl-an-chart__line" d="' + line + '"/>' +
+          dots + xLabels +
+        '</svg></div>';
+    }
+
+    function plAnRangeBar() {
+      return '<div class="pl-an__range" role="tablist">' +
+        PL_AN_PERIODS.map((p) =>
+          '<button type="button" class="pl-an__rangebtn' +
+          (p.k === _plStatsPeriod ? ' is-active' : '') + '" data-pl-period="' + p.k + '">' +
+          p.label + '</button>').join('') +
+        '</div>';
+    }
+
+    function renderPlStats(d) {
+      plStatsUrl.textContent = d.short_url || '';
+      const human = d.human_clicks == null ? '—' : d.human_clicks;
+      plStatsBody.innerHTML =
+        plAnRangeBar() +
+        '<div class="pl-an__cards">' +
+          '<div class="pl-an__card"><span class="pl-an__k">Total clicks</span>' +
+            '<span class="pl-an__v">' + (d.total_clicks == null ? '—' : d.total_clicks) + '</span></div>' +
+          '<div class="pl-an__card"><span class="pl-an__k">Human clicks</span>' +
+            '<span class="pl-an__v">' + human + '</span></div>' +
+        '</div>' +
+        plAnChart(Array.isArray(d.series) ? d.series : []) +
+        (d.error
+          ? '<div class="drawer-form__hint">' + escapeHtml(d.error) +
+            ' — showing the last synced total.</div>'
+          : (!d.configured
+              ? '<div class="drawer-form__hint">Short.io not configured — showing the last synced total only.</div>'
+              : ''));
     }
 
     async function loadPlStats() {
       plStatsBody.innerHTML = '<div class="muted">Loading…</div>';
+      plStatsError.hidden = true;
       try {
         const res = await fetch(
-          BOKUN_API_BASE + '/api/admin/placements/' + encodeURIComponent(_plStatsId) + '/stats',
+          BOKUN_API_BASE + '/api/admin/placements/' + encodeURIComponent(_plStatsId) +
+            '/stats?period=' + encodeURIComponent(_plStatsPeriod),
           { headers: { Authorization: 'Bearer ' + session.access_token } },
         );
         const d = await res.json();
         if (!res.ok) throw new Error((d && d.error) || 'stats_failed');
-        if (!d.configured && d.total == null) {
+        if (d.configured === false && (d.total_clicks == null)) {
           plStatsBody.innerHTML =
             '<div class="hd-empty">No short link yet — analytics appear once a link is minted.</div>';
           return;
         }
-        plStatsBody.innerHTML =
-          (d.short_url ? '<div class="pl-stat pl-stat--url mono">' + escapeHtml(d.short_url) + '</div>' : '') +
-          plStatLine('Total clicks', d.total) +
-          plStatLine('Last 30 days', d.last30) +
-          plStatLine('Last 7 days', d.last7) +
-          plStatLine('Last 24 hours', d.last24) +
-          plStatLine('Last clicked',
-            d.last_clicked ? (formatHumanDateTime(d.last_clicked) || d.last_clicked) : null) +
-          (d.configured ? '' :
-            '<div class="drawer-form__hint">Short.io not configured — showing the last synced count only.</div>');
+        renderPlStats(d);
       } catch (err) {
         plStatsBody.innerHTML = '';
         plStatsError.textContent = 'Could not load analytics: ' + (err.message || 'try again');
@@ -2552,9 +2637,10 @@
 
     function openPlStats(id, name) {
       _plStatsId = id;
+      _plStatsPeriod = 'last30';
       plStatsName.textContent = name || 'placement';
+      plStatsUrl.textContent = '';
       plStatsError.hidden = true;
-      { const r = document.getElementById('plStatsRaw'); if (r) { r.hidden = true; r.textContent = ''; } }
       plStatsModal.hidden = false;
       loadPlStats();
     }
@@ -2565,46 +2651,14 @@
     document.getElementById('plStatsClose') && (document.getElementById('plStatsClose').onclick = closePlStats);
     document.getElementById('plStatsDone')  && (document.getElementById('plStatsDone').onclick  = closePlStats);
 
-    // TEMPORARY: fetch Short.io's raw stats JSON (last30 + total) using
-    // the in-page session — no manual token needed — render it and
-    // copy to clipboard so it can be pasted back for dashboard work.
-    const plStatsRaw = document.getElementById('plStatsRaw');
-    const plStatsRawBtn = document.getElementById('plStatsRawBtn');
-    plStatsRawBtn && plStatsRawBtn.addEventListener('click', async () => {
-      if (!_plStatsId) return;
-      plStatsRawBtn.disabled = true;
-      const orig = plStatsRawBtn.textContent;
-      plStatsRawBtn.textContent = 'Fetching…';
-      plStatsError.hidden = true;
-      try {
-        const get = async (period) => {
-          const r = await fetch(
-            BOKUN_API_BASE + '/api/admin/placements/' + encodeURIComponent(_plStatsId) +
-              '/stats/raw?period=' + encodeURIComponent(period),
-            { headers: { Authorization: 'Bearer ' + session.access_token } },
-          );
-          const j = await r.json();
-          if (!r.ok) throw new Error((j && (j.detail || j.error)) || 'raw_failed');
-          return j;
-        };
-        const [last30, total] = await Promise.all([get('last30'), get('total')]);
-        const text = JSON.stringify({ last30, total }, null, 2);
-        plStatsRaw.textContent = text;
-        plStatsRaw.hidden = false;
-        try {
-          await navigator.clipboard.writeText(text);
-          plStatsRawBtn.textContent = 'Copied ✓ — paste it back';
-        } catch (_) {
-          plStatsRawBtn.textContent = 'Shown below — copy it';
-        }
-      } catch (err) {
-        plStatsError.textContent = 'Raw stats failed: ' + (err.message || 'try again');
-        plStatsError.hidden = false;
-        plStatsRawBtn.textContent = orig;
-      } finally {
-        plStatsRawBtn.disabled = false;
-        setTimeout(() => { if (plStatsRawBtn) plStatsRawBtn.textContent = orig; }, 6000);
-      }
+    // Range selector → reload that period.
+    plStatsBody && plStatsBody.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-pl-period]');
+      if (!btn) return;
+      const k = btn.dataset.plPeriod;
+      if (k === _plStatsPeriod) return;
+      _plStatsPeriod = k;
+      loadPlStats();
     });
 
     plStatsSync && plStatsSync.addEventListener('click', async () => {
