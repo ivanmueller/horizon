@@ -166,6 +166,35 @@ export async function getLinkStats(env, shortIoId, period = "total") {
   return parseResponse(res, `GET ${SHORT_IO_STATS}/${shortIoId}`);
 }
 
+// Short.io's statistics payload has drifted across API versions: the
+// lifetime click total has appeared as totalClicks, humanClicks, and
+// plain clicks, and the last-click timestamp as lastClick /
+// lastClickDate / lastClickAt. Coerce numeric strings too. Returns
+// { totalClicks: number|null, lastClickDate: string|null } — null
+// total means "could not parse", which callers MUST treat as
+// unknown (do not write 0, or you clobber the real cached value).
+export function normalizeLinkStats(raw) {
+  if (!raw || typeof raw !== "object") {
+    return { totalClicks: null, lastClickDate: null };
+  }
+  const numFields = ["totalClicks", "humanClicks", "clicks", "totalClicksLink"];
+  let total = null;
+  for (const f of numFields) {
+    const v = raw[f];
+    if (typeof v === "number" && Number.isFinite(v)) { total = v; break; }
+    if (typeof v === "string" && v.trim() !== "" && Number.isFinite(Number(v))) {
+      total = Number(v);
+      break;
+    }
+  }
+  const dateFields = ["lastClick", "lastClickDate", "lastClickAt", "updatedAt"];
+  let last = null;
+  for (const f of dateFields) {
+    if (raw[f]) { last = raw[f]; break; }
+  }
+  return { totalClicks: total, lastClickDate: last };
+}
+
 // The tracking code IS the short-URL path: lowercase, hyphenated and
 // URL-safe by construction (htl-7q4k9, htl-7q4k9-e001 — see
 // PARTNERS_NAMING.md). There is no underscore↔hyphen translation

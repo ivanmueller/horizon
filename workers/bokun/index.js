@@ -99,6 +99,7 @@ import {
   isShortIoConfigured,
   trackingCodeToShortPath,
   getLinkStats,
+  normalizeLinkStats,
   ShortIoError,
 } from "./short-io.js";
 
@@ -1753,21 +1754,17 @@ async function handleAdminPlacementStats(placementId, request, env) {
     periods.map((p) => getLinkStats(env, link.short_io_id, p)),
   );
   const val = (r) =>
-    r.status === "fulfilled" && r.value && typeof r.value.totalClicks === "number"
-      ? r.value.totalClicks
-      : null;
-  const totalRes = results[0];
+    r.status === "fulfilled" ? normalizeLinkStats(r.value).totalClicks : null;
+  const totalNorm = results[0].status === "fulfilled"
+    ? normalizeLinkStats(results[0].value) : { totalClicks: null, lastClickDate: null };
   return jsonResponse({
     configured: true,
     short_url: link.short_url,
-    total: val(totalRes),
+    total: totalNorm.totalClicks != null ? totalNorm.totalClicks : (link.click_count_cached || 0),
     last30: val(results[1]),
     last7: val(results[2]),
     last24: val(results[3]),
-    last_clicked:
-      (totalRes.status === "fulfilled" && totalRes.value && totalRes.value.lastClickDate)
-        ? totalRes.value.lastClickDate
-        : (link.last_clicked_at || null),
+    last_clicked: totalNorm.lastClickDate || link.last_clicked_at || null,
   }, 200, request);
 }
 
@@ -2223,31 +2220,58 @@ async function syncClickCounts(env) {
 
   let synced = 0;
   let errors = 0;
+  let unparsed = 0;
+  let firstError = null;
+  let sampleKeys = null;
 
   for (const link of links) {
     try {
       const stats = await getLinkStats(env, link.short_io_id, "total");
-      const clickCount = (stats && typeof stats.totalClicks === "number")
-        ? stats.totalClicks
-        : 0;
-      const lastClicked = (stats && stats.lastClickDate) ? stats.lastClickDate : null;
+      const { totalClicks, lastClickDate } = normalizeLinkStats(stats);
+
+      // Could not find a click count in the payload. Do NOT write 0 —
+      // that silently clobbers the real cached value and looks like
+      // "sync stuck at 0". Skip the write, count it, and capture the
+      // payload shape once so the cause is diagnosable from the
+      // sync result instead of the logs alone.
+      if (totalClicks == null) {
+        unparsed++;
+        if (!sampleKeys && stats && typeof stats === "object") {
+          sampleKeys = Object.keys(stats).slice(0, 20);
+        }
+        console.warn(
+          `syncClickCounts: link ${link.id} — no click count in Short.io payload; keys=${
+            stats && typeof stats === "object" ? Object.keys(stats).join(",") : typeof stats
+          }`,
+        );
+        continue;
+      }
+
       await supabaseUpdate(
         env,
         `short_links?id=eq.${encodeURIComponent(link.id)}`,
         {
-          click_count_cached: clickCount,
-          ...(lastClicked ? { last_clicked_at: lastClicked } : {}),
+          click_count_cached: totalClicks,
+          ...(lastClickDate ? { last_clicked_at: lastClickDate } : {}),
           updated_at: new Date().toISOString(),
         },
       );
       synced++;
     } catch (err) {
       console.error(`syncClickCounts: link ${link.id} failed:`, err.message);
+      if (!firstError) firstError = err.message;
       errors++;
     }
   }
 
-  return { synced, errors, total: links.length };
+  return {
+    synced,
+    errors,
+    unparsed,
+    total: links.length,
+    ...(firstError ? { first_error: firstError } : {}),
+    ...(sampleKeys ? { sample_keys: sampleKeys } : {}),
+  };
 }
 
 // GET /api/admin/short-links

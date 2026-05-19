@@ -2580,7 +2580,20 @@
         const res = await fetch(BOKUN_API_BASE + '/api/admin/sync-clicks', {
           method: 'POST', headers: { Authorization: 'Bearer ' + session.access_token },
         });
-        if (!res.ok) throw new Error('sync_failed');
+        const r = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error((r && r.error) || 'sync_failed');
+        // Surface why a sync did nothing instead of a false "success".
+        if (r.skipped) {
+          throw new Error(r.reason || 'Short.io not configured on the worker');
+        }
+        if ((r.synced === 0 && (r.unparsed || r.errors))) {
+          const why = r.first_error
+            ? r.first_error
+            : (r.sample_keys
+                ? 'Short.io returned an unexpected payload (fields: ' + r.sample_keys.join(', ') + ')'
+                : 'Short.io returned ' + (r.unparsed || r.errors) + ' unusable responses');
+          throw new Error(why);
+        }
         await reloadHotelsCacheAndRefresh();
         await loadPlStats();
       } catch (err) {
