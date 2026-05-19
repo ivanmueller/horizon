@@ -3908,12 +3908,13 @@
                   ' data-pl-deployed="' + escapeHtml(deployedDate) + '"' +
                   ' data-pl-status="' + escapeHtml(p.status || 'draft') + '"' +
                   ' data-pl-code="' + escapeHtml(code) + '">' +
+                  '<td>' + statusPill + '</td>' +
                   '<td class="hd-emp__name">' + escapeHtml(p.name || '—') + '</td>' +
                   '<td>' + escapeHtml(typeLabel) + '</td>' +
                   '<td><button type="button" class="hd-copy mono" data-copy="' + escapeHtml(copyVal) + '" title="' + copyTitle + '">' +
                       '<span>' + escapeHtml(code || '—') + '</span>' + plCopyIcon + '</button></td>' +
-                  '<td>' + statusPill + '</td>' +
                   '<td class="num hd-num">' + (sl ? (sl.click_count_cached || 0) : 0) + '</td>' +
+                  '<td class="num hd-num muted">—</td>' +
                   actCell +
                 '</tr>'
               );
@@ -3922,8 +3923,8 @@
             '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
               '<table class="bk-table">' +
                 '<thead><tr>' +
-                  '<th>Placement</th><th>Type</th><th>Code</th>' +
-                  '<th>Status</th><th class="num">Clicks</th><th></th>' +
+                  '<th>Status</th><th>Placement</th><th>Type</th><th>Code</th>' +
+                  '<th class="num">Clicks</th><th class="num">Conversion rate</th><th></th>' +
                 '</tr></thead>' +
                 '<tbody>' + pRows + '</tbody>' +
               '</table>' +
