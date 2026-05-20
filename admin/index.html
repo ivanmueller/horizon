@@ -2771,6 +2771,10 @@
       // The short URL lives in the lightbox header strip now; no
       // separate row inside the Performance section.
       const human = d.human_clicks == null ? '—' : d.human_clicks;
+      const bookings = Number.isFinite(Number(d.bookings)) ? Number(d.bookings) : 0;
+      const revenue  = Number.isFinite(Number(d.revenue)) ? Number(d.revenue) : 0;
+      const cur      = d.currency || 'CAD';
+      const revenueText = revenue > 0 ? formatHotelMoney(revenue, cur) : '—';
       plStatsBody.innerHTML =
         plAnDateRange() +
         '<div class="pl-an__cards">' +
@@ -2778,6 +2782,10 @@
             '<span class="pl-an__v">' + (d.total_clicks == null ? '—' : d.total_clicks) + '</span></div>' +
           '<div class="pl-an__card"><span class="pl-an__k">Human clicks</span>' +
             '<span class="pl-an__v">' + human + '</span></div>' +
+          '<div class="pl-an__card"><span class="pl-an__k">Bookings</span>' +
+            '<span class="pl-an__v">' + bookings + '</span></div>' +
+          '<div class="pl-an__card"><span class="pl-an__k">Revenue</span>' +
+            '<span class="pl-an__v">' + escapeHtml(revenueText) + '</span></div>' +
         '</div>' +
         plAnChart(Array.isArray(d.series) ? d.series : []) +
         '<div class="pl-an__breakdowns">' +
@@ -4707,8 +4715,8 @@
                     '<span class="pl-clicks-sparkline" data-pl-spark="' + escapeHtml(p.id) + '" aria-hidden="true"></span>' +
                     '<span class="pl-clicks-num">' + totalClicks + '</span>' +
                   '</td>' +
-                  '<td class="num hd-num muted" title="Available once booking attribution ships">—</td>' +
-                  '<td class="num hd-num muted" title="Available once booking attribution ships">—</td>' +
+                  '<td class="num hd-num muted" data-pl-bookings="' + escapeHtml(p.id) + '">—</td>' +
+                  '<td class="num hd-num muted" data-pl-revenue="' + escapeHtml(p.id) + '">—</td>' +
                   '<td class="muted">' + lastScan + '</td>' +
                   actCell +
                 '</tr>'
@@ -5605,33 +5613,51 @@
     // count is the accessible representation. Cached series are
     // reused on re-renders within the same session to avoid hammering
     // the worker; this cache resets when the page reloads.
-    const _placementSparkCache = new Map();
+    // Lazy stats hydrator. One fetch per row populates the sparkline,
+    // bookings, and revenue cells from the same /stats payload so we
+    // don't make three round-trips per placement. Cached in-memory
+    // per page session to absorb re-renders.
+    const _placementStatsCache = new Map();
+    function fillPlacementRowStats(id, data, els) {
+      const root = els.placementsBody;
+      if (!root) return;
+      const spark = root.querySelector('[data-pl-spark="' + (CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
+      if (spark) renderSparklineInto(spark, data && data.series || []);
+      const bookings = root.querySelector('[data-pl-bookings="' + (CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
+      if (bookings) {
+        const n = data && Number.isFinite(Number(data.bookings)) ? Number(data.bookings) : 0;
+        bookings.textContent = String(n);
+        bookings.classList.toggle('muted', n === 0);
+      }
+      const revenue = root.querySelector('[data-pl-revenue="' + (CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
+      if (revenue) {
+        const r = data && Number.isFinite(Number(data.revenue)) ? Number(data.revenue) : 0;
+        const cur = (data && data.currency) || 'CAD';
+        revenue.textContent = r > 0 ? formatHotelMoney(r, cur) : '—';
+        revenue.classList.toggle('muted', r === 0);
+      }
+    }
     async function hydratePlacementSparklines(els) {
       if (!els || !els.placementsBody) return;
       const nodes = els.placementsBody.querySelectorAll('[data-pl-spark]');
       if (!nodes.length) return;
-      const tasks = [];
       nodes.forEach((node) => {
         const id = node.dataset.plSpark;
         if (!id) return;
-        if (_placementSparkCache.has(id)) {
-          renderSparklineInto(node, _placementSparkCache.get(id));
+        if (_placementStatsCache.has(id)) {
+          fillPlacementRowStats(id, _placementStatsCache.get(id), els);
           return;
         }
-        tasks.push(
-          fetch(BOKUN_API_BASE + '/api/admin/placements/' + encodeURIComponent(id) + '/stats?period=last30', {
-            headers: { Authorization: 'Bearer ' + session.access_token },
+        fetch(BOKUN_API_BASE + '/api/admin/placements/' + encodeURIComponent(id) + '/stats?period=last30', {
+          headers: { Authorization: 'Bearer ' + session.access_token },
+        })
+          .then((r) => r.ok ? r.json() : null)
+          .then((data) => {
+            _placementStatsCache.set(id, data || {});
+            fillPlacementRowStats(id, data || {}, els);
           })
-            .then((r) => r.ok ? r.json() : null)
-            .then((data) => {
-              const series = (data && Array.isArray(data.series)) ? data.series : [];
-              _placementSparkCache.set(id, series);
-              renderSparklineInto(node, series);
-            })
-            .catch(() => { /* silent — sparkline is decoration */ })
-        );
+          .catch(() => { /* silent — sparkline + numbers are decoration */ });
       });
-      // No await needed; sparklines stream in.
     }
     function renderSparklineInto(node, series) {
       if (!node) return;

@@ -2041,6 +2041,53 @@ async function handleAdminPlacementAssetUpdate(placementId, assetId, request, en
 // total/last24); the client labels the axis accordingly.
 const PLACEMENT_STAT_PERIODS = new Set(["last24", "last7", "last30", "total"]);
 
+// Period → cutoff timestamp in ISO. 'total' returns null to mean
+// "no lower bound." Used for bookings/revenue windowing.
+function periodCutoffIso(period) {
+  const day = 86400 * 1000;
+  const now = Date.now();
+  if (period === "last24") return new Date(now - day).toISOString();
+  if (period === "last7")  return new Date(now - 7 * day).toISOString();
+  if (period === "last30") return new Date(now - 30 * day).toISOString();
+  return null;
+}
+
+// Bookings + revenue attributed to a placement in a time window.
+// Placements are funnel-only — they never "win" credit — but we count
+// bookings their tracking code appeared in as the honest measure of
+// the placement's contribution. Revenue is the sum of commission_amount
+// for those bookings.
+async function bookingsForPlacement(env, code, period) {
+  if (!code) return { bookings: 0, revenue: 0, currency: "CAD" };
+  const touches = await supabaseSelect(
+    env,
+    `booking_touchpoints?code=ilike.${encodeURIComponent(code)}` +
+      `&select=confirmation_code`,
+  );
+  const codes = Array.from(new Set(
+    (touches || []).map((t) => t.confirmation_code).filter(Boolean),
+  ));
+  if (!codes.length) return { bookings: 0, revenue: 0, currency: "CAD" };
+  const cutoff = periodCutoffIso(period);
+  const inList = codes.map((c) => `"${c.replace(/"/g, '""')}"`).join(",");
+  const filter = `confirmation_code=in.(${inList})` +
+    (cutoff ? `&created_at=gte.${encodeURIComponent(cutoff)}` : "");
+  const rows = await supabaseSelect(
+    env,
+    `bookings?${filter}&select=id,confirmation_code,commission_ledger(commission_amount,currency)`,
+  );
+  let revenue = 0;
+  let currency = "CAD";
+  for (const b of rows) {
+    const ledger = Array.isArray(b.commission_ledger) ? b.commission_ledger[0] : null;
+    if (ledger) {
+      revenue += Number(ledger.commission_amount) || 0;
+      if (ledger.currency) currency = ledger.currency;
+    }
+  }
+  return { bookings: rows.length, revenue, currency };
+}
+
 async function handleAdminPlacementStats(placementId, request, env) {
   const auth = await requireHorizonAdmin(request, env);
   if (auth.error) return auth.error;
@@ -2055,6 +2102,12 @@ async function handleAdminPlacementStats(placementId, request, env) {
     env, `placements?id=eq.${encodeURIComponent(placementId)}&select=code`,
   );
   const code = (pRows[0] && pRows[0].code ? pRows[0].code : "").toLowerCase();
+  // Bookings + revenue are independent of Short.io so we compute them
+  // unconditionally and merge into the response below.
+  const attribution = await bookingsForPlacement(env, code, period).catch((e) => {
+    console.warn("bookingsForPlacement failed:", e && e.message);
+    return { bookings: 0, revenue: 0, currency: "CAD" };
+  });
   const links = code
     ? await supabaseSelect(
         env,
@@ -2064,7 +2117,12 @@ async function handleAdminPlacementStats(placementId, request, env) {
     : [];
   const link = links[0] || null;
   if (!link) {
-    return jsonResponse({ configured: false }, 200, request);
+    return jsonResponse({
+      configured: false,
+      bookings: attribution.bookings,
+      revenue: attribution.revenue,
+      currency: attribution.currency,
+    }, 200, request);
   }
   if (!isShortIoConfigured(env)) {
     return jsonResponse({
@@ -2074,6 +2132,9 @@ async function handleAdminPlacementStats(placementId, request, env) {
       total_clicks: link.click_count_cached || 0,
       human_clicks: null,
       series: [],
+      bookings: attribution.bookings,
+      revenue: attribution.revenue,
+      currency: attribution.currency,
     }, 200, request);
   }
 
@@ -2113,6 +2174,9 @@ async function handleAdminPlacementStats(placementId, request, env) {
       series,
       browsers: breakdown(raw && raw.browser, "browser"),
       os: breakdown(raw && raw.os, "os"),
+      bookings: attribution.bookings,
+      revenue: attribution.revenue,
+      currency: attribution.currency,
     }, 200, request);
   } catch (err) {
     console.error("placement stats failed:", err && err.message);
@@ -2126,6 +2190,9 @@ async function handleAdminPlacementStats(placementId, request, env) {
       series: [],
       browsers: [],
       os: [],
+      bookings: attribution.bookings,
+      revenue: attribution.revenue,
+      currency: attribution.currency,
       error: "Short.io stats unavailable",
     }, 200, request);
   }
