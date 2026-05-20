@@ -269,6 +269,10 @@ export default {
         if (segs[3] && segs[4] === "stats" && !segs[5] && request.method === "GET") {
           return await handleAdminStaffStats(segs[3], request, env);
         }
+        // Activity log: /hotel-staff/:id/events
+        if (segs[3] && segs[4] === "events" && !segs[5] && request.method === "GET") {
+          return await handleAdminStaffEvents(segs[3], request, env);
+        }
         if (request.method === "POST" && !segs[3]) return await handleAdminStaffCreate(request, env);
         if (request.method === "PATCH" && segs[3]) return await handleAdminStaffUpdate(segs[3], request, env);
         if (request.method === "DELETE" && segs[3]) return await handleAdminStaffTerminate(segs[3], request, env);
@@ -1741,6 +1745,34 @@ async function handleAdminHotelTerminate(id, request, env) {
   return jsonResponse({ hotel: normaliseHotel(updated[0]) }, 200, request);
 }
 
+// Activity log writer for staff. Same fire-and-forget contract as
+// writePlacementEvent — audit data never blocks a user mutation.
+async function writeStaffEvent(env, staffId, eventType, payload, actorEmail) {
+  try {
+    await supabaseInsert(env, "staff_events", [{
+      staff_id:    staffId,
+      event_type:  eventType,
+      actor_email: actorEmail || null,
+      payload:     payload || {},
+    }]);
+  } catch (err) {
+    console.warn(`staff_event ${eventType} for ${staffId} failed: ${err && err.message}`);
+  }
+}
+
+async function handleAdminStaffEvents(staffId, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(staffId)) return jsonResponse({ error: "invalid staff id" }, 400, request);
+  const rows = await supabaseSelect(
+    env,
+    `staff_events?staff_id=eq.${encodeURIComponent(staffId)}` +
+      `&select=id,event_type,actor_email,payload,created_at` +
+      `&order=created_at.desc&limit=50`,
+  );
+  return jsonResponse({ events: rows || [] }, 200, request);
+}
+
 async function handleAdminStaffCreate(request, env) {
   const auth = await requireHorizonAdmin(request, env);
   if (auth.error) return auth.error;
@@ -1755,6 +1787,10 @@ async function handleAdminStaffCreate(request, env) {
     logMutation(request, auth.claims, "create", "staff", staff.id, {
       hotel_id: v.row.hotel_id, tracking_code: staff.tracking_code, name: staff.name,
     });
+    await writeStaffEvent(env, staff.id, "onboarded", {
+      tracking_code: staff.tracking_code,
+      kickback_pct: staff.kickback_pct,
+    }, auth.claims && auth.claims.email);
     const payload = { staff: normaliseStaff(staff) };
     if (shortLinkWarning) payload.short_link_warning = shortLinkWarning;
     return jsonResponse(payload, 201, request);
@@ -1775,6 +1811,16 @@ async function handleAdminStaffUpdate(id, request, env) {
   if (v.error) return jsonResponse({ error: v.error }, 400, request);
   delete v.row.hotel_id; // can't reassign staff to a different hotel
 
+  // Snapshot prior rate so a rate_changed event is only written
+  // when the kickback actually changes.
+  let priorRate = null;
+  if (v.row.kickback_pct !== undefined) {
+    const before = await supabaseSelect(
+      env, `hotel_staff?id=eq.${encodeURIComponent(id)}&select=kickback_pct&limit=1`,
+    );
+    priorRate = before[0] ? before[0].kickback_pct : null;
+  }
+
   const updated = await supabaseUpdate(
     env, `hotel_staff?id=eq.${encodeURIComponent(id)}`, v.row, { returnRow: true },
   );
@@ -1782,6 +1828,12 @@ async function handleAdminStaffUpdate(id, request, env) {
     return jsonResponse({ error: "staff not found" }, 404, request);
   }
   logMutation(request, auth.claims, "update", "staff", id, { fields: Object.keys(v.row) });
+  if (v.row.kickback_pct !== undefined &&
+      Number(priorRate) !== Number(v.row.kickback_pct)) {
+    await writeStaffEvent(env, id, "rate_changed", {
+      from: priorRate, to: v.row.kickback_pct,
+    }, auth.claims && auth.claims.email);
+  }
   return jsonResponse({ staff: normaliseStaff(updated[0]) }, 200, request);
 }
 
@@ -1790,6 +1842,10 @@ async function handleAdminStaffTerminate(id, request, env) {
   if (auth.error) return auth.error;
   if (!UUID_RE.test(id)) return jsonResponse({ error: "invalid staff id" }, 400, request);
 
+  const before = await supabaseSelect(
+    env, `hotel_staff?id=eq.${encodeURIComponent(id)}&select=status&limit=1`,
+  );
+  const priorStatus = before[0] && before[0].status;
   const updated = await supabaseUpdate(
     env, `hotel_staff?id=eq.${encodeURIComponent(id)}`,
     { status: "terminated" }, { returnRow: true },
@@ -1798,6 +1854,9 @@ async function handleAdminStaffTerminate(id, request, env) {
     return jsonResponse({ error: "staff not found" }, 404, request);
   }
   logMutation(request, auth.claims, "terminate", "staff", id);
+  await writeStaffEvent(env, id, "terminated", {
+    from: priorStatus, to: "terminated",
+  }, auth.claims && auth.claims.email);
   return jsonResponse({ staff: normaliseStaff(updated[0]) }, 200, request);
 }
 

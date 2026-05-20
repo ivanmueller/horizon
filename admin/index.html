@@ -630,6 +630,12 @@
         </div>
       </section>
 
+      <!-- Activity log (edit mode only) ─────────────────────── -->
+      <section class="pl-modal__section" id="staffModalActivitySection" hidden>
+        <h3 class="pl-modal__sectiontitle">Activity log</h3>
+        <div id="staffModalActivity"><div class="muted">Loading…</div></div>
+      </section>
+
       <!-- Payouts (edit mode only) ─────────────────────────── -->
       <section class="pl-modal__section" id="staffModalPayoutsSection" hidden>
         <h3 class="pl-modal__sectiontitle">Payouts</h3>
@@ -7629,6 +7635,7 @@
       'staffModalScoreboardSection',
       'staffModalRecentSection',
       'staffModalMaterialsSection',
+      'staffModalActivitySection',
       'staffModalPayoutsSection',
     ];
     function setStaffEditSectionsVisible(visible) {
@@ -7766,6 +7773,10 @@
         shortHint.textContent = 'No personal short link minted yet.';
       }
 
+      // Activity log fires in parallel with stats so the timeline
+      // streams in independently of the scoreboard.
+      loadStaffActivity(staff.id);
+
       try {
         const res = await fetch(
           BOKUN_API_BASE + '/api/admin/hotel-staff/' + encodeURIComponent(staff.id) + '/stats?period=last30',
@@ -7794,6 +7805,65 @@
       } catch (err) {
         document.getElementById('staffModalRecent').innerHTML =
           '<div class="muted">Could not load stats: ' + escapeHtml(err.message || 'try again') + '</div>';
+      }
+    }
+
+    async function loadStaffActivity(staffId) {
+      const body = document.getElementById('staffModalActivity');
+      if (!body) return;
+      body.innerHTML = '<div class="muted">Loading…</div>';
+      try {
+        const res = await fetch(
+          BOKUN_API_BASE + '/api/admin/hotel-staff/' + encodeURIComponent(staffId) + '/events',
+          { headers: { Authorization: 'Bearer ' + session.access_token } },
+        );
+        const d = await res.json();
+        if (!res.ok) throw new Error((d && d.error) || 'events_failed');
+        renderStaffActivity(d.events || []);
+      } catch (err) {
+        body.innerHTML = '<div class="muted">Could not load activity: ' +
+          escapeHtml(err.message || 'try again') + '</div>';
+      }
+    }
+    function renderStaffActivity(events) {
+      const body = document.getElementById('staffModalActivity');
+      if (!body) return;
+      if (!events.length) {
+        body.innerHTML = '<div class="muted" style="font-size: var(--t-sm);">No activity yet.</div>';
+        return;
+      }
+      const rows = events.map((e) => {
+        const when = relativeTimeOrNever(e.created_at);
+        const actor = e.actor_email ? ' · ' + escapeHtml(e.actor_email) : '';
+        return '<li class="pl-act-row">' +
+          '<span class="pl-act-row__dot" aria-hidden="true"></span>' +
+          '<div class="pl-act-row__body">' +
+            '<div class="pl-act-row__title">' + staffActivityLabel(e) + '</div>' +
+            '<div class="pl-act-row__meta">' + when + actor + '</div>' +
+          '</div>' +
+        '</li>';
+      }).join('');
+      body.innerHTML = '<ul class="pl-act-list">' + rows + '</ul>';
+    }
+    function staffActivityLabel(e) {
+      const p = e.payload || {};
+      switch (e.event_type) {
+        case 'onboarded':
+          return 'Onboarded' + (p.tracking_code ? ' as ' + escapeHtml(p.tracking_code) : '');
+        case 'rate_changed':
+          return 'Kickback changed' +
+            (p.from != null ? ' from ' + escapeHtml(String(p.from)) + '%' : '') +
+            (p.to   != null ? ' to '   + escapeHtml(String(p.to))   + '%' : '');
+        case 'status_changed':
+          return 'Status changed' +
+            (p.from ? ' from ' + escapeHtml(p.from) : '') +
+            (p.to   ? ' to '   + escapeHtml(p.to)   : '');
+        case 'terminated':
+          return 'Terminated';
+        case 'first_booking':
+          return 'First booking recorded';
+        default:
+          return escapeHtml(e.event_type);
       }
     }
 
