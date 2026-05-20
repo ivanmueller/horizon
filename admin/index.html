@@ -8456,22 +8456,18 @@
       return escapeHtml(formatHumanDate(iso.slice(0, 10)));
     }
     // Compact info-icon used in table column headers. Renders a small
-    // filled "i" disc with a Stripe-style floating tooltip on hover or
-    // keyboard focus. Tooltip lives as a child element (styled in
-    // admin.css under .hd-colinfo / .hd-colinfo__tip) so we can give
-    // it a card-like surface — the native title attr would only
-    // produce the browser default and clashed visually with the
-    // tables it sits on top of.
+    // outlined "i" SVG with a native browser tooltip carrying the blurb.
+    // Native title attr is the simplest accessible tooltip we can ship
+    // without a popper component. If we later want hover-styled tips,
+    // we can swap this for a CSS-driven pattern without touching call
+    // sites.
     function colInfo(text) {
       return ' <span class="hd-colinfo" tabindex="0"' +
+        ' title="' + escapeHtml(text) + '"' +
         ' aria-label="' + escapeHtml(text) + '">' +
-        '<svg class="hd-colinfo__icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">' +
-          '<circle cx="8" cy="8" r="7" fill="currentColor"/>' +
-          '<circle cx="8" cy="4.7" r="0.95" fill="#fff"/>' +
-          '<rect x="7.25" y="6.7" width="1.5" height="5" rx="0.75" fill="#fff"/>' +
-        '</svg>' +
-        '<span class="hd-colinfo__tip" role="tooltip">' + escapeHtml(text) + '</span>' +
-        '</span>';
+        '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+          '<circle cx="8" cy="8" r="6.5"/><path d="M8 7.5v3.5"/><circle cx="8" cy="5.2" r="0.5" fill="currentColor"/>' +
+        '</svg></span>';
     }
     // Maps the snake_case property_type enum stored in the DB to a
     // human-readable label for display.
