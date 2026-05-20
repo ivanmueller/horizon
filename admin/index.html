@@ -4883,26 +4883,38 @@
         }
       }
 
-      // Employees & Referral Codes — primary working section. Reads
-      // straight from h.staff (same source as the drawer) so the two
-      // views can never diverge. Commission column is split into
-      // "Rate" (effective % with an "override" tag if the employee's
-      // rate differs from the hotel default) and "Earned" (lifetime
-      // payout in the hotel's currency).
-      const staff = (h.staff || []).filter((s) => s.status !== 'revoked');
+      // Employees & Referral Codes — leaderboard. Default sort:
+      // commission desc (highest-earner on top). Status pill renders
+      // inline with the name in the Employee cell. Bookings,
+      // Conversion, and Last booking lazy-hydrate per row from
+      // /api/admin/hotel-staff/:id/stats.
+      const staff = (h.staff || []).filter((s) => s.status !== 'revoked')
+        .slice()
+        .sort((a, b) => (Number(b.lifetime_commission) || 0) - (Number(a.lifetime_commission) || 0));
       const hotelDefaultPct = (h.commission_pct != null && h.kickback_pool_pct == null)
         ? Number(h.commission_pct)
         : (h.kickback_pool_pct != null ? Number(h.kickback_pool_pct) : null);
       if (!staff.length) {
         els.empBody.innerHTML = '<div class="hd-empty">No employees yet.</div>';
       } else {
+        // Active staff get a rank for the top-3 medal. Inactive
+        // staff are unranked.
+        const activeRanked = staff
+          .filter((s) => s.status === 'active')
+          .map((s, i) => ({ id: s.id, rank: i + 1 }))
+          .reduce((acc, x) => { acc[x.id] = x.rank; return acc; }, {});
         const rows = staff.map((s) => {
           const initials = (s.name || '?')
             .split(/\s+/).filter(Boolean).slice(0, 2)
             .map((w) => w[0].toUpperCase()).join('') || '?';
-          const statusPill = s.status === 'active'
-            ? '<span class="bk-pill bk-pill--ok">Active</span>'
-            : '<span class="bk-pill bk-pill--neutral">' + escapeHtml(s.status || '—') + '</span>';
+          const statusInline = s.status === 'active'
+            ? '<span class="bk-pill bk-pill--ok bk-pill--xs">Active</span>'
+            : '<span class="bk-pill bk-pill--neutral bk-pill--xs">' + escapeHtml(s.status || '—') + '</span>';
+          const rank = activeRanked[s.id];
+          const medal = rank === 1 ? '🥇' : (rank === 2 ? '🥈' : (rank === 3 ? '🥉' : ''));
+          const medalHtml = medal
+            ? '<span class="hd-emp__medal" title="Rank #' + rank + ' by commission" aria-label="Rank ' + rank + '">' + medal + '</span>'
+            : '';
           const rate = (s.kickback_pct != null) ? Number(s.kickback_pct) : null;
           const isOverride = rate != null && hotelDefaultPct != null && rate !== hotelDefaultPct;
           const rateCell = (rate != null ? rate + '%' : '—')
@@ -4911,20 +4923,26 @@
           const refCode = s.tracking_code || '';
           return (
             '<tr data-staff-row="' + escapeHtml(s.id) + '">' +
-              '<td class="hd-emp">' +
+              '<td class="hd-user">' +
                 '<span class="hd-avatar" aria-hidden="true">' + escapeHtml(initials) + '</span>' +
-                '<span class="hd-emp__name">' + escapeHtml(s.name || '—') + '</span>' +
-                (s.role ? '<span class="hd-emp__role">' + escapeHtml(s.role) + '</span>' : '') +
+                '<div class="hd-user__body">' +
+                  '<div class="hd-user__name">' +
+                    medalHtml + escapeHtml(s.name || '—') +
+                  '</div>' +
+                  '<div class="hd-user__sub">' + statusInline +
+                    (s.role ? ' · ' + escapeHtml(s.role) : '') +
+                  '</div>' +
+                '</div>' +
               '</td>' +
-              '<td>' + statusPill + '</td>' +
               '<td><button type="button" class="hd-copy mono" data-copy="' + escapeHtml(refCode) + '" title="Copy referral code">' +
                   '<span>' + escapeHtml(refCode || '—') + '</span>' +
                   '<svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
               '</button></td>' +
-              '<td class="num hd-num">0</td>' +
+              '<td class="num hd-num muted" data-staff-bookings="' + escapeHtml(s.id) + '">—</td>' +
+              '<td class="num hd-num muted" data-staff-conversion="' + escapeHtml(s.id) + '">—</td>' +
               '<td class="num hd-num">' + rateCell + '</td>' +
               '<td class="num hd-num">' + escapeHtml(earned) + '</td>' +
-              '<td class="muted">—</td>' +
+              '<td class="muted" data-staff-lastbooking="' + escapeHtml(s.id) + '">—</td>' +
               '<td class="bk-table__kebab">' +
                 '<button type="button" class="bk-kebab" data-staff-edit-id="' + escapeHtml(s.id) + '" aria-label="Edit ' + escapeHtml(s.name || '') + '">⋯</button>' +
               '</td>' +
@@ -4935,13 +4953,19 @@
           '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
             '<table class="bk-table">' +
               '<thead><tr>' +
-                '<th>Employee</th><th>Status</th><th>Referral code</th>' +
-                '<th class="num">Bookings</th><th class="num">Rate</th><th class="num">Commission</th>' +
-                '<th>Last booking</th><th></th>' +
+                '<th>Employee</th>' +
+                '<th>Code</th>' +
+                '<th class="num">Bookings' + colInfo('Confirmed bookings this employee’s referrals produced. Hover a cell for this month vs all-time.') + '</th>' +
+                '<th class="num">Conversion' + colInfo('Confirmed bookings as a % of clicks on this employee’s personal short link.') + '</th>' +
+                '<th class="num">Rate' + colInfo('Kickback percentage applied to bookings credited to this employee.') + '</th>' +
+                '<th class="num">Commission' + colInfo('Lifetime commission earned. Default sort.') + '</th>' +
+                '<th>Last booking' + colInfo('Time since the most recent confirmed booking credited to this employee.') + '</th>' +
+                '<th></th>' +
               '</tr></thead>' +
               '<tbody>' + rows + '</tbody>' +
             '</table>' +
           '</div></div>';
+        hydrateStaffStats(els);
       }
 
       // Managers — page-level section, rendered into #hdManagersBody.
@@ -5852,6 +5876,68 @@
         revenue.classList.toggle('muted', r === 0);
       }
     }
+    // Lazy stats for the Employees leaderboard. One fetch per
+    // active staff row populates Bookings + Conversion + Last
+    // booking cells. Cached in-memory per page session.
+    const _staffStatsCache = new Map();
+    function fillStaffRowStats(id, data, els) {
+      const root = els.empBody;
+      if (!root) return;
+      const esc = (s) => (CSS && CSS.escape ? CSS.escape(s) : s);
+      const bk = root.querySelector('[data-staff-bookings="' + esc(id) + '"]');
+      if (bk) {
+        const total = Number(data.bookings_total) || 0;
+        const mo    = Number(data.bookings_month) || 0;
+        bk.textContent = String(total);
+        bk.classList.toggle('muted', total === 0);
+        bk.title = mo + ' this month · ' + total + ' all-time';
+      }
+      const cv = root.querySelector('[data-staff-conversion="' + esc(id) + '"]');
+      if (cv) {
+        if (data.conversion_pct == null) {
+          cv.textContent = '—';
+          cv.classList.add('muted');
+          cv.title = 'No clicks yet';
+        } else {
+          cv.textContent = data.conversion_pct + '%';
+          cv.classList.remove('muted');
+          cv.title = (Number(data.bookings_total) || 0) + ' bookings / ' +
+                     (Number(data.clicks_total) || 0) + ' clicks';
+        }
+      }
+      const lb = root.querySelector('[data-staff-lastbooking="' + esc(id) + '"]');
+      if (lb) {
+        if (data.last_booking_at) {
+          lb.innerHTML = relativeTimeOrNever(data.last_booking_at);
+          lb.classList.remove('muted');
+        } else {
+          lb.innerHTML = '<span class="muted">Never</span>';
+        }
+      }
+    }
+    async function hydrateStaffStats(els) {
+      if (!els || !els.empBody) return;
+      const rows = els.empBody.querySelectorAll('[data-staff-bookings]');
+      rows.forEach((cell) => {
+        const id = cell.dataset.staffBookings;
+        if (!id) return;
+        if (_staffStatsCache.has(id)) {
+          fillStaffRowStats(id, _staffStatsCache.get(id), els);
+          return;
+        }
+        fetch(BOKUN_API_BASE + '/api/admin/hotel-staff/' + encodeURIComponent(id) + '/stats?period=last30', {
+          headers: { Authorization: 'Bearer ' + session.access_token },
+        })
+          .then((r) => r.ok ? r.json() : null)
+          .then((data) => {
+            if (!data) return;
+            _staffStatsCache.set(id, data);
+            fillStaffRowStats(id, data, els);
+          })
+          .catch(() => { /* silent — leaderboard cells degrade gracefully */ });
+      });
+    }
+
     async function hydratePlacementSparklines(els) {
       if (!els || !els.placementsBody) return;
       const nodes = els.placementsBody.querySelectorAll('[data-pl-spark]');

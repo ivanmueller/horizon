@@ -3092,8 +3092,29 @@ select.hd-bankf__input { appearance: auto; }
   gap: var(--s3);
 }
 .hd-user__body { min-width: 0; }
-.hd-user__name { font-weight: 500; color: var(--text); }
-.hd-user__sub  { font-size: var(--t-xs); color: var(--text-muted); margin-top: 1px; }
+.hd-user__name {
+  font-weight: 500;
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.hd-user__sub {
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+  margin-top: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.hd-emp__medal { font-size: 0.9em; line-height: 1; }
+/* Compact pill variant for inline use inside other cells. */
+.bk-pill--xs {
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
 
 /* Permissions checklist below the role select. Each row is a
    role-keyed permission with a green ✓ or muted ✗. Compact so it

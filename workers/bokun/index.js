@@ -265,6 +265,10 @@ export default {
 
       // ── Hotel staff CRUD ────────────────────────────────────────
       if (segs[0] === "api" && segs[1] === "admin" && segs[2] === "hotel-staff") {
+        // Stats endpoint: /hotel-staff/:id/stats?period=last30
+        if (segs[3] && segs[4] === "stats" && !segs[5] && request.method === "GET") {
+          return await handleAdminStaffStats(segs[3], request, env);
+        }
         if (request.method === "POST" && !segs[3]) return await handleAdminStaffCreate(request, env);
         if (request.method === "PATCH" && segs[3]) return await handleAdminStaffUpdate(segs[3], request, env);
         if (request.method === "DELETE" && segs[3]) return await handleAdminStaffTerminate(segs[3], request, env);
@@ -2273,6 +2277,101 @@ async function handleAdminPlacementStats(placementId, request, env) {
       error: "Short.io stats unavailable",
     }, 200, request);
   }
+}
+
+// Per-staff stats: bookings (total + this month + period), last
+// booking, clicks + conversion %, lifetime commission, recent
+// bookings (last 5 with their commission). Powers the Employees
+// table lazy-load + the Employee lightbox scoreboard.
+async function handleAdminStaffStats(staffId, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(staffId)) return jsonResponse({ error: "invalid staff id" }, 400, request);
+
+  const url = new URL(request.url);
+  let period = url.searchParams.get("period") || "last30";
+  if (!PLACEMENT_STAT_PERIODS.has(period)) period = "last30";
+  const periodCutoff = periodCutoffIso(period);
+  const monthStart = (() => {
+    const d = new Date();
+    d.setUTCDate(1);
+    d.setUTCHours(0, 0, 0, 0);
+    return d.toISOString();
+  })();
+
+  // Pull a flat list of this staff's confirmed bookings (recent first
+  // so we can slice the top 5 for the lightbox without a second
+  // round-trip). At realistic per-employee volumes this is small.
+  const rows = await supabaseSelect(
+    env,
+    `bookings?staff_id=eq.${encodeURIComponent(staffId)}` +
+      `&status=eq.confirmed` +
+      `&select=id,created_at,date,tour_title,amount,currency,lead_name,status,confirmation_code,commission_ledger(commission_amount,currency)` +
+      `&order=created_at.desc&limit=500`,
+  );
+  const bookings = Array.isArray(rows) ? rows : [];
+  const bookings_total = bookings.length;
+  const bookings_30d = periodCutoff
+    ? bookings.filter((b) => b.created_at && b.created_at >= periodCutoff).length
+    : bookings_total;
+  const bookings_month = bookings.filter((b) => b.created_at && b.created_at >= monthStart).length;
+  const last_booking_at = bookings.length ? bookings[0].created_at : null;
+  let lifetime_commission = 0;
+  let currency = "CAD";
+  for (const b of bookings) {
+    const ledger = Array.isArray(b.commission_ledger) ? b.commission_ledger[0] : null;
+    if (ledger) {
+      lifetime_commission += Number(ledger.commission_amount) || 0;
+      if (ledger.currency) currency = ledger.currency;
+    }
+  }
+
+  // Per-staff click count comes from the personal short link
+  // (short_links.staff_id = this id). One row at most.
+  const links = await supabaseSelect(
+    env,
+    `short_links?staff_id=eq.${encodeURIComponent(staffId)}` +
+      `&link_type=eq.staff&status=eq.active` +
+      `&select=short_url,short_path,click_count_cached,last_clicked_at&limit=1`,
+  );
+  const link = (links && links[0]) || null;
+  const clicks_total = link && Number.isFinite(Number(link.click_count_cached))
+    ? Number(link.click_count_cached) : 0;
+  const conversion_pct = clicks_total > 0
+    ? Number(((bookings_total / clicks_total) * 100).toFixed(1))
+    : null;
+
+  // Recent 5 — already sorted from the bookings fetch.
+  const recent = bookings.slice(0, 5).map((b) => {
+    const ledger = Array.isArray(b.commission_ledger) ? b.commission_ledger[0] : null;
+    return {
+      id: b.id,
+      confirmation_code: b.confirmation_code,
+      created_at: b.created_at,
+      date: b.date,
+      tour_title: b.tour_title,
+      amount: b.amount,
+      currency: b.currency,
+      lead_name: b.lead_name,
+      status: b.status,
+      commission_amount: ledger ? Number(ledger.commission_amount) || 0 : 0,
+    };
+  });
+
+  return jsonResponse({
+    period,
+    bookings_total,
+    bookings_30d,
+    bookings_month,
+    last_booking_at,
+    clicks_total,
+    clicks_last_at: link && link.last_clicked_at || null,
+    conversion_pct,
+    lifetime_commission,
+    currency,
+    short_url: link && link.short_url || null,
+    recent_bookings: recent,
+  }, 200, request);
 }
 
 async function handleAdminHotelUserCreate(request, env) {
