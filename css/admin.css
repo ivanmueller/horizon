@@ -2531,6 +2531,48 @@ select.hd-bankf__input { appearance: auto; }
   margin-left: 4px;
 }
 
+/* Row-action popover. The kebab itself is non-destructive — it
+   only toggles this menu. Destructive options live inside as
+   explicit choices so a single click on the dots can never
+   trigger a deletion. Card surface mirrors the standard popover
+   pattern used elsewhere in /admin/: 1px border, 8px radius,
+   two-layer soft shadow. */
+.hd-rowmenu { position: relative; display: inline-block; }
+.hd-rowmenu__pop {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 50;
+  min-width: 160px;
+  padding: 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow:
+    0 8px 24px rgba(15, 23, 42, 0.10),
+    0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.hd-rowmenu__pop[hidden] { display: none; }
+.hd-rowmenu__item {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  border: 0;
+  background: transparent;
+  border-radius: 4px;
+  text-align: left;
+  font-size: var(--t-sm);
+  color: var(--text);
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast);
+}
+.hd-rowmenu__item:hover,
+.hd-rowmenu__item:focus-visible { background: var(--bg-subtle); }
+.hd-rowmenu__item:focus-visible { outline: none; }
+.hd-rowmenu__item--danger { color: var(--bad-fg); }
+.hd-rowmenu__item--danger:hover { background: #fdecec; }
+.hd-rowmenu__item:disabled { opacity: .5; cursor: default; }
+
 /* Stripe-style rows: label bolded above the value, tight inner
    gap, generous outer spacing between fields. The whole sidebar
    reads like a definition list rather than a table. */
