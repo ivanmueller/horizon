@@ -2953,8 +2953,7 @@
     }
     function closePlEdit() {
       plEditModal.hidden = true;
-      const menu = document.getElementById('plEditMenu');
-      if (menu) menu.hidden = true;
+      plEditMenuClose();
     }
 
     // Header strip writer. Reads from the table row's dataset (already
@@ -3002,27 +3001,45 @@
     }
 
     // Header kebab menu — open/close + outside-click dismiss.
+    // The outside-click handler listens in the capture phase on
+    // pointerdown so it fires before any descendant's click handler
+    // can stopPropagation it. Click-on-button toggles; click-elsewhere
+    // closes; ESC closes.
     const plEditMenuBtn = document.getElementById('plEditMenuBtn');
     const plEditMenu    = document.getElementById('plEditMenu');
+    function plEditMenuClose() {
+      if (!plEditMenu || plEditMenu.hidden) return;
+      plEditMenu.hidden = true;
+      if (plEditMenuBtn) plEditMenuBtn.setAttribute('aria-expanded', 'false');
+    }
+    function plEditMenuToggle() {
+      if (!plEditMenu || !plEditMenuBtn) return;
+      const willOpen = plEditMenu.hidden;
+      plEditMenu.hidden = !willOpen;
+      plEditMenuBtn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    }
     if (plEditMenuBtn && plEditMenu) {
       plEditMenuBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const open = plEditMenu.hidden;
-        plEditMenu.hidden = !open;
-        plEditMenuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        plEditMenuToggle();
       });
-      document.addEventListener('click', (e) => {
+      // Capture-phase pointerdown — runs before any click handler in
+      // the modal subtree, so nothing can swallow it.
+      document.addEventListener('pointerdown', (e) => {
         if (plEditMenu.hidden) return;
-        if (!plEditMenu.contains(e.target) && e.target !== plEditMenuBtn) {
-          plEditMenu.hidden = true;
-          plEditMenuBtn.setAttribute('aria-expanded', 'false');
+        const path = e.composedPath ? e.composedPath() : [];
+        if (path.includes(plEditMenu) || path.includes(plEditMenuBtn)) return;
+        plEditMenuClose();
+      }, true);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !plEditMenu.hidden) {
+          plEditMenuClose();
         }
       });
       plEditMenu.addEventListener('click', async (e) => {
         const btn = e.target.closest('[data-pl-action]');
         if (!btn || !_plEditId) return;
-        plEditMenu.hidden = true;
-        plEditMenuBtn.setAttribute('aria-expanded', 'false');
+        plEditMenuClose();
         const action = btn.dataset.plAction;
         if (action === 'pause' || action === 'resume') {
           await setPlacementStatus(_plEditId, action === 'pause' ? 'paused' : 'active');
