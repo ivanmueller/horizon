@@ -3001,22 +3001,27 @@
     }
 
     // Header kebab menu — open/close + outside-click dismiss.
-    // Direct onclick on each menu item (no delegation) so a click on
-    // Pause / Retire is guaranteed to fire its handler and close the
-    // menu, regardless of any modal-internal stopPropagation. A plain
-    // mousedown listener on document handles outside-click dismissal.
-    const plEditMenuBtn = document.getElementById('plEditMenuBtn');
-    const plEditMenu    = document.getElementById('plEditMenu');
+    // Delegates EVERY interaction (kebab toggle, menu item activation,
+    // outside-click dismissal) off document.body so the binding can't
+    // miss the menu elements at load time and so a single source of
+    // truth handles the logic. Previous direct-binding versions kept
+    // failing for the user and a delegated approach removes every
+    // timing / scope variable from the equation.
+    function plEditMenuEl()    { return document.getElementById('plEditMenu'); }
+    function plEditMenuBtnEl() { return document.getElementById('plEditMenuBtn'); }
     function plEditMenuClose() {
-      if (!plEditMenu || plEditMenu.hidden) return;
-      plEditMenu.hidden = true;
-      if (plEditMenuBtn) plEditMenuBtn.setAttribute('aria-expanded', 'false');
+      const m = plEditMenuEl();
+      const b = plEditMenuBtnEl();
+      if (m && !m.hidden) m.hidden = true;
+      if (b) b.setAttribute('aria-expanded', 'false');
     }
     function plEditMenuToggle() {
-      if (!plEditMenu || !plEditMenuBtn) return;
-      const willOpen = plEditMenu.hidden;
-      plEditMenu.hidden = !willOpen;
-      plEditMenuBtn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+      const m = plEditMenuEl();
+      const b = plEditMenuBtnEl();
+      if (!m || !b) return;
+      const willOpen = m.hidden;
+      m.hidden = !willOpen;
+      b.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
     }
     async function plEditMenuRunAction(action) {
       plEditMenuClose();
@@ -3029,33 +3034,30 @@
         retirePlacement(_plEditId, name);
       }
     }
-    if (plEditMenuBtn && plEditMenu) {
-      plEditMenuBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        plEditMenuToggle();
-      });
-      // Each menu item gets its own click handler so the menu always
-      // closes even if the action fails or _plEditId is somehow stale.
-      plEditMenu.querySelectorAll('[data-pl-action]').forEach((btn) => {
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          plEditMenuRunAction(btn.dataset.plAction);
-        });
-      });
-      // Mousedown outside the menu and the kebab closes the menu.
-      // Plain bubble-phase listener — simpler than capture and works
-      // for every input device in every browser.
-      document.addEventListener('mousedown', (e) => {
-        if (plEditMenu.hidden) return;
-        if (plEditMenu.contains(e.target)) return;
-        if (plEditMenuBtn.contains(e.target)) return;
+    // Single delegated click handler on document handles all three
+    // interactions: kebab toggle, menu item activation, outside-click.
+    document.addEventListener('click', (e) => {
+      const menu = plEditMenuEl();
+      if (!menu) return;
+      // 1. Kebab button toggles the menu.
+      const kebab = e.target.closest('#plEditMenuBtn');
+      if (kebab) { plEditMenuToggle(); return; }
+      // 2. A menu item runs its action and closes the menu.
+      const item = e.target.closest('#plEditMenu [data-pl-action]');
+      if (item) {
+        e.preventDefault();
+        plEditMenuRunAction(item.dataset.plAction);
+        return;
+      }
+      // 3. Anything else — outside the menu — closes it.
+      if (!menu.hidden && !menu.contains(e.target)) {
         plEditMenuClose();
-      });
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && !plEditMenu.hidden) plEditMenuClose();
-      });
-    }
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      const m = plEditMenuEl();
+      if (e.key === 'Escape' && m && !m.hidden) plEditMenuClose();
+    });
 
     // Status flip used by the header Pause / Resume action. Reuses
     // the same PATCH endpoint as the form submit but only touches
