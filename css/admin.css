@@ -3587,42 +3587,65 @@ select.hd-bankf__input { appearance: auto; }
   text-align: center;
 }
 
-/* Recent activity — populated-row pattern (ready for live data). */
+/* Recent activity — Stripe-style timeline. Items stack with a subtle
+   vertical connector running through the icon column so the feed
+   reads as a sequence, not a list. Notes carry a byline + kebab;
+   system events (e.g. "Hotel was created") show just the title and
+   timestamp. */
 .hd-activity { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .hd-activity__item {
+  position: relative;
   display: grid;
-  grid-template-columns: 28px 1fr auto;
+  grid-template-columns: 20px 1fr auto;
   gap: var(--s3);
   align-items: flex-start;
-  padding: var(--s3) var(--s2);
-  border-bottom: 1px solid var(--border);
-  transition: background 100ms;
+  padding: var(--s2) 0 var(--s3);
 }
-.hd-activity__item:last-child { border-bottom: 0; }
-.hd-activity__item:hover { background: var(--bg-subtle); }
+.hd-activity__item:last-child { padding-bottom: 0; }
+.hd-activity__item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 9px;   /* center of the 20px icon column */
+  top: 32px;   /* below the icon */
+  bottom: -2px;
+  width: 1px;
+  background: var(--border);
+}
 .hd-activity__icon {
-  width: 24px;
-  height: 24px;
-  border-radius: 999px;
+  position: relative;
+  z-index: 1;
+  width: 20px;
+  height: 20px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: #fff;
 }
-.hd-activity__icon svg { width: 12px; height: 12px; }
-.hd-activity__icon--booking { background: var(--accent); }
-.hd-activity__icon--email   { background: #2563EB; }
-.hd-activity__icon--payout  { background: #047857; }
+.hd-activity__icon svg { width: 16px; height: 16px; }
+.hd-activity__icon--hotel_created { color: #16A34A; }   /* green person */
+.hd-activity__icon--note          { color: var(--text-muted); }
+.hd-activity__icon--booking { color: var(--accent); }
+.hd-activity__icon--email   { color: #2563EB; }
+.hd-activity__icon--payout  { color: #047857; }
 .hd-activity__icon--other,
-.hd-activity__icon--system  { background: var(--text-faint); }
+.hd-activity__icon--system  { color: var(--text-faint); }
 .hd-activity__text { min-width: 0; }
 .hd-activity__title {
   font-size: var(--t-sm);
   color: var(--text);
   line-height: 1.4;
+  word-wrap: break-word;
 }
 .hd-activity__title strong { font-weight: 600; }
+.hd-activity__title em { font-style: italic; }
+
+/* Kebab column for note rows; events have no kebab and the column
+   collapses to zero width via the auto track. */
+.hd-activity__actions {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 2px;
+}
 /* Inline mono pill — used for referral codes inside activity titles
    and for HTTP status codes in the Logs table. */
 .hd-pill-mono {
@@ -3641,12 +3664,125 @@ select.hd-bankf__input { appearance: auto; }
   color: var(--text-muted);
 }
 .hd-pos { color: #047857; font-feature-settings: 'tnum' 1; }
+/* Timestamp reads as a quiet link — underlined, muted blue-grey —
+   matching the Stripe reference. Hover deepens the colour without
+   moving the underline. */
 .hd-activity__time {
   font-size: var(--t-xs);
-  color: var(--text-faint);
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 2px;
   white-space: nowrap;
-  flex-shrink: 0;
-  padding-top: 2px;
+  transition: color var(--t-fast), text-decoration-color var(--t-fast);
+}
+.hd-activity__time:hover {
+  color: var(--text);
+  text-decoration-color: var(--text-muted);
+}
+.hd-activity__meta-by {
+  color: var(--text-faint);
+  margin-left: 6px;
+}
+
+/* Note composer. Renders inline above the feed when "+ Add note"
+   is open. Focus ring on the textarea matches the standard input
+   pattern; the hint chips render below the textarea on the left,
+   action buttons on the right with their keyboard shortcut chips
+   inline. */
+.hd-notef {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  padding-bottom: var(--s3);
+  margin-bottom: var(--s2);
+  border-bottom: 1px solid var(--border);
+}
+.hd-notef__input {
+  width: 100%;
+  min-height: 88px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: var(--t-sm);
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  resize: vertical;
+  transition: border-color var(--t-fast), box-shadow var(--t-fast);
+}
+.hd-notef__input::placeholder { color: var(--text-faint); }
+.hd-notef__input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.hd-notef__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  flex-wrap: wrap;
+}
+.hd-notef__hints {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+}
+.hd-notef__hint {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0;
+}
+.hd-notef__hint strong { font-weight: 700; }
+.hd-notef__hint em { font-style: italic; }
+.hd-notef__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+/* Inline keyboard-shortcut chip — used inside Cancel / Add note
+   buttons to mirror the Stripe reference. The "on-primary" variant
+   tones down for the accent-filled Add note button. */
+.hd-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  margin-left: 6px;
+  padding: 0 4px;
+  font: inherit;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  line-height: 1;
+  color: var(--text-muted);
+  background: var(--bg-sunken);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+}
+.hd-kbd--on-primary {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+.hd-kbd-plus {
+  margin-left: 4px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* The "+ Add note" trigger lives in the section header. Same ghost
+   button as the rest of /admin/; the leading "+" is a quieter
+   weight so the label is the dominant glyph. */
+.hd-activity__addbtn { gap: 4px; }
+.hd-activity__addbtn-plus {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-muted);
 }
 
 /* ── Short Links global page (Phase 6) ────────────────────────── */
