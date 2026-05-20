@@ -6887,6 +6887,14 @@
       // section on success.
       const openForm = () => {
         const today = new Date().toISOString().slice(0, 10);
+        // One key per form-open; survives retries within the same
+        // form instance so the server dedupes a re-submit instead of
+        // inserting a duplicate row. randomUUID() is available in
+        // every modern browser; fallback uses Math.random for the
+        // unlikely no-crypto case so we always send *something*.
+        const idempotencyKey = (typeof crypto !== 'undefined' && crypto.randomUUID)
+          ? crypto.randomUUID()
+          : 'k_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
         body.innerHTML =
           '<div class="hd-bankf">' +
             '<label class="hd-bankf__field"><span class="hd-bankf__label">Amount (' + escapeHtml(currency) + ')</span>' +
@@ -6930,7 +6938,11 @@
           try {
             const res = await fetch(BOKUN_API_BASE + '/api/admin/payments', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: 'Bearer ' + session.access_token,
+                'Idempotency-Key': idempotencyKey,
+              },
               body: JSON.stringify(payload),
             });
             const d = await res.json();
@@ -6938,6 +6950,8 @@
             await fetchAndRender();
             // Refresh the events timeline so the new payment_created
             // event shows up at the top without a page reload.
+            // (A server-side dedupe returns 200 + the original row
+            // without a new event, so this is a no-op in that case.)
             renderHotelEvents(h, els);
           } catch (err) {
             saveBtn.disabled = false;
