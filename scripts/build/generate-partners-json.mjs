@@ -62,7 +62,7 @@ function num(v) {
 async function main() {
   const hotelFields =
     "id,code,name,location,type,status,effective_date," +
-    "default_tracking_code,commission_pct,kickback_pool_pct,notes";
+    "default_tracking_code,commission_pct,kickback_pool_pct";
   const staffFields =
     "hotel_id,name,tracking_code,kickback_pct,status";
 
@@ -99,7 +99,6 @@ async function main() {
       commission_pct:        num(h.commission_pct),
       kickback_pool_pct:     num(h.kickback_pool_pct),
       employees:             staffByHotel.get(h.id) || [],
-      notes:                 h.notes,
     })),
   };
 
