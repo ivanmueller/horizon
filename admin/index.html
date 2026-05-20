@@ -5121,19 +5121,58 @@
             return;
           }
           const total = list.reduce((a, p) => a + (Number(p.amount) || 0), 0);
-          const rows = '<dl class="hd-side__list">' + list.map((p) =>
-              '<div class="hd-side__row"><dt class="hd-side__label">' +
-                escapeHtml(formatHumanDate((p.paid_at || '').slice(0, 10)) || p.paid_at || '—') +
-                ' · ' + escapeHtml(methodLabel(p.method)) +
-                (p.period ? ' · ' + escapeHtml(p.period) : '') + '</dt>' +
-              '<dd class="hd-side__value">' + escapeHtml(formatHotelMoney(p.amount || 0, currency)) +
-                (p.reference ? ' <span class="hd-pay__ref">' + escapeHtml(p.reference) + '</span>' : '') +
-                (p.note ? '<br><span class="hd-pay__note">' + escapeHtml(p.note) + '</span>' : '') +
-                ' <button type="button" class="hd-pay__del" data-del="' + escapeHtml(p.id) + '" title="Delete this record">✕</button>' +
-              '</dd></div>').join('') + '</dl>' +
-              '<p class="hd-bank__hint">Total recorded: <strong>' +
-                escapeHtml(formatHotelMoney(total, currency)) + '</strong></p>';
-          payoutsBody.innerHTML = rows;
+          const code = (currency || 'CAD').toUpperCase();
+          const fmtAmount = (n) => (Math.round((n || 0) * 100) / 100).toFixed(2);
+
+          const bodyRows = list.map((p) => {
+            const ref    = p.reference ? p.reference : '—';
+            const period = p.period ? p.period : '—';
+            const paidOn = formatHumanDate((p.paid_at || '').slice(0, 10)) || (p.paid_at || '—');
+            return (
+              '<tr>' +
+                '<td>' +
+                  '<span class="bk-table__amount">' + escapeHtml(fmtAmount(p.amount)) + '</span>' +
+                  '<span class="bk-table__currency">' + escapeHtml(code) + '</span>' +
+                  ' <span class="bk-pill bk-pill--ok">Paid</span>' +
+                '</td>' +
+                '<td>' + escapeHtml(methodLabel(p.method)) + '</td>' +
+                '<td class="bk-table__desc">' + escapeHtml(ref) + '</td>' +
+                '<td class="bk-table__desc">' + escapeHtml(period) + '</td>' +
+                '<td class="bk-table__muted">' + escapeHtml(paidOn) + '</td>' +
+                '<td class="bk-table__kebab">' +
+                  '<button type="button" class="bk-kebab" data-del="' + escapeHtml(p.id) +
+                    '" aria-label="Delete this record" title="Delete this record">⋯</button>' +
+                '</td>' +
+              '</tr>' +
+              (p.note
+                ? '<tr class="hd-payouts__noterow"><td colspan="6" class="hd-payouts__note">' +
+                    escapeHtml(p.note) + '</td></tr>'
+                : '')
+            );
+          }).join('');
+
+          payoutsBody.innerHTML =
+            '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
+              '<table class="bk-table bk-table--payouts">' +
+                '<thead><tr>' +
+                  '<th>Total</th>' +
+                  '<th>Method</th>' +
+                  '<th>Reference</th>' +
+                  '<th>Period</th>' +
+                  '<th>Paid on</th>' +
+                  '<th aria-label="Actions"></th>' +
+                '</tr></thead>' +
+                '<tbody>' + bodyRows + '</tbody>' +
+              '</table>' +
+            '</div></div>' +
+            '<div class="hd-payouts__footer">' +
+              '<span class="hd-payouts__results">' +
+                list.length + (list.length === 1 ? ' result' : ' results') +
+              '</span>' +
+              '<span class="hd-payouts__total">Total recorded ' +
+                '<strong>' + escapeHtml(code + ' ' + fmtAmount(total)) + '</strong>' +
+              '</span>' +
+            '</div>';
 
           payoutsBody.querySelectorAll('[data-del]').forEach((b) => {
             b.onclick = async () => {
