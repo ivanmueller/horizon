@@ -5140,8 +5140,14 @@
                 '<td class="bk-table__desc">' + escapeHtml(period) + '</td>' +
                 '<td class="bk-table__muted">' + escapeHtml(paidOn) + '</td>' +
                 '<td class="bk-table__kebab">' +
-                  '<button type="button" class="bk-kebab" data-del="' + escapeHtml(p.id) +
-                    '" aria-label="Delete this record" title="Delete this record">⋯</button>' +
+                  '<div class="hd-rowmenu" data-rowmenu>' +
+                    '<button type="button" class="bk-kebab" data-rowmenu-trigger ' +
+                      'aria-haspopup="menu" aria-expanded="false" aria-label="Row actions">⋯</button>' +
+                    '<div class="hd-rowmenu__pop" role="menu" hidden>' +
+                      '<button type="button" class="hd-rowmenu__item hd-rowmenu__item--danger" ' +
+                        'role="menuitem" data-del="' + escapeHtml(p.id) + '">Delete record</button>' +
+                    '</div>' +
+                  '</div>' +
                 '</td>' +
               '</tr>' +
               (p.note
@@ -5157,9 +5163,9 @@
                 '<thead><tr>' +
                   '<th>Total</th>' +
                   '<th>Method</th>' +
-                  '<th>Reference</th>' +
+                  '<th>Invoice number</th>' +
                   '<th>Period</th>' +
-                  '<th>Paid on</th>' +
+                  '<th>Due</th>' +
                   '<th aria-label="Actions"></th>' +
                 '</tr></thead>' +
                 '<tbody>' + bodyRows + '</tbody>' +
@@ -5173,6 +5179,45 @@
                 '<strong>' + escapeHtml(code + ' ' + fmtAmount(total)) + '</strong>' +
               '</span>' +
             '</div>';
+
+          // Row-action popover: clicking the kebab toggles the menu;
+          // clicking anywhere else closes it. Delete now lives inside
+          // the menu so a single click on the kebab never destructs.
+          const closeAllRowMenus = (except) => {
+            payoutsBody.querySelectorAll('[data-rowmenu]').forEach((wrap) => {
+              if (wrap === except) return;
+              const trig = wrap.querySelector('[data-rowmenu-trigger]');
+              const pop  = wrap.querySelector('.hd-rowmenu__pop');
+              if (trig) trig.setAttribute('aria-expanded', 'false');
+              if (pop)  pop.hidden = true;
+              wrap.classList.remove('hd-rowmenu--open');
+            });
+          };
+          payoutsBody.querySelectorAll('[data-rowmenu-trigger]').forEach((trig) => {
+            trig.onclick = (e) => {
+              e.stopPropagation();
+              const wrap = trig.closest('[data-rowmenu]');
+              const pop  = wrap && wrap.querySelector('.hd-rowmenu__pop');
+              const open = wrap && wrap.classList.contains('hd-rowmenu--open');
+              closeAllRowMenus(open ? null : wrap);
+              if (!wrap || !pop) return;
+              if (open) {
+                wrap.classList.remove('hd-rowmenu--open');
+                pop.hidden = true;
+                trig.setAttribute('aria-expanded', 'false');
+              } else {
+                wrap.classList.add('hd-rowmenu--open');
+                pop.hidden = false;
+                trig.setAttribute('aria-expanded', 'true');
+              }
+            };
+          });
+          if (!payoutsBody._rowmenuDocBound) {
+            document.addEventListener('click', (e) => {
+              if (!e.target.closest('[data-rowmenu]')) closeAllRowMenus(null);
+            });
+            payoutsBody._rowmenuDocBound = true;
+          }
 
           payoutsBody.querySelectorAll('[data-del]').forEach((b) => {
             b.onclick = async () => {
