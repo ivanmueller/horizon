@@ -4968,12 +4968,6 @@
       if (!staff.length) {
         els.empBody.innerHTML = '<div class="hd-empty">No employees yet.</div>';
       } else {
-        // Active staff get a rank for the top-3 medal. Inactive
-        // staff are unranked.
-        const activeRanked = staff
-          .filter((s) => s.status === 'active')
-          .map((s, i) => ({ id: s.id, rank: i + 1 }))
-          .reduce((acc, x) => { acc[x.id] = x.rank; return acc; }, {});
         const rows = staff.map((s) => {
           const initials = (s.name || '?')
             .split(/\s+/).filter(Boolean).slice(0, 2)
@@ -4981,11 +4975,6 @@
           const statusInline = s.status === 'active'
             ? '<span class="bk-pill bk-pill--ok bk-pill--xs">Active</span>'
             : '<span class="bk-pill bk-pill--neutral bk-pill--xs">' + escapeHtml(s.status || '—') + '</span>';
-          const rank = activeRanked[s.id];
-          const medal = rank === 1 ? '🥇' : (rank === 2 ? '🥈' : (rank === 3 ? '🥉' : ''));
-          const medalHtml = medal
-            ? '<span class="hd-emp__medal" title="Rank #' + rank + ' by commission" aria-label="Rank ' + rank + '">' + medal + '</span>'
-            : '';
           const earned = formatHotelMoney(s.lifetime_commission || 0, currency);
           const refCode = s.tracking_code || '';
           return (
@@ -4993,9 +4982,7 @@
               '<td class="hd-user">' +
                 '<span class="hd-avatar" aria-hidden="true">' + escapeHtml(initials) + '</span>' +
                 '<div class="hd-user__body">' +
-                  '<div class="hd-user__name">' +
-                    medalHtml + escapeHtml(s.name || '—') +
-                  '</div>' +
+                  '<div class="hd-user__name">' + escapeHtml(s.name || '—') + '</div>' +
                   '<div class="hd-user__sub">' + statusInline +
                     (s.role ? ' · ' + escapeHtml(s.role) : '') +
                   '</div>' +

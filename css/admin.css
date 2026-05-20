@@ -3107,7 +3107,6 @@ select.hd-bankf__input { appearance: auto; }
   align-items: center;
   gap: 6px;
 }
-.hd-emp__medal { font-size: 0.9em; line-height: 1; }
 /* Compact pill variant for inline use inside other cells. */
 .bk-pill--xs {
   padding: 1px 6px;
