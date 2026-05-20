@@ -265,6 +265,14 @@ export default {
 
       // ── Hotel staff CRUD ────────────────────────────────────────
       if (segs[0] === "api" && segs[1] === "admin" && segs[2] === "hotel-staff") {
+        // Stats endpoint: /hotel-staff/:id/stats?period=last30
+        if (segs[3] && segs[4] === "stats" && !segs[5] && request.method === "GET") {
+          return await handleAdminStaffStats(segs[3], request, env);
+        }
+        // Activity log: /hotel-staff/:id/events
+        if (segs[3] && segs[4] === "events" && !segs[5] && request.method === "GET") {
+          return await handleAdminStaffEvents(segs[3], request, env);
+        }
         if (request.method === "POST" && !segs[3]) return await handleAdminStaffCreate(request, env);
         if (request.method === "PATCH" && segs[3]) return await handleAdminStaffUpdate(segs[3], request, env);
         if (request.method === "DELETE" && segs[3]) return await handleAdminStaffTerminate(segs[3], request, env);
@@ -1737,6 +1745,34 @@ async function handleAdminHotelTerminate(id, request, env) {
   return jsonResponse({ hotel: normaliseHotel(updated[0]) }, 200, request);
 }
 
+// Activity log writer for staff. Same fire-and-forget contract as
+// writePlacementEvent — audit data never blocks a user mutation.
+async function writeStaffEvent(env, staffId, eventType, payload, actorEmail) {
+  try {
+    await supabaseInsert(env, "staff_events", [{
+      staff_id:    staffId,
+      event_type:  eventType,
+      actor_email: actorEmail || null,
+      payload:     payload || {},
+    }]);
+  } catch (err) {
+    console.warn(`staff_event ${eventType} for ${staffId} failed: ${err && err.message}`);
+  }
+}
+
+async function handleAdminStaffEvents(staffId, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(staffId)) return jsonResponse({ error: "invalid staff id" }, 400, request);
+  const rows = await supabaseSelect(
+    env,
+    `staff_events?staff_id=eq.${encodeURIComponent(staffId)}` +
+      `&select=id,event_type,actor_email,payload,created_at` +
+      `&order=created_at.desc&limit=50`,
+  );
+  return jsonResponse({ events: rows || [] }, 200, request);
+}
+
 async function handleAdminStaffCreate(request, env) {
   const auth = await requireHorizonAdmin(request, env);
   if (auth.error) return auth.error;
@@ -1751,6 +1787,10 @@ async function handleAdminStaffCreate(request, env) {
     logMutation(request, auth.claims, "create", "staff", staff.id, {
       hotel_id: v.row.hotel_id, tracking_code: staff.tracking_code, name: staff.name,
     });
+    await writeStaffEvent(env, staff.id, "onboarded", {
+      tracking_code: staff.tracking_code,
+      kickback_pct: staff.kickback_pct,
+    }, auth.claims && auth.claims.email);
     const payload = { staff: normaliseStaff(staff) };
     if (shortLinkWarning) payload.short_link_warning = shortLinkWarning;
     return jsonResponse(payload, 201, request);
@@ -1771,6 +1811,16 @@ async function handleAdminStaffUpdate(id, request, env) {
   if (v.error) return jsonResponse({ error: v.error }, 400, request);
   delete v.row.hotel_id; // can't reassign staff to a different hotel
 
+  // Snapshot prior rate so a rate_changed event is only written
+  // when the kickback actually changes.
+  let priorRate = null;
+  if (v.row.kickback_pct !== undefined) {
+    const before = await supabaseSelect(
+      env, `hotel_staff?id=eq.${encodeURIComponent(id)}&select=kickback_pct&limit=1`,
+    );
+    priorRate = before[0] ? before[0].kickback_pct : null;
+  }
+
   const updated = await supabaseUpdate(
     env, `hotel_staff?id=eq.${encodeURIComponent(id)}`, v.row, { returnRow: true },
   );
@@ -1778,6 +1828,12 @@ async function handleAdminStaffUpdate(id, request, env) {
     return jsonResponse({ error: "staff not found" }, 404, request);
   }
   logMutation(request, auth.claims, "update", "staff", id, { fields: Object.keys(v.row) });
+  if (v.row.kickback_pct !== undefined &&
+      Number(priorRate) !== Number(v.row.kickback_pct)) {
+    await writeStaffEvent(env, id, "rate_changed", {
+      from: priorRate, to: v.row.kickback_pct,
+    }, auth.claims && auth.claims.email);
+  }
   return jsonResponse({ staff: normaliseStaff(updated[0]) }, 200, request);
 }
 
@@ -1786,6 +1842,10 @@ async function handleAdminStaffTerminate(id, request, env) {
   if (auth.error) return auth.error;
   if (!UUID_RE.test(id)) return jsonResponse({ error: "invalid staff id" }, 400, request);
 
+  const before = await supabaseSelect(
+    env, `hotel_staff?id=eq.${encodeURIComponent(id)}&select=status&limit=1`,
+  );
+  const priorStatus = before[0] && before[0].status;
   const updated = await supabaseUpdate(
     env, `hotel_staff?id=eq.${encodeURIComponent(id)}`,
     { status: "terminated" }, { returnRow: true },
@@ -1794,6 +1854,9 @@ async function handleAdminStaffTerminate(id, request, env) {
     return jsonResponse({ error: "staff not found" }, 404, request);
   }
   logMutation(request, auth.claims, "terminate", "staff", id);
+  await writeStaffEvent(env, id, "terminated", {
+    from: priorStatus, to: "terminated",
+  }, auth.claims && auth.claims.email);
   return jsonResponse({ staff: normaliseStaff(updated[0]) }, 200, request);
 }
 
@@ -2273,6 +2336,101 @@ async function handleAdminPlacementStats(placementId, request, env) {
       error: "Short.io stats unavailable",
     }, 200, request);
   }
+}
+
+// Per-staff stats: bookings (total + this month + period), last
+// booking, clicks + conversion %, lifetime commission, recent
+// bookings (last 5 with their commission). Powers the Employees
+// table lazy-load + the Employee lightbox scoreboard.
+async function handleAdminStaffStats(staffId, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(staffId)) return jsonResponse({ error: "invalid staff id" }, 400, request);
+
+  const url = new URL(request.url);
+  let period = url.searchParams.get("period") || "last30";
+  if (!PLACEMENT_STAT_PERIODS.has(period)) period = "last30";
+  const periodCutoff = periodCutoffIso(period);
+  const monthStart = (() => {
+    const d = new Date();
+    d.setUTCDate(1);
+    d.setUTCHours(0, 0, 0, 0);
+    return d.toISOString();
+  })();
+
+  // Pull a flat list of this staff's confirmed bookings (recent first
+  // so we can slice the top 5 for the lightbox without a second
+  // round-trip). At realistic per-employee volumes this is small.
+  const rows = await supabaseSelect(
+    env,
+    `bookings?staff_id=eq.${encodeURIComponent(staffId)}` +
+      `&status=eq.confirmed` +
+      `&select=id,created_at,date,tour_title,amount,currency,lead_name,status,confirmation_code,commission_ledger(commission_amount,currency)` +
+      `&order=created_at.desc&limit=500`,
+  );
+  const bookings = Array.isArray(rows) ? rows : [];
+  const bookings_total = bookings.length;
+  const bookings_30d = periodCutoff
+    ? bookings.filter((b) => b.created_at && b.created_at >= periodCutoff).length
+    : bookings_total;
+  const bookings_month = bookings.filter((b) => b.created_at && b.created_at >= monthStart).length;
+  const last_booking_at = bookings.length ? bookings[0].created_at : null;
+  let lifetime_commission = 0;
+  let currency = "CAD";
+  for (const b of bookings) {
+    const ledger = Array.isArray(b.commission_ledger) ? b.commission_ledger[0] : null;
+    if (ledger) {
+      lifetime_commission += Number(ledger.commission_amount) || 0;
+      if (ledger.currency) currency = ledger.currency;
+    }
+  }
+
+  // Per-staff click count comes from the personal short link
+  // (short_links.staff_id = this id). One row at most.
+  const links = await supabaseSelect(
+    env,
+    `short_links?staff_id=eq.${encodeURIComponent(staffId)}` +
+      `&link_type=eq.staff&status=eq.active` +
+      `&select=short_url,short_path,click_count_cached,last_clicked_at&limit=1`,
+  );
+  const link = (links && links[0]) || null;
+  const clicks_total = link && Number.isFinite(Number(link.click_count_cached))
+    ? Number(link.click_count_cached) : 0;
+  const conversion_pct = clicks_total > 0
+    ? Number(((bookings_total / clicks_total) * 100).toFixed(1))
+    : null;
+
+  // Recent 5 — already sorted from the bookings fetch.
+  const recent = bookings.slice(0, 5).map((b) => {
+    const ledger = Array.isArray(b.commission_ledger) ? b.commission_ledger[0] : null;
+    return {
+      id: b.id,
+      confirmation_code: b.confirmation_code,
+      created_at: b.created_at,
+      date: b.date,
+      tour_title: b.tour_title,
+      amount: b.amount,
+      currency: b.currency,
+      lead_name: b.lead_name,
+      status: b.status,
+      commission_amount: ledger ? Number(ledger.commission_amount) || 0 : 0,
+    };
+  });
+
+  return jsonResponse({
+    period,
+    bookings_total,
+    bookings_30d,
+    bookings_month,
+    last_booking_at,
+    clicks_total,
+    clicks_last_at: link && link.last_clicked_at || null,
+    conversion_pct,
+    lifetime_commission,
+    currency,
+    short_url: link && link.short_url || null,
+    recent_bookings: recent,
+  }, 200, request);
 }
 
 async function handleAdminHotelUserCreate(request, env) {

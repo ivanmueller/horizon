@@ -544,34 +544,108 @@
     </form>
   </div>
 
-  <!-- ── Staff (employee) modal — handles add + edit ───────── -->
+  <!-- ── Employee lightbox — handles add + sectioned edit ─── -->
   <div class="modal" id="staffModal" hidden>
-    <form class="modal__card" id="staffModalForm" novalidate>
-      <div class="modal__head">
-        <h2 class="modal__title" id="staffModalTitle">Add employee</h2>
-        <button type="button" class="modal__close" id="staffModalClose" aria-label="Close">&times;</button>
+    <form class="modal__card modal__card--wide pl-modal" id="staffModalForm" novalidate>
+      <!-- Header strip: status pill, name, code with copy, top-performer badge -->
+      <div class="pl-modal__head">
+        <div class="pl-modal__headmain">
+          <span class="pl-modal__statuswrap" id="staffModalHeaderStatus"></span>
+          <h2 class="pl-modal__title" id="staffModalTitle">Add employee</h2>
+          <button type="button" class="hd-copy mono pl-modal__short" id="staffModalHeaderCode"
+                  data-copy="" title="Copy referral code" hidden>
+            <span data-detail-text>—</span>
+            <svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+          <span class="bk-pill bk-pill--info bk-pill--xs" id="staffModalTopBadge" hidden>Top performer</span>
+        </div>
+        <div class="pl-modal__headactions">
+          <button type="button" class="modal__close" id="staffModalClose" aria-label="Close">&times;</button>
+        </div>
       </div>
+
       <div class="alert alert--bad" id="staffModalError" hidden></div>
 
-      <div class="drawer-form__row">
-        <label class="drawer-form__label" for="staffModalName">Name <span class="drawer-form__req">required</span></label>
-        <input class="input" id="staffModalName" type="text" required maxlength="120"
-               placeholder="Jane Smith" autocomplete="off">
-        <span class="drawer-form__hint" id="staffModalNameHint">The tracking code (used in QR codes) is auto-assigned on creation.</span>
-      </div>
+      <!-- Scoreboard (edit mode only) ────────────────────────── -->
+      <section class="pl-modal__section" id="staffModalScoreboardSection" hidden>
+        <h3 class="pl-modal__sectiontitle">Scoreboard</h3>
+        <div class="pl-an__cards">
+          <div class="pl-an__card"><span class="pl-an__k">Bookings</span>
+            <span class="pl-an__v" id="staffModalBookings">—</span></div>
+          <div class="pl-an__card"><span class="pl-an__k">Commission</span>
+            <span class="pl-an__v" id="staffModalCommission">—</span></div>
+          <div class="pl-an__card"><span class="pl-an__k">Conversion</span>
+            <span class="pl-an__v" id="staffModalConversion">—</span></div>
+          <div class="pl-an__card"><span class="pl-an__k">Avg booking</span>
+            <span class="pl-an__v" id="staffModalAvgBooking">—</span></div>
+        </div>
+        <div class="muted" id="staffModalRankLine" style="margin-top: 8px; font-size: var(--t-sm);"></div>
+      </section>
 
-      <div class="drawer-form__row" id="staffModalTrackingRow" hidden>
-        <label class="drawer-form__label" for="staffModalTracking">Tracking code <span class="drawer-form__req">permanent</span></label>
-        <input class="input" id="staffModalTracking" type="text" disabled
-               style="font-family: var(--font-mono); font-size: 0.9em;">
-        <span class="drawer-form__hint">Auto-assigned at creation. Encoded in this employee's QR code.</span>
-      </div>
+      <!-- Recent bookings (edit mode only) ─────────────────── -->
+      <section class="pl-modal__section" id="staffModalRecentSection" hidden>
+        <h3 class="pl-modal__sectiontitle">Recent bookings</h3>
+        <div id="staffModalRecent"><div class="muted">Loading…</div></div>
+      </section>
 
-      <div class="drawer-form__row">
-        <label class="drawer-form__label" for="staffModalKickback">Kickback %</label>
-        <input class="input" id="staffModalKickback" type="number" min="0" max="100" step="0.1"
-               placeholder="5">
-      </div>
+      <!-- Configuration ────────────────────────────────────── -->
+      <section class="pl-modal__section">
+        <h3 class="pl-modal__sectiontitle">Configuration</h3>
+
+        <div class="drawer-form__row">
+          <label class="drawer-form__label" for="staffModalName">Name <span class="drawer-form__req">required</span></label>
+          <input class="input" id="staffModalName" type="text" required maxlength="120"
+                 placeholder="Jane Smith" autocomplete="off">
+          <span class="drawer-form__hint" id="staffModalNameHint">The tracking code (used in QR codes) is auto-assigned on creation.</span>
+        </div>
+
+        <div class="drawer-form__row" id="staffModalTrackingRow" hidden>
+          <label class="drawer-form__label" for="staffModalTracking">Tracking code <span class="drawer-form__req">permanent</span></label>
+          <input class="input" id="staffModalTracking" type="text" disabled
+                 style="font-family: var(--font-mono); font-size: 0.9em;">
+          <span class="drawer-form__hint">Auto-assigned at creation. Encoded in this employee's QR code.</span>
+        </div>
+
+        <div class="drawer-form__row">
+          <label class="drawer-form__label" for="staffModalKickback">Kickback %</label>
+          <input class="input" id="staffModalKickback" type="number" min="0" max="100" step="0.1"
+                 placeholder="5">
+          <span class="drawer-form__hint" id="staffModalRateHint" hidden></span>
+        </div>
+      </section>
+
+      <!-- Materials (edit mode only) ───────────────────────── -->
+      <section class="pl-modal__section" id="staffModalMaterialsSection" hidden>
+        <h3 class="pl-modal__sectiontitle">Materials</h3>
+        <div class="pl-mat__qr">
+          <div class="pl-mat__qrbox" id="staffModalQr"></div>
+          <div class="pl-mat__qrside">
+            <div class="pl-mat__qrlabel">Personal QR + short link</div>
+            <div class="pl-mat__qrhint" id="staffModalShortHint">—</div>
+            <div class="pl-mat__qrbtns">
+              <button type="button" class="btn btn--sm" id="staffModalQrPng">Download PNG</button>
+              <button type="button" class="btn btn--sm" id="staffModalQrSvg">Download SVG</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Activity log (edit mode only) ─────────────────────── -->
+      <section class="pl-modal__section" id="staffModalActivitySection" hidden>
+        <h3 class="pl-modal__sectiontitle">Activity log</h3>
+        <div id="staffModalActivity"><div class="muted">Loading…</div></div>
+      </section>
+
+      <!-- Payouts (edit mode only) ─────────────────────────── -->
+      <section class="pl-modal__section" id="staffModalPayoutsSection" hidden>
+        <h3 class="pl-modal__sectiontitle">Payouts</h3>
+        <dl class="mgr-keyvals">
+          <div class="mgr-keyvals__row"><dt>Lifetime earned</dt><dd id="staffModalLifetime">—</dd></div>
+          <div class="mgr-keyvals__row"><dt>Pending</dt>
+            <dd class="muted" title="Pending = commission accrued on confirmed bookings not yet allocated to a payout. Staff-level allocation lands when per-staff payouts ship.">—</dd></div>
+          <div class="mgr-keyvals__row"><dt>Last hotel payout</dt><dd id="staffModalLastPayout" class="muted">—</dd></div>
+        </dl>
+      </section>
 
       <div class="modal__actions">
         <button type="button" class="btn" id="staffModalCancel">Cancel</button>
@@ -4883,26 +4957,38 @@
         }
       }
 
-      // Employees & Referral Codes — primary working section. Reads
-      // straight from h.staff (same source as the drawer) so the two
-      // views can never diverge. Commission column is split into
-      // "Rate" (effective % with an "override" tag if the employee's
-      // rate differs from the hotel default) and "Earned" (lifetime
-      // payout in the hotel's currency).
-      const staff = (h.staff || []).filter((s) => s.status !== 'revoked');
+      // Employees & Referral Codes — leaderboard. Default sort:
+      // commission desc (highest-earner on top). Status pill renders
+      // inline with the name in the Employee cell. Bookings,
+      // Conversion, and Last booking lazy-hydrate per row from
+      // /api/admin/hotel-staff/:id/stats.
+      const staff = (h.staff || []).filter((s) => s.status !== 'revoked')
+        .slice()
+        .sort((a, b) => (Number(b.lifetime_commission) || 0) - (Number(a.lifetime_commission) || 0));
       const hotelDefaultPct = (h.commission_pct != null && h.kickback_pool_pct == null)
         ? Number(h.commission_pct)
         : (h.kickback_pool_pct != null ? Number(h.kickback_pool_pct) : null);
       if (!staff.length) {
         els.empBody.innerHTML = '<div class="hd-empty">No employees yet.</div>';
       } else {
+        // Active staff get a rank for the top-3 medal. Inactive
+        // staff are unranked.
+        const activeRanked = staff
+          .filter((s) => s.status === 'active')
+          .map((s, i) => ({ id: s.id, rank: i + 1 }))
+          .reduce((acc, x) => { acc[x.id] = x.rank; return acc; }, {});
         const rows = staff.map((s) => {
           const initials = (s.name || '?')
             .split(/\s+/).filter(Boolean).slice(0, 2)
             .map((w) => w[0].toUpperCase()).join('') || '?';
-          const statusPill = s.status === 'active'
-            ? '<span class="bk-pill bk-pill--ok">Active</span>'
-            : '<span class="bk-pill bk-pill--neutral">' + escapeHtml(s.status || '—') + '</span>';
+          const statusInline = s.status === 'active'
+            ? '<span class="bk-pill bk-pill--ok bk-pill--xs">Active</span>'
+            : '<span class="bk-pill bk-pill--neutral bk-pill--xs">' + escapeHtml(s.status || '—') + '</span>';
+          const rank = activeRanked[s.id];
+          const medal = rank === 1 ? '🥇' : (rank === 2 ? '🥈' : (rank === 3 ? '🥉' : ''));
+          const medalHtml = medal
+            ? '<span class="hd-emp__medal" title="Rank #' + rank + ' by commission" aria-label="Rank ' + rank + '">' + medal + '</span>'
+            : '';
           const rate = (s.kickback_pct != null) ? Number(s.kickback_pct) : null;
           const isOverride = rate != null && hotelDefaultPct != null && rate !== hotelDefaultPct;
           const rateCell = (rate != null ? rate + '%' : '—')
@@ -4911,20 +4997,26 @@
           const refCode = s.tracking_code || '';
           return (
             '<tr data-staff-row="' + escapeHtml(s.id) + '">' +
-              '<td class="hd-emp">' +
+              '<td class="hd-user">' +
                 '<span class="hd-avatar" aria-hidden="true">' + escapeHtml(initials) + '</span>' +
-                '<span class="hd-emp__name">' + escapeHtml(s.name || '—') + '</span>' +
-                (s.role ? '<span class="hd-emp__role">' + escapeHtml(s.role) + '</span>' : '') +
+                '<div class="hd-user__body">' +
+                  '<div class="hd-user__name">' +
+                    medalHtml + escapeHtml(s.name || '—') +
+                  '</div>' +
+                  '<div class="hd-user__sub">' + statusInline +
+                    (s.role ? ' · ' + escapeHtml(s.role) : '') +
+                  '</div>' +
+                '</div>' +
               '</td>' +
-              '<td>' + statusPill + '</td>' +
               '<td><button type="button" class="hd-copy mono" data-copy="' + escapeHtml(refCode) + '" title="Copy referral code">' +
                   '<span>' + escapeHtml(refCode || '—') + '</span>' +
                   '<svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
               '</button></td>' +
-              '<td class="num hd-num">0</td>' +
+              '<td class="num hd-num muted" data-staff-bookings="' + escapeHtml(s.id) + '">—</td>' +
+              '<td class="num hd-num muted" data-staff-conversion="' + escapeHtml(s.id) + '">—</td>' +
               '<td class="num hd-num">' + rateCell + '</td>' +
               '<td class="num hd-num">' + escapeHtml(earned) + '</td>' +
-              '<td class="muted">—</td>' +
+              '<td class="muted" data-staff-lastbooking="' + escapeHtml(s.id) + '">—</td>' +
               '<td class="bk-table__kebab">' +
                 '<button type="button" class="bk-kebab" data-staff-edit-id="' + escapeHtml(s.id) + '" aria-label="Edit ' + escapeHtml(s.name || '') + '">⋯</button>' +
               '</td>' +
@@ -4935,13 +5027,19 @@
           '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
             '<table class="bk-table">' +
               '<thead><tr>' +
-                '<th>Employee</th><th>Status</th><th>Referral code</th>' +
-                '<th class="num">Bookings</th><th class="num">Rate</th><th class="num">Commission</th>' +
-                '<th>Last booking</th><th></th>' +
+                '<th>Employee</th>' +
+                '<th>Code</th>' +
+                '<th class="num">Bookings' + colInfo('Confirmed bookings this employee’s referrals produced. Hover a cell for this month vs all-time.') + '</th>' +
+                '<th class="num">Conversion' + colInfo('Confirmed bookings as a % of clicks on this employee’s personal short link.') + '</th>' +
+                '<th class="num">Rate' + colInfo('Kickback percentage applied to bookings credited to this employee.') + '</th>' +
+                '<th class="num">Commission' + colInfo('Lifetime commission earned. Default sort.') + '</th>' +
+                '<th>Last booking' + colInfo('Time since the most recent confirmed booking credited to this employee.') + '</th>' +
+                '<th></th>' +
               '</tr></thead>' +
               '<tbody>' + rows + '</tbody>' +
             '</table>' +
           '</div></div>';
+        hydrateStaffStats(els);
       }
 
       // Managers — page-level section, rendered into #hdManagersBody.
@@ -5852,6 +5950,68 @@
         revenue.classList.toggle('muted', r === 0);
       }
     }
+    // Lazy stats for the Employees leaderboard. One fetch per
+    // active staff row populates Bookings + Conversion + Last
+    // booking cells. Cached in-memory per page session.
+    const _staffStatsCache = new Map();
+    function fillStaffRowStats(id, data, els) {
+      const root = els.empBody;
+      if (!root) return;
+      const esc = (s) => (CSS && CSS.escape ? CSS.escape(s) : s);
+      const bk = root.querySelector('[data-staff-bookings="' + esc(id) + '"]');
+      if (bk) {
+        const total = Number(data.bookings_total) || 0;
+        const mo    = Number(data.bookings_month) || 0;
+        bk.textContent = String(total);
+        bk.classList.toggle('muted', total === 0);
+        bk.title = mo + ' this month · ' + total + ' all-time';
+      }
+      const cv = root.querySelector('[data-staff-conversion="' + esc(id) + '"]');
+      if (cv) {
+        if (data.conversion_pct == null) {
+          cv.textContent = '—';
+          cv.classList.add('muted');
+          cv.title = 'No clicks yet';
+        } else {
+          cv.textContent = data.conversion_pct + '%';
+          cv.classList.remove('muted');
+          cv.title = (Number(data.bookings_total) || 0) + ' bookings / ' +
+                     (Number(data.clicks_total) || 0) + ' clicks';
+        }
+      }
+      const lb = root.querySelector('[data-staff-lastbooking="' + esc(id) + '"]');
+      if (lb) {
+        if (data.last_booking_at) {
+          lb.innerHTML = relativeTimeOrNever(data.last_booking_at);
+          lb.classList.remove('muted');
+        } else {
+          lb.innerHTML = '<span class="muted">Never</span>';
+        }
+      }
+    }
+    async function hydrateStaffStats(els) {
+      if (!els || !els.empBody) return;
+      const rows = els.empBody.querySelectorAll('[data-staff-bookings]');
+      rows.forEach((cell) => {
+        const id = cell.dataset.staffBookings;
+        if (!id) return;
+        if (_staffStatsCache.has(id)) {
+          fillStaffRowStats(id, _staffStatsCache.get(id), els);
+          return;
+        }
+        fetch(BOKUN_API_BASE + '/api/admin/hotel-staff/' + encodeURIComponent(id) + '/stats?period=last30', {
+          headers: { Authorization: 'Bearer ' + session.access_token },
+        })
+          .then((r) => r.ok ? r.json() : null)
+          .then((data) => {
+            if (!data) return;
+            _staffStatsCache.set(id, data);
+            fillStaffRowStats(id, data, els);
+          })
+          .catch(() => { /* silent — leaderboard cells degrade gracefully */ });
+      });
+    }
+
     async function hydratePlacementSparklines(els) {
       if (!els || !els.placementsBody) return;
       const nodes = els.placementsBody.querySelectorAll('[data-pl-spark]');
@@ -7470,6 +7630,21 @@
     const staffModalKickback    = document.getElementById('staffModalKickback');
     const staffModalSubmit  = document.getElementById('staffModalSubmit');
 
+    // Section ids that only render in edit mode. Hidden during invite.
+    const STAFF_EDIT_SECTIONS = [
+      'staffModalScoreboardSection',
+      'staffModalRecentSection',
+      'staffModalMaterialsSection',
+      'staffModalActivitySection',
+      'staffModalPayoutsSection',
+    ];
+    function setStaffEditSectionsVisible(visible) {
+      STAFF_EDIT_SECTIONS.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.hidden = !visible;
+      });
+    }
+
     function openStaffModalAdd(hotel) {
       _staffModalHotel  = hotel;
       _staffModalEditId = null;
@@ -7481,13 +7656,18 @@
       staffModalKickback.value          = '';
       staffModalTrackingRow.hidden      = true;
       staffModalNameHint.hidden         = false;
+      document.getElementById('staffModalHeaderStatus').innerHTML = '';
+      document.getElementById('staffModalHeaderCode').hidden = true;
+      document.getElementById('staffModalTopBadge').hidden = true;
+      document.getElementById('staffModalRateHint').hidden = true;
+      setStaffEditSectionsVisible(false);
       staffModal.hidden = false;
       staffModalName.focus();
     }
     function openStaffModalEdit(hotel, staff) {
       _staffModalHotel  = hotel;
       _staffModalEditId = staff.id;
-      staffModalTitle.textContent       = 'Edit ' + (staff.name || 'employee');
+      staffModalTitle.textContent       = staff.name || 'Employee';
       staffModalSubmit.textContent      = 'Save changes';
       staffModalSubmit.disabled         = false;
       staffModalError.hidden            = true;
@@ -7496,10 +7676,230 @@
       staffModalTracking.value          = staff.tracking_code || '—';
       staffModalTrackingRow.hidden      = false;
       staffModalNameHint.hidden         = true;
+      // Header strip
+      const statusPill = staff.status === 'active'
+        ? '<span class="bk-pill bk-pill--ok">Active</span>'
+        : '<span class="bk-pill bk-pill--neutral">' + escapeHtml(staff.status || '—') + '</span>';
+      document.getElementById('staffModalHeaderStatus').innerHTML = statusPill;
+      const codeBtn = document.getElementById('staffModalHeaderCode');
+      if (staff.tracking_code) {
+        codeBtn.hidden = false;
+        codeBtn.dataset.copy = staff.tracking_code;
+        const txt = codeBtn.querySelector('[data-detail-text]');
+        if (txt) txt.textContent = staff.tracking_code;
+      } else {
+        codeBtn.hidden = true;
+      }
+      // Hotel default rate warning chip
+      const hotelDefault = (hotel.commission_pct != null && hotel.kickback_pool_pct == null)
+        ? Number(hotel.commission_pct)
+        : (hotel.kickback_pool_pct != null ? Number(hotel.kickback_pool_pct) : null);
+      const rate = staff.kickback_pct != null ? Number(staff.kickback_pct) : null;
+      const rateHint = document.getElementById('staffModalRateHint');
+      if (rate != null && hotelDefault != null && rate !== hotelDefault) {
+        rateHint.hidden = false;
+        rateHint.textContent = `Custom rate · hotel default is ${hotelDefault}%`;
+      } else {
+        rateHint.hidden = true;
+      }
+      // Show the edit-only sections and kick off the stats fetch.
+      setStaffEditSectionsVisible(true);
+      loadStaffStats(hotel, staff);
       staffModal.hidden = false;
       staffModalName.focus();
     }
     function closeStaffModal() { staffModal.hidden = true; }
+
+    // Populate the lightbox edit-mode sections from the per-staff
+    // stats endpoint + the hotel's payouts list (already on the
+    // hotel object). Rank line is computed client-side from the
+    // staff array we already have, so no extra round-trip needed.
+    async function loadStaffStats(hotel, staff) {
+      const cur = (staff.currency) || (hotel.currency) || 'CAD';
+      // Reset visible state — placeholders during the fetch.
+      ['staffModalBookings','staffModalCommission','staffModalConversion','staffModalAvgBooking']
+        .forEach((id) => { const el = document.getElementById(id); if (el) el.textContent = '—'; });
+      document.getElementById('staffModalRecent').innerHTML = '<div class="muted">Loading…</div>';
+      document.getElementById('staffModalLifetime').textContent =
+        formatHotelMoney(staff.lifetime_commission || 0, cur);
+      // Last hotel payout (closest stub we can show until per-staff
+      // payouts ship). Reads from h.payouts when available.
+      const payouts = Array.isArray(hotel.payouts) ? hotel.payouts : [];
+      const lastPayout = payouts.slice().sort((a, b) =>
+        String(b.paid_at || '').localeCompare(String(a.paid_at || ''))
+      )[0];
+      document.getElementById('staffModalLastPayout').textContent =
+        lastPayout && lastPayout.paid_at
+          ? formatHumanDate(String(lastPayout.paid_at).slice(0, 10))
+          : '—';
+
+      // Rank line + top-performer badge — computed against the
+      // hotel's active staff sorted by lifetime commission desc.
+      const activeStaff = (hotel.staff || [])
+        .filter((s) => s.status === 'active')
+        .slice()
+        .sort((a, b) => (Number(b.lifetime_commission) || 0) - (Number(a.lifetime_commission) || 0));
+      const myRank = activeStaff.findIndex((s) => s.id === staff.id) + 1;
+      const totalActive = activeStaff.length;
+      const rankLine = document.getElementById('staffModalRankLine');
+      if (rankLine) {
+        rankLine.textContent = myRank > 0
+          ? `Rank #${myRank} of ${totalActive} active employees by commission earned`
+          : '';
+      }
+      const topBadge = document.getElementById('staffModalTopBadge');
+      if (topBadge) topBadge.hidden = (myRank !== 1 || totalActive < 2);
+
+      // Personal QR + short link (Materials section).
+      const personalLink = (hotel.short_links || [])
+        .find((l) => l.status === 'active' && l.staff_id === staff.id);
+      const shortUrl = personalLink && personalLink.short_url;
+      const qrBox = document.getElementById('staffModalQr');
+      const shortHint = document.getElementById('staffModalShortHint');
+      if (qrBox) qrBox.innerHTML = '';
+      if (shortUrl && qrBox) {
+        const qr = makeQRInstance(shortUrl, 140);
+        if (qr) qr.append(qrBox);
+        if (shortHint) shortHint.textContent = shortUrl;
+        document.getElementById('staffModalQrPng').onclick = () => {
+          const q = makeQRInstance(shortUrl, 600);
+          if (q) q.download({ name: staff.tracking_code || 'staff', extension: 'png' });
+        };
+        document.getElementById('staffModalQrSvg').onclick = () => {
+          const q = makeQRInstance(shortUrl, 600);
+          if (q) q.download({ name: staff.tracking_code || 'staff', extension: 'svg' });
+        };
+      } else if (shortHint) {
+        shortHint.textContent = 'No personal short link minted yet.';
+      }
+
+      // Activity log fires in parallel with stats so the timeline
+      // streams in independently of the scoreboard.
+      loadStaffActivity(staff.id);
+
+      try {
+        const res = await fetch(
+          BOKUN_API_BASE + '/api/admin/hotel-staff/' + encodeURIComponent(staff.id) + '/stats?period=last30',
+          { headers: { Authorization: 'Bearer ' + session.access_token } },
+        );
+        const d = await res.json();
+        if (!res.ok) throw new Error((d && d.error) || 'stats_failed');
+        const dcur = d.currency || cur;
+        document.getElementById('staffModalBookings').textContent =
+          (Number(d.bookings_total) || 0) +
+          (d.bookings_month ? ' (' + d.bookings_month + ' this month)' : '');
+        document.getElementById('staffModalCommission').textContent =
+          formatHotelMoney(d.lifetime_commission || 0, dcur);
+        document.getElementById('staffModalConversion').textContent =
+          d.conversion_pct == null ? '—' : (d.conversion_pct + '%');
+        const avg = (Number(d.bookings_total) || 0) > 0 && Array.isArray(d.recent_bookings)
+          ? d.recent_bookings.reduce((acc, b) => acc + (Number(b.amount) || 0), 0) /
+            Math.max(1, d.recent_bookings.length)
+          : 0;
+        document.getElementById('staffModalAvgBooking').textContent =
+          avg > 0 ? formatHotelMoney(avg, dcur) : '—';
+        renderStaffRecent(d.recent_bookings || [], dcur);
+        // Update lifetime in case the cache was stale.
+        document.getElementById('staffModalLifetime').textContent =
+          formatHotelMoney(d.lifetime_commission || 0, dcur);
+      } catch (err) {
+        document.getElementById('staffModalRecent').innerHTML =
+          '<div class="muted">Could not load stats: ' + escapeHtml(err.message || 'try again') + '</div>';
+      }
+    }
+
+    async function loadStaffActivity(staffId) {
+      const body = document.getElementById('staffModalActivity');
+      if (!body) return;
+      body.innerHTML = '<div class="muted">Loading…</div>';
+      try {
+        const res = await fetch(
+          BOKUN_API_BASE + '/api/admin/hotel-staff/' + encodeURIComponent(staffId) + '/events',
+          { headers: { Authorization: 'Bearer ' + session.access_token } },
+        );
+        const d = await res.json();
+        if (!res.ok) throw new Error((d && d.error) || 'events_failed');
+        renderStaffActivity(d.events || []);
+      } catch (err) {
+        body.innerHTML = '<div class="muted">Could not load activity: ' +
+          escapeHtml(err.message || 'try again') + '</div>';
+      }
+    }
+    function renderStaffActivity(events) {
+      const body = document.getElementById('staffModalActivity');
+      if (!body) return;
+      if (!events.length) {
+        body.innerHTML = '<div class="muted" style="font-size: var(--t-sm);">No activity yet.</div>';
+        return;
+      }
+      const rows = events.map((e) => {
+        const when = relativeTimeOrNever(e.created_at);
+        const actor = e.actor_email ? ' · ' + escapeHtml(e.actor_email) : '';
+        return '<li class="pl-act-row">' +
+          '<span class="pl-act-row__dot" aria-hidden="true"></span>' +
+          '<div class="pl-act-row__body">' +
+            '<div class="pl-act-row__title">' + staffActivityLabel(e) + '</div>' +
+            '<div class="pl-act-row__meta">' + when + actor + '</div>' +
+          '</div>' +
+        '</li>';
+      }).join('');
+      body.innerHTML = '<ul class="pl-act-list">' + rows + '</ul>';
+    }
+    function staffActivityLabel(e) {
+      const p = e.payload || {};
+      switch (e.event_type) {
+        case 'onboarded':
+          return 'Onboarded' + (p.tracking_code ? ' as ' + escapeHtml(p.tracking_code) : '');
+        case 'rate_changed':
+          return 'Kickback changed' +
+            (p.from != null ? ' from ' + escapeHtml(String(p.from)) + '%' : '') +
+            (p.to   != null ? ' to '   + escapeHtml(String(p.to))   + '%' : '');
+        case 'status_changed':
+          return 'Status changed' +
+            (p.from ? ' from ' + escapeHtml(p.from) : '') +
+            (p.to   ? ' to '   + escapeHtml(p.to)   : '');
+        case 'terminated':
+          return 'Terminated';
+        case 'first_booking':
+          return 'First booking recorded';
+        default:
+          return escapeHtml(e.event_type);
+      }
+    }
+
+    function renderStaffRecent(rows, cur) {
+      const body = document.getElementById('staffModalRecent');
+      if (!body) return;
+      if (!rows.length) {
+        body.innerHTML = '<div class="muted" style="font-size: var(--t-sm);">No bookings yet.</div>';
+        return;
+      }
+      const trs = rows.map((b) => {
+        const statusPill = b.status === 'confirmed'
+          ? '<span class="bk-pill bk-pill--ok bk-pill--xs">Confirmed</span>'
+          : b.status === 'refunded' || b.status === 'cancelled'
+            ? '<span class="bk-pill bk-pill--neutral bk-pill--xs">' + escapeHtml(b.status) + '</span>'
+            : '<span class="bk-pill bk-pill--warn bk-pill--xs">' + escapeHtml(b.status || '—') + '</span>';
+        return '<tr>' +
+          '<td class="muted">' + escapeHtml(formatHumanDate(String(b.date || b.created_at || '').slice(0, 10)) || '—') + '</td>' +
+          '<td>' + escapeHtml(b.tour_title || '—') + '</td>' +
+          '<td>' + escapeHtml(b.lead_name || '—') + '</td>' +
+          '<td class="num">' + escapeHtml(formatHotelMoney(b.amount || 0, b.currency || cur)) + '</td>' +
+          '<td class="num">' + escapeHtml(formatHotelMoney(b.commission_amount || 0, b.currency || cur)) + '</td>' +
+          '<td>' + statusPill + '</td>' +
+        '</tr>';
+      }).join('');
+      body.innerHTML =
+        '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
+          '<table class="bk-table">' +
+            '<thead><tr>' +
+              '<th>Date</th><th>Tour</th><th>Guest</th>' +
+              '<th class="num">Value</th><th class="num">Commission</th><th></th>' +
+            '</tr></thead>' +
+            '<tbody>' + trs + '</tbody>' +
+          '</table>' +
+        '</div></div>';
+    }
 
     staffModal && staffModal.addEventListener('click', (e) => {
       if (e.target === staffModal) closeStaffModal();
