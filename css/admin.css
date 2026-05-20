@@ -3013,40 +3013,6 @@ select.hd-bankf__input { appearance: auto; }
   flex-shrink: 0;
 }
 
-/* Kebab menu — small floating list anchored to the kebab button. */
-.pl-modal__menuwrap { position: relative; }
-.pl-modal__menu {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
-  min-width: 160px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-  padding: 4px;
-  z-index: 5;
-  display: flex;
-  flex-direction: column;
-}
-.pl-modal__menuitem {
-  display: block;
-  width: 100%;
-  text-align: left;
-  background: transparent;
-  border: 0;
-  padding: 6px 10px;
-  border-radius: 4px;
-  font-size: var(--t-sm);
-  color: var(--text);
-  cursor: pointer;
-  transition: background-color var(--t-fast);
-}
-.pl-modal__menuitem:hover {
-  background: var(--bg-subtle);
-}
-.pl-modal__menuitem--danger { color: var(--bad-fg); }
-
 /* Section dividers — a thin rule + small caption above each block so
    the four sections (Performance / Materials / Configuration /
    Activity) feel like one continuous scroll, not stacked cards. */
