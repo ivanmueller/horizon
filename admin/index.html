@@ -1772,12 +1772,20 @@
 
                 <section class="hd-section" id="hdPayoutsSection">
                   <header class="hd-section__head">
-                    <h2 class="hd-section__title">Invoices &amp; Payouts</h2>
+                    <h2 class="hd-section__title">Invoices</h2>
                     <button type="button" class="bk-iconbtn hd-section__add" id="hdPayAdd" aria-label="Record a payment">+</button>
                   </header>
                   <div class="hd-section__body" id="hdPayoutsBody">
                     <div class="hd-empty">Banking not set up</div>
                   </div>
+                </section>
+
+                <section class="hd-section" id="hdPaymentsSection">
+                  <header class="hd-section__head">
+                    <h2 class="hd-section__title">Payments</h2>
+                    <button type="button" class="bk-iconbtn hd-section__add" id="hdPaymentAdd" aria-label="Record a payment">+</button>
+                  </header>
+                  <div class="hd-section__body" id="hdPaymentsBody"></div>
                 </section>
 
                 <section class="hd-section" id="hdActivitySection">
@@ -5807,6 +5815,7 @@
         populateHotelBookings(h, els, currency);
       }
       renderHotelActivity(h, els);
+      renderHotelPayments(h, els);
       renderHotelEvents(h, els);
 
       // Wire Add Employee buttons → centered modal (see openStaffModalAdd).
@@ -6630,6 +6639,232 @@
       renderList();
     }
 
+    // Payments — Stripe-style table of hand-entered receipts. Rows
+    // come from /api/admin/payments?hotel_id=X; "+" in the section
+    // header opens an inline form to record a new entry. A
+    // hotel_events row is written server-side on create so the
+    // Events timeline picks up "Payment was created" automatically;
+    // we trigger a re-fetch of that section after a successful save.
+    function renderHotelPayments(h, els) {
+      const body   = els.container.querySelector('#hdPaymentsBody');
+      const addBtn = els.container.querySelector('#hdPaymentAdd');
+      if (!body || !h || !h.id) return;
+      const currency = (h.currency || 'CAD').toUpperCase();
+      const fmt      = (n) => (Math.round((n || 0) * 100) / 100).toFixed(2);
+
+      const checkIcon = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>';
+      const xIcon     = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+      const pill = (status) => {
+        if (status === 'canceled') return '<span class="bk-pill bk-pill--neutral">Canceled ' + xIcon + '</span>';
+        return '<span class="bk-pill bk-pill--ok">Succeeded ' + checkIcon + '</span>';
+      };
+
+      const fetchAndRender = async () => {
+        body.innerHTML = '<div class="hd-empty">Loading payments…</div>';
+        let list = [];
+        try {
+          const res = await fetch(
+            BOKUN_API_BASE + '/api/admin/payments?hotel_id=' + encodeURIComponent(h.id),
+            { headers: { Authorization: 'Bearer ' + session.access_token } },
+          );
+          const d = await res.json();
+          if (!res.ok) throw new Error((d && (d.message || d.error)) || 'load_failed');
+          list = Array.isArray(d.payments) ? d.payments : [];
+        } catch (err) {
+          body.innerHTML = '<div class="hd-empty">Could not load payments: ' +
+            escapeHtml(String(err && err.message || err)) + '</div>';
+          return;
+        }
+        if (!list.length) {
+          body.innerHTML = '<div class="hd-empty">No payments recorded yet.</div>';
+          return;
+        }
+        const rows = list.map((p) => {
+          const code   = (p.currency || currency || 'CAD').toUpperCase();
+          const date   = formatHumanDateTime(p.occurred_at || p.created_at);
+          const desc   = p.description || 'Payment for Invoice';
+          return (
+            '<tr>' +
+              '<td class="bk-table__check">' +
+                '<input type="checkbox" data-pay-row="' + escapeHtml(p.id) + '" aria-label="Select payment">' +
+              '</td>' +
+              '<td>' +
+                '<span class="bk-table__amount">$' + escapeHtml(fmt(p.amount)) + '</span>' +
+                '<span class="bk-table__currency">' + escapeHtml(code) + '</span>' +
+                ' ' + pill(p.status) +
+              '</td>' +
+              '<td>' + escapeHtml(desc) + '</td>' +
+              '<td class="bk-table__muted">' + escapeHtml(date) + '</td>' +
+              '<td class="bk-table__kebab">' +
+                '<div class="hd-rowmenu" data-rowmenu>' +
+                  '<button type="button" class="bk-kebab" data-rowmenu-trigger ' +
+                    'aria-haspopup="menu" aria-expanded="false" aria-label="Row actions">⋯</button>' +
+                  '<div class="hd-rowmenu__pop" role="menu" hidden>' +
+                    '<button type="button" class="hd-rowmenu__item hd-rowmenu__item--danger" ' +
+                      'role="menuitem" data-pay-del="' + escapeHtml(p.id) + '">Delete payment</button>' +
+                  '</div>' +
+                '</div>' +
+              '</td>' +
+            '</tr>'
+          );
+        }).join('');
+
+        body.innerHTML =
+          '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
+            '<table class="bk-table bk-table--payments">' +
+              '<thead><tr>' +
+                '<th class="bk-table__check"><input type="checkbox" aria-label="Select all payments"></th>' +
+                '<th>Amount</th>' +
+                '<th>Description</th>' +
+                '<th>Date</th>' +
+                '<th aria-label="Actions"></th>' +
+              '</tr></thead>' +
+              '<tbody>' + rows + '</tbody>' +
+            '</table>' +
+          '</div></div>' +
+          '<div class="hd-payments__footer">' +
+            '<span class="hd-payments__results">' +
+              list.length + (list.length === 1 ? ' result' : ' results') +
+            '</span>' +
+          '</div>';
+
+        wireRowMenus();
+        wireDeletes();
+      };
+
+      const wireRowMenus = () => {
+        const closeAll = (except) => {
+          body.querySelectorAll('[data-rowmenu]').forEach((w) => {
+            if (w === except) return;
+            const t = w.querySelector('[data-rowmenu-trigger]');
+            const p = w.querySelector('.hd-rowmenu__pop');
+            if (t) t.setAttribute('aria-expanded', 'false');
+            if (p) p.hidden = true;
+            w.classList.remove('hd-rowmenu--open');
+          });
+        };
+        body.querySelectorAll('[data-rowmenu-trigger]').forEach((trig) => {
+          trig.onclick = (e) => {
+            e.stopPropagation();
+            const wrap = trig.closest('[data-rowmenu]');
+            const pop  = wrap && wrap.querySelector('.hd-rowmenu__pop');
+            const open = wrap && wrap.classList.contains('hd-rowmenu--open');
+            closeAll(open ? null : wrap);
+            if (!wrap || !pop) return;
+            if (open) {
+              wrap.classList.remove('hd-rowmenu--open');
+              pop.hidden = true;
+              trig.setAttribute('aria-expanded', 'false');
+            } else {
+              wrap.classList.add('hd-rowmenu--open');
+              pop.hidden = false;
+              trig.setAttribute('aria-expanded', 'true');
+            }
+          };
+        });
+        if (!body._payDocBound) {
+          document.addEventListener('click', (e) => {
+            if (!e.target.closest('[data-rowmenu]')) closeAll(null);
+          });
+          body._payDocBound = true;
+        }
+      };
+
+      const wireDeletes = () => {
+        body.querySelectorAll('[data-pay-del]').forEach((b) => {
+          b.onclick = async () => {
+            const id = b.dataset.payDel;
+            if (!confirm('Delete this payment record? This only removes the entry; no money moves.')) return;
+            b.disabled = true;
+            try {
+              const res = await fetch(BOKUN_API_BASE + '/api/admin/payments/' + encodeURIComponent(id), {
+                method: 'DELETE',
+                headers: { Authorization: 'Bearer ' + session.access_token },
+              });
+              if (!res.ok) {
+                const d = await res.json().catch(() => ({}));
+                throw new Error(d.message || d.error || 'delete_failed');
+              }
+              fetchAndRender();
+            } catch (err) {
+              b.disabled = false;
+              alert('Could not delete: ' + (err && err.message || err));
+            }
+          };
+        });
+      };
+
+      // "+" header button opens an inline form. Mirrors the
+      // payouts form patternfor consistency; save POSTs to
+      // /api/admin/payments, which writes the hotel_events row
+      // server-side, so we refresh both this table and the Events
+      // section on success.
+      const openForm = () => {
+        const today = new Date().toISOString().slice(0, 10);
+        body.innerHTML =
+          '<div class="hd-bankf">' +
+            '<label class="hd-bankf__field"><span class="hd-bankf__label">Amount (' + escapeHtml(currency) + ')</span>' +
+              '<input class="hd-bankf__input" id="hdPaymentAmt" inputmode="decimal" placeholder="0.00"></label>' +
+            '<label class="hd-bankf__field"><span class="hd-bankf__label">Description</span>' +
+              '<input class="hd-bankf__input" id="hdPaymentDesc" maxlength="200" placeholder="Payment for Invoice"></label>' +
+            '<label class="hd-bankf__field"><span class="hd-bankf__label">Date</span>' +
+              '<input class="hd-bankf__input" id="hdPaymentDate" type="date" value="' + today + '"></label>' +
+            '<label class="hd-bankf__field"><span class="hd-bankf__label">Status</span>' +
+              '<select class="hd-bankf__input" id="hdPaymentStatus">' +
+                '<option value="succeeded">Succeeded</option>' +
+                '<option value="canceled">Canceled</option>' +
+              '</select></label>' +
+            '<p class="hd-bankf__err" id="hdPaymentErr" hidden></p>' +
+            '<div class="hd-bank__actions">' +
+              '<button type="button" class="btn btn--primary btn--sm" id="hdPaymentSave">Save payment</button>' +
+              '<button type="button" class="btn btn--ghost btn--sm" id="hdPaymentCancel">Cancel</button>' +
+            '</div>' +
+          '</div>';
+        const errEl = body.querySelector('#hdPaymentErr');
+        const showErr = (m) => { errEl.textContent = m; errEl.hidden = false; };
+        body.querySelector('#hdPaymentCancel').onclick = fetchAndRender;
+        const saveBtn = body.querySelector('#hdPaymentSave');
+        saveBtn.onclick = async () => {
+          errEl.hidden = true;
+          const amt = parseFloat(body.querySelector('#hdPaymentAmt').value);
+          if (!Number.isFinite(amt) || amt <= 0) return showErr('Enter a positive amount.');
+          const date = body.querySelector('#hdPaymentDate').value;
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return showErr('Pick a date.');
+          const payload = {
+            hotel_id:    h.id,
+            amount:      Math.round(amt * 100) / 100,
+            status:      body.querySelector('#hdPaymentStatus').value,
+            occurred_at: date,
+            currency,
+          };
+          const desc = body.querySelector('#hdPaymentDesc').value.trim();
+          if (desc) payload.description = desc;
+          saveBtn.disabled = true;
+          saveBtn.textContent = 'Saving…';
+          try {
+            const res = await fetch(BOKUN_API_BASE + '/api/admin/payments', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+              body: JSON.stringify(payload),
+            });
+            const d = await res.json();
+            if (!res.ok) throw new Error((d && (d.message || d.error)) || 'save_failed');
+            await fetchAndRender();
+            // Refresh the events timeline so the new payment_created
+            // event shows up at the top without a page reload.
+            renderHotelEvents(h, els);
+          } catch (err) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save payment';
+            showErr('Could not save: ' + (err && err.message || err));
+          }
+        };
+      };
+
+      if (addBtn) addBtn.onclick = openForm;
+      fetchAndRender();
+    }
+
     // Events — Stripe-style audit timeline. Fetches the aggregator
     // endpoint which UNIONs hotel_events + placement_events + staff_events
     // for this hotel and renders them as two-column rows (description
@@ -6693,6 +6928,14 @@
           case 'commission_changed':
             return 'Commission rate changed' +
               (p.to != null ? ' to ' + escapeHtml(String(p.to)) + '%' : '');
+          case 'payment_created': {
+            const amt = (p.amount != null) ? Number(p.amount).toFixed(2) : null;
+            const cur = (p.currency || 'CAD').toUpperCase();
+            const head = amt
+              ? 'A ' + cur + ' ' + amt + ' payment was created'
+              : 'A new payment was created';
+            return p.description ? head + ' for ' + escapeHtml(p.description) : head;
+          }
           default:
             return escapeHtml(e.event_type);
         }
