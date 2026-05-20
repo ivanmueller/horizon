@@ -6785,7 +6785,10 @@
                 const d = await res.json().catch(() => ({}));
                 throw new Error(d.message || d.error || 'delete_failed');
               }
-              fetchAndRender();
+              await fetchAndRender();
+              // Refresh the events timeline so the new
+              // payment_deleted row shows up at the top.
+              renderHotelEvents(h, els);
             } catch (err) {
               b.disabled = false;
               alert('Could not delete: ' + (err && err.message || err));
@@ -6928,12 +6931,14 @@
           case 'commission_changed':
             return 'Commission rate changed' +
               (p.to != null ? ' to ' + escapeHtml(String(p.to)) + '%' : '');
-          case 'payment_created': {
+          case 'payment_created':
+          case 'payment_deleted': {
             const amt = (p.amount != null) ? Number(p.amount).toFixed(2) : null;
             const cur = (p.currency || 'CAD').toUpperCase();
+            const verb = e.event_type === 'payment_deleted' ? 'deleted' : 'created';
             const head = amt
-              ? 'A ' + cur + ' ' + amt + ' payment was created'
-              : 'A new payment was created';
+              ? 'A ' + cur + ' ' + amt + ' payment was ' + verb
+              : 'A payment was ' + verb;
             return p.description ? head + ' for ' + escapeHtml(p.description) : head;
           }
           default:
