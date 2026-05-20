@@ -2285,6 +2285,46 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 
 .hd-num { font-feature-settings: 'tnum' 1; font-variant-numeric: tabular-nums; }
 
+/* Compact column-header info icon. Sits inline after the title so the
+   user can hover for a definition without taking up row chrome.
+   Lives at the muted-text color so it never competes with the title. */
+.hd-colinfo {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  color: var(--text-muted);
+  cursor: help;
+  vertical-align: -2px;
+}
+.hd-colinfo:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+
+/* Clicks cell: sparkline floats to the left of the number with a
+   little gap so the visual + numeric reading happen together.
+   Right-aligned because the column is numeric. */
+.pl-clicks-cell {
+  white-space: nowrap;
+}
+.pl-clicks-cell .pl-clicks-sparkline {
+  display: inline-block;
+  width: 60px;
+  height: 16px;
+  margin-right: 8px;
+  vertical-align: middle;
+  color: var(--text-muted);
+}
+.pl-clicks-cell .pl-clicks-sparkline svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.pl-clicks-cell .pl-clicks-num {
+  vertical-align: middle;
+}
+
 .hd-copy {
   background: transparent;
   border: 0;
