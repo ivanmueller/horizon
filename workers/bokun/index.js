@@ -261,6 +261,10 @@ export default {
         if (request.method === "GET" && segs[3] && segs[4] === "short-links") {
           return await handleAdminHotelShortLinksList(segs[3], request, env);
         }
+        // GET /api/admin/hotels/:id/events — aggregator timeline
+        if (request.method === "GET" && segs[3] && segs[4] === "events") {
+          return await handleAdminHotelEvents(segs[3], request, env);
+        }
       }
 
       // ── Hotel staff CRUD ────────────────────────────────────────
@@ -1696,6 +1700,9 @@ async function handleAdminHotelCreate(request, env) {
     logMutation(request, auth.claims, "create", "hotel", hotel.id, {
       code: hotel.code, name: hotel.name,
     });
+    await writeHotelEvent(env, hotel.id, "created", {
+      name: hotel.name, code: hotel.code,
+    }, auth.claims?.email);
     const payload = { hotel: normaliseHotel(hotel) };
     if (shortLinkWarning) payload.short_link_warning = shortLinkWarning;
     return jsonResponse(payload, 201, request);
@@ -1726,6 +1733,26 @@ async function handleAdminHotelUpdate(id, request, env) {
     return jsonResponse({ error: "hotel not found" }, 404, request);
   }
   logMutation(request, auth.claims, "update", "hotel", id, { fields: Object.keys(v.row) });
+  // Persist a hotel_events row so the profile's Events timeline picks
+  // up this change. Specialised event types fire when commission or
+  // banking fields are touched so the timeline reads meaningfully
+  // ("Commission changed to 5%") instead of a generic "updated".
+  const fields = Object.keys(v.row);
+  const touchedBanking = fields.some((f) => f.startsWith("payout_"));
+  const wasBankingSet  = updated[0].payout_method
+    && !v.row.payout_method ? false : !!updated[0].payout_method;
+  const actor = auth.claims?.email;
+  if (v.row.commission_pct != null) {
+    await writeHotelEvent(env, id, "commission_changed", {
+      to: Number(v.row.commission_pct),
+    }, actor);
+  } else if (touchedBanking) {
+    await writeHotelEvent(env, id,
+      wasBankingSet ? "banking_updated" : "banking_set",
+      { method: updated[0].payout_method || null }, actor);
+  } else {
+    await writeHotelEvent(env, id, "updated", { fields }, actor);
+  }
   return jsonResponse({ hotel: normaliseHotel(updated[0]) }, 200, request);
 }
 
@@ -1742,7 +1769,118 @@ async function handleAdminHotelTerminate(id, request, env) {
     return jsonResponse({ error: "hotel not found" }, 404, request);
   }
   logMutation(request, auth.claims, "terminate", "hotel", id);
+  await writeHotelEvent(env, id, "terminated", {}, auth.claims?.email);
   return jsonResponse({ hotel: normaliseHotel(updated[0]) }, 200, request);
+}
+
+// Activity log writer for the hotel record itself. Fire-and-forget —
+// audit data never blocks a user mutation. Mirrors writePlacementEvent
+// / writeStaffEvent so the aggregator endpoint can UNION all three
+// tables into a single Stripe-style timeline on the hotel profile.
+async function writeHotelEvent(env, hotelId, eventType, payload, actorEmail) {
+  try {
+    await supabaseInsert(env, "hotel_events", [{
+      hotel_id:    hotelId,
+      event_type:  eventType,
+      actor_email: actorEmail || null,
+      payload:     payload || {},
+    }]);
+  } catch (err) {
+    console.warn(`hotel_event ${eventType} for ${hotelId} failed: ${err && err.message}`);
+  }
+}
+
+// Aggregator: pulls the three event sources scoped to one hotel and
+// returns them as a single sorted array. Each row carries `source`
+// so the frontend can format the description per source type without
+// re-querying. Limit 50 per source keeps the round-trip cheap;
+// pagination ships as a follow-up if a hotel ever produces enough
+// events to need it.
+async function handleAdminHotelEvents(hotelId, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(hotelId)) {
+    return jsonResponse({ error: "invalid hotel id" }, 400, request);
+  }
+
+  // Hotel events live in their own table keyed by hotel_id — direct fetch.
+  const hotelRowsP = supabaseSelect(
+    env,
+    `hotel_events?hotel_id=eq.${encodeURIComponent(hotelId)}` +
+      `&select=id,event_type,actor_email,payload,created_at` +
+      `&order=created_at.desc&limit=50`,
+  );
+
+  // Placement and staff events join via their owning entity; fetch
+  // the entity ids for this hotel first, then the events by id list.
+  // Two-step keeps the queries simple and uses the proper indexes.
+  const placementsP = supabaseSelect(
+    env,
+    `placements?hotel_id=eq.${encodeURIComponent(hotelId)}&select=id,name`,
+  );
+  const staffP = supabaseSelect(
+    env,
+    `hotel_staff?hotel_id=eq.${encodeURIComponent(hotelId)}&select=id,name,tracking_code`,
+  );
+
+  const [hotelRows, placements, staff] = await Promise.all([
+    hotelRowsP, placementsP, staffP,
+  ]);
+
+  const placementById = new Map((placements || []).map((p) => [p.id, p]));
+  const staffById     = new Map((staff || []).map((s) => [s.id, s]));
+
+  const placementEvents = placementById.size
+    ? await supabaseSelect(
+        env,
+        `placement_events?placement_id=in.(${Array.from(placementById.keys()).join(",")})` +
+          `&select=id,placement_id,event_type,actor_email,payload,created_at` +
+          `&order=created_at.desc&limit=50`,
+      )
+    : [];
+  const staffEvents = staffById.size
+    ? await supabaseSelect(
+        env,
+        `staff_events?staff_id=in.(${Array.from(staffById.keys()).join(",")})` +
+          `&select=id,staff_id,event_type,actor_email,payload,created_at` +
+          `&order=created_at.desc&limit=50`,
+      )
+    : [];
+
+  // Normalise each source into a common envelope so the frontend has
+  // a single shape to render. `subject` carries the entity label
+  // (e.g. placement name, staff name) so descriptions can read
+  // "Lobby rack card status changed to Active" without an extra join
+  // on the client.
+  const merged = [];
+  for (const r of (hotelRows || [])) {
+    merged.push({
+      id: r.id, source: "hotel",
+      event_type: r.event_type, payload: r.payload || {},
+      actor_email: r.actor_email, created_at: r.created_at,
+      subject: null,
+    });
+  }
+  for (const r of (placementEvents || [])) {
+    const pl = placementById.get(r.placement_id);
+    merged.push({
+      id: r.id, source: "placement",
+      event_type: r.event_type, payload: r.payload || {},
+      actor_email: r.actor_email, created_at: r.created_at,
+      subject: pl ? { id: pl.id, name: pl.name } : null,
+    });
+  }
+  for (const r of (staffEvents || [])) {
+    const s = staffById.get(r.staff_id);
+    merged.push({
+      id: r.id, source: "staff",
+      event_type: r.event_type, payload: r.payload || {},
+      actor_email: r.actor_email, created_at: r.created_at,
+      subject: s ? { id: s.id, name: s.name, tracking_code: s.tracking_code } : null,
+    });
+  }
+  merged.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+  return jsonResponse({ events: merged.slice(0, 50) }, 200, request);
 }
 
 // Activity log writer for staff. Same fire-and-forget contract as
