@@ -5144,8 +5144,16 @@
         if (l.status === 'active' && l.staff_id) staffShortByStaffId.set(l.staff_id, l);
       }
 
-      // Invoices & Payouts — promote the not-connected state into a
-      // real CTA card (vs. a quiet empty state). Updates the existing
+      // ── Invoices section render
+      //
+      // Naming note for future readers: the UI label is "Invoices"
+      // but the internal identifiers (hdPayoutsBody, hdPayAdd,
+      // renderPayouts, /api/admin/payouts, payouts table) all
+      // retain "payouts" because the section was built before the
+      // rename. The newer "Payments" section below is a separate
+      // table backed by /api/admin/payments — don't confuse the
+      // two paths. Promotes the not-connected state into a real
+      // CTA card (vs. a quiet empty state). Updates the existing
       // node from the route HTML; the button wires below.
       const payoutsBody = els.container.querySelector('#hdPayoutsBody');
       const payAddBtn = els.container.querySelector('#hdPayAdd');
@@ -7764,11 +7772,6 @@
                 </label>
               </div>
 
-              <label class="drawer-form__row">
-                <span class="drawer-form__label">Notes</span>
-                <textarea class="input" id="heNotes" rows="3"
-                          placeholder="Internal notes — not shown to partners.">${escapeHtml(h.notes || '')}</textarea>
-              </label>
             </div>
           </section>
 
@@ -7960,11 +7963,6 @@
                 <input class="input" id="hcEffective" type="date">
               </label>
 
-              <label class="drawer-form__row">
-                <span class="drawer-form__label">Notes</span>
-                <textarea class="input" id="hcNotes" rows="3"
-                          placeholder="Internal notes — not shown to partners."></textarea>
-              </label>
             </div>
           </section>
 
@@ -7990,7 +7988,6 @@
       const commission = form.querySelector('#hcCommission').value.trim();
       const pool = form.querySelector('#hcPool').value.trim();
       const effective = form.querySelector('#hcEffective').value.trim();
-      const notes = form.querySelector('#hcNotes').value.trim();
 
       if (!/^[a-z0-9-]{2,60}$/.test(code)) {
         return showInline(errEl, 'Slug must be 2–60 lowercase letters, digits, or hyphens.');
@@ -8004,7 +8001,6 @@
       if (commission !== '') body.commission_pct = Number(commission);
       if (pool !== '')       body.kickback_pool_pct = Number(pool);
       if (effective)         body.effective_date = effective;
-      if (notes)             body.notes = notes;
 
       saveBtn.disabled = true;
       saveBtn.textContent = 'Creating…';
@@ -8089,7 +8085,6 @@
       const website      = form.querySelector('#heWebsite').value.trim();
       const contactName  = form.querySelector('#heContactName').value.trim();
       const contactEmail = form.querySelector('#heContactEmail').value.trim();
-      const notes        = form.querySelector('#heNotes').value;
 
       if (!name) return showInline(errEl, 'Name is required.');
       if (!location) return showInline(errEl, 'Pick a location.');
@@ -8112,7 +8107,6 @@
       body.primary_contact_name  = contactName  || null;
       body.primary_contact_email = contactEmail || null;
       body.country             = country || null;
-      body.notes               = notes ? notes : null;
 
       saveBtn.disabled = true;
       saveBtn.textContent = 'Saving…';
