@@ -6529,15 +6529,34 @@
           sideBody.innerHTML = '';
           return;
         }
+        // Only the most recent note ever surfaces in the rail — the
+        // rest live in Recent activity. A "View N more note(s)" link
+        // appears inside the same card when there are more, mirroring
+        // the Stripe pattern; clicking it scrolls the timeline into
+        // view and centres it in the viewport.
         sidePanel.hidden = false;
-        sideBody.innerHTML = notes.map((n) =>
+        const top  = notes[0];
+        const rest = notes.length - 1;
+        const moreLink = rest > 0
+          ? '<button type="button" class="hd-stickynote__more" id="hdStickyMore">' +
+              'View ' + rest + ' more note' + (rest === 1 ? '' : 's') +
+            '</button>'
+          : '';
+        sideBody.innerHTML =
           '<article class="hd-stickynote">' +
-            '<div class="hd-stickynote__text">' + renderNoteMarkup(n.text || '') + '</div>' +
+            '<div class="hd-stickynote__text">' + renderNoteMarkup(top.text || '') + '</div>' +
             '<div class="hd-stickynote__by">Note' +
-              (n.author ? ' by ' + escapeHtml(n.author) : '') +
+              (top.author ? ' by ' + escapeHtml(top.author) : '') +
             '</div>' +
-          '</article>'
-        ).join('');
+            moreLink +
+          '</article>';
+        const moreBtn = sideBody.querySelector('#hdStickyMore');
+        if (moreBtn) {
+          moreBtn.onclick = () => {
+            const section = els.container.querySelector('#hdActivitySection');
+            if (section) section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          };
+        }
       };
 
       const seed = {
