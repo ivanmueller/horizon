@@ -3083,6 +3083,84 @@ select.hd-bankf__input { appearance: auto; }
   margin-top: 2px;
 }
 
+/* ── Manager table + lightbox patterns ──────────────────────────
+   User cell stacks name over email — Linear/Notion style. Saves a
+   column and reads better than three side-by-side cells. */
+.hd-user {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+}
+.hd-user__body { min-width: 0; }
+.hd-user__name { font-weight: 500; color: var(--text); }
+.hd-user__sub  { font-size: var(--t-xs); color: var(--text-muted); margin-top: 1px; }
+
+/* Permissions checklist below the role select. Each row is a
+   role-keyed permission with a green ✓ or muted ✗. Compact so it
+   doesn't dominate the Access section. */
+.mgr-perms {
+  list-style: none;
+  margin: var(--s2) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 16px;
+}
+.mgr-perms__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--t-sm);
+}
+.mgr-perms__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  font-weight: 600;
+}
+.mgr-perms__row--on  .mgr-perms__mark  { color: var(--ok-fg); }
+.mgr-perms__row--off .mgr-perms__mark  { color: var(--text-faint); }
+.mgr-perms__row--off .mgr-perms__label { color: var(--text-muted); }
+
+/* Key/value pairs used by the Activity + Account sections. Each
+   row is a label/value pair with the label muted-and-narrow and
+   the value taking the rest. */
+.mgr-keyvals {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mgr-keyvals__row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: var(--s3);
+  font-size: var(--t-sm);
+}
+.mgr-keyvals dt {
+  color: var(--text-muted);
+}
+.mgr-keyvals dd {
+  margin: 0;
+  color: var(--text);
+}
+
+/* Danger zone in the manager lightbox — separated rule + soft tint
+   so destructive actions don't blend with neutral Account fields. */
+.pl-modal__danger { border-top-color: var(--bad-border); }
+.mgr-danger__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  padding: var(--s3) 0;
+  border-bottom: 1px solid var(--border);
+}
+.mgr-danger__row:last-child { border-bottom: 0; }
+.mgr-danger__label { font-size: var(--t-sm); font-weight: 500; color: var(--text); }
+.mgr-danger__hint  { font-size: var(--t-xs); color: var(--text-muted); margin-top: 2px; }
+
 /* Materials & QR section inside the Edit modal. */
 .pl-mat {
   margin-top: var(--s4);
