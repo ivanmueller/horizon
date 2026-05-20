@@ -534,7 +534,7 @@
       <!-- Activity log ──────────────────────────────────────── -->
       <section class="pl-modal__section">
         <h3 class="pl-modal__sectiontitle">Activity log</h3>
-        <p class="muted" style="font-size: var(--t-sm); margin: 0;">Coming soon — every status change, asset upload, and first-scan event will appear here as a timeline.</p>
+        <div id="plEditActivity"><div class="muted">Loading…</div></div>
       </section>
 
       <div class="modal__actions">
@@ -2828,6 +2828,75 @@
     // Stats now live inside the consolidated lightbox. Any caller
     // (e.g. legacy "View analytics" row button) just opens the
     // lightbox; the Performance section is the first thing visible.
+    // Activity log — loads the last 50 events for the currently-open
+    // placement and renders them as a timeline. Renderer is below.
+    async function loadPlActivity() {
+      if (!_plEditId) return;
+      const body = document.getElementById('plEditActivity');
+      if (!body) return;
+      body.innerHTML = '<div class="muted">Loading…</div>';
+      try {
+        const res = await fetch(
+          BOKUN_API_BASE + '/api/admin/placements/' + encodeURIComponent(_plEditId) + '/events',
+          { headers: { Authorization: 'Bearer ' + session.access_token } },
+        );
+        const d = await res.json();
+        if (!res.ok) throw new Error((d && d.error) || 'events_failed');
+        renderPlActivity(d.events || []);
+      } catch (err) {
+        body.innerHTML = '<div class="muted">Could not load activity: ' +
+          escapeHtml(err.message || 'try again') + '</div>';
+      }
+    }
+    function renderPlActivity(events) {
+      const body = document.getElementById('plEditActivity');
+      if (!body) return;
+      if (!events.length) {
+        body.innerHTML = '<div class="muted" style="font-size: var(--t-sm);">No activity yet.</div>';
+        return;
+      }
+      const rows = events.map((e) => {
+        const when = relativeTimeOrNever(e.created_at);
+        const actor = e.actor_email
+          ? ' · ' + escapeHtml(e.actor_email)
+          : (e.event_type === 'first_scan' || e.event_type === 'status_auto_active'
+              ? ' · system' : '');
+        return '<li class="pl-act-row">' +
+          '<span class="pl-act-row__dot" aria-hidden="true"></span>' +
+          '<div class="pl-act-row__body">' +
+            '<div class="pl-act-row__title">' + plActivityLabel(e) + '</div>' +
+            '<div class="pl-act-row__meta">' + when + actor + '</div>' +
+          '</div>' +
+        '</li>';
+      }).join('');
+      body.innerHTML = '<ul class="pl-act-list">' + rows + '</ul>';
+    }
+    function plActivityLabel(e) {
+      const p = e.payload || {};
+      switch (e.event_type) {
+        case 'created':
+          return 'Created' + (p.name ? ' as ' + escapeHtml(p.name) : '');
+        case 'status_changed':
+          return 'Status changed' +
+            (p.from ? ' from ' + escapeHtml(p.from) : '') +
+            (p.to   ? ' to '   + escapeHtml(p.to)   : '');
+        case 'status_auto_active':
+          return 'Auto-activated on first scan';
+        case 'first_scan':
+          return 'First scan detected';
+        case 'asset_uploaded':
+          return 'Asset uploaded' +
+            (p.kind ? ' (' + escapeHtml(p.kind) + ')' : '') +
+            (p.filename ? ' · ' + escapeHtml(p.filename) : '');
+        case 'asset_replaced':
+          return 'Asset replaced' +
+            (p.kind ? ' (' + escapeHtml(p.kind) + ' v' + (p.version || '') + ')' : '') +
+            (p.filename ? ' · ' + escapeHtml(p.filename) : '');
+        default:
+          return escapeHtml(e.event_type);
+      }
+    }
+
     function openPlStats(id) {
       if (!id) return;
       const row = document.querySelector('[data-placement-row="' + (CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
@@ -2955,6 +3024,9 @@
       renderPlEditMaterials(_plEditId);
       // Performance section — fetch fresh on every open.
       loadPlStats();
+      // Activity log — fetch fresh on every open so a status change
+      // made elsewhere shows up immediately.
+      loadPlActivity();
     }
     function closePlEdit() {
       plEditModal.hidden = true;
