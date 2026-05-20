@@ -266,6 +266,21 @@ export default {
         }
       }
 
+      // Admin-authored notes attached to a hotel. Stored in
+      // hotel_notes — shared across browsers/devices, unlike the
+      // v1 localStorage backing.
+      if (segs[0] === "api" && segs[1] === "admin" && segs[2] === "hotel-notes") {
+        if (request.method === "GET" && !segs[3]) {
+          return await handleAdminHotelNotesList(url, env, request);
+        }
+        if (request.method === "POST" && !segs[3]) {
+          return await handleAdminHotelNoteCreate(request, env);
+        }
+        if (request.method === "DELETE" && segs[3]) {
+          return await handleAdminHotelNoteDelete(segs[3], request, env);
+        }
+      }
+
       // ── Hotels CRUD ─────────────────────────────────────────────
       if (segs[0] === "api" && segs[1] === "admin" && segs[2] === "hotels") {
         if (request.method === "GET" && !segs[3])  return await handleAdminHotelsList(env, request);
@@ -1434,6 +1449,87 @@ async function handleAdminPaymentDelete(id, request, env) {
     status:      row.status,
     description: row.description || null,
   }, auth.claims?.email);
+  return jsonResponse({ ok: true }, 200, request);
+}
+
+// ── Hotel notes (admin-authored timeline entries) ──────────────────
+// Replaces the v1 localStorage backing so notes survive across
+// browsers / devices / cache clears. author_email + author_display
+// are denormalised on the row so the byline keeps rendering even
+// if the admin account is later renamed.
+async function handleAdminHotelNotesList(url, env, request) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const hotelId = url.searchParams.get("hotel_id");
+  if (!hotelId || !UUID_RE.test(hotelId)) {
+    return jsonResponse({ error: "hotel_id required" }, 400, request);
+  }
+  const rows = await supabaseSelect(
+    env,
+    `hotel_notes?hotel_id=eq.${encodeURIComponent(hotelId)}` +
+      `&select=id,hotel_id,text,author_email,author_display,created_at` +
+      `&order=created_at.desc&limit=500`,
+  );
+  return jsonResponse({ notes: rows || [] }, 200, request);
+}
+
+async function handleAdminHotelNoteCreate(request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+
+  const hotelId = typeof body.hotel_id === "string" ? body.hotel_id.trim() : "";
+  if (!UUID_RE.test(hotelId)) {
+    return jsonResponse({ error: "valid hotel_id required" }, 400, request);
+  }
+  const text = typeof body.text === "string" ? body.text.trim() : "";
+  if (!text) {
+    return jsonResponse({ error: "text required" }, 400, request);
+  }
+  // Cap incoming text so a runaway client can't bloat the row.
+  // Long-form operational context still fits comfortably.
+  if (text.length > 8000) {
+    return jsonResponse({ error: "text too long (8000 chars max)" }, 400, request);
+  }
+
+  const hotelRows = await supabaseSelect(
+    env, `hotels?id=eq.${encodeURIComponent(hotelId)}&select=id`,
+  );
+  if (!hotelRows.length) {
+    return jsonResponse({ error: "hotel not found" }, 404, request);
+  }
+
+  const row = {
+    hotel_id:       hotelId,
+    text,
+    author_email:   auth.claims?.email || null,
+    author_display: typeof body.author_display === "string"
+      ? body.author_display.trim().slice(0, 120) || null
+      : null,
+  };
+  const inserted = await supabaseInsert(env, "hotel_notes", [row], { returnRow: true });
+  const created  = Array.isArray(inserted) ? inserted[0] : inserted;
+  logMutation(request, auth.claims, "create", "hotel_note", created && created.id, {
+    hotel_id: hotelId,
+  });
+  return jsonResponse({ note: created }, 201, request);
+}
+
+async function handleAdminHotelNoteDelete(id, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(id)) {
+    return jsonResponse({ error: "invalid note id" }, 400, request);
+  }
+  const deleted = await supabaseRequest(
+    env, "DELETE", `/hotel_notes?id=eq.${encodeURIComponent(id)}`,
+    { prefer: "return=representation" },
+  );
+  if (!Array.isArray(deleted) || deleted.length === 0) {
+    return jsonResponse({ error: "note not found" }, 404, request);
+  }
+  logMutation(request, auth.claims, "delete", "hotel_note", id);
   return jsonResponse({ ok: true }, 200, request);
 }
 

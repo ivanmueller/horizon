@@ -4881,19 +4881,48 @@
       return s.replace(/\n/g, '<br>');
     }
 
-    // localStorage is the v1 backing store for notes — single source
-    // of truth until the /api/admin/hotel_notes endpoint exists.
-    // Key is scoped per hotel so notes don't leak across profiles.
-    function readHotelNotes(hotelId) {
-      try {
-        const raw = localStorage.getItem('hotel-notes:' + hotelId);
-        const arr = raw ? JSON.parse(raw) : [];
-        return Array.isArray(arr) ? arr : [];
-      } catch (e) { return []; }
+    // Notes are persisted server-side in hotel_notes — shared across
+    // admins/browsers/devices. The three helpers below are the only
+    // touch points; renderHotelActivity holds the in-memory cache
+    // and re-renders on every mutation.
+    async function fetchHotelNotes(hotelId) {
+      const res = await fetch(
+        BOKUN_API_BASE + '/api/admin/hotel-notes?hotel_id=' + encodeURIComponent(hotelId),
+        { headers: { Authorization: 'Bearer ' + session.access_token } },
+      );
+      const d = await res.json();
+      if (!res.ok) throw new Error((d && (d.message || d.error)) || 'load_failed');
+      return Array.isArray(d.notes) ? d.notes : [];
     }
-    function writeHotelNotes(hotelId, list) {
-      try { localStorage.setItem('hotel-notes:' + hotelId, JSON.stringify(list)); }
-      catch (e) { /* quota / private-mode — silent */ }
+    async function createHotelNote(hotelId, text, authorDisplay) {
+      const res = await fetch(BOKUN_API_BASE + '/api/admin/hotel-notes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + session.access_token,
+        },
+        body: JSON.stringify({
+          hotel_id: hotelId,
+          text,
+          author_display: authorDisplay || null,
+        }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error((d && (d.message || d.error)) || 'save_failed');
+      return d.note;
+    }
+    async function deleteHotelNote(noteId) {
+      const res = await fetch(
+        BOKUN_API_BASE + '/api/admin/hotel-notes/' + encodeURIComponent(noteId),
+        {
+          method: 'DELETE',
+          headers: { Authorization: 'Bearer ' + session.access_token },
+        },
+      );
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error((d && (d.message || d.error)) || 'delete_failed');
+      }
     }
     function currentAdminName() {
       const email = (session.user && session.user.email) || '';
@@ -6431,10 +6460,12 @@
 
     // Recent activity — Stripe-style timeline. The seed event ("Hotel
     // was created") is always present at the bottom; admin notes
-    // stack above it newest-first. Notes are stored in localStorage
-    // keyed by hotel id while the backend endpoint is pending — the
-    // read/write helpers (readHotelNotes / writeHotelNotes) are the
-    // only swap point when /api/admin/hotel_notes ships.
+    // stack above it newest-first. Notes are persisted in hotel_notes
+    // via /api/admin/hotel-notes — shared across browsers and admins.
+    // notesCache is the in-memory render source; the three mutation
+    // paths (load, create, delete) all funnel through it before
+    // calling renderList() so the UI never reads from the network
+    // during a paint.
     function renderHotelActivity(h, els) {
       const body       = els.container.querySelector('#hdActivityBody');
       const addBtn     = els.container.querySelector('#hdActivityAdd');
@@ -6454,11 +6485,6 @@
           sideBody.innerHTML = '';
           return;
         }
-        // Only the most recent note ever surfaces in the rail — the
-        // rest live in Recent activity. A "View N more note(s)" link
-        // appears inside the same card when there are more, mirroring
-        // the Stripe pattern; clicking it scrolls the timeline into
-        // view and centres it in the viewport.
         sidePanel.hidden = false;
         const top  = notes[0];
         const rest = notes.length - 1;
@@ -6492,9 +6518,23 @@
       };
 
       let composerOpen = false;
+      let notesCache   = [];
+      let loadError    = null;
+
+      // Normalise a server row into the shape renderActivityRow
+      // expects — collapses author_display / author_email / "Admin"
+      // into a single byline so the renderer never has to branch.
+      const normaliseNote = (n) => ({
+        id: n.id,
+        text: n.text || '',
+        author: n.author_display ||
+          (n.author_email ? n.author_email.split('@')[0] : null) ||
+          'Admin',
+        created_at: n.created_at,
+      });
 
       const renderList = () => {
-        const notes = readHotelNotes(h.id).slice().sort((a, b) =>
+        const notes = notesCache.slice().sort((a, b) =>
           (a.created_at < b.created_at ? 1 : -1)
         );
         renderSidePanel(notes);
@@ -6531,14 +6571,36 @@
             '</div>'
           : '';
 
+        const errorBanner = loadError
+          ? '<div class="hd-empty">Could not load notes: ' +
+              escapeHtml(loadError) + '</div>'
+          : '';
+
         body.innerHTML =
           composerHtml +
+          errorBanner +
           '<ul class="hd-activity">' +
             items.map(renderActivityRow).join('') +
           '</ul>';
 
         if (composerOpen) wireComposer();
         wireNoteMenus();
+      };
+
+      // Initial fetch. The "Hotel was created" seed is already in
+      // the cache implicitly (renderList always appends it), so the
+      // timeline renders something useful even if the API call
+      // fails — only the notes go missing.
+      const loadNotes = async () => {
+        try {
+          const rows = await fetchHotelNotes(h.id);
+          notesCache = rows.map(normaliseNote);
+          loadError  = null;
+        } catch (err) {
+          notesCache = [];
+          loadError  = String(err && err.message || err);
+        }
+        renderList();
       };
 
       const openComposer = () => {
@@ -6553,20 +6615,29 @@
         if (addBtn) addBtn.disabled = false;
         renderList();
       };
-      const saveNote = () => {
-        const ta = body.querySelector('#hdNoteInput');
+
+      // Save flow: disable the Save button to absorb double-clicks,
+      // POST, then push the server-shaped row into the cache so the
+      // byline + id match what a refetch would return. On failure
+      // the composer stays open with an inline error so the typed
+      // text isn't lost.
+      const saveNote = async () => {
+        const ta   = body.querySelector('#hdNoteInput');
+        const save = body.querySelector('#hdNoteSave');
         const text = (ta && ta.value || '').trim();
         if (!text) return;
-        const note = {
-          id: 'n_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-          text,
-          author: currentAdminName(),
-          created_at: new Date().toISOString(),
-        };
-        const list = readHotelNotes(h.id);
-        list.push(note);
-        writeHotelNotes(h.id, list);
-        closeComposer();
+        if (save) { save.disabled = true; save.textContent = 'Saving…'; }
+        try {
+          const created = await createHotelNote(h.id, text, currentAdminName());
+          notesCache.push(normaliseNote(created));
+          closeComposer();
+        } catch (err) {
+          if (save) { save.disabled = false; save.innerHTML =
+            'Add note <kbd class="hd-kbd hd-kbd--on-primary">Ctrl</kbd>' +
+            '<span class="hd-kbd-plus">+</span>' +
+            '<kbd class="hd-kbd hd-kbd--on-primary">Enter</kbd>'; }
+          alert('Could not save note: ' + (err && err.message || err));
+        }
       };
 
       const wireComposer = () => {
@@ -6618,13 +6689,23 @@
             }
           };
         });
+        // Optimistic delete: remove from the cache and re-render
+        // immediately, then DELETE. On failure restore the cache
+        // and surface the error.
         body.querySelectorAll('[data-note-del]').forEach((b) => {
-          b.onclick = () => {
+          b.onclick = async () => {
             const id = b.dataset.noteDel;
             if (!confirm('Delete this note?')) return;
-            const list = readHotelNotes(h.id).filter((n) => n.id !== id);
-            writeHotelNotes(h.id, list);
+            const prev = notesCache;
+            notesCache = notesCache.filter((n) => n.id !== id);
             renderList();
+            try {
+              await deleteHotelNote(id);
+            } catch (err) {
+              notesCache = prev;
+              renderList();
+              alert('Could not delete: ' + (err && err.message || err));
+            }
           };
         });
       };
@@ -6636,7 +6717,9 @@
       }
 
       if (addBtn) addBtn.onclick = openComposer;
+      // Render the seed event immediately, then load notes async.
       renderList();
+      loadNotes();
     }
 
     // Payments — Stripe-style table of hand-entered receipts. Rows
