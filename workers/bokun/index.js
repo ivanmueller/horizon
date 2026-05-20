@@ -2265,7 +2265,7 @@ const PLACEMENT_TYPES = new Set([
   "rack_card", "table_tent", "welcome_packet",
   "website_widget", "lobby_qr", "custom",
 ]);
-const PLACEMENT_STATUSES = new Set(["pending", "active", "paused", "retired"]);
+const PLACEMENT_STATUSES = new Set(["designed", "printed", "active", "paused", "retired"]);
 // Short.io path constraints — alphanumeric plus the common
 // separators. Conservative; tighten if you find Short.io rejecting
 // edge cases.
@@ -2566,12 +2566,14 @@ async function syncClickCounts(env) {
     return { skipped: true, reason: "SHORT_IO_API_KEY not configured" };
   }
 
-  // Fetch all active links (id + short_io_id only — we don't need full rows).
+  // Fetch all active links. short_path is included so we can auto-
+  // transition the placement that owns this link from 'printed' to
+  // 'active' on the first scan (see below).
   let links;
   try {
     links = await supabaseSelect(
       env,
-      "short_links?status=eq.active&select=id,short_io_id&order=created_at.asc",
+      "short_links?status=eq.active&select=id,short_io_id,short_path&order=created_at.asc",
     );
   } catch (err) {
     console.error("syncClickCounts: failed to fetch short_links:", err.message);
@@ -2617,6 +2619,26 @@ async function syncClickCounts(env) {
         },
       );
       synced++;
+
+      // Auto-transition: a placement currently in 'printed' state
+      // flips to 'active' on its first recorded scan. The short
+      // link's short_path equals the placement's lowercased code, so
+      // one indexed lookup per link is enough. Failures here are
+      // logged but don't abort the sync run.
+      if (totalClicks > 0 && link.short_path) {
+        try {
+          await supabaseUpdate(
+            env,
+            `placements?code=ilike.${encodeURIComponent(link.short_path)}` +
+              `&status=eq.printed`,
+            { status: "active" },
+          );
+        } catch (err) {
+          console.warn(
+            `syncClickCounts: placement auto-transition failed for ${link.short_path}: ${err.message}`,
+          );
+        }
+      }
     } catch (err) {
       console.error(`syncClickCounts: link ${link.id} failed:`, err.message);
       if (!firstError) firstError = err.message;

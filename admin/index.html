@@ -444,6 +444,7 @@
           </button>
         </div>
         <div class="pl-modal__headactions">
+          <button type="button" class="btn btn--sm" id="plEditPrintBtn" hidden>Mark printed</button>
           <button type="button" class="btn btn--sm" id="plEditPauseBtn" hidden>Pause</button>
           <button type="button" class="btn btn--sm btn--danger" id="plEditRetireBtn" hidden>Retire</button>
           <button type="button" class="modal__close" id="plEditClose" aria-label="Close">&times;</button>
@@ -520,7 +521,8 @@
         <div class="drawer-form__row">
           <label class="drawer-form__label" for="plEditStatus">Status</label>
           <select class="input" id="plEditStatus">
-            <option value="pending">Pending</option>
+            <option value="designed">Designed</option>
+            <option value="printed">Printed</option>
             <option value="active">Active</option>
             <option value="paused">Paused</option>
             <option value="retired">Retired</option>
@@ -2971,28 +2973,36 @@
           headerShort.hidden = true;
         }
       }
-      // Pause / Resume label flips based on current status. Retire is
-      // hidden when already retired; both are hidden in pending state
-      // since there's nothing operational to pause/retire yet. These
-      // are plain inline buttons in the header strip — no popup menu.
-      const status = row.dataset.plStatus || 'pending';
+      // Quick-action buttons by status:
+      //   designed → [Mark printed] [Retire]
+      //   printed  → [Pause] [Retire]
+      //   active   → [Pause] [Retire]
+      //   paused   → [Resume] [Retire]
+      //   retired  → (none — placement is terminal)
+      // The status select in Configuration is the escape hatch for
+      // any non-standard transition.
+      const status = row.dataset.plStatus || 'designed';
+      const printBtn  = document.getElementById('plEditPrintBtn');
       const pauseBtn  = document.getElementById('plEditPauseBtn');
       const retireBtn = document.getElementById('plEditRetireBtn');
+      if (printBtn) printBtn.hidden = (status !== 'designed');
       if (pauseBtn) {
         pauseBtn.textContent = status === 'paused' ? 'Resume' : 'Pause';
         pauseBtn.dataset.plAction = status === 'paused' ? 'resume' : 'pause';
-        pauseBtn.hidden = (status === 'pending' || status === 'retired');
+        pauseBtn.hidden = (status === 'designed' || status === 'retired');
       }
       if (retireBtn) retireBtn.hidden = (status === 'retired');
     }
 
     function plStatusPill(status) {
       const map = {
-        active:  '<span class="bk-pill bk-pill--ok">Active</span>',
-        paused:  '<span class="bk-pill bk-pill--warn">Paused</span>',
-        retired: '<span class="bk-pill bk-pill--neutral">Retired</span>',
+        designed: '<span class="bk-pill bk-pill--neutral">Designed</span>',
+        printed:  '<span class="bk-pill bk-pill--info">Printed</span>',
+        active:   '<span class="bk-pill bk-pill--ok">Active</span>',
+        paused:   '<span class="bk-pill bk-pill--warn">Paused</span>',
+        retired:  '<span class="bk-pill bk-pill--neutral">Retired</span>',
       };
-      return map[status] || '<span class="bk-pill bk-pill--warn">Pending</span>';
+      return map[status] || '<span class="bk-pill bk-pill--neutral">Designed</span>';
     }
 
     // Header actions — two inline buttons (Pause/Resume + Retire) in
@@ -3000,8 +3010,15 @@
     // delegation: each button has a direct onclick that does its
     // thing. updatePlModalHeader controls visibility + label based on
     // the current placement status.
+    const plEditPrintBtn  = document.getElementById('plEditPrintBtn');
     const plEditPauseBtn  = document.getElementById('plEditPauseBtn');
     const plEditRetireBtn = document.getElementById('plEditRetireBtn');
+    if (plEditPrintBtn) {
+      plEditPrintBtn.onclick = async () => {
+        if (!_plEditId) return;
+        await setPlacementStatus(_plEditId, 'printed');
+      };
+    }
     if (plEditPauseBtn) {
       plEditPauseBtn.onclick = async () => {
         if (!_plEditId) return;
@@ -4641,11 +4658,7 @@
             .slice()
             .sort((a, b) => (a.sequence_number || 0) - (b.sequence_number || 0))
             .map((p) => {
-              const statusPill = p.status === 'active'
-                ? '<span class="bk-pill bk-pill--ok">Active</span>'
-                : (p.status === 'retired'
-                    ? '<span class="bk-pill bk-pill--neutral">Retired</span>'
-                    : '<span class="bk-pill bk-pill--warn">Pending</span>');
+              const statusPill = plStatusPill(p.status || 'designed');
               const code = p.code || '';
               const sl = shortByPath.get((code || '').toLowerCase()) || null;
               const deployedDate = p.deployed_at
