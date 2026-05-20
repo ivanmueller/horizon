@@ -544,34 +544,102 @@
     </form>
   </div>
 
-  <!-- ── Staff (employee) modal — handles add + edit ───────── -->
+  <!-- ── Employee lightbox — handles add + sectioned edit ─── -->
   <div class="modal" id="staffModal" hidden>
-    <form class="modal__card" id="staffModalForm" novalidate>
-      <div class="modal__head">
-        <h2 class="modal__title" id="staffModalTitle">Add employee</h2>
-        <button type="button" class="modal__close" id="staffModalClose" aria-label="Close">&times;</button>
+    <form class="modal__card modal__card--wide pl-modal" id="staffModalForm" novalidate>
+      <!-- Header strip: status pill, name, code with copy, top-performer badge -->
+      <div class="pl-modal__head">
+        <div class="pl-modal__headmain">
+          <span class="pl-modal__statuswrap" id="staffModalHeaderStatus"></span>
+          <h2 class="pl-modal__title" id="staffModalTitle">Add employee</h2>
+          <button type="button" class="hd-copy mono pl-modal__short" id="staffModalHeaderCode"
+                  data-copy="" title="Copy referral code" hidden>
+            <span data-detail-text>—</span>
+            <svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+          <span class="bk-pill bk-pill--info bk-pill--xs" id="staffModalTopBadge" hidden>Top performer</span>
+        </div>
+        <div class="pl-modal__headactions">
+          <button type="button" class="modal__close" id="staffModalClose" aria-label="Close">&times;</button>
+        </div>
       </div>
+
       <div class="alert alert--bad" id="staffModalError" hidden></div>
 
-      <div class="drawer-form__row">
-        <label class="drawer-form__label" for="staffModalName">Name <span class="drawer-form__req">required</span></label>
-        <input class="input" id="staffModalName" type="text" required maxlength="120"
-               placeholder="Jane Smith" autocomplete="off">
-        <span class="drawer-form__hint" id="staffModalNameHint">The tracking code (used in QR codes) is auto-assigned on creation.</span>
-      </div>
+      <!-- Scoreboard (edit mode only) ────────────────────────── -->
+      <section class="pl-modal__section" id="staffModalScoreboardSection" hidden>
+        <h3 class="pl-modal__sectiontitle">Scoreboard</h3>
+        <div class="pl-an__cards">
+          <div class="pl-an__card"><span class="pl-an__k">Bookings</span>
+            <span class="pl-an__v" id="staffModalBookings">—</span></div>
+          <div class="pl-an__card"><span class="pl-an__k">Commission</span>
+            <span class="pl-an__v" id="staffModalCommission">—</span></div>
+          <div class="pl-an__card"><span class="pl-an__k">Conversion</span>
+            <span class="pl-an__v" id="staffModalConversion">—</span></div>
+          <div class="pl-an__card"><span class="pl-an__k">Avg booking</span>
+            <span class="pl-an__v" id="staffModalAvgBooking">—</span></div>
+        </div>
+        <div class="muted" id="staffModalRankLine" style="margin-top: 8px; font-size: var(--t-sm);"></div>
+      </section>
 
-      <div class="drawer-form__row" id="staffModalTrackingRow" hidden>
-        <label class="drawer-form__label" for="staffModalTracking">Tracking code <span class="drawer-form__req">permanent</span></label>
-        <input class="input" id="staffModalTracking" type="text" disabled
-               style="font-family: var(--font-mono); font-size: 0.9em;">
-        <span class="drawer-form__hint">Auto-assigned at creation. Encoded in this employee's QR code.</span>
-      </div>
+      <!-- Recent bookings (edit mode only) ─────────────────── -->
+      <section class="pl-modal__section" id="staffModalRecentSection" hidden>
+        <h3 class="pl-modal__sectiontitle">Recent bookings</h3>
+        <div id="staffModalRecent"><div class="muted">Loading…</div></div>
+      </section>
 
-      <div class="drawer-form__row">
-        <label class="drawer-form__label" for="staffModalKickback">Kickback %</label>
-        <input class="input" id="staffModalKickback" type="number" min="0" max="100" step="0.1"
-               placeholder="5">
-      </div>
+      <!-- Configuration ────────────────────────────────────── -->
+      <section class="pl-modal__section">
+        <h3 class="pl-modal__sectiontitle">Configuration</h3>
+
+        <div class="drawer-form__row">
+          <label class="drawer-form__label" for="staffModalName">Name <span class="drawer-form__req">required</span></label>
+          <input class="input" id="staffModalName" type="text" required maxlength="120"
+                 placeholder="Jane Smith" autocomplete="off">
+          <span class="drawer-form__hint" id="staffModalNameHint">The tracking code (used in QR codes) is auto-assigned on creation.</span>
+        </div>
+
+        <div class="drawer-form__row" id="staffModalTrackingRow" hidden>
+          <label class="drawer-form__label" for="staffModalTracking">Tracking code <span class="drawer-form__req">permanent</span></label>
+          <input class="input" id="staffModalTracking" type="text" disabled
+                 style="font-family: var(--font-mono); font-size: 0.9em;">
+          <span class="drawer-form__hint">Auto-assigned at creation. Encoded in this employee's QR code.</span>
+        </div>
+
+        <div class="drawer-form__row">
+          <label class="drawer-form__label" for="staffModalKickback">Kickback %</label>
+          <input class="input" id="staffModalKickback" type="number" min="0" max="100" step="0.1"
+                 placeholder="5">
+          <span class="drawer-form__hint" id="staffModalRateHint" hidden></span>
+        </div>
+      </section>
+
+      <!-- Materials (edit mode only) ───────────────────────── -->
+      <section class="pl-modal__section" id="staffModalMaterialsSection" hidden>
+        <h3 class="pl-modal__sectiontitle">Materials</h3>
+        <div class="pl-mat__qr">
+          <div class="pl-mat__qrbox" id="staffModalQr"></div>
+          <div class="pl-mat__qrside">
+            <div class="pl-mat__qrlabel">Personal QR + short link</div>
+            <div class="pl-mat__qrhint" id="staffModalShortHint">—</div>
+            <div class="pl-mat__qrbtns">
+              <button type="button" class="btn btn--sm" id="staffModalQrPng">Download PNG</button>
+              <button type="button" class="btn btn--sm" id="staffModalQrSvg">Download SVG</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Payouts (edit mode only) ─────────────────────────── -->
+      <section class="pl-modal__section" id="staffModalPayoutsSection" hidden>
+        <h3 class="pl-modal__sectiontitle">Payouts</h3>
+        <dl class="mgr-keyvals">
+          <div class="mgr-keyvals__row"><dt>Lifetime earned</dt><dd id="staffModalLifetime">—</dd></div>
+          <div class="mgr-keyvals__row"><dt>Pending</dt>
+            <dd class="muted" title="Pending = commission accrued on confirmed bookings not yet allocated to a payout. Staff-level allocation lands when per-staff payouts ship.">—</dd></div>
+          <div class="mgr-keyvals__row"><dt>Last hotel payout</dt><dd id="staffModalLastPayout" class="muted">—</dd></div>
+        </dl>
+      </section>
 
       <div class="modal__actions">
         <button type="button" class="btn" id="staffModalCancel">Cancel</button>
@@ -7556,6 +7624,20 @@
     const staffModalKickback    = document.getElementById('staffModalKickback');
     const staffModalSubmit  = document.getElementById('staffModalSubmit');
 
+    // Section ids that only render in edit mode. Hidden during invite.
+    const STAFF_EDIT_SECTIONS = [
+      'staffModalScoreboardSection',
+      'staffModalRecentSection',
+      'staffModalMaterialsSection',
+      'staffModalPayoutsSection',
+    ];
+    function setStaffEditSectionsVisible(visible) {
+      STAFF_EDIT_SECTIONS.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.hidden = !visible;
+      });
+    }
+
     function openStaffModalAdd(hotel) {
       _staffModalHotel  = hotel;
       _staffModalEditId = null;
@@ -7567,13 +7649,18 @@
       staffModalKickback.value          = '';
       staffModalTrackingRow.hidden      = true;
       staffModalNameHint.hidden         = false;
+      document.getElementById('staffModalHeaderStatus').innerHTML = '';
+      document.getElementById('staffModalHeaderCode').hidden = true;
+      document.getElementById('staffModalTopBadge').hidden = true;
+      document.getElementById('staffModalRateHint').hidden = true;
+      setStaffEditSectionsVisible(false);
       staffModal.hidden = false;
       staffModalName.focus();
     }
     function openStaffModalEdit(hotel, staff) {
       _staffModalHotel  = hotel;
       _staffModalEditId = staff.id;
-      staffModalTitle.textContent       = 'Edit ' + (staff.name || 'employee');
+      staffModalTitle.textContent       = staff.name || 'Employee';
       staffModalSubmit.textContent      = 'Save changes';
       staffModalSubmit.disabled         = false;
       staffModalError.hidden            = true;
@@ -7582,10 +7669,167 @@
       staffModalTracking.value          = staff.tracking_code || '—';
       staffModalTrackingRow.hidden      = false;
       staffModalNameHint.hidden         = true;
+      // Header strip
+      const statusPill = staff.status === 'active'
+        ? '<span class="bk-pill bk-pill--ok">Active</span>'
+        : '<span class="bk-pill bk-pill--neutral">' + escapeHtml(staff.status || '—') + '</span>';
+      document.getElementById('staffModalHeaderStatus').innerHTML = statusPill;
+      const codeBtn = document.getElementById('staffModalHeaderCode');
+      if (staff.tracking_code) {
+        codeBtn.hidden = false;
+        codeBtn.dataset.copy = staff.tracking_code;
+        const txt = codeBtn.querySelector('[data-detail-text]');
+        if (txt) txt.textContent = staff.tracking_code;
+      } else {
+        codeBtn.hidden = true;
+      }
+      // Hotel default rate warning chip
+      const hotelDefault = (hotel.commission_pct != null && hotel.kickback_pool_pct == null)
+        ? Number(hotel.commission_pct)
+        : (hotel.kickback_pool_pct != null ? Number(hotel.kickback_pool_pct) : null);
+      const rate = staff.kickback_pct != null ? Number(staff.kickback_pct) : null;
+      const rateHint = document.getElementById('staffModalRateHint');
+      if (rate != null && hotelDefault != null && rate !== hotelDefault) {
+        rateHint.hidden = false;
+        rateHint.textContent = `Custom rate · hotel default is ${hotelDefault}%`;
+      } else {
+        rateHint.hidden = true;
+      }
+      // Show the edit-only sections and kick off the stats fetch.
+      setStaffEditSectionsVisible(true);
+      loadStaffStats(hotel, staff);
       staffModal.hidden = false;
       staffModalName.focus();
     }
     function closeStaffModal() { staffModal.hidden = true; }
+
+    // Populate the lightbox edit-mode sections from the per-staff
+    // stats endpoint + the hotel's payouts list (already on the
+    // hotel object). Rank line is computed client-side from the
+    // staff array we already have, so no extra round-trip needed.
+    async function loadStaffStats(hotel, staff) {
+      const cur = (staff.currency) || (hotel.currency) || 'CAD';
+      // Reset visible state — placeholders during the fetch.
+      ['staffModalBookings','staffModalCommission','staffModalConversion','staffModalAvgBooking']
+        .forEach((id) => { const el = document.getElementById(id); if (el) el.textContent = '—'; });
+      document.getElementById('staffModalRecent').innerHTML = '<div class="muted">Loading…</div>';
+      document.getElementById('staffModalLifetime').textContent =
+        formatHotelMoney(staff.lifetime_commission || 0, cur);
+      // Last hotel payout (closest stub we can show until per-staff
+      // payouts ship). Reads from h.payouts when available.
+      const payouts = Array.isArray(hotel.payouts) ? hotel.payouts : [];
+      const lastPayout = payouts.slice().sort((a, b) =>
+        String(b.paid_at || '').localeCompare(String(a.paid_at || ''))
+      )[0];
+      document.getElementById('staffModalLastPayout').textContent =
+        lastPayout && lastPayout.paid_at
+          ? formatHumanDate(String(lastPayout.paid_at).slice(0, 10))
+          : '—';
+
+      // Rank line + top-performer badge — computed against the
+      // hotel's active staff sorted by lifetime commission desc.
+      const activeStaff = (hotel.staff || [])
+        .filter((s) => s.status === 'active')
+        .slice()
+        .sort((a, b) => (Number(b.lifetime_commission) || 0) - (Number(a.lifetime_commission) || 0));
+      const myRank = activeStaff.findIndex((s) => s.id === staff.id) + 1;
+      const totalActive = activeStaff.length;
+      const rankLine = document.getElementById('staffModalRankLine');
+      if (rankLine) {
+        rankLine.textContent = myRank > 0
+          ? `Rank #${myRank} of ${totalActive} active employees by commission earned`
+          : '';
+      }
+      const topBadge = document.getElementById('staffModalTopBadge');
+      if (topBadge) topBadge.hidden = (myRank !== 1 || totalActive < 2);
+
+      // Personal QR + short link (Materials section).
+      const personalLink = (hotel.short_links || [])
+        .find((l) => l.status === 'active' && l.staff_id === staff.id);
+      const shortUrl = personalLink && personalLink.short_url;
+      const qrBox = document.getElementById('staffModalQr');
+      const shortHint = document.getElementById('staffModalShortHint');
+      if (qrBox) qrBox.innerHTML = '';
+      if (shortUrl && qrBox) {
+        const qr = makeQRInstance(shortUrl, 140);
+        if (qr) qr.append(qrBox);
+        if (shortHint) shortHint.textContent = shortUrl;
+        document.getElementById('staffModalQrPng').onclick = () => {
+          const q = makeQRInstance(shortUrl, 600);
+          if (q) q.download({ name: staff.tracking_code || 'staff', extension: 'png' });
+        };
+        document.getElementById('staffModalQrSvg').onclick = () => {
+          const q = makeQRInstance(shortUrl, 600);
+          if (q) q.download({ name: staff.tracking_code || 'staff', extension: 'svg' });
+        };
+      } else if (shortHint) {
+        shortHint.textContent = 'No personal short link minted yet.';
+      }
+
+      try {
+        const res = await fetch(
+          BOKUN_API_BASE + '/api/admin/hotel-staff/' + encodeURIComponent(staff.id) + '/stats?period=last30',
+          { headers: { Authorization: 'Bearer ' + session.access_token } },
+        );
+        const d = await res.json();
+        if (!res.ok) throw new Error((d && d.error) || 'stats_failed');
+        const dcur = d.currency || cur;
+        document.getElementById('staffModalBookings').textContent =
+          (Number(d.bookings_total) || 0) +
+          (d.bookings_month ? ' (' + d.bookings_month + ' this month)' : '');
+        document.getElementById('staffModalCommission').textContent =
+          formatHotelMoney(d.lifetime_commission || 0, dcur);
+        document.getElementById('staffModalConversion').textContent =
+          d.conversion_pct == null ? '—' : (d.conversion_pct + '%');
+        const avg = (Number(d.bookings_total) || 0) > 0 && Array.isArray(d.recent_bookings)
+          ? d.recent_bookings.reduce((acc, b) => acc + (Number(b.amount) || 0), 0) /
+            Math.max(1, d.recent_bookings.length)
+          : 0;
+        document.getElementById('staffModalAvgBooking').textContent =
+          avg > 0 ? formatHotelMoney(avg, dcur) : '—';
+        renderStaffRecent(d.recent_bookings || [], dcur);
+        // Update lifetime in case the cache was stale.
+        document.getElementById('staffModalLifetime').textContent =
+          formatHotelMoney(d.lifetime_commission || 0, dcur);
+      } catch (err) {
+        document.getElementById('staffModalRecent').innerHTML =
+          '<div class="muted">Could not load stats: ' + escapeHtml(err.message || 'try again') + '</div>';
+      }
+    }
+
+    function renderStaffRecent(rows, cur) {
+      const body = document.getElementById('staffModalRecent');
+      if (!body) return;
+      if (!rows.length) {
+        body.innerHTML = '<div class="muted" style="font-size: var(--t-sm);">No bookings yet.</div>';
+        return;
+      }
+      const trs = rows.map((b) => {
+        const statusPill = b.status === 'confirmed'
+          ? '<span class="bk-pill bk-pill--ok bk-pill--xs">Confirmed</span>'
+          : b.status === 'refunded' || b.status === 'cancelled'
+            ? '<span class="bk-pill bk-pill--neutral bk-pill--xs">' + escapeHtml(b.status) + '</span>'
+            : '<span class="bk-pill bk-pill--warn bk-pill--xs">' + escapeHtml(b.status || '—') + '</span>';
+        return '<tr>' +
+          '<td class="muted">' + escapeHtml(formatHumanDate(String(b.date || b.created_at || '').slice(0, 10)) || '—') + '</td>' +
+          '<td>' + escapeHtml(b.tour_title || '—') + '</td>' +
+          '<td>' + escapeHtml(b.lead_name || '—') + '</td>' +
+          '<td class="num">' + escapeHtml(formatHotelMoney(b.amount || 0, b.currency || cur)) + '</td>' +
+          '<td class="num">' + escapeHtml(formatHotelMoney(b.commission_amount || 0, b.currency || cur)) + '</td>' +
+          '<td>' + statusPill + '</td>' +
+        '</tr>';
+      }).join('');
+      body.innerHTML =
+        '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
+          '<table class="bk-table">' +
+            '<thead><tr>' +
+              '<th>Date</th><th>Tour</th><th>Guest</th>' +
+              '<th class="num">Value</th><th class="num">Commission</th><th></th>' +
+            '</tr></thead>' +
+            '<tbody>' + trs + '</tbody>' +
+          '</table>' +
+        '</div></div>';
+    }
 
     staffModal && staffModal.addEventListener('click', (e) => {
       if (e.target === staffModal) closeStaffModal();
