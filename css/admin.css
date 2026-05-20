@@ -2291,16 +2291,17 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   padding: 12px 0;
   border-bottom: 1px solid #ecf1f6;
   font-size: var(--t-sm);
-  font-weight: 500;
   color: #1a2c44;
   line-height: 1.4;
 }
 .hd-events__row:last-child { border-bottom: 0; }
 .hd-events__desc {
+  font-weight: 600;
   word-wrap: break-word;
   min-width: 0;
 }
 .hd-events__time {
+  font-weight: 400;
   white-space: nowrap;
   flex-shrink: 0;
   padding-top: 1px;
