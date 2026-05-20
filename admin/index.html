@@ -1801,15 +1801,6 @@
 
                 <section class="hd-section">
                   <header class="hd-section__head">
-                    <h2 class="hd-section__title">Logs</h2>
-                  </header>
-                  <div class="hd-section__body" id="hdLogsBody">
-                    <div class="hd-empty">No API logs</div>
-                  </div>
-                </section>
-
-                <section class="hd-section">
-                  <header class="hd-section__head">
                     <h2 class="hd-section__title">Events</h2>
                   </header>
                   <div class="hd-section__body">
@@ -1820,6 +1811,17 @@
               </main>
 
               <aside class="hd-side">
+
+                <!-- Sticky-notes panel — mirrors the Recent activity
+                     notes feed as yellow note cards. Stays hidden
+                     while the list is empty and renders above the
+                     Setup guide once at least one note exists. -->
+                <section class="hd-notespanel" id="hdNotesPanel" hidden>
+                  <header class="hd-notespanel__head">
+                    <h3 class="hd-notespanel__title">Notes</h3>
+                  </header>
+                  <div class="hd-notespanel__body" id="hdNotesPanelBody"></div>
+                </section>
 
                 <!-- Setup guide — conditional checklist card. Renders
                      only while pending; closes when verified (pill
@@ -6343,33 +6345,6 @@
           '</div></div>';
       }
 
-      // ── Logs
-      const logs = [
-        { ep: 'POST /v1/bookings/hzn_2026_0142',          status: '200 OK',      ts: 'Jun 18, 2026, 2:03:47 PM' },
-        { ep: 'POST /v1/referrals/track',                 status: '200 OK',      ts: 'Jun 18, 2026, 1:58:22 PM' },
-        { ep: 'GET  /v1/hotels/fairmont-ll/employees',    status: '200 OK',      ts: 'Jun 18, 2026, 11:14:08 AM' },
-        { ep: 'POST /v1/employees',                       status: '201 Created', ts: 'May 1, 2026, 4:22:15 PM' },
-        { ep: 'POST /v1/hotels',                          status: '201 Created', ts: 'Apr 28, 2026, 11:43:02 AM' },
-      ];
-      const logsBody = els.container.querySelector('#hdLogsBody');
-      if (logsBody) {
-        logsBody.innerHTML =
-          '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
-            '<table class="bk-table">' +
-              '<thead><tr><th>Endpoint</th><th>Status</th><th>Timestamp</th></tr></thead>' +
-              '<tbody>' +
-                logs.map((l) =>
-                  '<tr>' +
-                    '<td class="mono">' + escapeHtml(l.ep) + '</td>' +
-                    '<td><span class="hd-pill-mono">' + escapeHtml(l.status) + '</span></td>' +
-                    '<td class="muted">' + escapeHtml(l.ts) + '</td>' +
-                  '</tr>'
-                ).join('') +
-              '</tbody>' +
-            '</table>' +
-          '</div></div>';
-      }
-
       // ── Hero metric strip (demo values for the reference hotel)
       const setHero = (k, v) => {
         const n = els.heroStat && els.heroStat.querySelector('[data-herostat="' + k + '"]');
@@ -6536,9 +6511,34 @@
     // read/write helpers (readHotelNotes / writeHotelNotes) are the
     // only swap point when /api/admin/hotel_notes ships.
     function renderHotelActivity(h, els) {
-      const body   = els.container.querySelector('#hdActivityBody');
-      const addBtn = els.container.querySelector('#hdActivityAdd');
+      const body       = els.container.querySelector('#hdActivityBody');
+      const addBtn     = els.container.querySelector('#hdActivityAdd');
+      const sidePanel  = els.container.querySelector('#hdNotesPanel');
+      const sideBody   = els.container.querySelector('#hdNotesPanelBody');
       if (!body) return;
+
+      // Sticky-notes panel in the right rail mirrors the timeline
+      // notes as yellow cards. Hidden entirely while the list is
+      // empty — no header, no empty state — so the section appears
+      // only when there's something to show, and vanishes again
+      // when the last note is deleted.
+      const renderSidePanel = (notes) => {
+        if (!sidePanel || !sideBody) return;
+        if (!notes.length) {
+          sidePanel.hidden = true;
+          sideBody.innerHTML = '';
+          return;
+        }
+        sidePanel.hidden = false;
+        sideBody.innerHTML = notes.map((n) =>
+          '<article class="hd-stickynote">' +
+            '<div class="hd-stickynote__text">' + renderNoteMarkup(n.text || '') + '</div>' +
+            '<div class="hd-stickynote__by">Note' +
+              (n.author ? ' by ' + escapeHtml(n.author) : '') +
+            '</div>' +
+          '</article>'
+        ).join('');
+      };
 
       const seed = {
         kind: 'event',
@@ -6553,6 +6553,7 @@
         const notes = readHotelNotes(h.id).slice().sort((a, b) =>
           (a.created_at < b.created_at ? 1 : -1)
         );
+        renderSidePanel(notes);
         const items = notes.map((n) => ({
           kind: 'note',
           iconType: 'note',
