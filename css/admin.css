@@ -3834,14 +3834,34 @@ select.hd-bankf__input { appearance: auto; }
   color: rgba(255, 255, 255, 0.7);
 }
 
-/* The "+ Add note" trigger lives in the section header. Same ghost
-   button as the rest of /admin/; the leading "+" is a quieter
-   weight so the label is the dominant glyph. */
-.hd-activity__addbtn { gap: 4px; }
+/* The "+ Add note" trigger lives in the section header. White
+   surface, soft blue-grey hairline border, hint of elevation —
+   reads as a discrete affordance rather than a header chip. The
+   leading "+" sits at the same weight as the label so the pair
+   reads together. */
+.hd-activity__addbtn {
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--bg);
+  border: 1px solid #DBE3EF;
+  border-radius: 6px;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+  color: #1a2c44;
+  font-weight: 500;
+}
+.hd-activity__addbtn:hover {
+  background: var(--bg-subtle);
+  border-color: var(--border-strong);
+}
+.hd-activity__addbtn:disabled {
+  opacity: 0.55;
+  cursor: default;
+  box-shadow: none;
+}
 .hd-activity__addbtn-plus {
   font-size: 14px;
-  font-weight: 400;
-  color: var(--text-muted);
+  font-weight: 500;
+  color: #1a2c44;
 }
 
 /* ── Short Links global page (Phase 6) ────────────────────────── */
