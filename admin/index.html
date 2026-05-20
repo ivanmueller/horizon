@@ -4521,12 +4521,10 @@
                     : '<span class="bk-pill bk-pill--warn">Pending</span>');
               const code = p.code || '';
               const sl = shortByPath.get((code || '').toLowerCase()) || null;
-              // The code is the visible token; the copy icon yields the
-              // full shareable short URL (the code IS its path).
-              const copyVal = sl ? sl.short_url : code;
-              const copyTitle = sl ? 'Copy short link' : 'Copy placement code';
               const deployedDate = p.deployed_at
                 ? String(p.deployed_at).slice(0, 10) : '';
+              const totalClicks = sl ? (sl.click_count_cached || 0) : 0;
+              const lastScan = relativeTimeOrNever(sl && sl.last_clicked_at);
               const plEditIcon =
                 '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>';
               const plTrashIcon =
@@ -4563,12 +4561,15 @@
                   ' data-pl-deployed="' + escapeHtml(deployedDate) + '"' +
                   ' data-pl-status="' + escapeHtml(p.status || 'pending') + '"' +
                   ' data-pl-code="' + escapeHtml(code) + '">' +
-                  '<td>' + statusPill + '</td>' +
                   '<td class="hd-emp__name">' + escapeHtml(p.name || '—') + '</td>' +
-                  '<td><button type="button" class="hd-copy mono" data-copy="' + escapeHtml(copyVal) + '" title="' + copyTitle + '">' +
-                      '<span>' + escapeHtml(code || '—') + '</span>' + plCopyIcon + '</button></td>' +
-                  '<td class="num hd-num">' + (sl ? (sl.click_count_cached || 0) : 0) + '</td>' +
+                  '<td>' + statusPill + '</td>' +
+                  '<td class="num hd-num pl-clicks-cell">' +
+                    '<span class="pl-clicks-sparkline" data-pl-spark="' + escapeHtml(p.id) + '" aria-hidden="true"></span>' +
+                    '<span class="pl-clicks-num">' + totalClicks + '</span>' +
+                  '</td>' +
                   '<td class="num hd-num muted" title="Available once booking attribution ships">—</td>' +
+                  '<td class="num hd-num muted" title="Available once booking attribution ships">—</td>' +
+                  '<td class="muted">' + lastScan + '</td>' +
                   actCell +
                 '</tr>'
               );
@@ -4577,8 +4578,13 @@
             '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
               '<table class="bk-table">' +
                 '<thead><tr>' +
-                  '<th>Status</th><th>Placement</th><th>Code</th>' +
-                  '<th class="num">Clicks</th><th class="num">Conversion rate</th><th></th>' +
+                  '<th>Placement</th>' +
+                  '<th>Status' + colInfo('Designed → Printed → Active → Paused → Retired.') + '</th>' +
+                  '<th class="num">Clicks' + colInfo('Total scans of this placement’s short link over the last 30 days.') + '</th>' +
+                  '<th class="num">Bookings' + colInfo('Confirmed bookings attributed to this placement in the last 30 days.') + '</th>' +
+                  '<th class="num">Revenue' + colInfo('CAD commission earned from bookings attributed to this placement in the last 30 days.') + '</th>' +
+                  '<th>Last scan' + colInfo('Time since the most recent scan of this placement’s short link.') + '</th>' +
+                  '<th></th>' +
                 '</tr></thead>' +
                 '<tbody>' + pRows + '</tbody>' +
               '</table>' +
@@ -4614,12 +4620,12 @@
           const refCode = s.tracking_code || '';
           return (
             '<tr data-staff-row="' + escapeHtml(s.id) + '">' +
-              '<td>' + statusPill + '</td>' +
               '<td class="hd-emp">' +
                 '<span class="hd-avatar" aria-hidden="true">' + escapeHtml(initials) + '</span>' +
                 '<span class="hd-emp__name">' + escapeHtml(s.name || '—') + '</span>' +
                 (s.role ? '<span class="hd-emp__role">' + escapeHtml(s.role) + '</span>' : '') +
               '</td>' +
+              '<td>' + statusPill + '</td>' +
               '<td><button type="button" class="hd-copy mono" data-copy="' + escapeHtml(refCode) + '" title="Copy referral code">' +
                   '<span>' + escapeHtml(refCode || '—') + '</span>' +
                   '<svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
@@ -4638,7 +4644,7 @@
           '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
             '<table class="bk-table">' +
               '<thead><tr>' +
-                '<th>Status</th><th>Employee</th><th>Referral code</th>' +
+                '<th>Employee</th><th>Status</th><th>Referral code</th>' +
                 '<th class="num">Bookings</th><th class="num">Rate</th><th class="num">Commission</th>' +
                 '<th>Last booking</th><th></th>' +
               '</tr></thead>' +
@@ -4654,6 +4660,12 @@
       // and the Employees section above; that's accurate modeling, not
       // duplication.
       renderHotelManagers(h, els);
+
+      // Sparklines in the Clicks column — lazy-loaded per row so the
+      // table paints immediately and the sparkline pops in as its
+      // /placements/:id/stats fetch returns. We'll fold this into a
+      // single bulk endpoint in PR B once we know it's a hotspot.
+      hydratePlacementSparklines(els);
 
       // Short-link lookups for this hotel. The Referral Links table
       // was removed (placements + the Employees table cover its rows);
@@ -5419,11 +5431,11 @@
           : '<span class="muted">Never</span>';
         return (
           '<tr data-manager-row="' + escapeHtml(m.id) + '">' +
-            '<td>' + statusPill + '</td>' +
             '<td class="hd-emp">' +
               '<span class="hd-avatar" aria-hidden="true">' + escapeHtml(initials) + '</span>' +
               '<span class="hd-emp__name">' + escapeHtml(primary) + '</span>' +
             '</td>' +
+            '<td>' + statusPill + '</td>' +
             '<td class="muted">' + escapeHtml(email) + '</td>' +
             '<td class="muted">' + escapeHtml(role) + '</td>' +
             '<td class="muted">' + lastSeen + '</td>' +
@@ -5439,12 +5451,70 @@
         '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
           '<table class="bk-table">' +
             '<thead><tr>' +
-              '<th>Status</th><th>Name</th><th>Email</th><th>Role</th><th>Last sign-in</th><th></th>' +
+              '<th>Name</th><th>Status</th><th>Email</th><th>Role</th><th>Last sign-in</th><th></th>' +
             '</tr></thead>' +
             '<tbody>' + rows + '</tbody>' +
           '</table>' +
         '</div></div>';
     }
+
+    // Lazy sparkline loader. Walks every [data-pl-spark] in the
+    // Placements table and fetches its 30-day series in parallel,
+    // then renders a tiny inline SVG with a 1px-stroke polyline. The
+    // SVG is purely decorative (aria-hidden) — the numeric click
+    // count is the accessible representation. Cached series are
+    // reused on re-renders within the same session to avoid hammering
+    // the worker; this cache resets when the page reloads.
+    const _placementSparkCache = new Map();
+    async function hydratePlacementSparklines(els) {
+      if (!els || !els.placementsBody) return;
+      const nodes = els.placementsBody.querySelectorAll('[data-pl-spark]');
+      if (!nodes.length) return;
+      const tasks = [];
+      nodes.forEach((node) => {
+        const id = node.dataset.plSpark;
+        if (!id) return;
+        if (_placementSparkCache.has(id)) {
+          renderSparklineInto(node, _placementSparkCache.get(id));
+          return;
+        }
+        tasks.push(
+          fetch(BOKUN_API_BASE + '/api/admin/placements/' + encodeURIComponent(id) + '/stats?period=last30', {
+            headers: { Authorization: 'Bearer ' + session.access_token },
+          })
+            .then((r) => r.ok ? r.json() : null)
+            .then((data) => {
+              const series = (data && Array.isArray(data.series)) ? data.series : [];
+              _placementSparkCache.set(id, series);
+              renderSparklineInto(node, series);
+            })
+            .catch(() => { /* silent — sparkline is decoration */ })
+        );
+      });
+      // No await needed; sparklines stream in.
+    }
+    function renderSparklineInto(node, series) {
+      if (!node) return;
+      if (!series || !series.length) {
+        // Empty state — a faint horizontal baseline so the column
+        // alignment doesn't jump once data arrives elsewhere.
+        node.innerHTML = '<svg viewBox="0 0 60 16" preserveAspectRatio="none"><line x1="0" y1="14" x2="60" y2="14" stroke="currentColor" stroke-width="1" opacity="0.25"/></svg>';
+        return;
+      }
+      const ys = series.map((p) => Number(p.y) || 0);
+      const max = Math.max(1, ...ys);
+      const stepX = ys.length > 1 ? 60 / (ys.length - 1) : 60;
+      const points = ys.map((y, i) => {
+        const x = (i * stepX).toFixed(2);
+        const yy = (14 - (y / max) * 12).toFixed(2);
+        return x + ',' + yy;
+      }).join(' ');
+      node.innerHTML =
+        '<svg viewBox="0 0 60 16" preserveAspectRatio="none">' +
+          '<polyline points="' + points + '" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round" stroke-linecap="round"/>' +
+        '</svg>';
+    }
+
 
     // Demo-only data for the Fairmont reference hotel. Populates the
     // four empty sections (Bookings, Recent activity, Sent emails,
@@ -7278,6 +7348,37 @@
       const p = s.split('-').map(Number);
       const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
       return months[p[1] - 1] + ' ' + p[2] + ', ' + p[0];
+    }
+    // Short relative time. Returns "Never" for empty input. Below an hour
+    // shows minutes; under a day, hours; under a week, days; otherwise an
+    // absolute date. Kept terse for table cells.
+    function relativeTimeOrNever(iso) {
+      if (!iso) return '<span class="muted">Never</span>';
+      const then = new Date(iso).getTime();
+      if (!Number.isFinite(then)) return '<span class="muted">—</span>';
+      const diff = Math.max(0, Date.now() - then);
+      const min  = Math.floor(diff / 60000);
+      if (min < 1)   return 'just now';
+      if (min < 60)  return min + 'm ago';
+      const hr = Math.floor(min / 60);
+      if (hr  < 24)  return hr + 'h ago';
+      const day = Math.floor(hr / 24);
+      if (day < 7)   return day + 'd ago';
+      return escapeHtml(formatHumanDate(iso.slice(0, 10)));
+    }
+    // Compact info-icon used in table column headers. Renders a small
+    // outlined "i" SVG with a native browser tooltip carrying the blurb.
+    // Native title attr is the simplest accessible tooltip we can ship
+    // without a popper component. If we later want hover-styled tips,
+    // we can swap this for a CSS-driven pattern without touching call
+    // sites.
+    function colInfo(text) {
+      return ' <span class="hd-colinfo" tabindex="0"' +
+        ' title="' + escapeHtml(text) + '"' +
+        ' aria-label="' + escapeHtml(text) + '">' +
+        '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+          '<circle cx="8" cy="8" r="6.5"/><path d="M8 7.5v3.5"/><circle cx="8" cy="5.2" r="0.5" fill="currentColor"/>' +
+        '</svg></span>';
     }
     // Maps the snake_case property_type enum stored in the DB to a
     // human-readable label for display.
