@@ -4765,10 +4765,14 @@
                   ' data-pl-id="' + escapeHtml(p.id) + '"' +
                   ' data-pl-name="' + escapeHtml(p.name || code) + '"' +
                   ' title="Analytics" aria-label="View analytics">' + plStatsIcon + '</button>';
+              // Analytics + Retire moved into the consolidated
+              // lightbox (Performance section + header Retire button).
+              // The row keeps Edit only so the actions column reads as
+              // a single ⋯ → opens the lightbox affordance.
               const actCell =
                 '<td class="hd-links__act-cell">' +
                   '<div class="pl-actions">' +
-                    editBtnHtml + statsBtnHtml + retireBtnHtml +
+                    editBtnHtml +
                     '<button type="button" class="pl-act pl-act--menu" data-pl-menu="1"' +
                       ' aria-label="Placement actions" aria-haspopup="true">⋯</button>' +
                   '</div>' +
