@@ -1407,6 +1407,18 @@ async function handleAdminPaymentDelete(id, request, env) {
   if (!UUID_RE.test(id)) {
     return jsonResponse({ error: "invalid payment id" }, 400, request);
   }
+  // Fetch first so the hotel_events row we write afterwards
+  // carries the original hotel_id + amount/currency for the
+  // timeline label, then DELETE.
+  const existing = await supabaseSelect(
+    env,
+    `payments?id=eq.${encodeURIComponent(id)}` +
+      `&select=id,hotel_id,amount,currency,status,description&limit=1`,
+  );
+  if (!Array.isArray(existing) || !existing.length) {
+    return jsonResponse({ error: "payment not found" }, 404, request);
+  }
+  const row = existing[0];
   const deleted = await supabaseRequest(
     env, "DELETE", `/payments?id=eq.${encodeURIComponent(id)}`,
     { prefer: "return=representation" },
@@ -1415,6 +1427,13 @@ async function handleAdminPaymentDelete(id, request, env) {
     return jsonResponse({ error: "payment not found" }, 404, request);
   }
   logMutation(request, auth.claims, "delete", "payment", id);
+  await writeHotelEvent(env, row.hotel_id, "payment_deleted", {
+    payment_id:  id,
+    amount:      row.amount,
+    currency:    row.currency || "CAD",
+    status:      row.status,
+    description: row.description || null,
+  }, auth.claims?.email);
   return jsonResponse({ ok: true }, 200, request);
 }
 
