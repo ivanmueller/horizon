@@ -581,35 +581,102 @@
   </div>
 
   <!-- ── Manager modal — handles invite + edit ─────────────── -->
+  <!-- ── Manager lightbox — invite + sectioned edit view ──── -->
   <div class="modal" id="mgrModal" hidden>
-    <form class="modal__card" id="mgrModalForm" novalidate>
-      <div class="modal__head">
-        <h2 class="modal__title" id="mgrModalTitle">Invite manager</h2>
-        <button type="button" class="modal__close" id="mgrModalClose" aria-label="Close">&times;</button>
+    <form class="modal__card modal__card--wide pl-modal" id="mgrModalForm" novalidate>
+      <!-- Header strip: status pill, name, email, close -->
+      <div class="pl-modal__head">
+        <div class="pl-modal__headmain">
+          <span class="pl-modal__statuswrap" id="mgrModalHeaderStatus"></span>
+          <h2 class="pl-modal__title" id="mgrModalTitle">Invite manager</h2>
+          <span class="pl-modal__short" id="mgrModalHeaderEmail" hidden></span>
+        </div>
+        <div class="pl-modal__headactions">
+          <button type="button" class="modal__close" id="mgrModalClose" aria-label="Close">&times;</button>
+        </div>
       </div>
+
       <div class="alert alert--bad" id="mgrModalError" hidden></div>
 
-      <div class="drawer-form__row">
-        <label class="drawer-form__label" for="mgrModalName">Name <span class="drawer-form__req">required</span></label>
-        <input class="input" id="mgrModalName" type="text" required maxlength="120"
-               placeholder="Anna Liang" autocomplete="off">
-      </div>
+      <!-- Access ─────────────────────────────────────────────── -->
+      <section class="pl-modal__section">
+        <h3 class="pl-modal__sectiontitle">Access</h3>
 
-      <div class="drawer-form__row">
-        <label class="drawer-form__label" for="mgrModalEmail">Email <span class="drawer-form__req" id="mgrModalEmailReq">required &middot; permanent</span></label>
-        <input class="input" id="mgrModalEmail" type="email" required
-               autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
-               placeholder="manager@hotel.com">
-        <span class="drawer-form__hint" id="mgrModalEmailHint">An invite email will be sent. They'll set a password on first sign-in.</span>
-      </div>
+        <div class="drawer-form__row" id="mgrModalNameRow">
+          <label class="drawer-form__label" for="mgrModalName">Name <span class="drawer-form__req">required</span></label>
+          <input class="input" id="mgrModalName" type="text" required maxlength="120"
+                 placeholder="Anna Liang" autocomplete="off">
+        </div>
 
-      <div class="drawer-form__row">
-        <label class="drawer-form__label" for="mgrModalRole">Role</label>
-        <select class="input" id="mgrModalRole">
-          <option value="manager">manager (can view bookings + invoices)</option>
-          <option value="admin">admin (can also manage staff at this hotel)</option>
-        </select>
-      </div>
+        <div class="drawer-form__row" id="mgrModalEmailRow">
+          <label class="drawer-form__label" for="mgrModalEmail">Email <span class="drawer-form__req" id="mgrModalEmailReq">required &middot; permanent</span></label>
+          <input class="input" id="mgrModalEmail" type="email" required
+                 autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+                 placeholder="manager@hotel.com">
+          <span class="drawer-form__hint" id="mgrModalEmailHint">An invite email will be sent. They'll set a password on first sign-in.</span>
+        </div>
+
+        <div class="drawer-form__row">
+          <label class="drawer-form__label" for="mgrModalRole">Role</label>
+          <select class="input" id="mgrModalRole">
+            <option value="owner">Owner</option>
+            <option value="manager">Manager</option>
+            <option value="read_only">Read-only</option>
+          </select>
+        </div>
+
+        <ul class="mgr-perms" id="mgrModalPerms"></ul>
+      </section>
+
+      <!-- Activity ──────────────────────────────────────────── -->
+      <section class="pl-modal__section" id="mgrModalActivitySection" hidden>
+        <h3 class="pl-modal__sectiontitle">Activity</h3>
+        <dl class="mgr-keyvals">
+          <div class="mgr-keyvals__row"><dt>Last sign-in</dt><dd id="mgrModalLastSeen">—</dd></div>
+          <div class="mgr-keyvals__row"><dt>Total sign-ins</dt><dd class="muted" title="Sign-in tracking coming soon">—</dd></div>
+          <div class="mgr-keyvals__row"><dt>Last action</dt><dd class="muted" title="Manager audit log coming soon">—</dd></div>
+        </dl>
+      </section>
+
+      <!-- Account ──────────────────────────────────────────── -->
+      <section class="pl-modal__section" id="mgrModalAccountSection" hidden>
+        <h3 class="pl-modal__sectiontitle">Account</h3>
+        <dl class="mgr-keyvals">
+          <div class="mgr-keyvals__row"><dt>Added</dt><dd id="mgrModalAdded">—</dd></div>
+          <div class="mgr-keyvals__row"><dt>Invited by</dt><dd id="mgrModalInvitedBy">—</dd></div>
+          <div class="mgr-keyvals__row"><dt>2FA</dt><dd class="muted" title="2FA status surfaces once we read it from Supabase Auth">—</dd></div>
+        </dl>
+        <div class="drawer-form__row" id="mgrModalResendRow" hidden>
+          <button type="button" class="btn btn--sm" id="mgrModalResend">Resend invite</button>
+          <span class="drawer-form__hint">Account hasn't been claimed yet. Resends the Supabase Auth invite email.</span>
+        </div>
+      </section>
+
+      <!-- Danger zone ──────────────────────────────────────── -->
+      <section class="pl-modal__section pl-modal__danger" id="mgrModalDangerSection" hidden>
+        <h3 class="pl-modal__sectiontitle">Danger zone</h3>
+        <div class="mgr-danger__row" id="mgrModalSuspendRow">
+          <div>
+            <div class="mgr-danger__label">Suspend access</div>
+            <div class="mgr-danger__hint">Temporarily blocks sign-in. The account stays in the table — flip back to active anytime.</div>
+          </div>
+          <button type="button" class="btn" id="mgrModalSuspend">Suspend</button>
+        </div>
+        <div class="mgr-danger__row" id="mgrModalResumeRow" hidden>
+          <div>
+            <div class="mgr-danger__label">Resume access</div>
+            <div class="mgr-danger__hint">Restores sign-in. Role and permissions are preserved.</div>
+          </div>
+          <button type="button" class="btn" id="mgrModalResume">Resume</button>
+        </div>
+        <div class="mgr-danger__row">
+          <div>
+            <div class="mgr-danger__label">Remove access</div>
+            <div class="mgr-danger__hint">Permanent. They lose access immediately and the row is hidden from this list. Re-invite the same email later to bring them back.</div>
+          </div>
+          <button type="button" class="btn btn--danger" id="mgrModalRemove">Remove</button>
+        </div>
+      </section>
 
       <div class="modal__actions">
         <button type="button" class="btn" id="mgrModalCancel">Cancel</button>
@@ -5634,7 +5701,24 @@
     // confirmation. A manager with no login activity yet shows "—".
     function renderHotelManagers(h, els) {
       if (!els.mgrBody) return;
-      const managers = (h.managers || []).filter((m) => m.status !== 'revoked');
+      // 'revoked' is permanent removal — hide from the table. Suspended
+      // rows stay visible (with a Suspended chip) so admins can resume
+      // them. Sort: active first, then suspended; managers ahead of
+      // read-only within the same status.
+      const ROLE_ORDER = { owner: 0, manager: 1, read_only: 2 };
+      const STATUS_ORDER = { active: 0, suspended: 1 };
+      const managers = (h.managers || [])
+        .filter((m) => m.status !== 'revoked')
+        .slice()
+        .sort((a, b) => {
+          const sa = STATUS_ORDER[a.status] ?? 9;
+          const sb = STATUS_ORDER[b.status] ?? 9;
+          if (sa !== sb) return sa - sb;
+          const ra = ROLE_ORDER[a.role] ?? 9;
+          const rb = ROLE_ORDER[b.role] ?? 9;
+          if (ra !== rb) return ra - rb;
+          return String(a.name || a.email).localeCompare(String(b.name || b.email));
+        });
       if (!managers.length) {
         els.mgrBody.innerHTML = '<div class="hd-empty">No managers yet.</div>';
         return;
@@ -5646,23 +5730,27 @@
         const initials = (name
           ? name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('')
           : email.slice(0, 2).toUpperCase()) || '?';
-        const role     = m.role || 'manager';
-        const statusPill = m.status === 'active'
-          ? '<span class="bk-pill bk-pill--ok">Active</span>'
-          : '<span class="bk-pill bk-pill--neutral">' + escapeHtml(m.status || '—') + '</span>';
-        const lastSeen = m.last_sign_in_at
-          ? escapeHtml(formatHumanDate(String(m.last_sign_in_at).slice(0, 10)) || '—')
-          : '<span class="muted">Never</span>';
+        const userCell =
+          '<td class="hd-user">' +
+            '<span class="hd-avatar" aria-hidden="true">' + escapeHtml(initials) + '</span>' +
+            '<div class="hd-user__body">' +
+              '<div class="hd-user__name">' + escapeHtml(primary) + '</div>' +
+              (name
+                ? '<div class="hd-user__sub">' + escapeHtml(email) + '</div>'
+                : '') +
+            '</div>' +
+          '</td>';
+        const rolePill   = mgrRolePill(m.role);
+        const statusPill = mgrStatusPill(m);
+        const lastSeen   = mgrLastSeenLabel(m);
+        const added      = mgrAddedLabel(m);
         return (
           '<tr data-manager-row="' + escapeHtml(m.id) + '">' +
-            '<td class="hd-emp">' +
-              '<span class="hd-avatar" aria-hidden="true">' + escapeHtml(initials) + '</span>' +
-              '<span class="hd-emp__name">' + escapeHtml(primary) + '</span>' +
-            '</td>' +
+            userCell +
+            '<td>' + rolePill + '</td>' +
             '<td>' + statusPill + '</td>' +
-            '<td class="muted">' + escapeHtml(email) + '</td>' +
-            '<td class="muted">' + escapeHtml(role) + '</td>' +
             '<td class="muted">' + lastSeen + '</td>' +
+            '<td class="muted">' + added + '</td>' +
             '<td class="bk-table__kebab">' +
               '<button type="button" class="bk-kebab"' +
                 ' data-manager-edit-id="' + escapeHtml(m.id) + '"' +
@@ -5675,11 +5763,62 @@
         '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
           '<table class="bk-table">' +
             '<thead><tr>' +
-              '<th>Name</th><th>Status</th><th>Email</th><th>Role</th><th>Last sign-in</th><th></th>' +
+              '<th>User</th><th>Role</th><th>Status</th><th>Last sign-in</th><th>Added</th><th></th>' +
             '</tr></thead>' +
             '<tbody>' + rows + '</tbody>' +
           '</table>' +
         '</div></div>';
+    }
+
+    // ── Manager cell helpers (used by table + lightbox) ───────────
+    function mgrRolePill(role) {
+      const map = {
+        owner:     '<span class="bk-pill bk-pill--info">Owner</span>',
+        manager:   '<span class="bk-pill bk-pill--neutral">Manager</span>',
+        read_only: '<span class="bk-pill bk-pill--neutral">Read-only</span>',
+      };
+      return map[role] || '<span class="bk-pill bk-pill--neutral">Manager</span>';
+    }
+    function mgrEffectiveStatus(m) {
+      // Status is derived from two signals: the DB status flag
+      // (active/suspended/revoked) and password_set_at. An active row
+      // with no password is "Invited" — they exist but haven't claimed
+      // their account.
+      if (m.status === 'suspended') return 'suspended';
+      if (m.status === 'revoked')   return 'revoked';
+      if (!m.password_set_at)       return 'invited';
+      return 'active';
+    }
+    function mgrStatusPill(m) {
+      const eff = mgrEffectiveStatus(m);
+      const map = {
+        active:    '<span class="bk-pill bk-pill--ok">Active</span>',
+        invited:   '<span class="bk-pill bk-pill--warn">Invited</span>',
+        suspended: '<span class="bk-pill bk-pill--neutral">Suspended</span>',
+        revoked:   '<span class="bk-pill bk-pill--neutral">Removed</span>',
+      };
+      return map[eff] || '<span class="bk-pill bk-pill--neutral">—</span>';
+    }
+    function mgrLastSeenLabel(m) {
+      // Real last-sign-in tracking requires an auth.users join we
+      // haven't wired yet. For now: 'Invited Xd ago' for unclaimed
+      // accounts (derived from created_at), 'Active' as a placeholder
+      // for claimed ones until the auth join lands.
+      const eff = mgrEffectiveStatus(m);
+      if (eff === 'invited') {
+        return 'Invited ' + (relativeTimeOrNever(m.created_at) || 'recently');
+      }
+      if (eff === 'active') {
+        return '<span class="muted" title="Sign-in tracking coming soon">—</span>';
+      }
+      return '<span class="muted">—</span>';
+    }
+    function mgrAddedLabel(m) {
+      const when = m.created_at
+        ? escapeHtml(formatHumanDate(String(m.created_at).slice(0, 10)) || '—')
+        : '—';
+      const by = m.invited_by_email ? ' by ' + escapeHtml(m.invited_by_email) : '';
+      return when + by;
     }
 
     // Lazy sparkline loader. Walks every [data-pl-spark] in the
@@ -7435,6 +7574,30 @@
     const mgrModalRole    = document.getElementById('mgrModalRole');
     const mgrModalSubmit  = document.getElementById('mgrModalSubmit');
 
+    // Permissions matrix — hardcoded to mirror what the worker
+    // actually checks today. As we formalise the permissions model,
+    // this map becomes the single source of truth driving both the
+    // checklist UI and the worker-side gates.
+    const MGR_PERMISSIONS = [
+      { key: 'view_bookings',    label: 'View bookings + revenue',  roles: ['owner', 'manager', 'read_only'] },
+      { key: 'view_invoices',    label: 'View invoices + payouts',  roles: ['owner', 'manager', 'read_only'] },
+      { key: 'edit_placements',  label: 'Create + edit placements', roles: ['owner', 'manager'] },
+      { key: 'manage_staff',     label: 'Add + edit employees',     roles: ['owner', 'manager'] },
+      { key: 'edit_hotel',       label: 'Edit hotel profile',       roles: ['owner'] },
+      { key: 'manage_users',     label: 'Invite + manage users',    roles: ['owner'] },
+    ];
+    function renderMgrPerms(role) {
+      const ul = document.getElementById('mgrModalPerms');
+      if (!ul) return;
+      ul.innerHTML = MGR_PERMISSIONS.map((p) => {
+        const ok = p.roles.includes(role);
+        return '<li class="mgr-perms__row mgr-perms__row--' + (ok ? 'on' : 'off') + '">' +
+          '<span class="mgr-perms__mark" aria-hidden="true">' + (ok ? '✓' : '✗') + '</span>' +
+          '<span class="mgr-perms__label">' + escapeHtml(p.label) + '</span>' +
+        '</li>';
+      }).join('');
+    }
+
     function openMgrModalInvite(hotel) {
       _mgrModalHotel  = hotel;
       _mgrModalEditId = null;
@@ -7448,13 +7611,22 @@
       mgrModalEmailHint.hidden     = false;
       mgrModalEmailReq.textContent = 'required · permanent';
       mgrModalRole.value           = 'manager';
+      renderMgrPerms('manager');
+      // Header strip — invite mode has no status pill or email subtitle.
+      document.getElementById('mgrModalHeaderStatus').innerHTML = '';
+      const subEl = document.getElementById('mgrModalHeaderEmail');
+      if (subEl) subEl.hidden = true;
+      // Edit-only sections are hidden in invite mode.
+      document.getElementById('mgrModalActivitySection').hidden = true;
+      document.getElementById('mgrModalAccountSection').hidden  = true;
+      document.getElementById('mgrModalDangerSection').hidden   = true;
       mgrModal.hidden = false;
       mgrModalName.focus();
     }
     function openMgrModalEdit(hotel, manager) {
       _mgrModalHotel  = hotel;
       _mgrModalEditId = manager.id;
-      mgrModalTitle.textContent    = 'Edit ' + (manager.name || manager.email || 'manager');
+      mgrModalTitle.textContent    = manager.name || manager.email || 'Manager';
       mgrModalSubmit.textContent   = 'Save changes';
       mgrModalSubmit.disabled      = false;
       mgrModalError.hidden         = true;
@@ -7464,6 +7636,25 @@
       mgrModalEmailHint.hidden     = true;
       mgrModalEmailReq.textContent = 'permanent';
       mgrModalRole.value           = manager.role || 'manager';
+      renderMgrPerms(manager.role || 'manager');
+      // Header strip
+      document.getElementById('mgrModalHeaderStatus').innerHTML = mgrStatusPill(manager);
+      const subEl = document.getElementById('mgrModalHeaderEmail');
+      if (subEl) { subEl.hidden = false; subEl.textContent = manager.email || ''; }
+      // Edit-mode sections
+      const eff = mgrEffectiveStatus(manager);
+      document.getElementById('mgrModalActivitySection').hidden = false;
+      document.getElementById('mgrModalAccountSection').hidden  = false;
+      document.getElementById('mgrModalDangerSection').hidden   = false;
+      document.getElementById('mgrModalLastSeen').innerHTML   = mgrLastSeenLabel(manager);
+      document.getElementById('mgrModalAdded').textContent    =
+        manager.created_at ? (formatHumanDate(String(manager.created_at).slice(0, 10)) || '—') : '—';
+      document.getElementById('mgrModalInvitedBy').textContent = manager.invited_by_email || 'Unknown';
+      // Resend invite is only meaningful for unclaimed accounts.
+      document.getElementById('mgrModalResendRow').hidden = (eff !== 'invited');
+      // Suspend ↔ Resume swap.
+      document.getElementById('mgrModalSuspendRow').hidden = (eff === 'suspended');
+      document.getElementById('mgrModalResumeRow').hidden  = (eff !== 'suspended');
       mgrModal.hidden = false;
       mgrModalName.focus();
     }
@@ -7474,6 +7665,107 @@
     });
     document.getElementById('mgrModalClose')  && (document.getElementById('mgrModalClose').onclick  = closeMgrModal);
     document.getElementById('mgrModalCancel') && (document.getElementById('mgrModalCancel').onclick = closeMgrModal);
+
+    // Live-update the permissions checklist when the admin picks
+    // a different role in the dropdown.
+    mgrModalRole && mgrModalRole.addEventListener('change', () => {
+      renderMgrPerms(mgrModalRole.value);
+    });
+
+    // Suspend / Resume / Remove / Resend invite — all hit the
+    // existing PATCH /api/admin/hotel-users/:id (or DELETE for remove)
+    // with the appropriate body. Each calls reloadHotelsCacheAndRefresh
+    // and re-opens the modal so the user sees the new state.
+    async function patchManager(id, body) {
+      const res = await fetch(BOKUN_API_BASE + '/api/admin/hotel-users/' + encodeURIComponent(id), {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + session.access_token,
+        },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error((data && data.error) || 'Update failed');
+      return data;
+    }
+    const mgrModalSuspend = document.getElementById('mgrModalSuspend');
+    if (mgrModalSuspend) mgrModalSuspend.onclick = async () => {
+      if (!_mgrModalEditId) return;
+      mgrModalSuspend.disabled = true;
+      mgrModalError.hidden = true;
+      try {
+        await patchManager(_mgrModalEditId, { status: 'suspended' });
+        flashHotelsNotice('Manager access suspended.');
+        closeMgrModal();
+        reloadHotelsCacheAndRefresh();
+      } catch (err) {
+        showInline(mgrModalError, err.message);
+        mgrModalSuspend.disabled = false;
+      }
+    };
+    const mgrModalResume = document.getElementById('mgrModalResume');
+    if (mgrModalResume) mgrModalResume.onclick = async () => {
+      if (!_mgrModalEditId) return;
+      mgrModalResume.disabled = true;
+      mgrModalError.hidden = true;
+      try {
+        await patchManager(_mgrModalEditId, { status: 'active' });
+        flashHotelsNotice('Manager access resumed.');
+        closeMgrModal();
+        reloadHotelsCacheAndRefresh();
+      } catch (err) {
+        showInline(mgrModalError, err.message);
+        mgrModalResume.disabled = false;
+      }
+    };
+    const mgrModalRemove = document.getElementById('mgrModalRemove');
+    if (mgrModalRemove) mgrModalRemove.onclick = () => {
+      if (!_mgrModalEditId) return;
+      const email = mgrModalEmail.value || 'this manager';
+      const id    = _mgrModalEditId;
+      openDangerModal({
+        title:        'Remove ' + email + '?',
+        body:         'They lose access immediately and the row is hidden from the Managers list. Re-invite the same email later to bring them back — their historical activity stays attached.',
+        confirmLabel: 'Remove access',
+        busyLabel:    'Removing…',
+        onConfirm:    async () => {
+          await patchManager(id, { status: 'revoked' });
+          flashHotelsNotice('Manager removed.');
+          closeMgrModal();
+          reloadHotelsCacheAndRefresh();
+        },
+      });
+    };
+    const mgrModalResend = document.getElementById('mgrModalResend');
+    if (mgrModalResend) mgrModalResend.onclick = async () => {
+      // Resend uses the same invite endpoint the create flow uses
+      // (Supabase Auth admin invite). Worker treats a re-invite to
+      // an existing-but-unclaimed account as a no-op success.
+      if (!_mgrModalHotel || !mgrModalEmail.value) return;
+      mgrModalResend.disabled = true;
+      mgrModalError.hidden = true;
+      try {
+        await fetch(BOKUN_API_BASE + '/api/admin/hotel-users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + session.access_token,
+          },
+          body: JSON.stringify({
+            hotel_id: _mgrModalHotel.id,
+            email: mgrModalEmail.value,
+            name: mgrModalName.value || mgrModalEmail.value,
+            role: mgrModalRole.value,
+          }),
+        });
+        flashHotelsNotice('Invite resent to ' + mgrModalEmail.value + '.');
+        mgrModalResend.disabled = false;
+      } catch (err) {
+        showInline(mgrModalError, err.message || 'Could not resend invite.');
+        mgrModalResend.disabled = false;
+      }
+    };
 
     mgrModalForm && mgrModalForm.addEventListener('submit', async (e) => {
       e.preventDefault();

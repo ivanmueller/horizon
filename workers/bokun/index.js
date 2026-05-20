@@ -1304,13 +1304,18 @@ const HOTEL_FIELDS =
 const STAFF_FIELDS =
   "id,hotel_id,name,tracking_code,sequence_number,kickback_pct," +
   "status,created_at,updated_at";
-const MANAGER_FIELDS = "id,email,name,hotel_id,role,status,created_at,updated_at";
+const MANAGER_FIELDS =
+  "id,email,name,hotel_id,role,status,created_at,updated_at,password_set_at,invited_by_email";
+const MANAGER_ROLES = new Set(["owner", "manager", "read_only"]);
+const MANAGER_STATUSES = new Set(["active", "suspended", "revoked"]);
 
 const HOTEL_TYPES = new Set(["kickback", "pool"]);
 const HOTEL_LOCATIONS = new Set(["Banff", "Canmore"]);
 const HOTEL_STATUSES = new Set(["active", "terminated"]);
 const STAFF_STATUSES = new Set(["active", "terminated"]);
-const MANAGER_STATUSES = new Set(["active", "revoked"]);
+// MANAGER_STATUSES + MANAGER_ROLES live at the top of the placements
+// constants block above so the manager invite handler can validate
+// against the same source.
 // 60-char ceiling lets us hold full property names like
 // "the-rimrock-resort-hotel-banff-springs" instead of forcing
 // abbreviation. Slugs stay lowercase + hyphen + digit only.
@@ -2282,12 +2287,13 @@ async function handleAdminHotelUserCreate(request, env) {
   if (!UUID_RE.test(hotel_id)) return jsonResponse({ error: "valid hotel_id required" }, 400, request);
   const name = typeof body.name === "string" ? body.name.trim() : "";
   if (!name) return jsonResponse({ error: "name required" }, 400, request);
-  const role = body.role === "admin" ? "admin" : "manager";
+  const role = MANAGER_ROLES.has(body.role) ? body.role : "manager";
+  const invited_by_email = (auth.claims && auth.claims.email) || null;
 
   try {
     const inserted = await supabaseInsert(
       env, "hotel_users",
-      [{ email, name, hotel_id, role, status: "active" }],
+      [{ email, name, hotel_id, role, status: "active", invited_by_email }],
       { returnRow: true },
     );
     const invite_sent = await sendManagerInvite(env, email);
@@ -2348,8 +2354,8 @@ async function handleAdminHotelUserUpdate(id, request, env) {
     patch.status = body.status;
   }
   if (typeof body.role === "string") {
-    if (!["manager", "admin"].includes(body.role)) {
-      return jsonResponse({ error: "role must be manager or admin" }, 400, request);
+    if (!MANAGER_ROLES.has(body.role)) {
+      return jsonResponse({ error: "role must be owner, manager, or read_only" }, 400, request);
     }
     patch.role = body.role;
   }
