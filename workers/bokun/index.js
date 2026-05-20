@@ -2036,12 +2036,30 @@ async function handleAdminHotelEvents(hotelId, request, env) {
     return jsonResponse({ error: "invalid hotel id" }, 400, request);
   }
 
+  // Cursor pagination: `before` is the created_at of the oldest row
+  // the client already has. lt is exclusive so we never re-emit the
+  // boundary row. PAGE is the per-source cap AND the response cap;
+  // has_more conservatively flags when any source returned a full
+  // page (likely more available) or when the merged set exceeded
+  // PAGE before slicing.
+  const url = new URL(request.url);
+  const beforeRaw = url.searchParams.get("before");
+  let beforeFilter = "";
+  if (beforeRaw) {
+    if (Number.isNaN(Date.parse(beforeRaw))) {
+      return jsonResponse({ error: "before must be an ISO timestamp" }, 400, request);
+    }
+    beforeFilter = `&created_at=lt.${encodeURIComponent(beforeRaw)}`;
+  }
+  const PAGE = 50;
+
   // Hotel events live in their own table keyed by hotel_id — direct fetch.
   const hotelRowsP = supabaseSelect(
     env,
     `hotel_events?hotel_id=eq.${encodeURIComponent(hotelId)}` +
       `&select=id,event_type,actor_email,payload,created_at` +
-      `&order=created_at.desc&limit=50`,
+      `&order=created_at.desc&limit=${PAGE}` +
+      beforeFilter,
   );
 
   // Placement and staff events join via their owning entity; fetch
@@ -2068,7 +2086,8 @@ async function handleAdminHotelEvents(hotelId, request, env) {
         env,
         `placement_events?placement_id=in.(${Array.from(placementById.keys()).join(",")})` +
           `&select=id,placement_id,event_type,actor_email,payload,created_at` +
-          `&order=created_at.desc&limit=50`,
+          `&order=created_at.desc&limit=${PAGE}` +
+          beforeFilter,
       )
     : [];
   const staffEvents = staffById.size
@@ -2076,7 +2095,8 @@ async function handleAdminHotelEvents(hotelId, request, env) {
         env,
         `staff_events?staff_id=in.(${Array.from(staffById.keys()).join(",")})` +
           `&select=id,staff_id,event_type,actor_email,payload,created_at` +
-          `&order=created_at.desc&limit=50`,
+          `&order=created_at.desc&limit=${PAGE}` +
+          beforeFilter,
       )
     : [];
 
@@ -2113,7 +2133,18 @@ async function handleAdminHotelEvents(hotelId, request, env) {
     });
   }
   merged.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
-  return jsonResponse({ events: merged.slice(0, 50) }, 200, request);
+  const page = merged.slice(0, PAGE);
+  // has_more is a conservative flag: any source that filled its
+  // PAGE quota probably has older rows, and a merged set that
+  // exceeded PAGE before slicing definitely has more. A false
+  // positive just means an empty "Load more" click; a false
+  // negative would silently truncate history, which is worse.
+  const hasMore =
+    merged.length > PAGE ||
+    (hotelRows && hotelRows.length === PAGE) ||
+    (placementEvents && placementEvents.length === PAGE) ||
+    (staffEvents && staffEvents.length === PAGE);
+  return jsonResponse({ events: page, has_more: hasMore }, 200, request);
 }
 
 // Activity log writer for staff. Same fire-and-forget contract as

@@ -2308,6 +2308,15 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   font-variant-numeric: tabular-nums;
 }
 
+/* "Load more events" sits centred under the list when the
+   aggregator reports has_more — same ghost button chrome as the
+   rest of the section actions so the affordance stays quiet. */
+.hd-events__more {
+  display: flex;
+  justify-content: center;
+  padding: var(--s4) 0 0;
+}
+
 .hd-section { display: flex; flex-direction: column; gap: var(--s3); }
 .hd-section__head {
   display: flex;
