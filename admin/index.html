@@ -5660,6 +5660,8 @@
       // wired in. Keyed by slug so it never leaks onto other hotels.
       if ((h.code || '') === 'fairmont-ll') {
         populateFairmontDemoData(h, els, currency);
+      } else {
+        populateHotelBookings(h, els, currency);
       }
 
       // Internal notes — sidebar card with auto-save on blur. Posts a
@@ -6239,6 +6241,150 @@
         cells[6].textContent = data.last;            // Last booking
         cells[6].classList.remove('muted');
       });
+    }
+
+
+    // Real-data renderer for the Bookings section on a hotel detail
+    // page. Fetches /api/dashboard/bookings?hotel=<code> and renders
+    // rows with the same visual structure as populateFairmontDemoData.
+    // Any booking processed with a tracking code that resolves to this
+    // hotel will appear here (the worker matches on hotel_id, which is
+    // set at booking insert time from the referral code on /checkout).
+    function populateHotelBookings(h, els, currency) {
+      const bookingsBody = els.container.querySelector('#hdBookingsBody');
+      if (!bookingsBody) return;
+      if (!h || !h.code) return;
+
+      const fm = (n) => formatHotelMoney(n, currency);
+      const pill = (kind, label) =>
+        '<span class="bk-pill bk-pill--' + kind + '">' + escapeHtml(label) + '</span>';
+      const refPill = (code) =>
+        '<span class="hd-pill-mono">' + escapeHtml(code) + '</span>';
+
+      const shortDate = (iso) => {
+        if (!iso) return '—';
+        // ISO date strings without a time component ("2026-06-18") get
+        // parsed as UTC midnight, which can roll back a day in negative
+        // timezones — split and build a local Date so the label matches
+        // what the partner sees on Bokun.
+        let d;
+        const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (m) d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+        else d = new Date(iso);
+        if (isNaN(d.getTime())) return '—';
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        return months[d.getMonth()] + ' ' +
+               String(d.getDate()).padStart(2, '0') + ', ' +
+               d.getFullYear();
+      };
+
+      bookingsBody.innerHTML = '<div class="hd-empty">Loading bookings…</div>';
+
+      const url = BOKUN_API_BASE + '/api/dashboard/bookings?hotel=' +
+                  encodeURIComponent(h.code);
+      fetch(url, {
+        cache: 'no-store',
+        headers: { Authorization: 'Bearer ' + session.access_token },
+      })
+        .then((res) => res.json().then((b) => ({ ok: res.ok, body: b })))
+        .then((res) => {
+          if (!res.ok) throw new Error((res.body && res.body.error) || 'fetch_failed');
+          const records = (res.body && res.body.records) || [];
+          const commissionPct =
+            (res.body && res.body.hotel && Number(res.body.hotel.commission_pct)) ||
+            (h.commission_pct != null ? Number(h.commission_pct) : 0);
+
+          if (!records.length) {
+            bookingsBody.innerHTML = '<div class="hd-empty">No bookings</div>';
+            return;
+          }
+
+          // Show the five most recent rows on the hotel detail page —
+          // the same shape as the Fairmont demo. "View all bookings" in
+          // the footer routes to the global Bookings page where the
+          // full list is filterable.
+          const top = records.slice(0, 5);
+          const todayStart = new Date();
+          todayStart.setHours(0, 0, 0, 0);
+
+          const rows = top.map((r) => {
+            const status = r.status || 'confirmed';
+            const isRefunded  = status === 'refunded' || status === 'pending_refund';
+            const isCancelled = status === 'cancelled';
+
+            // Tour date determines Confirmed vs Upcoming; refund /
+            // cancellation overrides everything (those rows are
+            // terminal regardless of when the tour was scheduled).
+            let kind = 'ok', label = 'Confirmed';
+            if (isRefunded) {
+              kind = 'neutral'; label = 'Refunded';
+            } else if (isCancelled) {
+              kind = 'neutral'; label = 'Cancelled';
+            } else if (r.date) {
+              const m = String(r.date).match(/^(\d{4})-(\d{2})-(\d{2})/);
+              const tourDate = m
+                ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+                : new Date(r.date);
+              if (!isNaN(tourDate.getTime()) && tourDate >= todayStart) {
+                kind = 'info'; label = 'Upcoming';
+              }
+            }
+
+            const amount = r.amount != null ? Number(r.amount) : 0;
+            const commission = isRefunded ? 0 : (amount * commissionPct) / 100;
+            const ref = r.first_touch_code ||
+                        (r.staff && r.staff.tracking_code) ||
+                        '—';
+            const tour = r.tour_title || '—';
+            const customer = r.lead_name || r.lead_email || '—';
+            const dateStr = shortDate(r.date || r.created_at);
+
+            const statusPill = pill(kind, label);
+            const amountCell = '<td class="bk-row__amount' +
+              (isRefunded ? ' bk-row__amount--muted' : '') + '">' +
+                '<span class="mono">' + escapeHtml(fm(amount)) + '</span>' +
+                ' ' + statusPill +
+              '</td>';
+            const commissionCell = isRefunded
+              ? '<td class="bk-row__commission bk-row__commission--muted">Refunded</td>'
+              : '<td class="bk-row__commission bk-row__commission--pos">+' +
+                  escapeHtml(fm(commission)) + '</td>';
+
+            return (
+              '<tr>' +
+                amountCell +
+                '<td>' + escapeHtml(tour) + '</td>' +
+                '<td>' + escapeHtml(customer) + '</td>' +
+                '<td class="bk-table__muted">' + escapeHtml(dateStr) + '</td>' +
+                '<td>' + refPill(ref) + '</td>' +
+                commissionCell +
+              '</tr>'
+            );
+          }).join('');
+
+          bookingsBody.innerHTML =
+            '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
+              '<table class="bk-table bk-table--bookings">' +
+                '<thead><tr>' +
+                  '<th>Amount</th>' +
+                  '<th>Tour</th>' +
+                  '<th>Customer</th>' +
+                  '<th>Date</th>' +
+                  '<th>Source</th>' +
+                  '<th>Commission</th>' +
+                '</tr></thead>' +
+                '<tbody>' + rows + '</tbody>' +
+              '</table>' +
+            '</div></div>' +
+            '<div class="bk-table__footer hd-bookings__footer">' +
+              '<span class="muted">Showing ' + top.length + ' of ' + records.length + '</span>' +
+              '<a href="' + ADMIN_BASE + '/bookings/" class="hd-bookings__viewall">View all bookings →</a>' +
+            '</div>';
+        })
+        .catch((err) => {
+          console.error('hotel bookings fetch failed', err);
+          bookingsBody.innerHTML = '<div class="hd-empty">Could not load bookings.</div>';
+        });
     }
 
     function flashHotelsNotice(msg, opts) {
