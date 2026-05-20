@@ -3527,35 +3527,6 @@ select.hd-bankf__input { appearance: auto; }
   font-size: 0.9em;
 }
 
-/* Internal notes — sidebar card with auto-save on blur. Textarea
-   matches the rest of the sidebar (smaller padding, sized to the
-   card width), with a tertiary "Last edited …" meta line beneath. */
-.hd-notes-wrap { display: flex; flex-direction: column; gap: 6px; }
-.hd-notes {
-  width: 100%;
-  min-height: 88px;
-  padding: var(--s3);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: #fff;
-  color: var(--text);
-  font: inherit;
-  font-size: var(--t-sm);
-  resize: vertical;
-  transition: border-color 100ms, opacity 100ms;
-}
-.hd-notes:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
-.hd-notes--saving { opacity: 0.6; }
-.hd-notes__meta {
-  font-size: var(--t-xs);
-  color: var(--text-faint);
-}
-.hd-notes__meta[hidden] { display: none; }
-
 /* ── Hotel detail page — round-3 additions ──────────── */
 
 .hd-delta {
