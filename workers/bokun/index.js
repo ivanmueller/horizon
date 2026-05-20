@@ -2265,7 +2265,7 @@ const PLACEMENT_TYPES = new Set([
   "rack_card", "table_tent", "welcome_packet",
   "website_widget", "lobby_qr", "custom",
 ]);
-const PLACEMENT_STATUSES = new Set(["pending", "active", "retired"]);
+const PLACEMENT_STATUSES = new Set(["pending", "active", "paused", "retired"]);
 // Short.io path constraints — alphanumeric plus the common
 // separators. Conservative; tighten if you find Short.io rejecting
 // edge cases.
