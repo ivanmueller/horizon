@@ -291,6 +291,10 @@ export default {
         if (segs[3] && segs[4] === "stats" && !segs[5] && request.method === "GET") {
           return await handleAdminPlacementStats(segs[3], request, env);
         }
+        // Activity log: /placements/:id/events
+        if (segs[3] && segs[4] === "events" && !segs[5] && request.method === "GET") {
+          return await handleAdminPlacementEvents(segs[3], request, env);
+        }
         if (request.method === "POST" && !segs[3]) return await handleAdminPlacementCreate(request, env);
         if (request.method === "PATCH" && segs[3] && !segs[4]) return await handleAdminPlacementUpdate(segs[3], request, env);
         if (request.method === "DELETE" && segs[3] && !segs[4]) return await handleAdminPlacementRetire(segs[3], request, env);
@@ -1788,6 +1792,40 @@ async function handleAdminStaffTerminate(id, request, env) {
   return jsonResponse({ staff: normaliseStaff(updated[0]) }, 200, request);
 }
 
+// Activity log writer. Fire-and-forget — events are audit data and
+// must never break the user-facing mutation if Supabase has a hiccup.
+// Caller passes the placement id, an event_type from the enum, an
+// optional payload (object that will be JSON-encoded into payload
+// jsonb), and the actor's email (auth.claims.email).
+async function writePlacementEvent(env, placementId, eventType, payload, actorEmail) {
+  try {
+    await supabaseInsert(env, "placement_events", [{
+      placement_id: placementId,
+      event_type:   eventType,
+      actor_email:  actorEmail || null,
+      payload:      payload || {},
+    }]);
+  } catch (err) {
+    console.warn(
+      `placement_event ${eventType} for ${placementId} failed: ${err && err.message}`,
+    );
+  }
+}
+
+async function handleAdminPlacementEvents(placementId, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const guard = await placementOr404(env, placementId, request);
+  if (guard.error) return guard.error;
+  const rows = await supabaseSelect(
+    env,
+    `placement_events?placement_id=eq.${encodeURIComponent(placementId)}` +
+      `&select=id,event_type,actor_email,payload,created_at` +
+      `&order=created_at.desc&limit=50`,
+  );
+  return jsonResponse({ events: rows || [] }, 200, request);
+}
+
 async function handleAdminPlacementCreate(request, env) {
   const auth = await requireHorizonAdmin(request, env);
   if (auth.error) return auth.error;
@@ -1802,6 +1840,11 @@ async function handleAdminPlacementCreate(request, env) {
     logMutation(request, auth.claims, "create", "placement", placement.id, {
       hotel_id: v.row.hotel_id, code: placement.code, name: placement.name,
     });
+    await writePlacementEvent(env, placement.id, "created", {
+      name: placement.name,
+      placement_type: placement.placement_type,
+      status: placement.status,
+    }, auth.claims && auth.claims.email);
     const payload = { placement };
     if (shortLinkWarning) payload.short_link_warning = shortLinkWarning;
     return jsonResponse(payload, 201, request);
@@ -1822,6 +1865,16 @@ async function handleAdminPlacementUpdate(id, request, env) {
   if (v.error) return jsonResponse({ error: v.error }, 400, request);
   delete v.row.hotel_id; // can't reassign a placement to a different hotel
 
+  // Snapshot the prior status so we can write a status_changed
+  // event only when it actually changes.
+  let priorStatus = null;
+  if (v.row.status) {
+    const before = await supabaseSelect(
+      env, `placements?id=eq.${encodeURIComponent(id)}&select=status&limit=1`,
+    );
+    priorStatus = (before[0] && before[0].status) || null;
+  }
+
   const updated = await supabaseUpdate(
     env, `placements?id=eq.${encodeURIComponent(id)}`, v.row, { returnRow: true },
   );
@@ -1829,6 +1882,11 @@ async function handleAdminPlacementUpdate(id, request, env) {
     return jsonResponse({ error: "placement not found" }, 404, request);
   }
   logMutation(request, auth.claims, "update", "placement", id, { fields: Object.keys(v.row) });
+  if (v.row.status && priorStatus !== v.row.status) {
+    await writePlacementEvent(env, id, "status_changed", {
+      from: priorStatus, to: v.row.status,
+    }, auth.claims && auth.claims.email);
+  }
   return jsonResponse({ placement: updated[0] }, 200, request);
 }
 
@@ -1840,6 +1898,10 @@ async function handleAdminPlacementRetire(id, request, env) {
   // Soft-delete: status flips to 'retired'. The Short.io redirect and
   // short_links row stay alive so any printed QR keeps resolving and
   // historical click data is preserved — same contract as staff.
+  const before = await supabaseSelect(
+    env, `placements?id=eq.${encodeURIComponent(id)}&select=status&limit=1`,
+  );
+  const priorStatus = (before[0] && before[0].status) || null;
   const updated = await supabaseUpdate(
     env, `placements?id=eq.${encodeURIComponent(id)}`,
     { status: "retired" }, { returnRow: true },
@@ -1848,6 +1910,11 @@ async function handleAdminPlacementRetire(id, request, env) {
     return jsonResponse({ error: "placement not found" }, 404, request);
   }
   logMutation(request, auth.claims, "retire", "placement", id);
+  if (priorStatus !== "retired") {
+    await writePlacementEvent(env, id, "status_changed", {
+      from: priorStatus, to: "retired",
+    }, auth.claims && auth.claims.email);
+  }
   return jsonResponse({ placement: updated[0] }, 200, request);
 }
 
@@ -1957,6 +2024,11 @@ async function handleAdminPlacementAssetRecord(placementId, request, env) {
         byte_size,
         version: nextVer,
       }], { returnRow: true });
+      await writePlacementEvent(env, placementId,
+        nextVer > 1 ? "asset_replaced" : "asset_uploaded",
+        { kind, version: nextVer, filename },
+        auth.claims && auth.claims.email,
+      );
       logMutation(request, auth.claims, "create", "placement_asset", inserted[0].id, {
         placement_id: placementId, kind, version: nextVer,
       });
@@ -2691,15 +2763,25 @@ async function syncClickCounts(env) {
       // flips to 'active' on its first recorded scan. The short
       // link's short_path equals the placement's lowercased code, so
       // one indexed lookup per link is enough. Failures here are
-      // logged but don't abort the sync run.
+      // logged but don't abort the sync run. We also write two
+      // activity events (first_scan + status_auto_active) when the
+      // transition actually fires.
       if (totalClicks > 0 && link.short_path) {
         try {
-          await supabaseUpdate(
+          const flipped = await supabaseUpdate(
             env,
             `placements?code=ilike.${encodeURIComponent(link.short_path)}` +
               `&status=eq.printed`,
             { status: "active" },
+            { returnRow: true },
           );
+          if (Array.isArray(flipped) && flipped.length) {
+            const pid = flipped[0].id;
+            await writePlacementEvent(env, pid, "first_scan",
+              { total_clicks: totalClicks, last_clicked_at: lastClickDate || null }, null);
+            await writePlacementEvent(env, pid, "status_auto_active",
+              { from: "printed", to: "active" }, null);
+          }
         } catch (err) {
           console.warn(
             `syncClickCounts: placement auto-transition failed for ${link.short_path}: ${err.message}`,
