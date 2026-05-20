@@ -4008,6 +4008,15 @@ select.hd-bankf__input { appearance: auto; }
 .bk-row__commission--pos   { color: #217005; }
 .bk-row__commission--muted { color: var(--text-muted); }
 
+/* Pax column — narrow, numeric, centred. Just a count of passengers
+   on the booking; no unit label, no decoration. */
+.bk-row__pax {
+  width: 1%;
+  white-space: nowrap;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Footer beneath the bookings table: "Showing X of Y" on the
    left, "View all bookings →" link in the brand accent on the
    right. */
