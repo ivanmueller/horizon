@@ -6959,26 +6959,73 @@
     function renderHotelEvents(h, els) {
       const body = els.container.querySelector('#hdEventsBody');
       if (!body || !h || !h.id) return;
+
+      // Cursor pagination — the aggregator returns `has_more` and we
+      // pass the oldest visible row's created_at as `before` on each
+      // subsequent fetch. Cache is the in-memory source for renders
+      // so the list never blanks while Load more is in flight.
+      let cache    = [];
+      let hasMore  = false;
+      let loading  = false;
+
+      const fetchPage = async (before) => {
+        const qs = before ? '?before=' + encodeURIComponent(before) : '';
+        const res = await fetch(
+          BOKUN_API_BASE + '/api/admin/hotels/' + encodeURIComponent(h.id) + '/events' + qs,
+          { cache: 'no-store', headers: { Authorization: 'Bearer ' + session.access_token } },
+        );
+        const d = await res.json();
+        if (!res.ok) throw new Error((d && (d.message || d.error)) || 'fetch_failed');
+        return { events: d.events || [], hasMore: !!d.has_more };
+      };
+
+      const render = () => {
+        if (!cache.length) {
+          body.innerHTML = '<div class="hd-empty">No audit events</div>';
+          return;
+        }
+        const rows = cache.map((e) =>
+          '<li class="hd-events__row">' +
+            '<span class="hd-events__desc">' + describeHotelEvent(e) + '</span>' +
+            '<time class="hd-events__time">' + escapeHtml(formatEventTime(e.created_at)) + '</time>' +
+          '</li>'
+        ).join('');
+        const moreBtn = hasMore
+          ? '<div class="hd-events__more">' +
+              '<button type="button" class="btn btn--ghost btn--sm" id="hdEventsMore"' +
+                (loading ? ' disabled' : '') + '>' +
+                (loading ? 'Loading…' : 'Load more events') +
+              '</button>' +
+            '</div>'
+          : '';
+        body.innerHTML = '<ul class="hd-events">' + rows + '</ul>' + moreBtn;
+        const btn = body.querySelector('#hdEventsMore');
+        if (btn) btn.onclick = loadMore;
+      };
+
+      const loadMore = async () => {
+        if (loading || !hasMore || !cache.length) return;
+        loading = true;
+        render();
+        const cursor = cache[cache.length - 1].created_at;
+        try {
+          const { events, hasMore: more } = await fetchPage(cursor);
+          cache = cache.concat(events);
+          hasMore = more;
+        } catch (err) {
+          console.error('hotel events page fetch failed', err);
+          alert('Could not load more events: ' + (err && err.message || err));
+        }
+        loading = false;
+        render();
+      };
+
       body.innerHTML = '<div class="hd-empty">Loading events…</div>';
-      fetch(BOKUN_API_BASE + '/api/admin/hotels/' + encodeURIComponent(h.id) + '/events', {
-        cache: 'no-store',
-        headers: { Authorization: 'Bearer ' + session.access_token },
-      })
-        .then((res) => res.json().then((b) => ({ ok: res.ok, body: b })))
-        .then((res) => {
-          if (!res.ok) throw new Error((res.body && res.body.error) || 'fetch_failed');
-          const events = (res.body && res.body.events) || [];
-          if (!events.length) {
-            body.innerHTML = '<div class="hd-empty">No audit events</div>';
-            return;
-          }
-          const rows = events.map((e) =>
-            '<li class="hd-events__row">' +
-              '<span class="hd-events__desc">' + describeHotelEvent(e) + '</span>' +
-              '<time class="hd-events__time">' + escapeHtml(formatEventTime(e.created_at)) + '</time>' +
-            '</li>'
-          ).join('');
-          body.innerHTML = '<ul class="hd-events">' + rows + '</ul>';
+      fetchPage(null)
+        .then(({ events, hasMore: more }) => {
+          cache   = events;
+          hasMore = more;
+          render();
         })
         .catch((err) => {
           console.error('hotel events fetch failed', err);
