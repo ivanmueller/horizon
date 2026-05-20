@@ -2487,26 +2487,49 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .hd-bankf__err[hidden] { display: none; }
 select.hd-bankf__input { appearance: auto; }
 
-/* Manual payment records list. */
-.hd-pay__ref {
+/* Manual payment records — Stripe-style table.
+   Reuses .bk-table chrome (header rule, row separators, hover tint)
+   so payouts read identically to the bookings table on the same
+   page. The trailing actions column sits flush-right with a kebab,
+   matching the bookings row pattern. */
+.bk-table--payouts thead th { border-top: 0; }
+.bk-table--payouts .bk-table__kebab { width: 36px; text-align: right; }
+.bk-table--payouts .bk-pill { margin-left: var(--s2); }
+
+/* Optional note attached to a payout renders as a muted subrow
+   directly under its parent record so it stays associated visually
+   without inflating the main row height. */
+.hd-payouts__noterow td { border-bottom: 1px solid #ecf1f6; }
+.hd-payouts__note {
+  padding-top: 0 !important;
+  padding-left: var(--s4);
   font-size: var(--t-xs);
-  color: var(--text-soft, #6b6b66);
+  color: var(--text-muted);
+  white-space: normal;
+  font-weight: 400;
 }
-.hd-pay__note {
-  font-size: var(--t-xs);
-  color: var(--text-soft, #6b6b66);
+
+/* Table footer — "N results" link on the left in the brand accent
+   (mirrors Stripe's pagination affordance), running-total chip on
+   the right so admins keep the recorded total at a glance. */
+.hd-payouts__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--s3) 0 0;
+  font-size: var(--t-sm);
 }
-.hd-pay__del {
-  border: 0;
-  background: none;
-  cursor: pointer;
-  color: var(--bad-fg);
-  font-size: var(--t-xs);
-  padding: 0 4px;
-  line-height: 1;
+.hd-payouts__results {
+  color: var(--accent);
+  font-weight: 500;
 }
-.hd-pay__del:hover { text-decoration: underline; }
-.hd-pay__del:disabled { opacity: .5; cursor: default; }
+.hd-payouts__total { color: var(--text-muted); }
+.hd-payouts__total strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  margin-left: 4px;
+}
 
 /* Stripe-style rows: label bolded above the value, tight inner
    gap, generous outer spacing between fields. The whole sidebar
