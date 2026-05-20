@@ -6056,24 +6056,26 @@
     // data sources are wired.
     function populateFairmontDemoData(h, els, currency) {
       const fm = (n) => formatHotelMoney(n, currency);
-      const pill = (kind, label) => '<span class="bk-pill bk-pill--' + kind + '">' + escapeHtml(label) + '</span>';
       const refPill = (code) => '<span class="hd-pill-mono">' + escapeHtml(code) + '</span>';
 
       // ── Bookings table
-      // Demo data exercises all three status pills (Confirmed,
-      // Upcoming, Refunded). Future dates render as Upcoming.
+      // status mirrors the raw booking.status values used on the global
+      // /admin/bookings/ page so renderBkPill renders them identically
+      // here. Source codes are the credited tracking_code (employee
+      // code when staff earned the commission, hotel pool code
+      // otherwise).
       const bookings = [
-        { tour: 'Lake Louise Voyageur Canoe', date: 'Jun 18, 2026', guest: 'Sarah Chen',     ref: 'X7K2_E_0001', amt: 747.00,  com: 37.35, status: 'ok',      label: 'Confirmed' },
-        { tour: 'Lake Agnes Tea House Hike',  date: 'Jun 22, 2026', guest: 'Michael Torres', ref: 'X7K2_E_0001', amt: 876.00,  com: 43.80, status: 'info',    label: 'Upcoming'  },
-        { tour: 'Banff Town & Gondola Day',   date: 'Jul 02, 2026', guest: "James O'Brien",  ref: 'X7K2_E_0002', amt: 1196.00, com: 59.80, status: 'info',    label: 'Upcoming'  },
-        { tour: 'Lake Louise Voyageur Canoe', date: 'Jun 12, 2026', guest: 'Priya Sharma',   ref: 'X7K2_H',      amt: 498.00,  com: 24.90, status: 'ok',      label: 'Confirmed' },
-        { tour: 'Lake Agnes Tea House Hike',  date: 'May 02, 2026', guest: 'Hannah Berg',    ref: 'X7K2_E_0001', amt: 438.00,  com: 0,     status: 'neutral', label: 'Refunded'  },
+        { tour: 'Lake Louise Voyageur Canoe', date: 'Jun 18, 2026', pax: 3, ref: 'X7K2_E_0001', amt: 747.00,  com: 37.35, status: 'confirmed' },
+        { tour: 'Lake Agnes Tea House Hike',  date: 'Jun 22, 2026', pax: 4, ref: 'X7K2_E_0001', amt: 876.00,  com: 43.80, status: 'confirmed' },
+        { tour: 'Banff Town & Gondola Day',   date: 'Jul 02, 2026', pax: 5, ref: 'X7K2_E_0002', amt: 1196.00, com: 59.80, status: 'confirmed' },
+        { tour: 'Lake Louise Voyageur Canoe', date: 'Jun 12, 2026', pax: 2, ref: 'X7K2_H',      amt: 498.00,  com: 24.90, status: 'confirmed' },
+        { tour: 'Lake Agnes Tea House Hike',  date: 'May 02, 2026', pax: 2, ref: 'X7K2_E_0001', amt: 438.00,  com: 0,     status: 'refunded'  },
       ];
       const bookingsBody = els.container.querySelector('#hdBookingsBody');
       if (bookingsBody) {
         const rows = bookings.map((b) => {
-          const isRefunded  = b.status === 'neutral';
-          const statusPill  = pill(b.status, b.label);
+          const isRefunded  = b.status === 'refunded' || b.status === 'pending_refund';
+          const statusPill  = renderBkPill(b.status);
           const amountCell  = '<td class="bk-row__amount' + (isRefunded ? ' bk-row__amount--muted' : '') + '">' +
                                 '<span class="mono">' + escapeHtml(fm(b.amt)) + '</span>' +
                                 ' ' + statusPill +
@@ -6085,7 +6087,7 @@
             '<tr>' +
               amountCell +
               '<td>' + escapeHtml(b.tour) + '</td>' +
-              '<td>' + escapeHtml(b.guest) + '</td>' +
+              '<td class="bk-row__pax">' + b.pax + '</td>' +
               '<td class="bk-table__muted">' + escapeHtml(b.date) + '</td>' +
               '<td>' + refPill(b.ref) + '</td>' +
               commission +
@@ -6098,7 +6100,7 @@
               '<thead><tr>' +
                 '<th>Amount</th>' +
                 '<th>Tour</th>' +
-                '<th>Customer</th>' +
+                '<th class="bk-row__pax">Pax</th>' +
                 '<th>Date</th>' +
                 '<th>Source</th>' +
                 '<th>Commission</th>' +
@@ -6266,8 +6268,6 @@
       if (!h || !h.code) return;
 
       const fm = (n) => formatHotelMoney(n, currency);
-      const pill = (kind, label) =>
-        '<span class="bk-pill bk-pill--' + kind + '">' + escapeHtml(label) + '</span>';
       const refPill = (code) =>
         '<span class="hd-pill-mono">' + escapeHtml(code) + '</span>';
 
@@ -6314,42 +6314,28 @@
           // the footer routes to the global Bookings page where the
           // full list is filterable.
           const top = records.slice(0, 5);
-          const todayStart = new Date();
-          todayStart.setHours(0, 0, 0, 0);
 
           const rows = top.map((r) => {
             const status = r.status || 'confirmed';
             const isRefunded  = status === 'refunded' || status === 'pending_refund';
-            const isCancelled = status === 'cancelled';
-
-            // Tour date determines Confirmed vs Upcoming; refund /
-            // cancellation overrides everything (those rows are
-            // terminal regardless of when the tour was scheduled).
-            let kind = 'ok', label = 'Confirmed';
-            if (isRefunded) {
-              kind = 'neutral'; label = 'Refunded';
-            } else if (isCancelled) {
-              kind = 'neutral'; label = 'Cancelled';
-            } else if (r.date) {
-              const m = String(r.date).match(/^(\d{4})-(\d{2})-(\d{2})/);
-              const tourDate = m
-                ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
-                : new Date(r.date);
-              if (!isNaN(tourDate.getTime()) && tourDate >= todayStart) {
-                kind = 'info'; label = 'Upcoming';
-              }
-            }
 
             const amount = r.amount != null ? Number(r.amount) : 0;
             const commission = isRefunded ? 0 : (amount * commissionPct) / 100;
-            const ref = r.first_touch_code ||
-                        (r.staff && r.staff.tracking_code) ||
+            // Source attribution mirrors the commission credit: when a
+            // staff member earned the commission, show their tracking
+            // code (not the hotel pool / first-touch code that the
+            // guest happened to land on).
+            const ref = (r.staff && r.staff.tracking_code) ||
+                        r.first_touch_code ||
                         '—';
             const tour = r.tour_title || '—';
-            const customer = r.lead_name || r.lead_email || '—';
+            const pax = (r.adults || 0) + (r.youth || 0) + (r.infants || 0);
             const dateStr = shortDate(r.date || r.created_at);
 
-            const statusPill = pill(kind, label);
+            // Status pill is rendered with the same helper the global
+            // /admin/bookings/ table uses so both surfaces stay in sync
+            // on the raw booking.status value.
+            const statusPill = renderBkPill(status);
             const amountCell = '<td class="bk-row__amount' +
               (isRefunded ? ' bk-row__amount--muted' : '') + '">' +
                 '<span class="mono">' + escapeHtml(fm(amount)) + '</span>' +
@@ -6364,7 +6350,7 @@
               '<tr>' +
                 amountCell +
                 '<td>' + escapeHtml(tour) + '</td>' +
-                '<td>' + escapeHtml(customer) + '</td>' +
+                '<td class="bk-row__pax">' + pax + '</td>' +
                 '<td class="bk-table__muted">' + escapeHtml(dateStr) + '</td>' +
                 '<td>' + refPill(ref) + '</td>' +
                 commissionCell +
@@ -6378,7 +6364,7 @@
                 '<thead><tr>' +
                   '<th>Amount</th>' +
                   '<th>Tour</th>' +
-                  '<th>Customer</th>' +
+                  '<th class="bk-row__pax">Pax</th>' +
                   '<th>Date</th>' +
                   '<th>Source</th>' +
                   '<th>Commission</th>' +
