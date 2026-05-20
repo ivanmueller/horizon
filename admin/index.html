@@ -1799,11 +1799,11 @@
                   </div>
                 </section>
 
-                <section class="hd-section">
+                <section class="hd-section" id="hdEventsSection">
                   <header class="hd-section__head">
                     <h2 class="hd-section__title">Events</h2>
                   </header>
-                  <div class="hd-section__body">
+                  <div class="hd-section__body" id="hdEventsBody">
                     <div class="hd-empty">No audit events</div>
                   </div>
                 </section>
@@ -5861,6 +5861,7 @@
         populateHotelBookings(h, els, currency);
       }
       renderHotelActivity(h, els);
+      renderHotelEvents(h, els);
 
       // Internal notes — sidebar card with auto-save on blur. Posts a
       // PATCH to /api/admin/hotels/<id> (the same endpoint the drawer
@@ -6712,6 +6713,120 @@
 
       if (addBtn) addBtn.onclick = openComposer;
       renderList();
+    }
+
+    // Events — Stripe-style audit timeline. Fetches the aggregator
+    // endpoint which UNIONs hotel_events + placement_events + staff_events
+    // for this hotel and renders them as two-column rows (description
+    // left, timestamp right). Limit 50; pagination ships when a hotel
+    // actually produces enough events to need it.
+    function renderHotelEvents(h, els) {
+      const body = els.container.querySelector('#hdEventsBody');
+      if (!body || !h || !h.id) return;
+      body.innerHTML = '<div class="hd-empty">Loading events…</div>';
+      fetch(BOKUN_API_BASE + '/api/admin/hotels/' + encodeURIComponent(h.id) + '/events', {
+        cache: 'no-store',
+        headers: { Authorization: 'Bearer ' + session.access_token },
+      })
+        .then((res) => res.json().then((b) => ({ ok: res.ok, body: b })))
+        .then((res) => {
+          if (!res.ok) throw new Error((res.body && res.body.error) || 'fetch_failed');
+          const events = (res.body && res.body.events) || [];
+          if (!events.length) {
+            body.innerHTML = '<div class="hd-empty">No audit events</div>';
+            return;
+          }
+          const rows = events.map((e) =>
+            '<li class="hd-events__row">' +
+              '<span class="hd-events__desc">' + describeHotelEvent(e) + '</span>' +
+              '<time class="hd-events__time">' + escapeHtml(formatEventTime(e.created_at)) + '</time>' +
+            '</li>'
+          ).join('');
+          body.innerHTML = '<ul class="hd-events">' + rows + '</ul>';
+        })
+        .catch((err) => {
+          console.error('hotel events fetch failed', err);
+          body.innerHTML = '<div class="hd-empty">Could not load events.</div>';
+        });
+    }
+
+    // Single switch keeps every event-type → human description in
+    // one place. Mirrors the per-entity labellers (plActivityLabel /
+    // staffActivityLabel) but lives next to the aggregator so the
+    // hotel-profile timeline reads as a coherent feed.
+    function describeHotelEvent(e) {
+      const p = e.payload || {};
+      const sub  = e.subject || {};
+      const name = sub.name ? '<strong>' + escapeHtml(sub.name) + '</strong>' : '';
+      if (e.source === 'hotel') {
+        switch (e.event_type) {
+          case 'created':
+            return p.name
+              ? 'Hotel <strong>' + escapeHtml(p.name) + '</strong> was created'
+              : 'Hotel was created';
+          case 'updated':
+            return 'Hotel details were updated';
+          case 'terminated':
+            return 'Hotel was terminated';
+          case 'banking_set':
+            return 'Banking details added' +
+              (p.method ? ' (' + escapeHtml(p.method) + ')' : '');
+          case 'banking_updated':
+            return 'Banking details were updated';
+          case 'commission_changed':
+            return 'Commission rate changed' +
+              (p.to != null ? ' to <strong>' + escapeHtml(String(p.to)) + '%</strong>' : '');
+          default:
+            return escapeHtml(e.event_type);
+        }
+      }
+      if (e.source === 'placement') {
+        const label = name || 'Placement';
+        switch (e.event_type) {
+          case 'created':           return label + ' was created';
+          case 'status_changed':    return label + ' status changed' +
+            (p.to ? ' to <strong>' + escapeHtml(p.to) + '</strong>' : '');
+          case 'status_auto_active':return label + ' was auto-activated on first scan';
+          case 'first_scan':        return 'First scan detected on ' + label;
+          case 'asset_uploaded':    return 'Asset uploaded for ' + label +
+            (p.filename ? ' · ' + escapeHtml(p.filename) : '');
+          case 'asset_replaced':    return 'Asset replaced on ' + label +
+            (p.filename ? ' · ' + escapeHtml(p.filename) : '');
+          default:                  return label + ' · ' + escapeHtml(e.event_type);
+        }
+      }
+      if (e.source === 'staff') {
+        const label = name || 'Employee';
+        const code  = sub.tracking_code
+          ? ' <span class="hd-pill-mono">' + escapeHtml(sub.tracking_code) + '</span>' : '';
+        switch (e.event_type) {
+          case 'onboarded':      return 'Employee ' + label + ' was onboarded' + code;
+          case 'rate_changed':   return label + '’s kickback rate was changed' +
+            (p.to != null ? ' to <strong>' + escapeHtml(String(p.to)) + '%</strong>' : '');
+          case 'status_changed': return label + '’s status changed' +
+            (p.to ? ' to <strong>' + escapeHtml(p.to) + '</strong>' : '');
+          case 'terminated':     return label + ' was terminated';
+          case 'first_booking':  return label + '’s first booking was credited';
+          default:               return label + ' · ' + escapeHtml(e.event_type);
+        }
+      }
+      return escapeHtml(e.event_type || 'event');
+    }
+
+    // Events use the same compact "5/16/26, 8:15:24 AM" timestamp
+    // Stripe shows on its Events panel — month/day/year, hours:min:sec.
+    function formatEventTime(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      const m   = d.getMonth() + 1;
+      const dy  = d.getDate();
+      const yr  = String(d.getFullYear()).slice(-2);
+      let hr = d.getHours(); const mer = hr >= 12 ? 'PM' : 'AM';
+      hr = hr % 12; if (hr === 0) hr = 12;
+      const min = String(d.getMinutes()).padStart(2, '0');
+      const sec = String(d.getSeconds()).padStart(2, '0');
+      return m + '/' + dy + '/' + yr + ', ' + hr + ':' + min + ':' + sec + ' ' + mer;
     }
 
     function flashHotelsNotice(msg, opts) {

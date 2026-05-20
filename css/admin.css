@@ -2275,6 +2275,38 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 .hd-stickynote__more:hover { color: var(--text); }
 
+/* Audit events timeline — Stripe-style two-column rows.
+   Description on the left can wrap to a second line; timestamp on
+   the right stays one line and right-aligns. Soft horizontal rules
+   between rows mirror the screenshot exactly — no card chrome, no
+   icons, just the facts. */
+.hd-events { list-style: none; margin: 0; padding: 0; }
+.hd-events__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s4);
+  padding: 12px 0;
+  border-bottom: 1px solid #ecf1f6;
+  font-size: var(--t-sm);
+}
+.hd-events__row:last-child { border-bottom: 0; }
+.hd-events__desc {
+  color: #1a2c44;
+  line-height: 1.4;
+  font-weight: 500;
+  word-wrap: break-word;
+  min-width: 0;
+}
+.hd-events__desc strong { font-weight: 600; }
+.hd-events__time {
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding-top: 1px;
+  font-variant-numeric: tabular-nums;
+}
+
 .hd-section { display: flex; flex-direction: column; gap: var(--s3); }
 .hd-section__head {
   display: flex;
