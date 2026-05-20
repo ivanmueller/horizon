@@ -427,65 +427,46 @@
     </form>
   </div>
 
-  <!-- ── Edit placement modal ──────────────────────────────── -->
+  <!-- ── Placement detail lightbox — performance + materials +
+       configuration + activity in one scrollable pane. Replaces the
+       old separate Edit and Analytics modals. ────────────────── -->
   <div class="modal" id="plEditModal" hidden>
-    <form class="modal__card modal__card--wide" id="plEditForm" novalidate>
-      <div class="modal__head">
-        <h2 class="modal__title">Edit placement</h2>
-        <button type="button" class="modal__close" id="plEditClose" aria-label="Close">×</button>
+    <form class="modal__card modal__card--wide pl-modal" id="plEditForm" novalidate>
+      <!-- Header strip: status pill, name, shortlink + copy, kebab, close -->
+      <div class="pl-modal__head">
+        <div class="pl-modal__headmain">
+          <span class="pl-modal__statuswrap" id="plEditHeaderStatus"></span>
+          <h2 class="pl-modal__title" id="plEditHeaderName">Placement</h2>
+          <button type="button" class="hd-copy mono pl-modal__short" id="plEditHeaderShortlink"
+                  data-copy="" title="Copy short link" hidden>
+            <span data-detail-text>—</span>
+            <svg class="hd-copy__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+        <div class="pl-modal__headactions">
+          <div class="pl-modal__menuwrap">
+            <button type="button" class="bk-iconbtn" id="plEditMenuBtn" aria-haspopup="menu" aria-expanded="false" aria-label="Placement actions">⋯</button>
+            <div class="pl-modal__menu" id="plEditMenu" role="menu" hidden>
+              <button type="button" class="pl-modal__menuitem" role="menuitem" data-pl-action="pause">Pause</button>
+              <button type="button" class="pl-modal__menuitem pl-modal__menuitem--danger" role="menuitem" data-pl-action="retire">Retire</button>
+            </div>
+          </div>
+          <button type="button" class="modal__close" id="plEditClose" aria-label="Close">&times;</button>
+        </div>
       </div>
+
       <div class="alert alert--bad" id="plEditError" hidden></div>
 
-      <div class="drawer-form__row">
-        <label class="drawer-form__label">Code</label>
-        <div class="sl-edit__readonly mono" id="plEditCode">—</div>
-        <span class="drawer-form__hint">Immutable — QR codes encode this. Attributes to the hotel pool (no kickback).</span>
-      </div>
+      <!-- Performance ────────────────────────────────────────── -->
+      <section class="pl-modal__section">
+        <h3 class="pl-modal__sectiontitle">Performance</h3>
+        <div class="alert alert--bad" id="plStatsError" hidden></div>
+        <div id="plStatsBody"><div class="muted">Loading…</div></div>
+      </section>
 
-      <div class="drawer-form__row">
-        <label class="drawer-form__label" for="plEditType">Type</label>
-        <select class="input" id="plEditType">
-          <option value="rack_card">Rack card</option>
-          <option value="table_tent">Table tent</option>
-          <option value="welcome_packet">Welcome packet</option>
-          <option value="website_widget">Website widget</option>
-          <option value="lobby_qr">Lobby QR</option>
-          <option value="custom">Custom</option>
-        </select>
-      </div>
-
-      <div class="drawer-form__row">
-        <label class="drawer-form__label" for="plEditName">Name</label>
-        <input class="input" type="text" id="plEditName" maxlength="120" autocomplete="off">
-      </div>
-
-      <div class="drawer-form__row">
-        <label class="drawer-form__label" for="plEditLocation">Location in hotel
-          <span class="drawer-form__optional">(optional)</span></label>
-        <input class="input" type="text" id="plEditLocation" maxlength="160"
-               placeholder="e.g. Front desk, west wall">
-      </div>
-
-      <div class="drawer-form__row">
-        <label class="drawer-form__label" for="plEditDeployed">Deployed on
-          <span class="drawer-form__optional">(optional)</span></label>
-        <input class="input" type="date" id="plEditDeployed">
-      </div>
-
-      <div class="drawer-form__row">
-        <label class="drawer-form__label" for="plEditStatus">Status</label>
-        <select class="input" id="plEditStatus">
-          <option value="pending">Pending</option>
-          <option value="active">Active</option>
-          <option value="retired">Retired</option>
-        </select>
-        <span class="drawer-form__hint" id="plEditStatusHint" hidden></span>
-      </div>
-
-      <div class="pl-mat">
-        <div class="pl-mat__head">
-          <h3 class="pl-mat__title">Materials &amp; QR</h3>
-        </div>
+      <!-- Materials ──────────────────────────────────────────── -->
+      <section class="pl-modal__section">
+        <h3 class="pl-modal__sectiontitle">Materials &amp; QR</h3>
         <div class="alert alert--bad" id="plAssetsError" hidden></div>
         <div class="pl-mat__qr">
           <div class="pl-mat__qrbox" id="plEditQr"></div>
@@ -499,7 +480,65 @@
           </div>
         </div>
         <div id="plAssetsBody"><div class="muted">Loading…</div></div>
-      </div>
+      </section>
+
+      <!-- Configuration ──────────────────────────────────────── -->
+      <section class="pl-modal__section">
+        <h3 class="pl-modal__sectiontitle">Configuration</h3>
+
+        <div class="drawer-form__row">
+          <label class="drawer-form__label">Code</label>
+          <div class="sl-edit__readonly mono" id="plEditCode">—</div>
+          <span class="drawer-form__hint">Immutable — QR codes encode this. Attributes to the hotel pool (no kickback).</span>
+        </div>
+
+        <div class="drawer-form__row">
+          <label class="drawer-form__label" for="plEditType">Type</label>
+          <select class="input" id="plEditType">
+            <option value="rack_card">Rack card</option>
+            <option value="table_tent">Table tent</option>
+            <option value="welcome_packet">Welcome packet</option>
+            <option value="website_widget">Website widget</option>
+            <option value="lobby_qr">Lobby QR</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+
+        <div class="drawer-form__row">
+          <label class="drawer-form__label" for="plEditName">Name</label>
+          <input class="input" type="text" id="plEditName" maxlength="120" autocomplete="off">
+        </div>
+
+        <div class="drawer-form__row">
+          <label class="drawer-form__label" for="plEditLocation">Location in hotel
+            <span class="drawer-form__optional">(optional)</span></label>
+          <input class="input" type="text" id="plEditLocation" maxlength="160"
+                 placeholder="e.g. Front desk, west wall">
+        </div>
+
+        <div class="drawer-form__row">
+          <label class="drawer-form__label" for="plEditDeployed">Deployed on
+            <span class="drawer-form__optional">(optional)</span></label>
+          <input class="input" type="date" id="plEditDeployed">
+        </div>
+
+        <div class="drawer-form__row">
+          <label class="drawer-form__label" for="plEditStatus">Status</label>
+          <select class="input" id="plEditStatus">
+            <option value="pending">Pending</option>
+            <option value="active">Active</option>
+            <option value="paused">Paused</option>
+            <option value="retired">Retired</option>
+          </select>
+          <span class="drawer-form__hint" id="plEditStatusHint" hidden></span>
+        </div>
+      </section>
+
+      <!-- Activity log ──────────────────────────────────────── -->
+      <section class="pl-modal__section">
+        <h3 class="pl-modal__sectiontitle">Activity log</h3>
+        <p class="muted" style="font-size: var(--t-sm); margin: 0;">Coming soon — every status change, asset upload, and first-scan event will appear here as a timeline.</p>
+      </section>
 
       <div class="modal__actions">
         <button type="button" class="btn" id="plEditCancel">Cancel</button>
@@ -580,19 +619,6 @@
         <button type="submit" class="btn btn--primary" id="mgrModalSubmit">Send invite</button>
       </div>
     </form>
-  </div>
-
-  <!-- ── Placement analytics modal ─────────────────────────── -->
-  <div class="modal" id="plStatsModal" hidden>
-    <div class="modal__card modal__card--xl">
-      <div class="modal__head">
-        <h2 class="modal__title">Analytics — <span id="plStatsName">placement</span></h2>
-        <button type="button" class="modal__close" id="plStatsClose" aria-label="Close">×</button>
-      </div>
-      <div class="pl-an__url mono" id="plStatsUrl"></div>
-      <div class="alert alert--bad" id="plStatsError" hidden></div>
-      <div id="plStatsBody"><div class="muted">Loading…</div></div>
-    </div>
   </div>
 
   <!-- ── Generic danger confirmation modal ────────────────────
@@ -2517,11 +2543,12 @@
 
 
     /* ── Placement analytics ─────────────────────────────── */
-    let _plStatsId = null;
+    // Now lives inside the consolidated placement lightbox (#plEditModal).
+    // The previous standalone analytics modal was removed; loadPlStats
+    // reads the same _plEditId state used by the rest of the lightbox
+    // so a single fetch hydrates the Performance section on open and
+    // on period change.
     let _plStatsPeriod = 'last30';
-    const plStatsModal = document.getElementById('plStatsModal');
-    const plStatsName  = document.getElementById('plStatsName');
-    const plStatsUrl   = document.getElementById('plStatsUrl');
     const plStatsBody  = document.getElementById('plStatsBody');
     const plStatsError = document.getElementById('plStatsError');
     const PL_AN_PERIODS = [
@@ -2744,7 +2771,8 @@
     }
 
     function renderPlStats(d) {
-      plStatsUrl.textContent = d.short_url || '';
+      // The short URL lives in the lightbox header strip now; no
+      // separate row inside the Performance section.
       const human = d.human_clicks == null ? '—' : d.human_clicks;
       plStatsBody.innerHTML =
         plAnDateRange() +
@@ -2768,11 +2796,12 @@
     }
 
     async function loadPlStats() {
+      if (!_plEditId) return;
       plStatsBody.innerHTML = '<div class="muted">Loading…</div>';
       plStatsError.hidden = true;
       try {
         const res = await fetch(
-          BOKUN_API_BASE + '/api/admin/placements/' + encodeURIComponent(_plStatsId) +
+          BOKUN_API_BASE + '/api/admin/placements/' + encodeURIComponent(_plEditId) +
             '/stats?period=' + encodeURIComponent(_plStatsPeriod),
           { headers: { Authorization: 'Bearer ' + session.access_token } },
         );
@@ -2791,20 +2820,14 @@
       }
     }
 
-    function openPlStats(id, name) {
-      _plStatsId = id;
-      _plStatsPeriod = 'last30';
-      plStatsName.textContent = name || 'placement';
-      plStatsUrl.textContent = '';
-      plStatsError.hidden = true;
-      plStatsModal.hidden = false;
-      loadPlStats();
+    // Stats now live inside the consolidated lightbox. Any caller
+    // (e.g. legacy "View analytics" row button) just opens the
+    // lightbox; the Performance section is the first thing visible.
+    function openPlStats(id) {
+      if (!id) return;
+      const row = document.querySelector('[data-placement-row="' + (CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
+      if (row) openPlEdit(row);
     }
-    function closePlStats() { plStatsModal.hidden = true; }
-    plStatsModal && plStatsModal.addEventListener('click', (e) => {
-      if (e.target === plStatsModal) closePlStats();
-    });
-    document.getElementById('plStatsClose') && (document.getElementById('plStatsClose').onclick = closePlStats);
 
     // Toolbar is re-rendered with the body, so delegate: date-range
     // dropdown reloads the period; the Sync button runs the click sync.
@@ -2918,10 +2941,130 @@
       plEditLocation.value    = row.dataset.plLocation || '';
       plEditDeployed.value    = row.dataset.plDeployed || '';
       plEditStatus.value      = row.dataset.plStatus || 'pending';
+      // Header strip — name + status pill + shortlink + kebab.
+      updatePlModalHeader(row);
+      // Reset the period selector on every open so a previous
+      // session's selection doesn't bleed into a new placement.
+      _plStatsPeriod = 'last30';
       plEditModal.hidden = false;
       renderPlEditMaterials(_plEditId);
+      // Performance section — fetch fresh on every open.
+      loadPlStats();
     }
-    function closePlEdit() { plEditModal.hidden = true; }
+    function closePlEdit() {
+      plEditModal.hidden = true;
+      const menu = document.getElementById('plEditMenu');
+      if (menu) menu.hidden = true;
+    }
+
+    // Header strip writer. Reads from the table row's dataset (already
+    // populated by the placements render) so we don't re-fetch on open.
+    function updatePlModalHeader(row) {
+      const headerName   = document.getElementById('plEditHeaderName');
+      const headerStatus = document.getElementById('plEditHeaderStatus');
+      const headerShort  = document.getElementById('plEditHeaderShortlink');
+      const menuPause    = document.querySelector('#plEditMenu [data-pl-action="pause"]');
+      if (headerName)   headerName.textContent = row.dataset.plName || 'Placement';
+      if (headerStatus) headerStatus.innerHTML = plStatusPill(row.dataset.plStatus || 'pending');
+      // Build short URL from the code (live host short domain).
+      const code = (row.dataset.plCode || '').trim();
+      const shortUrl = code ? ('https://link.gowithhorizon.com/' + code) : '';
+      if (headerShort) {
+        if (shortUrl) {
+          headerShort.hidden = false;
+          headerShort.dataset.copy = shortUrl;
+          const txt = headerShort.querySelector('[data-detail-text]');
+          if (txt) txt.textContent = 'link.gowithhorizon.com/' + code;
+        } else {
+          headerShort.hidden = true;
+        }
+      }
+      // Pause / Resume label flips based on current status. Retire is
+      // hidden when already retired; both are hidden in pending state
+      // since there's nothing operational to pause/retire yet.
+      const status = row.dataset.plStatus || 'pending';
+      if (menuPause) {
+        menuPause.textContent = status === 'paused' ? 'Resume' : 'Pause';
+        menuPause.dataset.plAction = status === 'paused' ? 'resume' : 'pause';
+        menuPause.hidden = (status === 'pending' || status === 'retired');
+      }
+      const menuRetire = document.querySelector('#plEditMenu [data-pl-action="retire"]');
+      if (menuRetire) menuRetire.hidden = (status === 'retired');
+    }
+
+    function plStatusPill(status) {
+      const map = {
+        active:  '<span class="bk-pill bk-pill--ok">Active</span>',
+        paused:  '<span class="bk-pill bk-pill--warn">Paused</span>',
+        retired: '<span class="bk-pill bk-pill--neutral">Retired</span>',
+      };
+      return map[status] || '<span class="bk-pill bk-pill--warn">Pending</span>';
+    }
+
+    // Header kebab menu — open/close + outside-click dismiss.
+    const plEditMenuBtn = document.getElementById('plEditMenuBtn');
+    const plEditMenu    = document.getElementById('plEditMenu');
+    if (plEditMenuBtn && plEditMenu) {
+      plEditMenuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const open = plEditMenu.hidden;
+        plEditMenu.hidden = !open;
+        plEditMenuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      document.addEventListener('click', (e) => {
+        if (plEditMenu.hidden) return;
+        if (!plEditMenu.contains(e.target) && e.target !== plEditMenuBtn) {
+          plEditMenu.hidden = true;
+          plEditMenuBtn.setAttribute('aria-expanded', 'false');
+        }
+      });
+      plEditMenu.addEventListener('click', async (e) => {
+        const btn = e.target.closest('[data-pl-action]');
+        if (!btn || !_plEditId) return;
+        plEditMenu.hidden = true;
+        plEditMenuBtn.setAttribute('aria-expanded', 'false');
+        const action = btn.dataset.plAction;
+        if (action === 'pause' || action === 'resume') {
+          await setPlacementStatus(_plEditId, action === 'pause' ? 'paused' : 'active');
+        } else if (action === 'retire') {
+          const name = (document.getElementById('plEditHeaderName') || {}).textContent || 'this placement';
+          closePlEdit();
+          retirePlacement(_plEditId, name);
+        }
+      });
+    }
+
+    // Status flip used by the header Pause / Resume action. Reuses
+    // the same PATCH endpoint as the form submit but only touches
+    // the status field. Refreshes the cache so the table reflects
+    // the new state and the lightbox reopens with synced data on
+    // the next click.
+    async function setPlacementStatus(id, status) {
+      plEditError.hidden = true;
+      try {
+        const res = await fetch(BOKUN_API_BASE + '/api/admin/placements/' + encodeURIComponent(id), {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + session.access_token,
+          },
+          body: JSON.stringify({ status }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error((data && data.error) || 'status_update_failed');
+        // Reload + re-render so the table + the lightbox header
+        // both pick up the new status.
+        await reloadHotelsCacheAndRefresh();
+        const row = document.querySelector('[data-placement-row="' + (CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
+        if (row) {
+          plEditStatus.value = status;
+          updatePlModalHeader(row);
+        }
+      } catch (err) {
+        plEditError.textContent = err.message || 'Could not update status.';
+        plEditError.hidden = false;
+      }
+    }
     plEditStatus && plEditStatus.addEventListener('change', updatePlStatusHint);
 
     plEditModal && plEditModal.addEventListener('click', (e) => {

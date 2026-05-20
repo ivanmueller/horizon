@@ -2958,6 +2958,102 @@ select.hd-bankf__input { appearance: auto; }
 .modal__card--wide { max-width: 720px; }
 .modal__card--xl   { max-width: 920px; }
 
+/* ── Placement detail lightbox ──────────────────────────────────────
+   Replaces the separate Edit + Analytics modals. One scrollable pane,
+   section-divided, with a header strip that owns status + shortlink +
+   actions so the body can stay focused on its section content. */
+.pl-modal { display: flex; flex-direction: column; }
+
+.pl-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  padding-bottom: var(--s2);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--s4);
+}
+.pl-modal__headmain {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.pl-modal__title {
+  font-size: var(--t-lg);
+  font-weight: 600;
+  margin: 0;
+  color: var(--text);
+}
+.pl-modal__statuswrap { display: inline-flex; }
+.pl-modal__short {
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+}
+.pl-modal__headactions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* Kebab menu — small floating list anchored to the kebab button. */
+.pl-modal__menuwrap { position: relative; }
+.pl-modal__menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 160px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  padding: 4px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+}
+.pl-modal__menuitem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: var(--t-sm);
+  color: var(--text);
+  cursor: pointer;
+  transition: background-color var(--t-fast);
+}
+.pl-modal__menuitem:hover {
+  background: var(--bg-subtle);
+}
+.pl-modal__menuitem--danger { color: var(--bad-fg); }
+
+/* Section dividers — a thin rule + small caption above each block so
+   the four sections (Performance / Materials / Configuration /
+   Activity) feel like one continuous scroll, not stacked cards. */
+.pl-modal__section {
+  padding-top: var(--s4);
+  margin-top: var(--s4);
+  border-top: 1px solid var(--border);
+}
+.pl-modal__section:first-of-type {
+  padding-top: 0;
+  margin-top: 0;
+  border-top: 0;
+}
+.pl-modal__sectiontitle {
+  font-size: var(--t-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin: 0 0 var(--s2);
+}
+
 /* Materials & QR section inside the Edit modal. */
 .pl-mat {
   margin-top: var(--s4);
