@@ -1394,6 +1394,23 @@ async function handleAdminPaymentCreate(request, env) {
     row.occurred_at = oa;
   }
 
+  // Idempotency: client mints a key per form-open and resends it on
+  // retries. (hotel_id, idempotency_key) carries a unique partial
+  // index — a duplicate insert raises 23505, which we catch and
+  // resolve to the original row. The payment_created event is only
+  // written on the first successful insert, never on dedupe.
+  const idemKey =
+    (request.headers.get("Idempotency-Key") || "").trim() ||
+    (typeof body.idempotency_key === "string" ? body.idempotency_key.trim() : "");
+  if (idemKey) {
+    if (idemKey.length > 80) {
+      return jsonResponse(
+        { error: "Idempotency-Key too long (80 chars max)" }, 400, request,
+      );
+    }
+    row.idempotency_key = idemKey;
+  }
+
   const hotelRows = await supabaseSelect(
     env, `hotels?id=eq.${encodeURIComponent(hotelId)}&select=id`,
   );
@@ -1401,8 +1418,31 @@ async function handleAdminPaymentCreate(request, env) {
     return jsonResponse({ error: "hotel not found" }, 404, request);
   }
 
-  const inserted = await supabaseInsert(env, "payments", [row], { returnRow: true });
-  const created  = Array.isArray(inserted) ? inserted[0] : inserted;
+  let created;
+  try {
+    const inserted = await supabaseInsert(env, "payments", [row], { returnRow: true });
+    created = Array.isArray(inserted) ? inserted[0] : inserted;
+  } catch (err) {
+    if (idemKey && isUniqueViolation(err, "payments_idempotency_key_uq")) {
+      // Retry of an already-processed request — return the original
+      // row without writing a second event. Status 200 (not 201)
+      // signals "found", not "created", in case a future client
+      // wants to distinguish.
+      const existing = await supabaseSelect(
+        env,
+        `payments?hotel_id=eq.${encodeURIComponent(hotelId)}` +
+          `&idempotency_key=eq.${encodeURIComponent(idemKey)}` +
+          `&select=id,hotel_id,amount,currency,description,status,occurred_at,actor_email,created_at,idempotency_key` +
+          `&limit=1`,
+      );
+      if (Array.isArray(existing) && existing.length) {
+        return jsonResponse(
+          { payment: existing[0], deduped: true }, 200, request,
+        );
+      }
+    }
+    throw err;
+  }
   logMutation(request, auth.claims, "create", "payment", created && created.id, {
     hotel_id: hotelId, amount: row.amount, status,
   });
@@ -4287,7 +4327,7 @@ function corsHeaders(request) {
   return {
     "Access-Control-Allow-Origin": allowed ? origin : ALLOWED_ORIGIN,
     "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, Idempotency-Key",
     Vary: "Origin",
   };
 }
