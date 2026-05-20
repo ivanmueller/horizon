@@ -4965,9 +4965,6 @@
       const staff = (h.staff || []).filter((s) => s.status !== 'revoked')
         .slice()
         .sort((a, b) => (Number(b.lifetime_commission) || 0) - (Number(a.lifetime_commission) || 0));
-      const hotelDefaultPct = (h.commission_pct != null && h.kickback_pool_pct == null)
-        ? Number(h.commission_pct)
-        : (h.kickback_pool_pct != null ? Number(h.kickback_pool_pct) : null);
       if (!staff.length) {
         els.empBody.innerHTML = '<div class="hd-empty">No employees yet.</div>';
       } else {
@@ -4989,10 +4986,6 @@
           const medalHtml = medal
             ? '<span class="hd-emp__medal" title="Rank #' + rank + ' by commission" aria-label="Rank ' + rank + '">' + medal + '</span>'
             : '';
-          const rate = (s.kickback_pct != null) ? Number(s.kickback_pct) : null;
-          const isOverride = rate != null && hotelDefaultPct != null && rate !== hotelDefaultPct;
-          const rateCell = (rate != null ? rate + '%' : '—')
-            + (isOverride ? ' <span class="hd-override-dot" title="Overrides hotel default" aria-label="Overrides hotel default"></span>' : '');
           const earned = formatHotelMoney(s.lifetime_commission || 0, currency);
           const refCode = s.tracking_code || '';
           return (
@@ -5014,7 +5007,6 @@
               '</button></td>' +
               '<td class="num hd-num muted" data-staff-bookings="' + escapeHtml(s.id) + '">—</td>' +
               '<td class="num hd-num muted" data-staff-conversion="' + escapeHtml(s.id) + '">—</td>' +
-              '<td class="num hd-num">' + rateCell + '</td>' +
               '<td class="num hd-num">' + escapeHtml(earned) + '</td>' +
               '<td class="muted" data-staff-lastbooking="' + escapeHtml(s.id) + '">—</td>' +
               '<td class="bk-table__kebab">' +
@@ -5031,8 +5023,7 @@
                 '<th>Code</th>' +
                 '<th class="num">Bookings' + colInfo('Confirmed bookings this employee’s referrals produced. Hover a cell for this month vs all-time.') + '</th>' +
                 '<th class="num">Conversion' + colInfo('Confirmed bookings as a % of clicks on this employee’s personal short link.') + '</th>' +
-                '<th class="num">Rate' + colInfo('Kickback percentage applied to bookings credited to this employee.') + '</th>' +
-                '<th class="num">Commission' + colInfo('Lifetime commission earned. Default sort.') + '</th>' +
+                '<th class="num">Commission' + colInfo('Lifetime commission earned. Default sort. Kickback rate is on the employee’s lightbox.') + '</th>' +
                 '<th>Last booking' + colInfo('Time since the most recent confirmed booking credited to this employee.') + '</th>' +
                 '<th></th>' +
               '</tr></thead>' +
