@@ -5968,14 +5968,15 @@
         const initials = (name
           ? name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('')
           : email.slice(0, 2).toUpperCase()) || '?';
+        // Email is intentionally not shown in the table — it would
+        // duplicate the manager lightbox's primary identifier and
+        // make rows wider than they need to be. Lightbox (opened
+        // via the kebab) carries the full email + invite history.
         const userCell =
           '<td class="hd-user">' +
             '<span class="hd-avatar" aria-hidden="true">' + escapeHtml(initials) + '</span>' +
             '<div class="hd-user__body">' +
               '<div class="hd-user__name">' + escapeHtml(primary) + '</div>' +
-              (name
-                ? '<div class="hd-user__sub">' + escapeHtml(email) + '</div>'
-                : '') +
             '</div>' +
           '</td>';
         const rolePill   = mgrRolePill(m.role);
