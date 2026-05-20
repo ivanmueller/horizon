@@ -1,0 +1,11 @@
+-- Drop the legacy hotels.notes textarea column.
+--
+-- Two surfaces used to write to it: the "Internal notes" sidebar
+-- card (removed in an earlier commit) and the create/edit hotel
+-- drawer textarea (removed in the same commit as this migration).
+-- Admin-authored notes now live in the hotel_notes table, surfaced
+-- in the Recent activity timeline + sidebar sticky panel.
+--
+-- IF EXISTS keeps the migration safe to re-run and tolerant of
+-- environments where the column was already dropped manually.
+alter table hotels drop column if exists notes;

@@ -1580,7 +1580,7 @@ async function handleAdminHotelNoteDelete(id, request, env) {
 
 const HOTEL_FIELDS =
   "id,code,name,location,type,status,effective_date,default_tracking_code," +
-  "tracking_prefix,commission_pct,kickback_pool_pct,notes,created_at,updated_at," +
+  "tracking_prefix,commission_pct,kickback_pool_pct,created_at,updated_at," +
   "contract_start_date,property_type,star_rating,country," +
   "platform_fee_pct," +
   "payout_method,payout_account_holder,payout_etransfer_email," +
@@ -3811,8 +3811,6 @@ function validateHotel(body, { creating }) {
     }
     row.platform_fee_pct = body.platform_fee_pct;
   }
-  if (body.notes === null) row.notes = null;
-  else if (typeof body.notes === "string") row.notes = body.notes;
   // Onboarding metadata — all nullable, all admin-editable. The
   // database CHECK on star_rating enforces 1..5, so we let invalid
   // values bubble up as a 5xx rather than silently sanitise.
