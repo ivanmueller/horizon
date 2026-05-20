@@ -1974,15 +1974,6 @@
                   </div>
                 </section>
 
-                <section class="hd-card" id="hdNotesCard">
-                  <header class="hd-card__head"><h3 class="hd-card__title">Internal notes</h3></header>
-                  <div class="hd-notes-wrap">
-                    <textarea class="hd-notes" id="hdNotes" rows="4"
-                              placeholder="Outreach tracking, concierge contact, follow-ups…"></textarea>
-                    <div class="hd-notes__meta" id="hdNotesMeta" hidden></div>
-                  </div>
-                </section>
-
                 <section class="hd-card">
                   <header class="hd-card__head"><h3 class="hd-card__title">Metadata</h3></header>
                   <dl class="hd-side__list">
@@ -4702,8 +4693,6 @@
         placementsBody: container.querySelector('#hdPlacementsBody'),
         details:      container.querySelector('#hdDetails'),
         heroStat:     container.querySelector('#hotelDetailHeroStat'),
-        notes:        container.querySelector('#hdNotes'),
-        notesMeta:    container.querySelector('#hdNotesMeta'),
         addBtnHead:   container.querySelector('#hdAddEmployee'),
         addBtnSection:container.querySelector('#hdEmpAdd'),
         mgrBody:      container.querySelector('#hdManagersBody'),
@@ -4770,49 +4759,6 @@
     // Re-render detail page using the freshest entry in hotelsCache.
     // Safe to call from anywhere — no-ops when the user isn't on the
     // detail route or the hotel is no longer in the cache.
-    // PATCH only the notes field for a hotel. Used by the sidebar
-    // "Internal notes" auto-save. Updates the textarea's last-saved
-    // marker on success and stamps the meta line. Failure rolls back
-    // the marker so the next blur will retry rather than skip.
-    function saveHotelNotes(hotelId, value, metaEl, taEl) {
-      if (!hotelId) return;
-      const body = { notes: value ? value : null };
-      if (taEl) taEl.classList.add('hd-notes--saving');
-      fetch(BOKUN_API_BASE + '/api/admin/hotels/' + encodeURIComponent(hotelId), {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + session.access_token,
-        },
-        body: JSON.stringify(body),
-      })
-        .then((r) => {
-          if (r.status === 401) { window.location.replace(connectUrl('/login/')); throw new Error('unauthorized'); }
-          return r.json().then((b) => ({ ok: r.ok, body: b }));
-        })
-        .then((res) => {
-          if (!res.ok) throw new Error((res.body && res.body.error) || 'save_failed');
-          if (taEl) taEl.dataset.lastSaved = value;
-          if (metaEl) {
-            metaEl.textContent = 'Last edited ' + formatHumanDateTime(new Date().toISOString());
-            metaEl.hidden = !value;
-          }
-          // Keep the in-memory cache + drawer in sync.
-          reloadHotelsCacheAndRefresh();
-        })
-        .catch((err) => {
-          if (err && err.message === 'unauthorized') return;
-          console.error('notes save failed', err);
-          if (metaEl) {
-            metaEl.textContent = 'Couldn\'t save — try again';
-            metaEl.hidden = false;
-          }
-        })
-        .finally(() => {
-          if (taEl) taEl.classList.remove('hd-notes--saving');
-        });
-    }
-
     function refreshHotelDetailFromCache() {
       if (!hotelDetailEls || !hotelDetailEls.slug) return;
       const hotel = hotelsCache.find((h) => h.code === hotelDetailEls.slug);
@@ -5863,37 +5809,6 @@
       renderHotelActivity(h, els);
       renderHotelEvents(h, els);
 
-      // Internal notes — sidebar card with auto-save on blur. Posts a
-      // PATCH to /api/admin/hotels/<id> (the same endpoint the drawer
-      // already uses), refreshes the hotel cache, and stamps the last
-      // edited timestamp underneath the field. We avoid binding a
-      // second listener on every render by stashing the bound handler
-      // on the textarea itself.
-      const notesEl = els.notes;
-      const notesMetaEl = els.notesMeta;
-      if (notesEl) {
-        notesEl.value = h.notes || '';
-        if (notesMetaEl) {
-          if (h.notes && (h.updated_at || h.created_at)) {
-            notesMetaEl.textContent = 'Last edited ' + formatHumanDateTime(h.updated_at || h.created_at);
-            notesMetaEl.hidden = false;
-          } else {
-            notesMetaEl.hidden = true;
-          }
-        }
-        notesEl.dataset.hotelId = String(h.id);
-        notesEl.dataset.lastSaved = h.notes || '';
-        if (!notesEl._wired) {
-          notesEl._wired = true;
-          notesEl.addEventListener('blur', () => {
-            const newVal = notesEl.value;
-            const prev   = notesEl.dataset.lastSaved || '';
-            if (newVal === prev) return;
-            saveHotelNotes(notesEl.dataset.hotelId, newVal, notesMetaEl, notesEl);
-          });
-        }
-      }
-
       // Wire Add Employee buttons → centered modal (see openStaffModalAdd).
       // The hero "+ Add Employee", the section "+", and the employee
       // kebab edit all route through the same staff modal. The drawer
@@ -6753,16 +6668,18 @@
     // Single switch keeps every event-type → human description in
     // one place. Mirrors the per-entity labellers (plActivityLabel /
     // staffActivityLabel) but lives next to the aggregator so the
-    // hotel-profile timeline reads as a coherent feed.
+    // hotel-profile timeline reads as a coherent feed. Output is
+    // flat text — no inline emphasis — to match the Stripe Events
+    // panel where every row reads at the same weight.
     function describeHotelEvent(e) {
-      const p = e.payload || {};
+      const p    = e.payload || {};
       const sub  = e.subject || {};
-      const name = sub.name ? '<strong>' + escapeHtml(sub.name) + '</strong>' : '';
+      const name = sub.name ? escapeHtml(sub.name) : '';
       if (e.source === 'hotel') {
         switch (e.event_type) {
           case 'created':
             return p.name
-              ? 'Hotel <strong>' + escapeHtml(p.name) + '</strong> was created'
+              ? 'Hotel ' + escapeHtml(p.name) + ' was created'
               : 'Hotel was created';
           case 'updated':
             return 'Hotel details were updated';
@@ -6775,7 +6692,7 @@
             return 'Banking details were updated';
           case 'commission_changed':
             return 'Commission rate changed' +
-              (p.to != null ? ' to <strong>' + escapeHtml(String(p.to)) + '%</strong>' : '');
+              (p.to != null ? ' to ' + escapeHtml(String(p.to)) + '%' : '');
           default:
             return escapeHtml(e.event_type);
         }
@@ -6785,7 +6702,7 @@
         switch (e.event_type) {
           case 'created':           return label + ' was created';
           case 'status_changed':    return label + ' status changed' +
-            (p.to ? ' to <strong>' + escapeHtml(p.to) + '</strong>' : '');
+            (p.to ? ' to ' + escapeHtml(p.to) : '');
           case 'status_auto_active':return label + ' was auto-activated on first scan';
           case 'first_scan':        return 'First scan detected on ' + label;
           case 'asset_uploaded':    return 'Asset uploaded for ' + label +
@@ -6797,14 +6714,13 @@
       }
       if (e.source === 'staff') {
         const label = name || 'Employee';
-        const code  = sub.tracking_code
-          ? ' <span class="hd-pill-mono">' + escapeHtml(sub.tracking_code) + '</span>' : '';
+        const code  = sub.tracking_code ? ' (' + escapeHtml(sub.tracking_code) + ')' : '';
         switch (e.event_type) {
           case 'onboarded':      return 'Employee ' + label + ' was onboarded' + code;
           case 'rate_changed':   return label + '’s kickback rate was changed' +
-            (p.to != null ? ' to <strong>' + escapeHtml(String(p.to)) + '%</strong>' : '');
+            (p.to != null ? ' to ' + escapeHtml(String(p.to)) + '%' : '');
           case 'status_changed': return label + '’s status changed' +
-            (p.to ? ' to <strong>' + escapeHtml(p.to) + '</strong>' : '');
+            (p.to ? ' to ' + escapeHtml(p.to) : '');
           case 'terminated':     return label + ' was terminated';
           case 'first_booking':  return label + '’s first booking was credited';
           default:               return label + ' · ' + escapeHtml(e.event_type);
