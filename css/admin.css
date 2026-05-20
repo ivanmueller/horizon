@@ -2254,6 +2254,26 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   font-size: var(--t-xs);
   color: var(--text-muted);
 }
+/* "View N more note(s)" lives inside the same sticky card,
+   separated by a hairline rule that picks up the yellow border
+   colour so it reads as part of the same surface. Purple matches
+   the accent used for in-page navigation affordances. */
+.hd-stickynote__more {
+  display: block;
+  width: calc(100% + 24px);
+  margin: 10px -12px -10px;
+  padding: 8px 12px 8px;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid #FDE68A;
+  text-align: left;
+  font: inherit;
+  font-size: var(--t-xs);
+  color: var(--accent);
+  cursor: pointer;
+  transition: color var(--t-fast);
+}
+.hd-stickynote__more:hover { color: var(--text); }
 
 .hd-section { display: flex; flex-direction: column; gap: var(--s3); }
 .hd-section__head {
