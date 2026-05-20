@@ -2623,6 +2623,23 @@ select.hd-bankf__input { appearance: auto; }
   margin-left: 4px;
 }
 
+/* Payments table footer — single "N results" link in the brand
+   accent, left-aligned. No running total: payments are tracked
+   per-entry only and rolling sums live elsewhere in reporting. */
+.bk-table--payments thead th { border-top: 0; }
+.bk-table--payments .bk-table__kebab { width: 36px; text-align: right; }
+.bk-table--payments .bk-pill { margin-left: var(--s2); }
+.hd-payments__footer {
+  display: flex;
+  align-items: center;
+  padding: var(--s3) 0 0;
+  font-size: var(--t-sm);
+}
+.hd-payments__results {
+  color: var(--accent);
+  font-weight: 500;
+}
+
 /* Row-action popover. The kebab itself is non-destructive — it
    only toggles this menu. Destructive options live inside as
    explicit choices so a single click on the dots can never
