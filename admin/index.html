@@ -4993,7 +4993,7 @@
               '</button></td>' +
               '<td class="num hd-num muted" data-staff-bookings="' + escapeHtml(s.id) + '">—</td>' +
               '<td class="num hd-num muted" data-staff-conversion="' + escapeHtml(s.id) + '">—</td>' +
-              '<td class="num hd-num">' + escapeHtml(earned) + '</td>' +
+              '<td class="num hd-num" data-staff-commission="' + escapeHtml(s.id) + '">' + escapeHtml(earned) + '</td>' +
               '<td class="muted" data-staff-lastbooking="' + escapeHtml(s.id) + '">—</td>' +
               '<td class="bk-table__kebab">' +
                 '<button type="button" class="bk-kebab" data-staff-edit-id="' + escapeHtml(s.id) + '" aria-label="Edit ' + escapeHtml(s.name || '') + '">⋯</button>' +
@@ -5966,6 +5966,17 @@
         } else {
           lb.innerHTML = '<span class="muted">Never</span>';
         }
+      }
+      // Commission cell is rendered at table-build time from
+      // hotel_staff.lifetime_commission, which doesn't exist on the
+      // row — commission is computed live by the stats endpoint, so
+      // overwrite the cell once stats land.
+      const cm = root.querySelector('[data-staff-commission="' + esc(id) + '"]');
+      if (cm && data.lifetime_commission != null) {
+        cm.textContent = formatHotelMoney(
+          Number(data.lifetime_commission) || 0,
+          data.currency || 'CAD',
+        );
       }
     }
     async function hydrateStaffStats(els) {

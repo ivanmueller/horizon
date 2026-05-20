@@ -2214,18 +2214,18 @@ async function bookingsForPlacement(env, code, period) {
     (cutoff ? `&created_at=gte.${encodeURIComponent(cutoff)}` : "");
   const rows = await supabaseSelect(
     env,
-    `bookings?${filter}&select=id,confirmation_code,commission_ledger(commission_amount,currency)`,
+    `bookings?${filter}&select=id,confirmation_code,amount,currency,hotel:hotels(commission_pct)`,
   );
   let revenue = 0;
   let currency = "CAD";
   for (const b of rows) {
-    const ledger = Array.isArray(b.commission_ledger) ? b.commission_ledger[0] : null;
-    if (ledger) {
-      revenue += Number(ledger.commission_amount) || 0;
-      if (ledger.currency) currency = ledger.currency;
-    }
+    const amount = Number(b.amount) || 0;
+    const pct = b.hotel && b.hotel.commission_pct != null
+      ? Number(b.hotel.commission_pct) : 0;
+    revenue += (amount * pct) / 100;
+    if (b.currency) currency = b.currency;
   }
-  return { bookings: rows.length, revenue, currency };
+  return { bookings: rows.length, revenue: round2(revenue), currency };
 }
 
 async function handleAdminPlacementStats(placementId, request, env) {
@@ -2361,11 +2361,16 @@ async function handleAdminStaffStats(staffId, request, env) {
   // Pull a flat list of this staff's confirmed bookings (recent first
   // so we can slice the top 5 for the lightbox without a second
   // round-trip). At realistic per-employee volumes this is small.
+  // Commission is computed on the fly from amount × hotel.commission_pct
+  // — the old commission_ledger accrual table was dropped in
+  // migration 0017 when automated payouts were retired in favour of
+  // manual e-Transfer / EFT (see 0018). The cross-hotel summary at
+  // line ~1051 follows the same pattern.
   const rows = await supabaseSelect(
     env,
     `bookings?staff_id=eq.${encodeURIComponent(staffId)}` +
       `&status=eq.confirmed` +
-      `&select=id,created_at,date,tour_title,amount,currency,lead_name,status,confirmation_code,commission_ledger(commission_amount,currency)` +
+      `&select=id,created_at,date,tour_title,amount,currency,lead_name,status,confirmation_code,hotel:hotels(commission_pct)` +
       `&order=created_at.desc&limit=500`,
   );
   const bookings = Array.isArray(rows) ? rows : [];
@@ -2375,15 +2380,19 @@ async function handleAdminStaffStats(staffId, request, env) {
     : bookings_total;
   const bookings_month = bookings.filter((b) => b.created_at && b.created_at >= monthStart).length;
   const last_booking_at = bookings.length ? bookings[0].created_at : null;
+  const commissionFor = (b) => {
+    const amount = Number(b.amount) || 0;
+    const pct = b.hotel && b.hotel.commission_pct != null
+      ? Number(b.hotel.commission_pct) : 0;
+    return (amount * pct) / 100;
+  };
   let lifetime_commission = 0;
   let currency = "CAD";
   for (const b of bookings) {
-    const ledger = Array.isArray(b.commission_ledger) ? b.commission_ledger[0] : null;
-    if (ledger) {
-      lifetime_commission += Number(ledger.commission_amount) || 0;
-      if (ledger.currency) currency = ledger.currency;
-    }
+    lifetime_commission += commissionFor(b);
+    if (b.currency) currency = b.currency;
   }
+  lifetime_commission = round2(lifetime_commission);
 
   // Per-staff click count comes from the personal short link
   // (short_links.staff_id = this id). One row at most.
@@ -2401,21 +2410,18 @@ async function handleAdminStaffStats(staffId, request, env) {
     : null;
 
   // Recent 5 — already sorted from the bookings fetch.
-  const recent = bookings.slice(0, 5).map((b) => {
-    const ledger = Array.isArray(b.commission_ledger) ? b.commission_ledger[0] : null;
-    return {
-      id: b.id,
-      confirmation_code: b.confirmation_code,
-      created_at: b.created_at,
-      date: b.date,
-      tour_title: b.tour_title,
-      amount: b.amount,
-      currency: b.currency,
-      lead_name: b.lead_name,
-      status: b.status,
-      commission_amount: ledger ? Number(ledger.commission_amount) || 0 : 0,
-    };
-  });
+  const recent = bookings.slice(0, 5).map((b) => ({
+    id: b.id,
+    confirmation_code: b.confirmation_code,
+    created_at: b.created_at,
+    date: b.date,
+    tour_title: b.tour_title,
+    amount: b.amount,
+    currency: b.currency,
+    lead_name: b.lead_name,
+    status: b.status,
+    commission_amount: round2(commissionFor(b)),
+  }));
 
   return jsonResponse({
     period,
