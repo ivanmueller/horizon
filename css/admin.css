@@ -2216,6 +2216,45 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .hd-main { display: flex; flex-direction: column; gap: var(--s6); min-width: 0; }
 .hd-side { display: flex; flex-direction: column; gap: var(--s8); min-width: 0; }
 
+/* Sticky-notes panel in the right rail. Mirrors the timeline notes
+   as yellow cards so the most recent admin context sits a glance
+   away from the section that produced it. The whole section is
+   hidden via the [hidden] attribute when there are no notes — no
+   header, no empty state — so it appears only when there's
+   something to read. */
+.hd-notespanel { display: flex; flex-direction: column; gap: var(--s3); }
+.hd-notespanel__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+.hd-notespanel__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+.hd-stickynote {
+  padding: 10px 12px;
+  background: #FEF9C3;
+  border: 1px solid #FDE68A;
+  border-radius: 6px;
+}
+.hd-stickynote__text {
+  font-size: var(--t-sm);
+  color: var(--text);
+  line-height: 1.4;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+.hd-stickynote__text strong { font-weight: 600; }
+.hd-stickynote__text em { font-style: italic; }
+.hd-stickynote__by {
+  margin-top: 4px;
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+}
+
 .hd-section { display: flex; flex-direction: column; gap: var(--s3); }
 .hd-section__head {
   display: flex;
