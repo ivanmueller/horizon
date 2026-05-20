@@ -444,13 +444,8 @@
           </button>
         </div>
         <div class="pl-modal__headactions">
-          <div class="pl-modal__menuwrap">
-            <button type="button" class="bk-iconbtn" id="plEditMenuBtn" aria-haspopup="menu" aria-expanded="false" aria-label="Placement actions">⋯</button>
-            <div class="pl-modal__menu" id="plEditMenu" role="menu" hidden>
-              <button type="button" class="pl-modal__menuitem" role="menuitem" data-pl-action="pause">Pause</button>
-              <button type="button" class="pl-modal__menuitem pl-modal__menuitem--danger" role="menuitem" data-pl-action="retire">Retire</button>
-            </div>
-          </div>
+          <button type="button" class="btn btn--sm" id="plEditPauseBtn" hidden>Pause</button>
+          <button type="button" class="btn btn--sm btn--danger" id="plEditRetireBtn" hidden>Retire</button>
           <button type="button" class="modal__close" id="plEditClose" aria-label="Close">&times;</button>
         </div>
       </div>
@@ -2953,7 +2948,6 @@
     }
     function closePlEdit() {
       plEditModal.hidden = true;
-      plEditMenuClose();
     }
 
     // Header strip writer. Reads from the table row's dataset (already
@@ -2962,7 +2956,6 @@
       const headerName   = document.getElementById('plEditHeaderName');
       const headerStatus = document.getElementById('plEditHeaderStatus');
       const headerShort  = document.getElementById('plEditHeaderShortlink');
-      const menuPause    = document.querySelector('#plEditMenu [data-pl-action="pause"]');
       if (headerName)   headerName.textContent = row.dataset.plName || 'Placement';
       if (headerStatus) headerStatus.innerHTML = plStatusPill(row.dataset.plStatus || 'pending');
       // Build short URL from the code (live host short domain).
@@ -2980,15 +2973,17 @@
       }
       // Pause / Resume label flips based on current status. Retire is
       // hidden when already retired; both are hidden in pending state
-      // since there's nothing operational to pause/retire yet.
+      // since there's nothing operational to pause/retire yet. These
+      // are plain inline buttons in the header strip — no popup menu.
       const status = row.dataset.plStatus || 'pending';
-      if (menuPause) {
-        menuPause.textContent = status === 'paused' ? 'Resume' : 'Pause';
-        menuPause.dataset.plAction = status === 'paused' ? 'resume' : 'pause';
-        menuPause.hidden = (status === 'pending' || status === 'retired');
+      const pauseBtn  = document.getElementById('plEditPauseBtn');
+      const retireBtn = document.getElementById('plEditRetireBtn');
+      if (pauseBtn) {
+        pauseBtn.textContent = status === 'paused' ? 'Resume' : 'Pause';
+        pauseBtn.dataset.plAction = status === 'paused' ? 'resume' : 'pause';
+        pauseBtn.hidden = (status === 'pending' || status === 'retired');
       }
-      const menuRetire = document.querySelector('#plEditMenu [data-pl-action="retire"]');
-      if (menuRetire) menuRetire.hidden = (status === 'retired');
+      if (retireBtn) retireBtn.hidden = (status === 'retired');
     }
 
     function plStatusPill(status) {
@@ -3000,64 +2995,28 @@
       return map[status] || '<span class="bk-pill bk-pill--warn">Pending</span>';
     }
 
-    // Header kebab menu — open/close + outside-click dismiss.
-    // Delegates EVERY interaction (kebab toggle, menu item activation,
-    // outside-click dismissal) off document.body so the binding can't
-    // miss the menu elements at load time and so a single source of
-    // truth handles the logic. Previous direct-binding versions kept
-    // failing for the user and a delegated approach removes every
-    // timing / scope variable from the equation.
-    function plEditMenuEl()    { return document.getElementById('plEditMenu'); }
-    function plEditMenuBtnEl() { return document.getElementById('plEditMenuBtn'); }
-    function plEditMenuClose() {
-      const m = plEditMenuEl();
-      const b = plEditMenuBtnEl();
-      if (m && !m.hidden) m.hidden = true;
-      if (b) b.setAttribute('aria-expanded', 'false');
-    }
-    function plEditMenuToggle() {
-      const m = plEditMenuEl();
-      const b = plEditMenuBtnEl();
-      if (!m || !b) return;
-      const willOpen = m.hidden;
-      m.hidden = !willOpen;
-      b.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-    }
-    async function plEditMenuRunAction(action) {
-      plEditMenuClose();
-      if (!_plEditId) return;
-      if (action === 'pause' || action === 'resume') {
+    // Header actions — two inline buttons (Pause/Resume + Retire) in
+    // the lightbox header. No popup menu, no dismissal logic, no
+    // delegation: each button has a direct onclick that does its
+    // thing. updatePlModalHeader controls visibility + label based on
+    // the current placement status.
+    const plEditPauseBtn  = document.getElementById('plEditPauseBtn');
+    const plEditRetireBtn = document.getElementById('plEditRetireBtn');
+    if (plEditPauseBtn) {
+      plEditPauseBtn.onclick = async () => {
+        if (!_plEditId) return;
+        const action = plEditPauseBtn.dataset.plAction;
         await setPlacementStatus(_plEditId, action === 'pause' ? 'paused' : 'active');
-      } else if (action === 'retire') {
+      };
+    }
+    if (plEditRetireBtn) {
+      plEditRetireBtn.onclick = () => {
+        if (!_plEditId) return;
         const name = (document.getElementById('plEditHeaderName') || {}).textContent || 'this placement';
         closePlEdit();
         retirePlacement(_plEditId, name);
-      }
+      };
     }
-    // Single delegated click handler on document handles all three
-    // interactions: kebab toggle, menu item activation, outside-click.
-    document.addEventListener('click', (e) => {
-      const menu = plEditMenuEl();
-      if (!menu) return;
-      // 1. Kebab button toggles the menu.
-      const kebab = e.target.closest('#plEditMenuBtn');
-      if (kebab) { plEditMenuToggle(); return; }
-      // 2. A menu item runs its action and closes the menu.
-      const item = e.target.closest('#plEditMenu [data-pl-action]');
-      if (item) {
-        e.preventDefault();
-        plEditMenuRunAction(item.dataset.plAction);
-        return;
-      }
-      // 3. Anything else — outside the menu — closes it.
-      if (!menu.hidden && !menu.contains(e.target)) {
-        plEditMenuClose();
-      }
-    });
-    document.addEventListener('keydown', (e) => {
-      const m = plEditMenuEl();
-      if (e.key === 'Escape' && m && !m.hidden) plEditMenuClose();
-    });
 
     // Status flip used by the header Pause / Resume action. Reuses
     // the same PATCH endpoint as the form submit but only touches
