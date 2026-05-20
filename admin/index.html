@@ -1147,6 +1147,10 @@
                 <div class="bk-statcard__label">All</div>
                 <div class="bk-statcard__value" data-count="all">—</div>
               </button>
+              <button type="button" class="bk-statcard" data-status="upcoming">
+                <div class="bk-statcard__label">Upcoming</div>
+                <div class="bk-statcard__value" data-count="upcoming">—</div>
+              </button>
               <button type="button" class="bk-statcard" data-status="confirmed">
                 <div class="bk-statcard__label">Confirmed</div>
                 <div class="bk-statcard__value" data-count="confirmed">—</div>
@@ -4088,9 +4092,9 @@
     }
 
     function renderStatcardCounts(els, records) {
-      const counts = { all: records.length, confirmed: 0, refunded: 0, cancelled: 0, pending_refund: 0 };
+      const counts = { all: records.length, upcoming: 0, confirmed: 0, refunded: 0, cancelled: 0, pending_refund: 0 };
       records.forEach(r => {
-        const s = r.status || 'confirmed';
+        const s = deriveBookingDisplayStatus(r);
         if (counts[s] != null) counts[s] += 1;
       });
       els.statcards.querySelectorAll('[data-count]').forEach(node => {
@@ -4102,7 +4106,7 @@
     function renderBookingRows(els) {
       const filtered = bkStatusFilter === 'all'
         ? bkRecords
-        : bkRecords.filter(r => (r.status || 'confirmed') === bkStatusFilter);
+        : bkRecords.filter(r => deriveBookingDisplayStatus(r) === bkStatusFilter);
 
       if (els.checkAll) els.checkAll.checked = false;
 
@@ -4117,14 +4121,15 @@
       }
 
       const rows = filtered.map(r => {
-        const status   = r.status || 'confirmed';
+        const rawStatus     = r.status || 'confirmed';
+        const displayStatus = deriveBookingDisplayStatus(r);
         const amount   = r.amount != null ? Number(r.amount).toFixed(2) : '—';
         const currency = (r.currency || 'CAD').toUpperCase();
         const hotel    = r._hotel || {};
         const desc     = 'HGCT';
         const customer = r.lead_email || r.lead_name || '—';
         const dateStr  = formatHumanDateTime(r.created_at);
-        const refunded = (status === 'refunded' || status === 'pending_refund')
+        const refunded = (rawStatus === 'refunded' || rawStatus === 'pending_refund')
           ? formatHumanDateTime(r.updated_at)
           : '—';
 
@@ -4134,7 +4139,7 @@
             '<td>' +
               '<span class="bk-table__amount">' + (amount === '—' ? '—' : '$' + escapeHtml(amount)) + '</span>' +
               '<span class="bk-table__currency">' + escapeHtml(currency) + '</span>' +
-              renderBkPill(status) +
+              renderBkPill(displayStatus) +
             '</td>' +
             '<td>' + escapeHtml(hotel.name || '—') + '</td>' +
             '<td class="bk-table__desc">' + escapeHtml(desc) + '</td>' +
@@ -4155,11 +4160,37 @@
       const refresh = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>';
       const check   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
       const cross   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+      const clock   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>';
+      if (status === 'upcoming')       return '<span class="bk-pill bk-pill--info">Upcoming ' + clock + '</span>';
       if (status === 'confirmed')      return '<span class="bk-pill bk-pill--ok">Confirmed ' + check + '</span>';
       if (status === 'refunded')       return '<span class="bk-pill bk-pill--neutral">Refunded ' + refresh + '</span>';
       if (status === 'cancelled')      return '<span class="bk-pill bk-pill--neutral">Cancelled ' + cross + '</span>';
       if (status === 'pending_refund') return '<span class="bk-pill bk-pill--warn">Pending refund ' + refresh + '</span>';
       return '<span class="bk-pill bk-pill--neutral">' + escapeHtml(status) + '</span>';
+    }
+
+    // Derive a display status for a booking record. The underlying
+    // booking.status column only carries the lifecycle state from
+    // Bokun (confirmed / refunded / cancelled / pending_refund) — it
+    // has no concept of whether the tour has happened yet. A confirmed
+    // booking whose tour date is still in the future renders as
+    // "Upcoming" so partners can tell at a glance which rows are still
+    // inside the refund window. Once the tour date has passed, the row
+    // graduates to "Confirmed". Refund / cancellation states are
+    // terminal and override the date check.
+    function deriveBookingDisplayStatus(r) {
+      const status = (r && r.status) || 'confirmed';
+      if (status !== 'confirmed') return status;
+      const iso = r && r.date;
+      if (!iso) return 'confirmed';
+      const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
+      const tourDate = m
+        ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+        : new Date(iso);
+      if (isNaN(tourDate.getTime())) return 'confirmed';
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return tourDate >= today ? 'upcoming' : 'confirmed';
     }
 
     /* ── Delegated handlers — survive route re-renders ───── */
@@ -6059,23 +6090,24 @@
       const refPill = (code) => '<span class="hd-pill-mono">' + escapeHtml(code) + '</span>';
 
       // ── Bookings table
-      // status mirrors the raw booking.status values used on the global
-      // /admin/bookings/ page so renderBkPill renders them identically
-      // here. Source codes are the credited tracking_code (employee
-      // code when staff earned the commission, hotel pool code
-      // otherwise).
+      // status / iso mirror the raw booking.status + tour-date pair on
+      // the global /admin/bookings/ page so deriveBookingDisplayStatus
+      // resolves Upcoming vs Confirmed identically across both
+      // surfaces. Source codes are the credited tracking_code
+      // (employee code when staff earned the commission, hotel pool
+      // code otherwise).
       const bookings = [
-        { tour: 'Lake Louise Voyageur Canoe', date: 'Jun 18, 2026', pax: 3, ref: 'X7K2_E_0001', amt: 747.00,  com: 37.35, status: 'confirmed' },
-        { tour: 'Lake Agnes Tea House Hike',  date: 'Jun 22, 2026', pax: 4, ref: 'X7K2_E_0001', amt: 876.00,  com: 43.80, status: 'confirmed' },
-        { tour: 'Banff Town & Gondola Day',   date: 'Jul 02, 2026', pax: 5, ref: 'X7K2_E_0002', amt: 1196.00, com: 59.80, status: 'confirmed' },
-        { tour: 'Lake Louise Voyageur Canoe', date: 'Jun 12, 2026', pax: 2, ref: 'X7K2_H',      amt: 498.00,  com: 24.90, status: 'confirmed' },
-        { tour: 'Lake Agnes Tea House Hike',  date: 'May 02, 2026', pax: 2, ref: 'X7K2_E_0001', amt: 438.00,  com: 0,     status: 'refunded'  },
+        { tour: 'Lake Louise Voyageur Canoe', iso: '2026-06-18', date: 'Jun 18, 2026', pax: 3, ref: 'X7K2_E_0001', amt: 747.00,  com: 37.35, status: 'confirmed' },
+        { tour: 'Lake Agnes Tea House Hike',  iso: '2026-06-22', date: 'Jun 22, 2026', pax: 4, ref: 'X7K2_E_0001', amt: 876.00,  com: 43.80, status: 'confirmed' },
+        { tour: 'Banff Town & Gondola Day',   iso: '2026-07-02', date: 'Jul 02, 2026', pax: 5, ref: 'X7K2_E_0002', amt: 1196.00, com: 59.80, status: 'confirmed' },
+        { tour: 'Lake Louise Voyageur Canoe', iso: '2026-05-12', date: 'May 12, 2026', pax: 2, ref: 'X7K2_H',      amt: 498.00,  com: 24.90, status: 'confirmed' },
+        { tour: 'Lake Agnes Tea House Hike',  iso: '2026-05-02', date: 'May 02, 2026', pax: 2, ref: 'X7K2_E_0001', amt: 438.00,  com: 0,     status: 'refunded'  },
       ];
       const bookingsBody = els.container.querySelector('#hdBookingsBody');
       if (bookingsBody) {
         const rows = bookings.map((b) => {
           const isRefunded  = b.status === 'refunded' || b.status === 'pending_refund';
-          const statusPill  = renderBkPill(b.status);
+          const statusPill  = renderBkPill(deriveBookingDisplayStatus({ status: b.status, date: b.iso }));
           const amountCell  = '<td class="bk-row__amount' + (isRefunded ? ' bk-row__amount--muted' : '') + '">' +
                                 '<span class="mono">' + escapeHtml(fm(b.amt)) + '</span>' +
                                 ' ' + statusPill +
@@ -6317,6 +6349,7 @@
 
           const rows = top.map((r) => {
             const status = r.status || 'confirmed';
+            const displayStatus = deriveBookingDisplayStatus(r);
             const isRefunded  = status === 'refunded' || status === 'pending_refund';
 
             const amount = r.amount != null ? Number(r.amount) : 0;
@@ -6333,9 +6366,11 @@
             const dateStr = shortDate(r.date || r.created_at);
 
             // Status pill is rendered with the same helper the global
-            // /admin/bookings/ table uses so both surfaces stay in sync
-            // on the raw booking.status value.
-            const statusPill = renderBkPill(status);
+            // /admin/bookings/ table uses so both surfaces stay in sync.
+            // "Upcoming" is derived from booking.status === 'confirmed'
+            // plus a future tour date — graduates to "Confirmed" once
+            // the tour date has passed.
+            const statusPill = renderBkPill(displayStatus);
             const amountCell = '<td class="bk-row__amount' +
               (isRefunded ? ' bk-row__amount--muted' : '') + '">' +
                 '<span class="mono">' + escapeHtml(fm(amount)) + '</span>' +
