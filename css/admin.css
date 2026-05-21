@@ -1105,7 +1105,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: var(--space-sm);
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-xl);
 }
 .bk-statcard {
   background: var(--bg-surface);
@@ -1187,7 +1187,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
 .bk-toolbar {
   display: flex; flex-wrap: wrap;
   align-items: center; gap: var(--space-sm);
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-xl);
 }
 .bk-filters { display: flex; flex-wrap: wrap; gap: var(--space-sm); flex: 1; }
 .bk-toolbar__actions { display: flex; gap: var(--space-sm); margin-left: auto; }
