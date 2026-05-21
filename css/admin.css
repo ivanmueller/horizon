@@ -1105,7 +1105,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: var(--space-sm);
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-lg);   /* +24px gap = 40px below, matches kit */
 }
 .bk-statcard {
   background: var(--bg-surface);
@@ -1187,7 +1187,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
 .bk-toolbar {
   display: flex; flex-wrap: wrap;
   align-items: center; gap: var(--space-sm);
-  margin-bottom: var(--space-xl);
+  margin-bottom: 14px;   /* +24px gap = 38px below, matches kit */
 }
 .bk-filters { display: flex; flex-wrap: wrap; gap: var(--space-sm); flex: 1; }
 .bk-toolbar__actions { display: flex; gap: var(--space-sm); margin-left: auto; }
@@ -4116,12 +4116,14 @@ select.hd-bankf__input { appearance: auto; }
 .app__primary:hover { background: var(--action-primary-hover); }
 
 /* ── Overview (Home) — KPI cards, leaderboard, activity feed ── */
-/* Page wrapper: uniform vertical rhythm between the head, KPI/filter row,
-   and the table/split (matches the kit's flex-column .page with a 24px
-   gap). Children's own bottom margins are zeroed so the gap is the single
-   source of section spacing — preventing per-element drift. */
+/* Page wrapper — mirrors the kit's flex-column .page (gap 24px). The
+   page head carries no extra margin (the gap spaces it), but section
+   rows below it keep their own margin-bottom which ADDS to the gap, just
+   like the kit (statcards/toolbar sit further from the table than the
+   head sits from them). Only the head margin is zeroed here. */
 .ov-page { display: flex; flex-direction: column; gap: var(--space-xl); }
-.ov-page > * { margin-bottom: 0; }
+.ov-page .page-head,
+.ov-page .bk-page__head { margin-bottom: 0; }
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -4226,7 +4228,7 @@ select.hd-bankf__input { appearance: auto; }
 .tbl tbody tr.is-active > td { background: var(--bg-brand-subtle); }
 
 /* ── Filter chip group (key/value) — Hotels list, etc. ───────── */
-.filters { display: flex; gap: var(--space-sm); flex-wrap: wrap; align-items: center; margin-bottom: var(--space-xl); }
+.filters { display: flex; gap: var(--space-sm); flex-wrap: wrap; align-items: center; }
 .filters__divider { width: 1px; height: 24px; background: var(--border-default); margin: 0 var(--space-xs); }
 .filters__more { margin-left: auto; }
 .chip {
