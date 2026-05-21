@@ -669,15 +669,18 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 
 /* ── Inline alerts ────────────────────────────────────────────── */
+/* Block message (admin alerts are text, not icon+text spans). Carries
+   its own bottom spacing for now; css_new's flex/marginless alert is the
+   flip-time target once markup is restructured. */
 .alert {
-  padding: var(--s2) var(--s4);
-  border-radius: var(--r-md);
-  font-size: var(--t-sm);
-  margin-bottom: var(--s3);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  font-size: var(--type-body-size);
+  margin-bottom: var(--space-md);
   border: 1px solid transparent;
 }
-.alert--ok   { background: var(--ok-bg);   color: var(--ok-fg);   border-color: var(--ok-border); }
-.alert--bad  { background: var(--bad-bg);  color: var(--bad-fg);  border-color: var(--bad-border); }
+.alert--ok   { background: var(--feedback-success-bg); color: var(--feedback-success-text); border-color: var(--feedback-success-border); }
+.alert--bad  { background: var(--feedback-danger-bg);  color: var(--feedback-danger-text);  border-color: var(--feedback-danger-border); }
 .alert[hidden] { display: none; }
 
 /* ── Pills (period selector etc.) ─────────────────────────────── */
