@@ -4116,10 +4116,12 @@ select.hd-bankf__input { appearance: auto; }
 .app__primary:hover { background: var(--action-primary-hover); }
 
 /* ── Overview (Home) — KPI cards, leaderboard, activity feed ── */
-/* Page wrapper: uniform vertical rhythm between the head, KPI row, and
-   the split (matches the kit's flex-column page with a 24px gap). */
+/* Page wrapper: uniform vertical rhythm between the head, KPI/filter row,
+   and the table/split (matches the kit's flex-column .page with a 24px
+   gap). Children's own bottom margins are zeroed so the gap is the single
+   source of section spacing — preventing per-element drift. */
 .ov-page { display: flex; flex-direction: column; gap: var(--space-xl); }
-.ov-page .page-head { margin-bottom: 0; }
+.ov-page > * { margin-bottom: 0; }
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
