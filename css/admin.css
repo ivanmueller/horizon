@@ -1637,7 +1637,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 /* No per-tile border — the wash provides the only visual seam.
    Each tile keeps its own white fill + rounded corners so the
-   8px wash reads as the gap between tiles. */
+   wash reads as the gap between tiles. */
 .hm-widget {
   background: var(--bg-surface);
   border-radius: var(--radius-lg);
