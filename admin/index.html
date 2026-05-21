@@ -1228,21 +1228,21 @@
         return {
           html: `
             <header class="bk-page__head">
-              <h1 class="bk-page__title">Bookings</h1>
+              <div>
+                <h1 class="bk-page__title">Bookings</h1>
+                <p class="bk-page__sub">All bookings routed through Horizon Connect across the partner network.</p>
+              </div>
               <div class="bk-page__actions">
-                <button type="button" class="btn btn--primary" id="bkCreate">+ Create booking</button>
                 <button type="button" class="btn" id="bkAnalyze">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
                   Analyze
                 </button>
+                <button type="button" class="btn btn--primary" id="bkCreate">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Create booking
+                </button>
               </div>
             </header>
-
-            <nav class="bk-tabs" aria-label="Bookings sub-navigation">
-              <button type="button" class="bk-tabs__btn bk-tabs__btn--active" data-tab="bookings">Bookings</button>
-              <button type="button" class="bk-tabs__btn" data-tab="payouts">Payouts</button>
-              <button type="button" class="bk-tabs__btn" data-tab="all">All activity</button>
-            </nav>
 
             <div class="alert alert--bad" id="bkError" hidden></div>
 
@@ -1278,8 +1278,8 @@
                 <button type="button" class="bk-chip" id="bkDateChip" data-chip="date"><span class="bk-chip__plus">+</span> <span class="bk-chip__text">Date and time</span></button>
                 <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Amount</button>
                 <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Currency</button>
-                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Status</button>
                 <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Hotel</button>
+                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Source</button>
                 <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> More filters</button>
               </div>
               <div class="bk-toolbar__actions">
@@ -1302,19 +1302,30 @@
                       <th class="bk-table__check"><input type="checkbox" id="bkCheckAll" aria-label="Select all"></th>
                       <th>Amount</th>
                       <th>Hotel</th>
-                      <th>Tour ID</th>
-                      <th>Date</th>
-                      <th>Refunded date</th>
-                      <th>Decline reason</th>
+                      <th>Tour</th>
+                      <th class="num">Pax</th>
+                      <th>Booked</th>
+                      <th>Source</th>
+                      <th class="num">Commission</th>
                       <th class="bk-table__kebab"></th>
                     </tr>
                   </thead>
                   <tbody id="bkBody">
-                    <tr><td colspan="8" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>
+                    <tr><td colspan="9" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>
                   </tbody>
                 </table>
               </div>
-              <div class="bk-table__footer" id="bkFooter">— items</div>
+              <div class="bk-table__footer">
+                <span id="bkFooter">— bookings</span>
+                <div class="bk-table__pag">
+                  <button type="button" class="bk-iconbtn bk-iconbtn--icon" aria-label="Previous page">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                  </button>
+                  <button type="button" class="bk-iconbtn bk-iconbtn--icon" aria-label="Next page">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                  </button>
+                </div>
+              </div>
             </div>
           `,
           mount: mountBookings,
@@ -3741,7 +3752,6 @@
       const els = {
         error:      container.querySelector('#bkError'),
         statcards:  container.querySelector('#bkStatcards'),
-        tabs:       container.querySelectorAll('.bk-tabs__btn'),
         body:       container.querySelector('#bkBody'),
         footer:     container.querySelector('#bkFooter'),
         checkAll:   container.querySelector('#bkCheckAll'),
@@ -3769,12 +3779,17 @@
         renderBookingRows(els);
       });
 
-      // Sub-tabs: Bookings / Payouts / All activity.
-      // Payouts + All activity are shells until those surfaces ship.
-      els.tabs.forEach(btn => {
-        btn.addEventListener('click', () => {
-          els.tabs.forEach(b => b.classList.toggle('bk-tabs__btn--active', b === btn));
-        });
+      // Row click → toggle the attribution-funnel detail row beneath it.
+      // Clicks on the checkbox or kebab are excluded so they keep working.
+      els.body.addEventListener('click', (e) => {
+        if (e.target.closest('.bk-table__check, .bk-table__kebab')) return;
+        const row = e.target.closest('.bk-row--expandable');
+        if (!row || !els.body.contains(row)) return;
+        const funnel = els.body.querySelector('#bkFunnel-' + row.dataset.bkFunnel);
+        if (!funnel) return;
+        const open = funnel.hidden;
+        funnel.hidden = !open;
+        row.classList.toggle('is-open', open);
       });
 
       // Most filter chips, Export, Edit columns, Create, Analyze are
@@ -4088,7 +4103,7 @@
       const summaryTo   = r && r.to   ? r.to   : new Date(Date.now() + 30 * 365 * 86400000).toISOString();
 
       clearBkError(els);
-      els.body.innerHTML = '<tr><td colspan="8" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>';
+      els.body.innerHTML = '<tr><td colspan="9" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>';
       els.footer.textContent = '— items';
 
       fetch(BOKUN_API_BASE + '/api/admin/summary' +
@@ -4152,7 +4167,7 @@
           if (err && (err.message === 'unauthorized' || err.message === 'forbidden')) return;
           console.error('admin bookings fetch failed', err);
           showBkError(els, 'Could not load bookings: ' + (err && err.message || 'unknown error'));
-          els.body.innerHTML = '<tr><td colspan="8" class="bk-empty"><div class="bk-empty__title">Could not load bookings</div><p class="bk-empty__body">Try again in a moment.</p></td></tr>';
+          els.body.innerHTML = '<tr><td colspan="9" class="bk-empty"><div class="bk-empty__title">Could not load bookings</div><p class="bk-empty__body">Try again in a moment.</p></td></tr>';
         });
     }
 
@@ -4178,58 +4193,148 @@
 
       if (!filtered.length) {
         els.body.innerHTML =
-          '<tr><td colspan="8" class="bk-empty">' +
+          '<tr><td colspan="9" class="bk-empty">' +
             '<div class="bk-empty__title">No bookings in this period</div>' +
             '<p class="bk-empty__body">Once partners start sending traffic, confirmed bookings will appear here.</p>' +
           '</td></tr>';
-        els.footer.textContent = '0 items';
+        els.footer.textContent = '0 of ' + bkRecords.length + ' bookings';
         return;
       }
 
-      const rows = filtered.map(r => {
+      const rows = filtered.map((r, idx) => {
         const rawStatus     = r.status || 'confirmed';
         const displayStatus = deriveBookingDisplayStatus(r);
-        const amount   = r.amount != null ? Number(r.amount).toFixed(2) : '—';
-        const currency = (r.currency || 'CAD').toUpperCase();
-        const hotel    = r._hotel || {};
-        const desc     = 'HGCT';
-        const dateStr  = formatHumanDateTime(r.created_at);
-        const refunded = (rawStatus === 'refunded' || rawStatus === 'pending_refund')
-          ? formatHumanDateTime(r.updated_at)
-          : '—';
+        const refunded      = rawStatus === 'refunded' || rawStatus === 'pending_refund';
+        const hotel         = r._hotel || {};
+        const commissionPct = Number(hotel.commission_pct) || 0;
+        const amountNum     = r.amount != null ? Number(r.amount) : null;
+        const commissionNum = amountNum != null ? amountNum * commissionPct / 100 : null;
+        const tour          = r.tour_title || r.tour_id || '—';
+        const pax           = (r.adults || 0) + (r.youth || 0) + (r.infants || 0);
+        const booked        = r.created_at ? formatBkDate(r.created_at) : '—';
+        const tps           = Array.isArray(r.touchpoints) ? r.touchpoints : [];
+        const source        = tps.length ? bkStreamLabel(bkCreditedTouch(r, tps)) : '—';
 
-        return (
-          '<tr>' +
+        const amountCell =
+          '<td class="bk-row__amount' + (refunded ? ' bk-row__amount--muted' : '') + '">' +
+            '<span class="mono">' + (amountNum != null ? escapeHtml(formatBkMoney(amountNum)) : '—') + '</span>' +
+            renderBkPill(displayStatus) +
+          '</td>';
+        const commissionCell = refunded
+          ? '<td class="bk-row__commission bk-row__commission--muted">Refunded</td>'
+          : '<td class="bk-row__commission bk-row__commission--pos">' +
+              (commissionNum != null ? '+' + escapeHtml(formatBkMoney(commissionNum)) : '—') +
+            '</td>';
+
+        const expandable = tps.length > 0;
+        const main =
+          '<tr' + (expandable ? ' class="bk-row--expandable" data-bk-funnel="' + idx + '"' : '') + '>' +
             '<td class="bk-table__check"><input type="checkbox" data-bk-row="' + escapeHtml(r.id) + '" aria-label="Select booking"></td>' +
-            '<td>' +
-              '<span class="bk-table__amount">' + (amount === '—' ? '—' : '$' + escapeHtml(amount)) + '</span>' +
-              '<span class="bk-table__currency">' + escapeHtml(currency) + '</span>' +
-              renderBkPill(displayStatus) +
-            '</td>' +
+            amountCell +
             '<td>' + escapeHtml(hotel.name || '—') + '</td>' +
-            '<td class="bk-table__desc">' + escapeHtml(desc) + '</td>' +
-            '<td>' + escapeHtml(dateStr) + '</td>' +
-            '<td class="bk-table__muted">' + escapeHtml(refunded) + '</td>' +
-            '<td class="bk-table__muted">—</td>' +
+            '<td>' + escapeHtml(tour) + '</td>' +
+            '<td class="num">' + pax + '</td>' +
+            '<td class="bk-table__muted">' + escapeHtml(booked) + '</td>' +
+            '<td>' + escapeHtml(source) + '</td>' +
+            commissionCell +
             '<td class="bk-table__kebab"><button type="button" class="bk-kebab" aria-label="Row actions">⋯</button></td>' +
-          '</tr>'
-        );
+          '</tr>';
+        const funnel = expandable
+          ? '<tr class="bk-funnel-row" id="bkFunnel-' + idx + '" hidden><td colspan="9">' + bkFunnelDetail(r, tps) + '</td></tr>'
+          : '';
+        return main + funnel;
       }).join('');
 
       els.body.innerHTML = rows;
-      els.footer.textContent = filtered.length + (filtered.length === 1 ? ' item' : ' items');
+      els.footer.textContent = filtered.length + ' of ' + bkRecords.length +
+        ' booking' + (bkRecords.length === 1 ? '' : 's');
+    }
+
+    // CA$-prefixed money, two decimals — the bookings table format.
+    function formatBkMoney(n) { return 'CA$ ' + (Math.round((n || 0) * 100) / 100).toFixed(2); }
+
+    // "May 18, 2026" — booking-created date for the Booked column.
+    function formatBkDate(iso) {
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return String(iso || '—');
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function formatBkLag(ms) {
+      if (ms == null || ms < 0) return '—';
+      const mins = Math.round(ms / 60000);
+      if (mins < 60) return mins + ' min';
+      const hrs = Math.round(mins / 60);
+      if (hrs < 48) return hrs + ' hr';
+      return Math.round(hrs / 24) + ' days';
+    }
+
+    // Which touchpoint earned the commission credit (mirrors the
+    // partner dashboard: explicit is_credited flag → credited_position
+    // → last touch as a fallback).
+    function bkCreditedTouch(r, tps) {
+      for (let i = 0; i < tps.length; i++) if (tps[i].is_credited) return tps[i];
+      if (r.credited_position != null) {
+        for (let j = 0; j < tps.length; j++) if (tps[j].position === r.credited_position) return tps[j];
+      }
+      return tps.length ? tps[tps.length - 1] : null;
+    }
+
+    // Human label for an attribution stream.
+    function bkStreamLabel(t) {
+      if (!t) return '—';
+      if (t.stream_type === 'employee') {
+        const nm = t.touch_staff && t.touch_staff.name;
+        return nm ? ('Employee · ' + nm) : 'Employee';
+      }
+      if (t.stream_type === 'placement')  return 'Placement';
+      if (t.stream_type === 'hotel-slug') return 'Hotel card';
+      if (t.stream_type === 'hotel')      return 'Hotel link';
+      return 'Direct';
+    }
+
+    // Expanded attribution-funnel detail row (touch list + metadata).
+    function bkFunnelDetail(r, tps) {
+      const firstTs  = tps[0] && tps[0].touched_at ? new Date(tps[0].touched_at).getTime() : null;
+      const bookedTs = r.created_at ? new Date(r.created_at).getTime() : null;
+      const lag = (firstTs && bookedTs) ? formatBkLag(bookedTs - firstTs) : '—';
+      const steps = tps.map((t, i) => {
+        const when = t.touched_at ? formatBkDate(t.touched_at) : '—';
+        return '<li class="bk-funnel__step' + (t.is_credited ? ' bk-funnel__step--credited' : '') + '">' +
+          '<span class="bk-funnel__n">' + (i + 1) + '</span>' +
+          '<span class="bk-funnel__label">' + escapeHtml(bkStreamLabel(t)) + '</span>' +
+          '<span class="bk-funnel__code">' + escapeHtml(t.code || '—') + '</span>' +
+          '<span class="bk-funnel__when">' + escapeHtml(when) +
+            (t.is_credited ? '<span class="bk-funnel__credited">Credited</span>' : '') +
+          '</span>' +
+        '</li>';
+      }).join('');
+      const hotel = r._hotel || {};
+      const meta =
+        '<div class="bk-funnel__meta">' +
+          metaRow('Booking ID', '<span class="mono">' + escapeHtml(r.confirmation_code || r.id || '—') + '</span>') +
+          metaRow('Hotel', escapeHtml(hotel.name || '—')) +
+          metaRow('Tour date', escapeHtml(r.date ? formatBkDate(r.date) : '—')) +
+          metaRow('First touch', escapeHtml(r.first_touch_code || (tps[0] && tps[0].code) || '—')) +
+          metaRow('Time to book', escapeHtml(lag)) +
+          metaRow('Attribution policy', escapeHtml(r.attribution_policy_used || '—')) +
+          metaRow('Touches', String(tps.length)) +
+        '</div>';
+      return '<div class="bk-funnel">' +
+        '<div class="bk-funnel__col"><h4>Attribution funnel</h4><ol class="bk-funnel__steps">' + steps + '</ol></div>' +
+        '<div class="bk-funnel__col"><h4>Booking metadata</h4>' + meta + '</div>' +
+      '</div>';
+      function metaRow(k, v) {
+        return '<div class="bk-funnel__metarow"><span>' + k + '</span><span>' + v + '</span></div>';
+      }
     }
 
     function renderBkPill(status) {
-      const refresh = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>';
-      const check   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
-      const cross   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-      const clock   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>';
-      if (status === 'upcoming')       return '<span class="bk-pill bk-pill--info">Upcoming ' + clock + '</span>';
-      if (status === 'confirmed')      return '<span class="bk-pill bk-pill--ok">Confirmed ' + check + '</span>';
-      if (status === 'refunded')       return '<span class="bk-pill bk-pill--neutral">Refunded ' + refresh + '</span>';
-      if (status === 'cancelled')      return '<span class="bk-pill bk-pill--neutral">Cancelled ' + cross + '</span>';
-      if (status === 'pending_refund') return '<span class="bk-pill bk-pill--warn">Pending refund ' + refresh + '</span>';
+      if (status === 'upcoming')       return '<span class="bk-pill bk-pill--info">Upcoming</span>';
+      if (status === 'confirmed')      return '<span class="bk-pill bk-pill--ok">Confirmed</span>';
+      if (status === 'refunded')       return '<span class="bk-pill bk-pill--neutral">Refunded</span>';
+      if (status === 'cancelled')      return '<span class="bk-pill bk-pill--neutral">Cancelled</span>';
+      if (status === 'pending_refund') return '<span class="bk-pill bk-pill--warn">Pending refund</span>';
       return '<span class="bk-pill bk-pill--neutral">' + escapeHtml(status) + '</span>';
     }
 
