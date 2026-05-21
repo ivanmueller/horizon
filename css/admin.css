@@ -1455,17 +1455,17 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
    chips + grid of six metric widgets).
    ─────────────────────────────────────────────────────────────── */
 
-.hm-section { margin-bottom: 40px; }
+.hm-section { margin-bottom: var(--space-2xl); }
 .hm-section__head {
-  border-bottom: 1px solid #ecf1f6;
-  padding-bottom: 14px;
-  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: var(--space-md);
+  margin-bottom: var(--space-lg);
 }
 .hm-section__title {
   font-family: var(--font-display);
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1a2c44;
+  font-size: var(--type-heading-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
   margin: 0;
   letter-spacing: -0.01em;
 }
@@ -1474,15 +1474,15 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .hm-today {
   display: grid;
   grid-template-columns: 1fr 320px;
-  gap: 48px;
+  gap: var(--space-3xl);
   align-items: start;
 }
 .hm-today__main { min-width: 0; }
 
 .hm-today__kpis {
   display: flex;
-  gap: 48px;
-  margin-bottom: 16px;
+  gap: var(--space-3xl);
+  margin-bottom: var(--space-lg);
 }
 .hm-kpi {
   background: none; border: 0; padding: 0;
@@ -1490,42 +1490,42 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   text-align: left;
   cursor: pointer;
   display: flex; flex-direction: column;
-  gap: 4px;
-  color: #1a2c44;
+  gap: var(--space-xs);
+  color: var(--text-primary);
 }
 .hm-kpi__label {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: #35455a;
+  display: inline-flex; align-items: center; gap: var(--space-xs);
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-body);
 }
 .hm-kpi__chev {
   width: 12px; height: 12px;
-  color: #50617a;
+  color: var(--text-secondary);
 }
 .hm-kpi__value {
   font-family: var(--font-display);
-  font-size: 1.625rem;
-  font-weight: 700;
-  color: #1a2c44;
+  font-size: var(--type-heading-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
   letter-spacing: -0.01em;
   font-feature-settings: 'tnum' 1;
 }
 .hm-kpi__time {
-  font-size: 0.75rem;
-  color: #50617a;
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
 }
 
 .hm-chart {
   position: relative;
-  margin-top: 8px;
+  margin-top: var(--space-sm);
 }
 .hm-chart__note {
   position: absolute;
   top: -22px;
   right: 0;
-  font-size: 0.75rem;
-  color: #50617a;
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
 }
 .hm-chart__svg {
   display: block;
@@ -1534,144 +1534,144 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 .hm-chart__axis {
   display: flex; justify-content: space-between;
-  font-size: 0.75rem;
-  color: #50617a;
-  margin-top: 4px;
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+  margin-top: var(--space-xs);
 }
 
 /* ── Today right side panel — balance + payouts ───────────────── */
 .hm-today__side {
-  padding-left: 32px;
-  border-left: 1px solid #ecf1f6;
+  padding-left: var(--space-2xl);
+  border-left: 1px solid var(--border-subtle);
 }
 .hm-side__row {
   display: flex; align-items: flex-start; justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-lg);
 }
-.hm-side__col { display: flex; flex-direction: column; gap: 4px; }
+.hm-side__col { display: flex; flex-direction: column; gap: var(--space-xs); }
 .hm-side__label {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: #35455a;
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-body);
 }
 .hm-side__value {
   font-family: var(--font-display);
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1a2c44;
+  font-size: var(--type-heading-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
   font-feature-settings: 'tnum' 1;
 }
-.hm-side__value--muted { color: #50617a; }
+.hm-side__value--muted { color: var(--text-secondary); }
 .hm-side__hint {
-  font-size: 0.75rem;
-  color: #50617a;
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
 }
 .hm-side__link {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--accent);
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  color: var(--action-primary-default);
   text-decoration: none;
 }
 .hm-side__link:hover { text-decoration: underline; }
 .hm-side__divider {
-  border: 0; border-top: 1px solid #ecf1f6;
-  margin: 20px 0;
+  border: 0; border-top: 1px solid var(--border-subtle);
+  margin: var(--space-lg) 0;
 }
 
 /* ── Filter row above the widgets grid ────────────────────────── */
 .hm-toolbar {
   display: flex; align-items: center; justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
 }
-.hm-filters { display: flex; flex-wrap: wrap; gap: 8px; }
-.hm-toolbar__actions { display: flex; gap: 8px; }
+.hm-filters { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+.hm-toolbar__actions { display: flex; gap: var(--space-sm); }
 
 .hm-filter {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: var(--bg);
-  border: 1px dashed #d4dee9;
-  border-radius: var(--r-full);
-  padding: 5px 12px;
+  display: inline-flex; align-items: center; gap: var(--space-xs);
+  background: var(--bg-surface);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-pill);
+  padding: var(--space-xs) var(--space-md);
   font: inherit;
-  font-size: var(--t-sm);
-  font-weight: 500;
-  color: #1a2c44;
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
   cursor: pointer;
-  transition: border-color var(--t-fast), background var(--t-fast);
+  /* Transition handled by the global interactive rule (rule 22). */
 }
 .hm-filter:hover {
-  border-color: var(--text-muted);
+  border-color: var(--border-strong);
   background: var(--bg-subtle);
 }
-.hm-filter__label { color: #1a2c44; font-weight: 500; }
-.hm-filter__sep   { color: #d4dee9; }
-.hm-filter__value { color: var(--accent); font-weight: 600; }
+.hm-filter__label { color: var(--text-primary); font-weight: var(--weight-medium); }
+.hm-filter__sep   { color: var(--text-tertiary); }
+.hm-filter__value { color: var(--action-primary-default); font-weight: var(--weight-medium); }
 .hm-filter__chev,
 .hm-filter__close {
   width: 12px; height: 12px;
-  color: #50617a;
+  color: var(--text-secondary);
 }
 .hm-filter--removable .hm-filter__close {
   width: 14px; height: 14px;
-  color: #50617a;
+  color: var(--text-secondary);
 }
-.hm-filter--removable:hover .hm-filter__close { color: #1a2c44; }
+.hm-filter--removable:hover .hm-filter__close { color: var(--text-primary); }
 
 /* ── Widgets grid ─────────────────────────────────────────────── */
-/* Six tiles sitting on a #f4f7fa wash. Auto-fit grid: tiles aim
+/* Six tiles sitting on a --bg-subtle wash. Auto-fit grid: tiles aim
    for 416×404 max but shrink to a 280px floor before wrapping to
    the next row, so the layout reorganises itself as the viewport
    narrows. min(100%, 280px) keeps it from overflowing on very
-   narrow viewports. The wash stays 8px thick around the tiles
-   regardless of width. */
+   narrow viewports. The wash (--space-sm gap + padding) stays an even
+   thickness around the tiles regardless of width. */
 .hm-widgets {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 416px));
   grid-auto-rows: 404px;
-  gap: 8px;
-  background: #f4f7fa;
-  border-radius: 12px;
-  padding: 8px;
+  gap: var(--space-sm);
+  background: var(--bg-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-sm);
   width: 100%;
 }
 /* No per-tile border — the wash provides the only visual seam.
    Each tile keeps its own white fill + rounded corners so the
-   8px wash reads as the gap between tiles. */
+   wash reads as the gap between tiles. */
 .hm-widget {
-  background: var(--bg);
-  border-radius: 12px;
-  padding: 20px 22px 16px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg) var(--space-xl) var(--space-lg);
   display: flex; flex-direction: column;
   min-width: 0;
 }
 .hm-widget__head {
-  display: flex; align-items: center; gap: 4px;
-  margin-bottom: 2px;
+  display: flex; align-items: center; gap: var(--space-xs);
+  margin-bottom: var(--space-xs);
 }
 .hm-widget__title {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: #1a2c44;
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
 }
 .hm-widget__info {
   width: 13px; height: 13px;
-  color: #50617a;
+  color: var(--text-secondary);
   flex-shrink: 0;
 }
 .hm-widget__value {
   font-family: var(--font-display);
-  font-size: 1.625rem;
-  font-weight: 700;
-  color: #1a2c44;
+  font-size: var(--type-heading-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
   letter-spacing: -0.01em;
   line-height: 1.15;
   font-feature-settings: 'tnum' 1;
 }
 .hm-widget__sub {
-  font-size: 0.75rem;
-  color: #50617a;
-  margin-bottom: 14px;
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-md);
 }
 .hm-widget__chart {
   position: relative;
@@ -1686,28 +1686,28 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   position: absolute; top: 0; right: 0;
   display: flex; flex-direction: column; justify-content: space-between;
   height: 100%;
-  font-size: 0.6875rem;
-  color: #50617a;
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
   text-align: right;
   pointer-events: none;
 }
 .hm-widget__xaxis {
   display: flex; justify-content: space-between;
-  font-size: 0.6875rem;
-  color: #50617a;
-  margin-top: 4px;
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+  margin-top: var(--space-xs);
 }
 .hm-widget__foot {
   display: flex; align-items: center; justify-content: space-between;
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid #ecf1f6;
-  font-size: 0.75rem;
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border-subtle);
+  font-size: var(--type-caption-size);
 }
-.hm-widget__updated { color: #50617a; }
+.hm-widget__updated { color: var(--text-secondary); }
 .hm-widget__more {
-  color: var(--accent);
-  font-weight: 500;
+  color: var(--action-primary-default);
+  font-weight: var(--weight-medium);
   text-decoration: none;
 }
 .hm-widget__more:hover { text-decoration: underline; }
