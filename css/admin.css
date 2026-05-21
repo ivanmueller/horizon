@@ -1161,33 +1161,30 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
 .bk-statcard {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-lg);
+  padding: 14px var(--space-lg);
   text-align: left;
   cursor: pointer;
-  font: inherit;
   color: inherit;
-  /* Transition handled by the global interactive rule (rule 22). */
+  display: flex; flex-direction: column; gap: 6px;
+  position: relative;
 }
+.bk-statcard:hover { border-color: var(--border-strong); }
 .bk-statcard:hover { border-color: var(--border-strong); }
 .bk-statcard--active {
   border-color: var(--action-primary-default);
   box-shadow: inset 0 0 0 1px var(--action-primary-default);
 }
 .bk-statcard__label {
-  font-size: var(--type-label-size);
-  color: var(--text-primary);
-  font-weight: var(--weight-medium);
-  margin-bottom: var(--space-xs);
+  font: var(--weight-medium) var(--type-caption-size)/1 var(--font-sans);
+  color: var(--text-secondary);
 }
-.bk-statcard--active .bk-statcard__label { color: var(--action-primary-default); }
+.bk-statcard--active .bk-statcard__label { color: var(--text-brand); }
 .bk-statcard__value {
-  font-family: var(--font-display);
-  font-size: var(--type-subheading-size);
-  font-weight: var(--weight-medium);
+  font: var(--weight-medium) 22px/1.1 var(--font-sans);
+  letter-spacing: -0.02em;
   color: var(--text-primary);
-  font-feature-settings: 'tnum' 1;
-  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Label-only variant — used by Hotels where each card is just a
@@ -1266,32 +1263,25 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
 .bk-toolbar__actions { display: flex; gap: var(--space-sm); margin-left: auto; }
 
 .bk-chip {
-  display: inline-flex; align-items: center; gap: var(--space-xs);
+  display: inline-flex; align-items: center; gap: 6px;
   background: var(--bg-surface);
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--radius-pill);
-  padding: var(--space-xs) var(--space-md) var(--space-xs) var(--space-sm);
-  font: inherit;
-  font-size: var(--type-label-size);
-  color: var(--text-primary);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 5px 12px;
+  font: var(--weight-regular) 13px/1.2 var(--font-sans);
+  color: var(--text-secondary);
   cursor: pointer;
-  /* Transition handled by the global interactive rule (rule 22). */
 }
 .bk-chip:hover {
   color: var(--text-primary);
-  border-color: var(--text-secondary);
+  border-color: var(--border-strong);
   background: var(--bg-subtle);
 }
 .bk-chip__plus {
-  width: 14px; height: 14px;
-  display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 50%;
-  border: 1px solid var(--border-default);
-  color: var(--text-secondary);
-  font-size: var(--type-overline-size);
-  line-height: 1;
+  font: var(--weight-medium) 14px/1 var(--font-sans);
+  color: var(--text-tertiary);
 }
-.bk-chip:hover .bk-chip__plus { border-color: var(--border-strong); color: var(--text-primary); }
+.bk-chip:hover .bk-chip__plus { color: var(--text-primary); }
 
 .bk-iconbtn {
   display: inline-flex; align-items: center; gap: var(--space-xs);
@@ -1314,38 +1304,38 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
    match Stripe's transactions list. Row separators use --border-subtle;
    the header rule uses --border-default. */
 .bk-table-wrap {
-  background: transparent;
-  border: 0;
-  border-radius: 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
 }
 .bk-table-scroll { overflow-x: auto; }
 .bk-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: var(--type-body-size);
+  font: var(--weight-regular) 13px/1.4 var(--font-sans);
 }
 .bk-table thead th {
-  font-weight: var(--weight-medium);
-  font-size: var(--type-label-size);
-  color: var(--text-primary);
+  font: var(--weight-medium) var(--type-overline-size)/1 var(--font-sans);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
   text-align: left;
-  padding: var(--space-sm) var(--space-lg);
-  background: transparent;
-  border-top: 1px solid var(--border-default);
+  padding: 10px var(--space-lg);
+  background: var(--bg-subtle);
   border-bottom: 1px solid var(--border-subtle);
   white-space: nowrap;
 }
 .bk-table tbody td {
   padding: var(--space-md) var(--space-lg);
   border-bottom: 1px solid var(--border-subtle);
-  white-space: nowrap;
   color: var(--text-primary);
   vertical-align: middle;
-  font-weight: var(--weight-medium);
 }
 .bk-table tbody tr:last-child > td { border-bottom: 0; }
-.bk-table tbody tr:hover > td { background: var(--bg-subtle); }
-.bk-table tbody tr.row--selected > td { background: var(--bg-brand-subtle); }
+.bk-table tbody tr:hover > td { background: rgba(91, 45, 232, 0.03); }
+.bk-table tbody tr.row--selected > td,
+.bk-table tbody tr.is-open > td { background: var(--bg-brand-subtle); }
 .bk-table tbody tr[data-hotel-idx],
 .bk-table tbody tr[data-bk-clickable] { cursor: pointer; }
 
@@ -1359,9 +1349,9 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
   font-weight: var(--weight-medium);
   font-size: var(--type-body-size);
 }
-.bk-table__check { width: 28px; padding-right: 0 !important; }
-.bk-table__check input { cursor: pointer; }
-.bk-table__kebab { width: 36px; text-align: right; }
+.bk-table__check { width: 32px; padding-right: 0 !important; }
+.bk-table__check input { cursor: pointer; accent-color: var(--color-violet-500); }
+.bk-table__kebab { width: 28px; text-align: right; }
 .bk-table__amount {
   font-weight: var(--weight-medium);
   font-feature-settings: 'tnum' 1;
@@ -1393,10 +1383,9 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
 .bk-kebab:hover { color: var(--text-primary); background: var(--bg-subtle); }
 
 .bk-table__footer {
-  padding: var(--space-md) 0 0;
-  font-size: var(--type-caption-size);
+  padding: 10px var(--space-lg);
+  font: var(--weight-regular) var(--type-caption-size) var(--font-sans);
   color: var(--text-secondary);
-  font-weight: var(--weight-medium);
   border-top: 1px solid var(--border-subtle);
   background: transparent;
   display: flex; align-items: center; justify-content: space-between;
@@ -1668,10 +1657,11 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
 /* ── Active filter chip (e.g. "✕ Date and time | Last 7 days") ── */
 .bk-chip--active {
   border-style: solid;
-  border-color: var(--border-default);
-  background: var(--bg-surface);
-  padding-left: var(--space-sm);
+  border-color: var(--color-violet-200);
+  background: var(--bg-brand-subtle);
+  color: var(--text-brand);
 }
+.bk-chip--active .bk-chip__plus { color: var(--text-brand); }
 .bk-chip__sep   { color: var(--text-tertiary); margin: 0 var(--space-xs); }
 .bk-chip__value { color: var(--action-primary-default); font-weight: var(--weight-medium); }
 .bk-chip__close {
@@ -4078,9 +4068,8 @@ select.hd-bankf__input { appearance: auto; }
 
 /* Expandable booking rows + attribution-funnel detail. */
 .bk-row--expandable { cursor: pointer; }
-.bk-row--expandable:hover > td { background: var(--bg-subtle); }
-.bk-row--expandable.is-open > td { background: var(--bg-brand-subtle); }
 .bk-funnel-row > td { background: var(--bg-page); padding: var(--space-xl) var(--space-2xl) var(--space-2xl); }
+.bk-funnel-row:hover > td { background: var(--bg-page); }
 .bk-funnel { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-xl); }
 .bk-funnel__col h4 {
   font: var(--weight-medium) var(--type-overline-size)/1 var(--font-sans);
