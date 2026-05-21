@@ -1136,33 +1136,14 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
   font-variant-numeric: tabular-nums;
 }
 
-/* Label-only variant — used by Hotels where each card is just a
-   filter chip, not a stat. Drops the bottom margin between (now-absent)
-   value; alignment is handled per-page (left for Hotels, see
-   .bk-statcards--hotels below). */
+/* Label-only variant — used by Short Links (and other list filters)
+   where each card is just a filter chip, not a stat. Drops the bottom
+   margin between the (now-absent) value. */
 .bk-statcard--label-only {
   display: flex;
   align-items: center;
 }
 .bk-statcard--label-only .bk-statcard__label { margin-bottom: 0; }
-
-/* Hotels: 7 fixed-size 180×46 cards spread across the full content
-   width via space-between. The gap between cards flexes with the
-   viewport so the row always reaches the same right edge as the
-   page head above it (where the Add hotel button sits) — Canmore's
-   right edge tracks the button's right edge at every width. */
-.bk-statcards--hotels {
-  display: flex;
-  justify-content: space-between;
-  gap: 0;
-}
-.bk-statcards--hotels .bk-statcard {
-  width: 180px;
-  height: 46px;
-  padding: 0 var(--space-lg);
-  justify-content: flex-start;
-  text-align: left;
-}
 
 /* Tour catalog: 3 fixed-size 395×66 stat cards spread across a
    1200 px row via space-between. 3 × 395 + 2 × ~7.5 gap = 1200. */
@@ -1288,16 +1269,6 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
 .bk-table tbody tr[data-hotel-idx],
 .bk-table tbody tr[data-bk-clickable] { cursor: pointer; }
 
-/* Hotels table — drops the rule above the header (the toolbar above
-   already provides separation), and tunes the hotel-name cell to read
-   slightly heavier than the other body cells, which stay at the regular
-   weight to match the filter chips. */
-.bk-table--hotels thead th { border-top: 0; }
-.bk-table--hotels tbody td { font-weight: var(--weight-regular); }
-.bk-table--hotels tbody td.bk-table__name {
-  font-weight: var(--weight-medium);
-  font-size: var(--type-body-size);
-}
 .bk-table__check { width: 32px; padding-right: 0 !important; }
 .bk-table__check input { cursor: pointer; accent-color: var(--color-violet-500); }
 .bk-table__kebab { width: 28px; text-align: right; }
@@ -4257,7 +4228,7 @@ select.hd-bankf__input { appearance: auto; }
 .tbl tbody tr.is-active > td { background: var(--bg-brand-subtle); }
 
 /* ── Filter chip group (key/value) — Hotels list, etc. ───────── */
-.filters { display: flex; gap: var(--space-sm); flex-wrap: wrap; align-items: center; }
+.filters { display: flex; gap: var(--space-sm); flex-wrap: wrap; align-items: center; margin-bottom: var(--space-xl); }
 .filters__divider { width: 1px; height: 24px; background: var(--border-default); margin: 0 var(--space-xs); }
 .filters__more { margin-left: auto; }
 .chip {
