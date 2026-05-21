@@ -13,85 +13,34 @@
    states default to neutrals.
    ───────────────────────────────────────────────────────────────── */
 
-/* ── Tokens ───────────────────────────────────────────────────── */
+/* ── Tokens ───────────────────────────────────────────────────────
+   Admin-local tokens are thin aliases onto the Connect design system
+   (css_new/horizon-connect-tokens.css) so the admin INHERITS the design
+   instead of shadowing it. Tokens that already exist in Connect
+   (--font-sans, --font-mono, --border-strong, --bg-subtle, …) are
+   intentionally NOT redefined here — they resolve to the Connect value.
+   Only genuinely admin-specific values live here.
+   ───────────────────────────────────────────────────────────────── */
 :root {
-  /* Backgrounds */
-  --bg:           #FFFFFF;
-  /* --bg-subtle intentionally not redefined here — it inherits the
-     Connect token (#F4F3F8, cool violet-tinted) so subtle surfaces
-     match the design system rather than the old warm grey. */
+  /* Legacy colour/font aliases — kept only for the rules and inline
+     styles that still reference the old names; each points at its
+     Connect equivalent so nothing renders off-system. */
+  --border:       var(--border-subtle);
+  --text:         var(--text-primary);
+  --text-muted:   var(--text-secondary);
+  --font-display: var(--font-sans);
 
-  /* Borders */
-  --border:       #EAEAE5;
-  --border-strong:#D4D4CE;
-
-  /* Text */
-  --text:         #1A1A2E;
-  --text-muted:   #6B7280;
-  --text-faint:   #9CA3AF;
-
-  /* Status palette for badges + alerts */
-  --ok-bg:        #ECFDF5;
-  --ok-fg:        #065F46;
-  --ok-border:    #A7F3D0;
-  --warn-bg:      #FEF3C7;
-  --warn-fg:      #92400E;
-  --warn-border:  #FDE68A;
-  --bad-bg:       #FEF2F2;
-  --bad-fg:       #991B1B;
-  --bad-border:   #FECACA;
-  --neutral-bg:   #F3F4F6;
-  --neutral-fg:   #374151;
-
-  /* Sidebar-specific palette */
-  --nav-text:           #30313d;   /* unselected nav label */
-  --nav-icon:           #667691;   /* unselected nav icon */
-  --nav-hover:          #f4f7fa;   /* unselected hover bg */
-  --nav-hover-active:   #E8F5F4;   /* hover bg when item is already active (faint accent wash) */
-
-  /* Type */
-  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-sans:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-mono:    'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
-
-  --t-xs:   0.75rem;
-  --t-sm:   0.8125rem;
-  --t-base: 0.9375rem;
-  --t-md:   1rem;
-  --t-lg:   1.125rem;
-  --t-xl:   1.25rem;
-  --t-2xl:  1.5rem;
-  --t-3xl:  1.875rem;
-
-  /* Spacing scale (4px grid) */
-  --s1:  4px;
-  --s2:  8px;
-  --s3:  12px;
-  --s4:  16px;
-  --s5:  20px;
-  --s6:  24px;
-  --s8:  32px;
-  --s10: 40px;
-  --s12: 48px;
-  --s16: 64px;
-
-  /* Radii */
-  --r-sm:   6px;
-  --r-md:   8px;
-  --r-lg:   12px;
-  --r-full: 999px;
+  /* Sizing aliases still referenced by a few inline styles in markup. */
+  --t-sm: 0.8125rem;
+  --s4:   16px;
+  --s5:   20px;
 
   /* Layout */
   --sidebar-w: 240px;
-  /* Content-area top padding. The hero topbar now occupies the top of
-     the main column, so content sits just below it. Page-head modifiers
-     (.bk-page__head--stack, --invoices) pixel-tune title baselines
-     against this value, so it stays fixed rather than contextual. */
+  /* Content-area top padding. The hero topbar occupies the top of the
+     main column; page-head modifiers pixel-tune title baselines against
+     this value, so it stays fixed rather than contextual. */
   --content-top: 24px;
-
-  /* Motion */
-  --t-fast: 120ms ease-out;
-  --t-base: 200ms ease-out;
 }
 
 /* ── Reset / base ─────────────────────────────────────────────── */
