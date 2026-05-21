@@ -17,7 +17,9 @@
 :root {
   /* Backgrounds */
   --bg:           #FFFFFF;
-  --bg-subtle:    #FAFAF9;   /* cards / hover states */
+  /* --bg-subtle intentionally not redefined here — it inherits the
+     Connect token (#F4F3F8, cool violet-tinted) so subtle surfaces
+     match the design system rather than the old warm grey. */
 
   /* Borders */
   --border:       #EAEAE5;
@@ -4219,7 +4221,7 @@ select.hd-bankf__input { appearance: auto; }
 }
 .tbl tbody tr:last-child td { border-bottom: 0; }
 .tbl tbody tr { cursor: pointer; }
-.tbl tbody tr:hover td { background: var(--bg-subtle); }
+.tbl tbody tr:hover td { background: rgba(91, 45, 232, 0.03); }
 .tbl .num { text-align: right; font-variant-numeric: tabular-nums; }
 
 /* Hotel identity cell (avatar + name + slug). */
