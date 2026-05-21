@@ -13,7 +13,10 @@
 
   <!-- Admin design system. Isolated from /css/style.css on purpose
        so neither stylesheet's churn affects the other until the
-       site-wide refresh. -->
+       site-wide refresh. The Horizon Connect token layer loads first
+       so admin.css can consume its semantic tokens; admin.css still
+       wins any colliding token names until each section is migrated. -->
+  <link rel="stylesheet" href="/css_new/horizon-connect-tokens.css">
   <link rel="stylesheet" href="/css/admin.css">
 
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%23FF6B4A'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">

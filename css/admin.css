@@ -121,8 +121,8 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 
 .app__sidebar {
-  background: var(--bg);
-  border-right: 1px solid var(--border);
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
   display: flex; flex-direction: column;
   position: sticky; top: 0;
   height: 100vh;
@@ -149,109 +149,105 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 
 .app-brand {
   display: flex; align-items: center;
-  /* gap and padding tuned so:
-       — the 24px brand icon's CENTRE lines up with the 18px nav-icon
-         centres below (both at x=30 from sidebar edge): margin 9px +
-         padding-left 9px = 18px → icon spans 18–42, centre at 30,
-         matching .app-nav (9px) + .app-nav__item (12px) + half of
-         the 18px icon.
-       — the brand LABEL's left edge lines up with the nav labels
-         below (x=49): icon ends at 42 + gap 7 = 49, matching
-         .app-nav__item content + 18px icon + .app-nav__item gap (10). */
-  gap: 7px;
-  margin: var(--s5) 9px var(--s8);
-  padding: 6px 9px;
-  border-radius: var(--r-sm);
+  /* Icon-centring math, re-derived on the 4px grid so the brand glyph
+     centre and the nav-icon centres below all sit at x=28 from the
+     sidebar edge, and the brand label aligns with the nav labels at x=48.
+       brand icon centre = margin-left 8 + padding-left 8 + 24/2  = 28
+       nav   icon centre = nav pad 8 + item pad-left 12 + 16/2    = 28
+       brand label x     = 8 + 8 + 24(icon) + 8(gap)              = 48
+       nav   label x     = 8 + 12 + 16(icon) + 12(gap)            = 48 */
+  gap: var(--space-sm);
+  margin: var(--space-lg) var(--space-sm) var(--space-2xl);
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background var(--t-fast);
+  transition: background var(--transition-default);
 }
 /* Hover: the inset rectangle picks up the same wash + radius the
    nav rows below use for unselected hover. */
-.app-brand:hover { background: var(--nav-hover); }
+.app-brand:hover { background: var(--bg-subtle); }
 .app-brand__chevron {
   margin-left: auto;
   display: inline-flex; align-items: center;
-  color: var(--text-faint);
+  color: var(--text-tertiary);
 }
-/* Icon now displays the first letter of the signed-in account
-   (admin email or hotel name), not the Horizon glyph. Background
-   matches the same neutral grey the nav row hovers to, so on hover
-   the icon visually merges into the row wash. */
+/* Icon displays the first letter of the signed-in account (admin email
+   or hotel name). Background matches the neutral wash the nav row hovers
+   to, so on hover the icon merges into the row. */
 .app-brand__icon {
   width: 24px; height: 24px;
-  border-radius: var(--r-sm);
-  background: var(--nav-hover);
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
   display: inline-flex; align-items: center; justify-content: center;
-  color: #1a2c44;
+  color: var(--text-primary);
   flex-shrink: 0;
 }
 .app-brand__letter {
   font-family: var(--font-display);
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
   line-height: 1;
 }
 .app-brand__name {
   font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 0.8125rem;
-  color: var(--nav-text);
+  font-weight: var(--weight-medium);
+  font-size: var(--type-label-size);
+  color: var(--text-primary);
   letter-spacing: -0.003em;
 }
 
 .app-nav {
   flex: 1;
-  /* 9px horizontal so items inset cleanly + the 18px nav icons stay
-     centred with the brand "h" mark above them
-     (9 + 12 + 9 = 30 = 18 + 12 from brand). */
-  padding: 0 9px;
+  /* 8px horizontal inset; nav icons stay centred with the brand glyph
+     above them (see .app-brand alignment note). */
+  padding: 0 var(--space-sm);
   overflow-y: auto;
-  display: flex; flex-direction: column; gap: var(--s4);   /* group→group spacing */
+  display: flex; flex-direction: column; gap: var(--space-lg);   /* group→group spacing */
 }
 .app-nav__heading {
-  font-size: 0.75rem;
+  font-size: var(--type-caption-size);
   letter-spacing: 0;
-  color: var(--nav-text);      /* same #30313d as the item labels */
-  font-weight: 400;
-  padding: 0 var(--s3) var(--s2);
-  margin-top: var(--s2);       /* less air above the heading */
+  color: var(--text-secondary);
+  font-weight: var(--weight-regular);
+  padding: 0 var(--space-md) var(--space-sm);
+  margin-top: var(--space-sm);
 }
-.app-nav__group { display: flex; flex-direction: column; gap: 1px; }
+.app-nav__group { display: flex; flex-direction: column; gap: 0; }
 
 .app-nav__item {
   display: flex; align-items: center;
-  gap: 10px;                   /* slightly more breathing between icon and label */
-  padding: 6px var(--s3);      /* trimmed 1px vertically — slightly tighter rows */
-  border-radius: var(--r-sm);
-  color: var(--nav-text);
-  font-size: 0.8125rem;        /* 13px */
-  font-weight: 400;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  color: var(--text-body);
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-regular);
   letter-spacing: -0.003em;
   cursor: pointer;
   background: none;
   text-decoration: none;
   border: 0;
-  transition: background var(--t-fast), color var(--t-fast);
+  transition: background var(--transition-default), color var(--transition-default);
 }
 .app-nav__item:hover {
-  background: var(--nav-hover);   /* #f4f7fa cool wash on hover */
+  background: var(--bg-subtle);
 }
-/* Active state: only text + icon turn the accent colour. No background
-   at rest; hover paints the faint accent wash for click affordance. */
+/* Active state: only text + icon turn the brand colour. No background
+   at rest; hover paints the faint brand wash for click affordance. */
 .app-nav__item--active {
   background: transparent;
-  color: var(--accent);
-  font-weight: 600;             /* selected reads slightly bolder */
+  color: var(--action-primary-default);
+  font-weight: var(--weight-medium);
 }
 .app-nav__item--active:hover {
-  background: var(--nav-hover-active);
-  color: var(--accent);
+  background: var(--bg-brand-subtle);
+  color: var(--action-primary-default);
 }
-.app-nav__item--active .app-nav__icon { color: var(--accent); }
+.app-nav__item--active .app-nav__icon { color: var(--action-primary-default); }
 .app-nav__icon {
-  width: 18px; height: 18px;               /* up from 16; pairs with 13px label */
+  width: 16px; height: 16px;
   display: inline-flex; align-items: center; justify-content: center;
-  color: var(--nav-icon);                  /* #667691 */
+  color: var(--text-secondary);
   flex-shrink: 0;
 }
 .app-nav__icon svg { width: 100%; height: 100%; }
@@ -259,13 +255,13 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 /* Pending-count badge on nav items (e.g. Access Requests inbox) */
 .app-nav__badge {
   margin-left: auto;
-  background: var(--accent);
-  color: #fff;
-  font-size: 0.6875rem;   /* 11px */
-  font-weight: 600;
+  background: var(--action-primary-default);
+  color: var(--text-inverse);
+  font-size: var(--type-overline-size);
+  font-weight: var(--weight-medium);
   line-height: 1;
-  padding: 2px 6px;
-  border-radius: 10px;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-pill);
   min-width: 18px;
   text-align: center;
 }
@@ -278,75 +274,74 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
    can extend beyond it without resizing the sidebar. */
 .brand-menu {
   position: absolute;
-  top: 60px;
-  left: 9px;
+  top: 56px;          /* flush under the brand row (margin 16 + box 40) */
+  left: var(--space-sm);
   width: 268px;
-  z-index: 50;
-  background: var(--bg);
-  border: 1px solid #d4dee9;
-  border-radius: 12px;
-  box-shadow: 0 12px 32px rgba(20, 30, 50, 0.10),
-              0  2px  6px rgba(20, 30, 50, 0.06);
-  padding: 8px;
+  z-index: var(--z-dropdown);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-e2);
+  padding: var(--space-sm);
 }
 .brand-menu[hidden] { display: none; }
 
 .brand-menu__head {
   display: flex; flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 12px 8px 14px;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-sm) var(--space-lg);
 }
 .brand-menu__avatar {
   width: 36px; height: 36px;
-  border-radius: var(--r-sm);
-  background: var(--nav-hover);
-  color: #1a2c44;
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+  color: var(--text-primary);
   display: inline-flex; align-items: center; justify-content: center;
   font-family: var(--font-display);
-  font-size: 12px;
-  font-weight: 700;
+  font-size: var(--type-caption-size);
+  font-weight: var(--weight-medium);
   letter-spacing: 0.02em;
 }
 .brand-menu__title {
   font-family: var(--font-display);
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: #1a2c44;
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
 }
 
 .brand-menu__section {
   display: flex; flex-direction: column;
-  gap: 1px;
+  gap: 0;
 }
 .brand-menu__divider {
-  border: 0; border-top: 1px solid #ecf1f6;
-  margin: 6px 0;
+  border: 0; border-top: 1px solid var(--border-subtle);
+  margin: var(--space-sm) 0;
 }
 
 .brand-menu__item {
   display: flex; align-items: center;
-  gap: 10px;
+  gap: var(--space-md);
   width: 100%;
   background: none; border: 0;
-  padding: 8px 10px;
-  border-radius: var(--r-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
   font: inherit;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: #1a2c44;
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
   cursor: pointer;
   text-align: left;
-  transition: background var(--t-fast);
+  transition: background var(--transition-default);
 }
-.brand-menu__item:hover { background: var(--nav-hover); }
+.brand-menu__item:hover { background: var(--bg-subtle); }
 .brand-menu__item:disabled { opacity: 0.55; cursor: progress; }
 
 .brand-menu__icon {
-  width: 18px; height: 18px;
+  width: 16px; height: 16px;
   flex-shrink: 0;
   display: inline-flex; align-items: center; justify-content: center;
-  color: #50617a;
+  color: var(--text-secondary);
 }
 .brand-menu__icon svg { width: 16px; height: 16px; }
 
@@ -354,7 +349,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .brand-menu__chev,
 .brand-menu__info {
   display: inline-flex; align-items: center; justify-content: center;
-  color: #50617a;
+  color: var(--text-secondary);
 }
 .brand-menu__chev svg,
 .brand-menu__info svg { width: 14px; height: 14px; }
@@ -365,7 +360,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 
 /* Chevron in the brand row flips when the menu is open. */
 .app-brand--open .app-brand__chevron { transform: rotate(180deg); }
-.app-brand__chevron { transition: transform var(--t-fast); }
+.app-brand__chevron { transition: transform var(--transition-default); }
 
 /* ── Page heading (top of every route) ────────────────────────── */
 .page-head {
