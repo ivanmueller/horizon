@@ -1785,8 +1785,11 @@
                     </div>
                   </div>
                 <div class="bk-page__actions hd-head__actions">
-                  <button type="button" class="btn" id="hdSendEmail">Send Email</button>
-                  <button type="button" class="btn btn--primary" id="hdAddEmployee">+ Add Employee</button>
+                  <button type="button" class="btn" id="hdSendEmail">Send email</button>
+                  <button type="button" class="btn btn--primary" id="hdAddEmployee">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Add employee
+                  </button>
                   <button type="button" class="bk-iconbtn" id="hdMore" aria-label="More actions">⋯</button>
                 </div>
               </div>
@@ -1799,18 +1802,22 @@
               <div class="hd-herostat__col">
                 <div class="hd-herostat__label">Total commission</div>
                 <div class="hd-herostat__value" data-herostat="commission">—</div>
+                <div class="hd-herostat__sub" data-herostat-sub="commission">Lifetime</div>
               </div>
               <div class="hd-herostat__col">
                 <div class="hd-herostat__label">Bookings</div>
                 <div class="hd-herostat__value" data-herostat="bookings">0</div>
+                <div class="hd-herostat__sub">In the last 30 days</div>
               </div>
               <div class="hd-herostat__col">
                 <div class="hd-herostat__label">Conversion rate</div>
                 <div class="hd-herostat__value" data-herostat="conversion">—</div>
+                <div class="hd-herostat__sub">scan → confirmed booking</div>
               </div>
               <div class="hd-herostat__col">
                 <div class="hd-herostat__label">Pending payout</div>
                 <div class="hd-herostat__value" data-herostat="payout">—</div>
+                <div class="hd-herostat__sub">Next payout batch</div>
               </div>
             </div>
 
@@ -2068,27 +2075,6 @@
                   </div>
                 </section>
 
-                <section class="hd-card">
-                  <header class="hd-card__head"><h3 class="hd-card__title">Metadata</h3></header>
-                  <dl class="hd-side__list">
-                    <div class="hd-side__row">
-                      <dt class="hd-side__label">Tags</dt>
-                      <dd class="hd-side__value muted">—</dd>
-                    </div>
-                    <div class="hd-side__row">
-                      <dt class="hd-side__label">Account owner</dt>
-                      <dd class="hd-side__value muted">—</dd>
-                    </div>
-                    <div class="hd-side__row">
-                      <dt class="hd-side__label">Created</dt>
-                      <dd class="hd-side__value" data-detail="created">—</dd>
-                    </div>
-                    <div class="hd-side__row">
-                      <dt class="hd-side__label">Last updated</dt>
-                      <dd class="hd-side__value" data-detail="updated">—</dd>
-                    </div>
-                  </dl>
-                </section>
 
               </aside>
             </div>
@@ -5676,6 +5662,11 @@
       setHeroStat('payout',     bankingSet
         ? formatHotelMoney(h.pending_payout || 0, currency)
         : 'Setup required');
+      const heroSub = els.heroStat && els.heroStat.querySelector('[data-herostat-sub="commission"]');
+      if (heroSub) {
+        const since = h.created_at ? formatHumanDate(String(h.created_at).slice(0, 10)) : '';
+        heroSub.textContent = since ? 'Lifetime · since ' + since : 'Lifetime';
+      }
 
       // Sidebar — Details. setDetail handles three node shapes:
       //  • plain element with [data-detail]
