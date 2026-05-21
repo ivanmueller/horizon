@@ -42,3 +42,246 @@
 .auth-layout .card {
   box-shadow: none;
 }
+
+/* ============================================================
+   PRIMITIVES — atomic, brand-agnostic building blocks
+   ============================================================
+   Foundation step 0.4. Every value references a semantic token;
+   brand themes flow through. No min-height:44px here — the
+   responsive layer enforces touch targets globally (rule 16).
+   Transitions are handled by the global rule in the tokens
+   layer (rule 22) — components don't redeclare them.
+   ============================================================ */
+
+/* ── Button ───────────────────────────────────────────────────
+   Base = secondary (neutral) appearance. Variants flip intent.
+   Radius --radius-md (8px) per Connect button hierarchy (rule 4).
+   States: default / hover / pressed (:active) / disabled / focus. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-lg);
+  border: 1px solid var(--action-secondary-border);
+  border-radius: var(--radius-md);
+  background: var(--action-secondary-default);
+  color: var(--text-primary);
+  font: var(--weight-medium) var(--type-label-size)/var(--type-label-line) var(--font-sans);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+.btn:hover    { background: var(--action-secondary-hover); }
+.btn:active   { background: var(--action-secondary-pressed); }
+.btn:focus-visible { outline: none; box-shadow: var(--shadow-focus-ring); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn--primary {
+  background: var(--action-primary-default);
+  border-color: transparent;
+  color: var(--text-inverse);
+}
+.btn--primary:hover    { background: var(--action-primary-hover); }
+.btn--primary:active   { background: var(--action-primary-pressed); }
+.btn--primary:disabled { background: var(--action-primary-disabled); opacity: 1; }
+
+.btn--danger {
+  background: var(--action-destructive-default);
+  border-color: transparent;
+  color: var(--text-inverse);
+}
+.btn--danger:hover  { background: var(--action-destructive-hover); }
+.btn--danger:active { background: var(--action-destructive-pressed); }
+
+.btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-body);
+}
+.btn--ghost:hover  { background: var(--bg-subtle); }
+.btn--ghost:active { background: var(--bg-muted); }
+
+.btn--sm {
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--type-caption-size);
+}
+
+/* ── Input / Select / Textarea ────────────────────────────────
+   Radius --radius-sm (4px) per Connect input hierarchy (rule 4). */
+.input,
+.select,
+.textarea {
+  display: block;
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: var(--weight-regular) var(--type-body-size)/var(--type-body-line) var(--font-sans);
+}
+.input::placeholder,
+.textarea::placeholder { color: var(--text-tertiary); }
+.input:hover,
+.select:hover,
+.textarea:hover { border-color: var(--border-strong); }
+.input:focus-visible,
+.select:focus-visible,
+.textarea:focus-visible {
+  outline: none;
+  border-color: var(--border-brand);
+  box-shadow: var(--shadow-focus-ring);
+}
+.input:disabled,
+.select:disabled,
+.textarea:disabled {
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+.textarea { resize: vertical; }
+
+/* ── Badge — neutral count / label tag (pill, rule 4) ────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-pill);
+  background: var(--bg-muted);
+  color: var(--text-body);
+  font: var(--weight-medium) var(--type-caption-size)/1 var(--font-sans);
+}
+
+/* ── Status pill — coloured state label (pill, rule 4) ───────── */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  font: var(--weight-medium) var(--type-caption-size)/1 var(--font-sans);
+}
+.status-pill--ok {
+  background: var(--feedback-success-bg);
+  border-color: var(--feedback-success-border);
+  color: var(--feedback-success-text);
+}
+.status-pill--warn {
+  background: var(--feedback-warning-bg);
+  border-color: var(--feedback-warning-border);
+  color: var(--feedback-warning-text);
+}
+.status-pill--bad {
+  background: var(--feedback-danger-bg);
+  border-color: var(--feedback-danger-border);
+  color: var(--feedback-danger-text);
+}
+.status-pill--info {
+  background: var(--feedback-info-bg);
+  border-color: var(--feedback-info-border);
+  color: var(--feedback-info-text);
+}
+.status-pill--neutral {
+  background: var(--bg-muted);
+  border-color: var(--border-subtle);
+  color: var(--text-body);
+}
+.status-pill--xs {
+  padding: 0 var(--space-xs);
+  font-size: var(--type-overline-size);
+}
+
+/* ── Alert — block-level feedback message ─────────────────────
+   Radius --radius-md (8px). Variants reuse feedback tokens. */
+.alert {
+  display: flex;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font: var(--weight-regular) var(--type-body-size)/var(--type-body-line) var(--font-sans);
+}
+.alert--ok {
+  background: var(--feedback-success-bg);
+  border-color: var(--feedback-success-border);
+  color: var(--feedback-success-text);
+}
+.alert--warn {
+  background: var(--feedback-warning-bg);
+  border-color: var(--feedback-warning-border);
+  color: var(--feedback-warning-text);
+}
+.alert--bad {
+  background: var(--feedback-danger-bg);
+  border-color: var(--feedback-danger-border);
+  color: var(--feedback-danger-text);
+}
+.alert--info {
+  background: var(--feedback-info-bg);
+  border-color: var(--feedback-info-border);
+  color: var(--feedback-info-text);
+}
+
+/* ── Empty state — centred placeholder for empty content ─────── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-3xl) var(--space-xl);
+  text-align: center;
+}
+.empty-state__title {
+  font: var(--weight-medium) var(--type-subheading-size)/var(--type-subheading-line) var(--font-sans);
+  color: var(--text-primary);
+}
+.empty-state__body {
+  font: var(--weight-regular) var(--type-body-size)/var(--type-body-line) var(--font-sans);
+  color: var(--text-secondary);
+  max-width: 42ch;
+}
+
+/* ── Skeleton — loading placeholder ───────────────────────────
+   Static by design: rule 27 defers decorative/loading motion to
+   a later version, so no shimmer/pulse animation here. */
+.skeleton {
+  background: var(--bg-muted);
+  border-radius: var(--radius-sm);
+  color: transparent;
+  user-select: none;
+}
+
+/* ── Copy button — compact icon action ───────────────────────── */
+.copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xs);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.copy-btn:hover { background: var(--bg-subtle); color: var(--text-primary); }
+.copy-btn:focus-visible { outline: none; box-shadow: var(--shadow-focus-ring); }
+
+/* ── Kbd — keyboard key cap ───────────────────────────────────── */
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--space-xs);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--bg-subtle);
+  color: var(--text-body);
+  font: var(--weight-medium) var(--type-caption-size)/1.6 var(--font-mono);
+}
+
+/* ── Text utilities ───────────────────────────────────────────── */
+.mono  { font-family: var(--font-mono); }
+.muted { color: var(--text-secondary); }
+.num   { font-variant-numeric: tabular-nums; }
