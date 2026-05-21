@@ -485,14 +485,12 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .btn--ghost:hover { background: var(--bg-subtle); color: var(--text-primary); }
 .btn--ghost:active { background: var(--bg-muted); }
 .btn--danger {
-  background: var(--bg-surface);
-  border-color: var(--border-danger);
-  color: var(--text-danger);
+  background: var(--action-destructive-default);
+  border-color: transparent;
+  color: var(--text-inverse);
 }
-.btn--danger:hover {
-  background: var(--feedback-danger-bg);
-  border-color: var(--text-danger);
-}
+.btn--danger:hover { background: var(--action-destructive-hover); }
+.btn--danger:active { background: var(--action-destructive-pressed); }
 .btn--sm { padding: var(--space-xs) var(--space-sm); font-size: var(--type-caption-size); }
 
 /* ── Cards ────────────────────────────────────────────────────── */
