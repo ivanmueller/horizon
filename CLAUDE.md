@@ -68,7 +68,7 @@ All 27 rules carry equal authority. If a redesign would require breaking one, th
 
 11. **Mobile-first, always.** Default styles target mobile. Use `min-width` queries to enhance up. Never the reverse.
 12. **Use breakpoint tokens, not raw pixels.** Reference `--bp-sm` (640), `--bp-md` (768), `--bp-lg` (1024), `--bp-xl` (1280), `--bp-2xl` (1536) in comments.
-13. **Containers cap content width.** Every page uses `.container`. Product UI caps at 1200px, marketing at 1440px, prose at 720px.
+13. **Containers cap content width.** Every page uses `.container`. Product UI caps at 1280px, marketing at 1440px, prose at 720px.
 14. **Use fluid type for headings, fixed for body.** Display, heading, subheading scale via `clamp()`. Body, caption, label, overline stay fixed.
 15. **Spacing scales by context.** Use `--space-section`, `--space-page`, `--space-card` for context-aware padding. Static tokens (xs–4xl) for element-level spacing. Tours' contextual spacing runs more generous than Connect's at every breakpoint.
 16. **Touch targets ≥44×44px on mobile.** Non-negotiable accessibility requirement. Already enforced globally — don't override.
