@@ -87,10 +87,6 @@
 
   /* Layout */
   --sidebar-w: 240px;
-  /* Dashboard content cap. Deliberately wider than rule 13's 1200px
-     product cap — this data-dense dashboard reads better wide. Documented
-     exception; revisit if the system gains a dashboard-scale container. */
-  --content-max: 1280px;
   /* Content-area top padding. Fixed anchor: page-head modifiers
      (.bk-page__head--stack, --invoices) pixel-tune title baselines
      against this value, so it stays fixed rather than contextual. */
@@ -142,12 +138,12 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 
 .app__content {
   flex: 1;
-  /* Content sits flat at --content-max (1280px) with no side padding;
-     the leftover space on wide screens becomes the side gutter via the
-     auto margins below. Fixed top anchor (--content-top), lighter
-     contextual bottom. */
+  /* Content sits flat at the product container width (--container-xl,
+     1280px in the system) with no side padding; the leftover space on
+     wide screens becomes the side gutter via the auto margins below.
+     Fixed top anchor (--content-top), lighter contextual bottom. */
   padding: var(--content-top) 0 var(--space-page);
-  max-width: var(--content-max);
+  max-width: var(--container-xl);
   width: 100%;
   margin: 0 auto;   /* centre within the main column (excludes sidebar) */
 }
