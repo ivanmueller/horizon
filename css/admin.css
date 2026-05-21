@@ -1329,6 +1329,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
   margin-left: var(--space-sm);
   white-space: nowrap;
   line-height: 1.5;
+  vertical-align: middle;
 }
 .bk-pill::before {
   content: ''; flex: none;
@@ -3954,19 +3955,14 @@ select.hd-bankf__input { appearance: auto; }
    (no separate Status header). Commission is green for positive,
    muted "Refunded" for refunded rows. */
 .bk-table--bookings tbody td { vertical-align: middle; }
+/* Amount + inline status pill. Kept as a normal table cell (NOT flex)
+   so it stretches to the full row height and its bottom border lines up
+   with the other cells; the pill aligns via vertical-align: middle. */
 .bk-row__amount {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
   white-space: nowrap;
-}
-/* Fix the amount column width so the status pills line up
-   vertically across rows regardless of price magnitude. */
-.bk-row__amount .mono {
-  display: inline-block;
-  min-width: 5.5rem;
   font-variant-numeric: tabular-nums;
 }
+.bk-row__amount .mono { color: var(--text-primary); font-variant-numeric: tabular-nums; }
 .bk-row__amount--muted .mono { color: var(--text-secondary); }
 .bk-row__commission {
   font-variant-numeric: tabular-nums;
