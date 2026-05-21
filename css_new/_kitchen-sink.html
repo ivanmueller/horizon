@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Horizon Connect — Primitives kitchen sink (0.4)</title>
+  <link rel="stylesheet" href="horizon-connect-tokens.css">
+  <link rel="stylesheet" href="horizon-connect-responsive.css">
+  <link rel="stylesheet" href="horizon-connect-components.css">
+  <style>
+    /* Page-local scaffolding only — not part of the design system.
+       Lets us eyeball every primitive in every state at 375/1024/1920. */
+    body { margin: 0; background: var(--bg-page); color: var(--text-body);
+           font: var(--weight-regular) var(--type-body-size)/var(--type-body-line) var(--font-sans); }
+    .ks-section { border-bottom: 1px solid var(--border-subtle); }
+    .ks-section > h2 {
+      margin: 0 0 var(--space-lg);
+      font: var(--weight-medium) var(--type-heading-size)/var(--type-heading-line) var(--font-sans);
+      color: var(--text-primary);
+    }
+    .ks-row { display: flex; flex-wrap: wrap; gap: var(--space-md); align-items: center; margin-bottom: var(--space-md); }
+    .ks-label { width: 100%; font: var(--weight-medium) var(--type-overline-size)/1.4 var(--font-sans);
+                letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-tertiary); }
+    .ks-grid { display: grid; gap: var(--space-md); grid-template-columns: repeat(auto-fit, minmax(min(280px,100%),1fr)); }
+  </style>
+</head>
+<body>
+  <div class="container stack--section" style="padding-block: var(--space-2xl);">
+    <header>
+      <h1 class="t-display">Primitives kitchen sink</h1>
+      <p class="muted">Foundation 0.4 — review every primitive in every state. Resize to 375 / 1024 / 1920. Tab through to check focus rings; hover and press with the mouse.</p>
+    </header>
+
+    <!-- Buttons -->
+    <section class="ks-section stack">
+      <h2>Buttons</h2>
+      <div class="ks-row">
+        <span class="ks-label">Default states (hover / press / focus are interactive)</span>
+        <button class="btn">Secondary</button>
+        <button class="btn btn--primary">Primary</button>
+        <button class="btn btn--danger">Danger</button>
+        <button class="btn btn--ghost">Ghost</button>
+        <button class="btn btn--sm">Small</button>
+        <button class="btn btn--primary btn--sm">Small primary</button>
+      </div>
+      <div class="ks-row">
+        <span class="ks-label">Disabled</span>
+        <button class="btn" disabled>Secondary</button>
+        <button class="btn btn--primary" disabled>Primary</button>
+        <button class="btn btn--danger" disabled>Danger</button>
+        <button class="btn btn--ghost" disabled>Ghost</button>
+      </div>
+    </section>
+
+    <!-- Inputs -->
+    <section class="ks-section stack">
+      <h2>Inputs</h2>
+      <div class="ks-grid">
+        <input class="input" placeholder="Text input">
+        <select class="select"><option>Select option</option><option>Another</option></select>
+        <input class="input" value="Filled value">
+        <input class="input" placeholder="Disabled" disabled>
+        <textarea class="textarea" rows="3" placeholder="Textarea"></textarea>
+      </div>
+    </section>
+
+    <!-- Badges + status pills -->
+    <section class="ks-section stack">
+      <h2>Badges &amp; status pills</h2>
+      <div class="ks-row">
+        <span class="ks-label">Badge</span>
+        <span class="badge">12</span>
+        <span class="badge">New</span>
+      </div>
+      <div class="ks-row">
+        <span class="ks-label">Status pill</span>
+        <span class="status-pill status-pill--ok">Active</span>
+        <span class="status-pill status-pill--warn">Pending</span>
+        <span class="status-pill status-pill--bad">Refunded</span>
+        <span class="status-pill status-pill--info">Processing</span>
+        <span class="status-pill status-pill--neutral">Draft</span>
+        <span class="status-pill status-pill--ok status-pill--xs">xs</span>
+      </div>
+    </section>
+
+    <!-- Alerts -->
+    <section class="ks-section stack">
+      <h2>Alerts</h2>
+      <div class="stack stack--sm">
+        <div class="alert alert--ok">Saved successfully.</div>
+        <div class="alert alert--warn">Heads up — this action needs review.</div>
+        <div class="alert alert--bad">Something went wrong. Please try again.</div>
+        <div class="alert alert--info">A new statement is available.</div>
+      </div>
+    </section>
+
+    <!-- Empty state -->
+    <section class="ks-section stack">
+      <h2>Empty state</h2>
+      <div class="card">
+        <div class="empty-state">
+          <div class="empty-state__title">No bookings yet</div>
+          <div class="empty-state__body">When a traveler books through one of your links, it’ll show up here with full attribution.</div>
+          <button class="btn btn--primary">Create a link</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Skeleton -->
+    <section class="ks-section stack">
+      <h2>Skeleton (static — rule 27)</h2>
+      <div class="stack stack--sm" style="max-width: 480px;">
+        <div class="skeleton" style="height: 16px; width: 60%;">&nbsp;</div>
+        <div class="skeleton" style="height: 16px; width: 90%;">&nbsp;</div>
+        <div class="skeleton" style="height: 16px; width: 75%;">&nbsp;</div>
+      </div>
+    </section>
+
+    <!-- Copy button + kbd + utilities -->
+    <section class="ks-section stack">
+      <h2>Copy button, kbd &amp; utilities</h2>
+      <div class="ks-row">
+        <span class="ks-label">Copy button</span>
+        <button class="copy-btn" aria-label="Copy">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>
+        <span class="mono">fcll-summer24</span>
+      </div>
+      <div class="ks-row">
+        <span class="ks-label">Kbd</span>
+        <span class="kbd">⌘</span><span class="kbd">K</span>
+        <span class="muted">muted text</span>
+        <span class="num">1,234.56</span>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
