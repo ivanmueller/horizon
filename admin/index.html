@@ -1229,7 +1229,6 @@
                       <th>Amount</th>
                       <th>Hotel</th>
                       <th>Tour ID</th>
-                      <th>Customer</th>
                       <th>Date</th>
                       <th>Refunded date</th>
                       <th>Decline reason</th>
@@ -1237,7 +1236,7 @@
                     </tr>
                   </thead>
                   <tbody id="bkBody">
-                    <tr><td colspan="9" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>
+                    <tr><td colspan="8" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>
                   </tbody>
                 </table>
               </div>
@@ -4055,7 +4054,7 @@
       const summaryTo   = r && r.to   ? r.to   : new Date(Date.now() + 30 * 365 * 86400000).toISOString();
 
       clearBkError(els);
-      els.body.innerHTML = '<tr><td colspan="9" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>';
+      els.body.innerHTML = '<tr><td colspan="8" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>';
       els.footer.textContent = '— items';
 
       fetch(BOKUN_API_BASE + '/api/admin/summary' +
@@ -4119,7 +4118,7 @@
           if (err && (err.message === 'unauthorized' || err.message === 'forbidden')) return;
           console.error('admin bookings fetch failed', err);
           showBkError(els, 'Could not load bookings: ' + (err && err.message || 'unknown error'));
-          els.body.innerHTML = '<tr><td colspan="9" class="bk-empty"><div class="bk-empty__title">Could not load bookings</div><p class="bk-empty__body">Try again in a moment.</p></td></tr>';
+          els.body.innerHTML = '<tr><td colspan="8" class="bk-empty"><div class="bk-empty__title">Could not load bookings</div><p class="bk-empty__body">Try again in a moment.</p></td></tr>';
         });
     }
 
@@ -4144,7 +4143,7 @@
 
       if (!filtered.length) {
         els.body.innerHTML =
-          '<tr><td colspan="9" class="bk-empty">' +
+          '<tr><td colspan="8" class="bk-empty">' +
             '<div class="bk-empty__title">No bookings in this period</div>' +
             '<p class="bk-empty__body">Once partners start sending traffic, confirmed bookings will appear here.</p>' +
           '</td></tr>';
@@ -4159,7 +4158,6 @@
         const currency = (r.currency || 'CAD').toUpperCase();
         const hotel    = r._hotel || {};
         const desc     = 'HGCT';
-        const customer = r.lead_email || r.lead_name || '—';
         const dateStr  = formatHumanDateTime(r.created_at);
         const refunded = (rawStatus === 'refunded' || rawStatus === 'pending_refund')
           ? formatHumanDateTime(r.updated_at)
@@ -4175,7 +4173,6 @@
             '</td>' +
             '<td>' + escapeHtml(hotel.name || '—') + '</td>' +
             '<td class="bk-table__desc">' + escapeHtml(desc) + '</td>' +
-            '<td>' + escapeHtml(customer) + '</td>' +
             '<td>' + escapeHtml(dateStr) + '</td>' +
             '<td class="bk-table__muted">' + escapeHtml(refunded) + '</td>' +
             '<td class="bk-table__muted">—</td>' +
