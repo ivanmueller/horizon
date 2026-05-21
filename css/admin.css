@@ -1390,13 +1390,16 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
 .bk-kebab:hover { color: var(--text-primary); background: var(--bg-subtle); }
 
 .bk-table__footer {
-  padding: var(--space-sm) 0 0;
+  padding: var(--space-md) 0 0;
   font-size: var(--type-caption-size);
-  color: var(--text-body);
+  color: var(--text-secondary);
   font-weight: var(--weight-medium);
-  border-top: 1px solid var(--border-default);
+  border-top: 1px solid var(--border-subtle);
   background: transparent;
+  display: flex; align-items: center; justify-content: space-between;
 }
+.bk-table__pag { display: flex; gap: var(--space-xs); }
+.bk-iconbtn--icon { padding: 6px; }
 
 /* ── Status badge next to amount (Stripe pill style) ──────────── */
 /* 1px-bordered pills with a light fill. Deliberately only two visual
@@ -1415,26 +1418,30 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
   white-space: nowrap;
   line-height: 1.5;
 }
-.bk-pill svg { width: 11px; height: 11px; }
+.bk-pill::before {
+  content: ''; flex: none;
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor;
+}
 .bk-pill--ok {
   background: var(--feedback-success-bg);
   border-color: var(--feedback-success-border);
   color:        var(--feedback-success-text);
 }
 .bk-pill--neutral {
-  background: var(--bg-subtle);
-  border-color: var(--border-default);
-  color:        var(--text-secondary);
+  background: var(--bg-muted);
+  border-color: var(--border-subtle);
+  color:        var(--text-body);
 }
 .bk-pill--warn {
-  background: var(--bg-subtle);
-  border-color: var(--border-default);
-  color:        var(--text-secondary);
+  background: var(--feedback-warning-bg);
+  border-color: var(--feedback-warning-border);
+  color:        var(--feedback-warning-text);
 }
 .bk-pill--bad {
-  background: var(--bg-subtle);
-  border-color: var(--border-default);
-  color:        var(--text-secondary);
+  background: var(--feedback-danger-bg);
+  border-color: var(--feedback-danger-border);
+  color:        var(--feedback-danger-text);
 }
 .bk-pill--info {
   background: var(--feedback-info-bg);
@@ -4051,9 +4058,74 @@ select.hd-bankf__input { appearance: auto; }
 .bk-row__commission {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  text-align: right;
 }
 .bk-row__commission--pos   { color: var(--text-success); }
 .bk-row__commission--muted { color: var(--text-secondary); }
+
+/* Numeric columns (Pax, Commission header) right-align, tabular. */
+.bk-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Bookings page-head subtitle. */
+.bk-page__sub {
+  margin: var(--space-xs) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--type-body-size);
+}
+
+/* Expandable booking rows + attribution-funnel detail. */
+.bk-row--expandable { cursor: pointer; }
+.bk-row--expandable:hover > td { background: var(--bg-subtle); }
+.bk-row--expandable.is-open > td { background: var(--bg-brand-subtle); }
+.bk-funnel-row > td { background: var(--bg-page); padding: var(--space-xl) var(--space-2xl) var(--space-2xl); }
+.bk-funnel { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-xl); }
+.bk-funnel__col h4 {
+  font: var(--weight-medium) var(--type-overline-size)/1 var(--font-sans);
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-secondary);
+  margin: 0 0 var(--space-md);
+}
+.bk-funnel__steps { display: flex; flex-direction: column; padding: 0; margin: 0; list-style: none; }
+.bk-funnel__step {
+  display: grid; grid-template-columns: 28px 1fr auto auto;
+  gap: var(--space-md); align-items: center;
+  padding: var(--space-sm) 0;
+  font: var(--weight-regular) var(--type-body-size)/1.4 var(--font-sans);
+  border-bottom: 1px dashed var(--border-subtle);
+}
+.bk-funnel__step:last-child { border-bottom: 0; }
+.bk-funnel__n {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--bg-muted); color: var(--text-body);
+  display: inline-flex; align-items: center; justify-content: center;
+  font: var(--weight-medium) var(--type-overline-size) var(--font-sans);
+  flex: none;
+}
+.bk-funnel__step--credited .bk-funnel__n { background: var(--color-violet-500); color: #fff; }
+.bk-funnel__step--credited { font-weight: var(--weight-medium); }
+.bk-funnel__label { color: var(--text-primary); }
+.bk-funnel__code { font: var(--weight-regular) var(--type-caption-size) var(--font-mono); color: var(--text-secondary); }
+.bk-funnel__when { font: var(--weight-regular) var(--type-caption-size) var(--font-sans); color: var(--text-tertiary); white-space: nowrap; }
+.bk-funnel__credited {
+  margin-left: var(--space-sm);
+  padding: 1px 8px; border-radius: var(--radius-pill);
+  background: var(--color-violet-500); color: #fff;
+  font: var(--weight-medium) var(--type-overline-size) var(--font-sans);
+}
+.bk-funnel__meta {
+  display: flex; flex-direction: column; gap: 6px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+}
+.bk-funnel__metarow {
+  display: flex; justify-content: space-between; gap: var(--space-lg);
+  font: var(--weight-regular) var(--type-caption-size)/1.4 var(--font-sans);
+}
+.bk-funnel__metarow span:first-child { color: var(--text-secondary); }
+.bk-funnel__metarow span:last-child  { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+@media (max-width: 768px) { .bk-funnel { grid-template-columns: 1fr; } }
 
 /* Pax column — narrow, numeric, centred. Just a count of passengers
    on the booking; no unit label, no decoration. */
