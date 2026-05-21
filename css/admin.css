@@ -133,14 +133,11 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
 
 .app__content {
   flex: 1;
-  /* Content sits flat at the product container width (--container-xl,
-     1280px in the system) with no side padding; the leftover space on
-     wide screens becomes the side gutter via the auto margins below.
-     Fixed top anchor (--content-top), lighter contextual bottom. */
-  padding: var(--content-top) 0 var(--space-page);
-  max-width: var(--container-xl);
+  /* Fill the main column with consistent side padding so page content
+     left-aligns with the full-width topbar (matches the kit). Fixed top
+     anchor (--content-top), lighter contextual bottom. */
+  padding: var(--content-top) var(--space-2xl) var(--space-page);
   width: 100%;
-  margin: 0 auto;   /* centre within the main column (excludes sidebar) */
 }
 
 /* ── Sidebar: brand + nav ─────────────────────────────────────── */
@@ -4087,7 +4084,7 @@ select.hd-bankf__input { appearance: auto; }
   position: sticky; top: 0; z-index: 50;
   display: flex; align-items: center;
   gap: var(--space-lg);
-  padding: var(--space-sm) var(--space-xl);
+  padding: var(--space-sm) var(--space-2xl);
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border-subtle);
 }
@@ -4135,6 +4132,10 @@ select.hd-bankf__input { appearance: auto; }
 .app__primary:hover { background: var(--action-primary-hover); }
 
 /* ── Overview (Home) — KPI cards, leaderboard, activity feed ── */
+/* Page wrapper: uniform vertical rhythm between the head, KPI row, and
+   the split (matches the kit's flex-column page with a 24px gap). */
+.ov-page { display: flex; flex-direction: column; gap: var(--space-xl); }
+.ov-page .page-head { margin-bottom: 0; }
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
