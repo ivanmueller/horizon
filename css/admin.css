@@ -87,10 +87,11 @@
 
   /* Layout */
   --sidebar-w: 240px;
-  /* Content-area top padding. Fixed anchor: page-head modifiers
+  /* Content-area top padding. The hero topbar now occupies the top of
+     the main column, so content sits just below it. Page-head modifiers
      (.bk-page__head--stack, --invoices) pixel-tune title baselines
      against this value, so it stays fixed rather than contextual. */
-  --content-top: 85px;
+  --content-top: 24px;
 
   /* Motion */
   --t-fast: 120ms ease-out;
@@ -4323,3 +4324,55 @@ select.hd-bankf__input { appearance: auto; }
   font-weight: 500;
 }
 .hd-bookings__viewall:hover { text-decoration: underline; }
+
+/* ── Topbar (hero bar — Stripe pattern) ───────────────────── */
+.app__topbar {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-sm) var(--space-xl);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.app__search {
+  display: inline-flex; align-items: center; gap: var(--space-sm);
+  flex: 1; max-width: 480px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+}
+.app__search input {
+  border: 0; outline: 0; background: transparent;
+  font: var(--weight-regular) var(--type-body-size)/var(--type-body-line) var(--font-sans);
+  color: var(--text-primary);
+  flex: 1; min-width: 0;
+}
+.app__kbd {
+  font: var(--weight-medium) 11px/1 var(--font-mono);
+  padding: 2px 6px;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+}
+.app__topbar-actions { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+.app__icbtn {
+  width: 32px; height: 32px;
+  border: 0; background: transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer; color: var(--text-secondary);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.app__icbtn:hover { background: var(--bg-subtle); color: var(--text-primary); }
+.app__primary {
+  width: 32px; height: 32px;
+  border: 0; background: var(--action-primary-default);
+  color: #fff;
+  border-radius: 50%;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-left: 4px;
+}
+.app__primary:hover { background: var(--action-primary-hover); }
