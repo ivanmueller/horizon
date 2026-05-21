@@ -395,26 +395,29 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 
 /* ── Buttons ──────────────────────────────────────────────────── */
 .btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: var(--s2);
-  padding: 7px 14px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--bg);
-  color: var(--text);
-  font-size: var(--t-sm);
-  font-weight: 500;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-lg);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
   cursor: pointer;
-  transition: all var(--t-fast);
   white-space: nowrap;
+  /* Transition handled by the global interactive rule (rule 22). */
 }
 .btn:hover { background: var(--bg-subtle); border-color: var(--border-strong); }
+.btn:active { background: var(--bg-muted); }
+.btn:focus-visible { outline: none; box-shadow: var(--shadow-focus-ring); }
 .btn:disabled { opacity: 0.55; cursor: progress; }
 .btn--primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
+  background: var(--action-primary-default);
+  border-color: var(--action-primary-default);
+  color: var(--text-inverse);
 }
-.btn--primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.btn--primary:hover { background: var(--action-primary-hover); border-color: var(--action-primary-hover); }
+.btn--primary:active { background: var(--action-primary-pressed); border-color: var(--action-primary-pressed); }
 
 /* Hotels page primary CTA — fixed pill size + slightly bolder label,
    with a translucent "n" key hint at the right edge (mirrors Stripe's
@@ -477,19 +480,20 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 .btn--ghost {
   background: none; border-color: transparent;
-  color: var(--text-muted);
+  color: var(--text-body);
 }
-.btn--ghost:hover { background: var(--bg-subtle); color: var(--text); }
+.btn--ghost:hover { background: var(--bg-subtle); color: var(--text-primary); }
+.btn--ghost:active { background: var(--bg-muted); }
 .btn--danger {
-  background: var(--bg);
-  border-color: var(--bad-border);
-  color: var(--bad-fg);
+  background: var(--bg-surface);
+  border-color: var(--border-danger);
+  color: var(--text-danger);
 }
 .btn--danger:hover {
-  background: var(--bad-bg);
-  border-color: var(--bad-fg);
+  background: var(--feedback-danger-bg);
+  border-color: var(--text-danger);
 }
-.btn--sm { padding: 5px 10px; font-size: var(--t-xs); }
+.btn--sm { padding: var(--space-xs) var(--space-sm); font-size: var(--type-caption-size); }
 
 /* ── Cards ────────────────────────────────────────────────────── */
 .card {
