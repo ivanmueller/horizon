@@ -1335,15 +1335,18 @@
         return {
           html: `
             <header class="bk-page__head bk-page__head--md">
-              <h1 class="bk-page__title">Hotels</h1>
+              <div>
+                <h1 class="bk-page__title">Partner hotels</h1>
+                <p class="bk-page__sub" id="hotelsSubtitle">—</p>
+              </div>
               <div class="bk-page__actions">
-                <button type="button" class="btn btn--primary hotels-add-btn" id="hotelsAdd">
-                  <svg class="hotels-add-btn__plus" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" aria-hidden="true">
-                    <line x1="8" y1="1.5" x2="8" y2="14.5"/>
-                    <line x1="1.5" y1="8" x2="14.5" y2="8"/>
-                  </svg>
-                  <span class="hotels-add-btn__label">Add hotel</span>
-                  <kbd class="btn__kbd" aria-label="Shortcut: n">n</kbd>
+                <button type="button" class="btn" id="hotelsExportCsv">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Export CSV
+                </button>
+                <button type="button" class="btn btn--primary" id="hotelsAdd">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Add partner hotel
                 </button>
               </div>
             </header>
@@ -1351,74 +1354,39 @@
             <div class="alert alert--bad" id="hotelsError" hidden></div>
             <div class="alert alert--ok"  id="hotelsNotice" hidden></div>
 
-            <div class="bk-statcards bk-statcards--hotels" id="hotelsStatcards" role="group" aria-label="Hotel filter">
-              <button type="button" class="bk-statcard bk-statcard--label-only bk-statcard--active" data-filter="all">
-                <div class="bk-statcard__label">All</div>
-              </button>
-              <button type="button" class="bk-statcard bk-statcard--label-only" data-filter="active">
-                <div class="bk-statcard__label">Active</div>
-              </button>
-              <button type="button" class="bk-statcard bk-statcard--label-only" data-filter="terminated">
-                <div class="bk-statcard__label">Terminated</div>
-              </button>
-              <button type="button" class="bk-statcard bk-statcard--label-only" data-filter="kickback">
-                <div class="bk-statcard__label">Kickback</div>
-              </button>
-              <button type="button" class="bk-statcard bk-statcard--label-only" data-filter="pool">
-                <div class="bk-statcard__label">Pool</div>
-              </button>
-              <button type="button" class="bk-statcard bk-statcard--label-only" data-filter="banff">
-                <div class="bk-statcard__label">Banff</div>
-              </button>
-              <button type="button" class="bk-statcard bk-statcard--label-only" data-filter="canmore">
-                <div class="bk-statcard__label">Canmore</div>
+            <div class="filters">
+              <button type="button" class="chip chip--active" data-status="all"><span class="chip__k">Status</span><span class="chip__v">All</span></button>
+              <button type="button" class="chip" data-status="active"><span class="chip__v">Active</span></button>
+              <button type="button" class="chip" data-status="pending"><span class="chip__v">Pending</span></button>
+              <button type="button" class="chip" data-status="paused"><span class="chip__v">Paused</span></button>
+              <span class="filters__divider" aria-hidden="true"></span>
+              <button type="button" class="chip chip--active" data-loc="all"><span class="chip__k">Location</span><span class="chip__v">All</span></button>
+              <button type="button" class="chip" data-loc="Banff"><span class="chip__v">Banff</span></button>
+              <button type="button" class="chip" data-loc="Canmore"><span class="chip__v">Canmore</span></button>
+              <button type="button" class="chip filters__more" id="hotelsMoreFilters">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                More filters
               </button>
             </div>
 
-            <div class="bk-toolbar">
-              <div class="bk-filters">
-                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Name</button>
-                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Location</button>
-                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Type</button>
-                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> Status</button>
-                <button type="button" class="bk-chip"><span class="bk-chip__plus">+</span> More filters</button>
-              </div>
-              <div class="bk-toolbar__actions">
-                <button type="button" class="bk-iconbtn" id="hotelsExport">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                  Export
-                </button>
-                <button type="button" class="bk-iconbtn" id="hotelsEditCols">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                  Edit columns
-                </button>
-              </div>
-            </div>
-
-            <div class="bk-table-wrap">
-              <div class="bk-table-scroll">
-                <table class="bk-table bk-table--hotels" id="hotelsTable">
-                  <thead>
-                    <tr>
-                      <th class="bk-table__check"><input type="checkbox" id="hotelsCheckAll" aria-label="Select all"></th>
-                      <th>Hotel</th>
-                      <th>Location</th>
-                      <th>Type</th>
-                      <th>Commission</th>
-                      <th>Staff</th>
-                      <th>Managers</th>
-                      <th>Status</th>
-                      <th>Effective date</th>
-                      <th>Created</th>
-                      <th class="bk-table__kebab"></th>
-                    </tr>
-                  </thead>
-                  <tbody id="hotelsBody">
-                    <tr><td colspan="11" class="bk-empty"><div class="bk-empty__title">Loading…</div></td></tr>
-                  </tbody>
-                </table>
-              </div>
-              <div class="bk-table__footer" id="hotelsFooter">— items</div>
+            <div class="ov-card">
+              <table class="tbl" id="hotelsTable">
+                <thead>
+                  <tr>
+                    <th>Hotel</th>
+                    <th>Status</th>
+                    <th>Location</th>
+                    <th class="num">Rooms</th>
+                    <th class="num">Bookings 30d</th>
+                    <th class="num">Commission 30d</th>
+                    <th>Commission %</th>
+                    <th>Last activity</th>
+                  </tr>
+                </thead>
+                <tbody id="hotelsBody">
+                  <tr><td colspan="8" style="text-align:center;padding:48px 0;color:var(--text-secondary)">Loading…</td></tr>
+                </tbody>
+              </table>
             </div>
           `,
           mount: mountHotels,
@@ -4547,59 +4515,52 @@
     /* ── Hotels route ────────────────────────────────────── */
     let hotelsCache  = [];      // last list response, indexed by index
     let hotelsEls    = null;    // captured in mountHotels so handlers can reload
-    let hotelsFilter = 'all';   // active stat-card filter
+    let hotelsFilter = 'all';   // active status-chip filter
+    let hotelsLocationFilter = 'all';   // active location-chip filter
 
     function mountHotels(container) {
       hotelsEls = {
-        body:       container.querySelector('#hotelsBody'),
-        error:      container.querySelector('#hotelsError'),
-        notice:     container.querySelector('#hotelsNotice'),
-        add:        container.querySelector('#hotelsAdd'),
-        statcards:  container.querySelector('#hotelsStatcards'),
-        chips:      container.querySelectorAll('.bk-chip'),
-        export:     container.querySelector('#hotelsExport'),
-        editCols:   container.querySelector('#hotelsEditCols'),
-        footer:     container.querySelector('#hotelsFooter'),
-        checkAll:   container.querySelector('#hotelsCheckAll'),
+        body:        container.querySelector('#hotelsBody'),
+        error:       container.querySelector('#hotelsError'),
+        notice:      container.querySelector('#hotelsNotice'),
+        add:         container.querySelector('#hotelsAdd'),
+        exportBtn:   container.querySelector('#hotelsExportCsv'),
+        subtitle:    container.querySelector('#hotelsSubtitle'),
+        statusChips: container.querySelectorAll('[data-status]'),
+        locChips:    container.querySelectorAll('[data-loc]'),
+        moreFilters: container.querySelector('#hotelsMoreFilters'),
       };
 
-      // Reset filter to "All" on every mount so the page opens neutral.
+      // Reset both filters to "All" on every mount so the page opens neutral.
       hotelsFilter = 'all';
-      hotelsEls.statcards.querySelectorAll('.bk-statcard').forEach(card => {
-        card.classList.toggle('bk-statcard--active', card.dataset.filter === 'all');
-      });
+      hotelsLocationFilter = 'all';
 
-      // Stat-card click → filter rows in-memory.
-      hotelsEls.statcards.addEventListener('click', (e) => {
-        const card = e.target.closest('.bk-statcard');
-        if (!card) return;
-        hotelsFilter = card.dataset.filter || 'all';
-        hotelsEls.statcards.querySelectorAll('.bk-statcard').forEach(c => {
-          c.classList.toggle('bk-statcard--active', c === card);
+      // Status chip group → filter rows by status.
+      hotelsEls.statusChips.forEach((chip) => {
+        chip.addEventListener('click', () => {
+          hotelsFilter = chip.dataset.status || 'all';
+          hotelsEls.statusChips.forEach((c) => c.classList.toggle('chip--active', c === chip));
+          renderHotelsTable(hotelsEls.body, hotelsCache);
         });
-        renderHotelsTable(hotelsEls.body, hotelsCache);
       });
 
-      // Filter chips, Export, Edit columns, Analyze are shells for now.
-      hotelsEls.chips.forEach(c => c.addEventListener('click', noopChip));
-      hotelsEls.export.addEventListener('click',   noopChip);
-      hotelsEls.editCols.addEventListener('click', noopChip);
-
-      // Header "select all" — toggles every visible row checkbox.
-      hotelsEls.checkAll.addEventListener('change', () => {
-        hotelsEls.body.querySelectorAll('input[type="checkbox"][data-hotels-row]')
-          .forEach(cb => { cb.checked = hotelsEls.checkAll.checked; });
+      // Location chip group → filter rows by location.
+      hotelsEls.locChips.forEach((chip) => {
+        chip.addEventListener('click', () => {
+          hotelsLocationFilter = chip.dataset.loc || 'all';
+          hotelsEls.locChips.forEach((c) => c.classList.toggle('chip--active', c === chip));
+          renderHotelsTable(hotelsEls.body, hotelsCache);
+        });
       });
 
-      // "+ Add hotel" still opens the create drawer (drawer code is
-      // unchanged below). Clicking a row navigates to the new full
-      // hotel-detail page at /admin/hotels/<slug>/. The detail drawer
-      // (openHotelDrawer) stays defined so per-tab CRUD on the new
-      // page can call into the same flows once those tabs are wired.
-      hotelsEls.add.addEventListener('click', openHotelCreateDrawer);
+      if (hotelsEls.exportBtn)   hotelsEls.exportBtn.addEventListener('click', noopChip);
+      if (hotelsEls.moreFilters) hotelsEls.moreFilters.addEventListener('click', noopChip);
+
+      // "Add partner hotel" opens the create drawer. Clicking a row
+      // navigates to the full hotel-detail page at /admin/hotels/<slug>/.
+      if (hotelsEls.add) hotelsEls.add.addEventListener('click', openHotelCreateDrawer);
       hotelsEls.body.addEventListener('click', (e) => {
-        // Ignore clicks on the row checkbox + kebab.
-        if (e.target.closest('input,button.bk-kebab')) return;
+        if (e.target.closest('input,button')) return;
         const tr = e.target.closest('tr[data-hotel-idx]');
         if (!tr) return;
         const hotel = hotelsCache[Number(tr.dataset.hotelIdx)];
@@ -7349,95 +7310,88 @@
     }
 
     function renderHotelsTable(body, hotels) {
-      // Update stat-card counts from the full unfiltered list every
-      // render — counts always reflect totals, not the current filter.
-      updateHotelsStatcardCounts(hotels);
       updateNavCount('hotels', hotels.length);
 
-      const filtered = hotels.filter((h) => matchesHotelsFilter(h, hotelsFilter));
+      // Subtitle: total + per-location breakdown, from the full list.
+      if (hotelsEls && hotelsEls.subtitle) {
+        const banff = hotels.filter((h) => (h.location || '').toLowerCase() === 'banff').length;
+        const canm  = hotels.filter((h) => (h.location || '').toLowerCase() === 'canmore').length;
+        hotelsEls.subtitle.textContent =
+          hotels.length + ' hotel' + (hotels.length === 1 ? '' : 's') +
+          ' · ' + banff + ' in Banff · ' + canm + ' in Canmore';
+      }
 
-      if (hotelsEls && hotelsEls.checkAll) hotelsEls.checkAll.checked = false;
+      const filtered = hotels.filter((h) => matchesHotelsFilter(h, hotelsFilter, hotelsLocationFilter));
 
       if (!filtered.length) {
-        const msg = hotels.length
-          ? 'No partners match this filter.'
-          : 'No partners yet. Add the first one with the + Add hotel button.';
+        const msg = hotels.length ? 'No hotels match these filters.' : 'No partners yet.';
         body.innerHTML =
-          '<tr><td colspan="11" class="bk-empty">' +
-            '<div class="bk-empty__title">' + escapeHtml(msg) + '</div>' +
-          '</td></tr>';
-        if (hotelsEls && hotelsEls.footer) hotelsEls.footer.textContent = '0 items';
+          '<tr><td colspan="8" style="text-align:center;padding:48px 0;color:var(--text-secondary)">' +
+            escapeHtml(msg) + '</td></tr>';
         return;
       }
 
       const frag = document.createDocumentFragment();
       filtered.forEach((h) => {
-        // Original index inside hotelsCache — preserved so the existing
-        // row-click handler (data-hotel-idx) keeps resolving the right
-        // record after the visible list is filtered.
-        const idx = hotels.indexOf(h);
-        const activeStaff = (h.staff    || []).filter((s) => s.status === 'active').length;
-        const activeMngrs = (h.managers || []).filter((m) => m.status === 'active').length;
-        const typeLabel   = h.type === 'kickback' ? 'Kickback'
-                          : h.type === 'pool'     ? 'Pool'
-                          : '—';
+        // Original index inside hotelsCache — preserved so the row-click
+        // handler (data-hotel-idx) resolves the right record after filtering.
+        const idx     = hotels.indexOf(h);
+        const rooms   = h.rooms != null ? String(h.rooms) : '—';
+        const booked  = h.bookings_count != null ? String(h.bookings_count) : '—';
+        const commPct = h.commission_pct != null ? h.commission_pct + '%' : '—';
+        const lastAct = h.updated_at ? relativeTimeOrNever(h.updated_at) : '—';
 
         const tr = document.createElement('tr');
         tr.dataset.hotelIdx = String(idx);
         tr.innerHTML =
-          '<td class="bk-table__check"><input type="checkbox" data-hotels-row="' + escapeHtml(h.id || '') + '" aria-label="Select hotel"></td>' +
-          '<td class="bk-table__name">' + escapeHtml(h.name) + '</td>' +
-          '<td>' + escapeHtml(h.location || '—') + '</td>' +
-          '<td>' + escapeHtml(typeLabel) + '</td>' +
-          '<td>' + (h.commission_pct != null ? escapeHtml(h.commission_pct + '%') : '—') + '</td>' +
-          '<td>' + activeStaff + '</td>' +
-          '<td>' + activeMngrs + '</td>' +
+          '<td>' +
+            '<div class="hotel">' +
+              '<span class="hotel__avatar">' + escapeHtml(hotelInitials(h.name)) + '</span>' +
+              '<div class="hotel__meta">' +
+                '<span class="hotel__name">' + escapeHtml(h.name || '—') + '</span>' +
+                '<span class="hotel__slug">' + escapeHtml(h.code || '') + '</span>' +
+              '</div>' +
+            '</div>' +
+          '</td>' +
           '<td>' + hotelStatusPill(h.status) + '</td>' +
-          '<td>' + escapeHtml(formatHumanDate(h.effective_date) || '—') + '</td>' +
-          '<td>' + escapeHtml(formatHumanDateTime(h.created_at)) + '</td>' +
-          '<td class="bk-table__kebab"><button type="button" class="bk-kebab" aria-label="Row actions">⋯</button></td>';
+          '<td>' + escapeHtml(h.location || '—') + '</td>' +
+          '<td class="num">' + escapeHtml(rooms) + '</td>' +
+          '<td class="num">' + escapeHtml(booked) + '</td>' +
+          '<td class="num">—</td>' +
+          '<td>' + escapeHtml(commPct) + '</td>' +
+          '<td>' + lastAct + '</td>';
         frag.appendChild(tr);
       });
       body.innerHTML = '';
       body.appendChild(frag);
-
-      if (hotelsEls && hotelsEls.footer) {
-        hotelsEls.footer.textContent =
-          filtered.length + (filtered.length === 1 ? ' item' : ' items');
-      }
     }
 
-    function matchesHotelsFilter(h, filter) {
-      if (filter === 'all')        return true;
-      if (filter === 'active')     return h.status === 'active';
-      if (filter === 'terminated') return h.status === 'terminated';
-      if (filter === 'kickback')   return h.type === 'kickback';
-      if (filter === 'pool')       return h.type === 'pool';
-      if (filter === 'banff')      return (h.location || '').toLowerCase() === 'banff';
-      if (filter === 'canmore')    return (h.location || '').toLowerCase() === 'canmore';
-      return true;
+    function matchesHotelsFilter(h, status, location) {
+      const statusOk = status === 'all' || h.status === status;
+      const locOk    = location === 'all' || (h.location || '').toLowerCase() === location.toLowerCase();
+      return statusOk && locOk;
     }
 
-    function updateHotelsStatcardCounts(hotels) {
-      if (!hotelsEls || !hotelsEls.statcards) return;
-      const counts = {
-        all:        hotels.length,
-        active:     hotels.filter((h) => h.status === 'active').length,
-        terminated: hotels.filter((h) => h.status === 'terminated').length,
-        kickback:   hotels.filter((h) => h.type   === 'kickback').length,
-        pool:       hotels.filter((h) => h.type   === 'pool').length,
-      };
-      hotelsEls.statcards.querySelectorAll('[data-count]').forEach((node) => {
-        const k = node.dataset.count;
-        node.textContent = String(counts[k] != null ? counts[k] : 0);
-      });
+    // First+last initials for the hotel avatar (single-word names fall
+    // back to the first two characters).
+    function hotelInitials(name) {
+      const parts = String(name || '').split(/\s+/).filter(Boolean);
+      if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+      return String(name || '?').slice(0, 2).toUpperCase();
     }
 
     function hotelStatusPill(status) {
-      if (status === 'active')     return '<span class="bk-pill bk-pill--ok">Active</span>';
-      if (status === 'terminated') return '<span class="bk-pill bk-pill--neutral">Terminated</span>';
-      if (status === 'revoked')    return '<span class="bk-pill bk-pill--neutral">Revoked</span>';
-      return '<span class="bk-pill bk-pill--neutral">' + escapeHtml(status || '—') + '</span>';
+      const map = {
+        active:     ['pill pill--ok',      'Active'],
+        pending:    ['pill pill--warn',    'Pending'],
+        paused:     ['pill pill--neutral', 'Paused'],
+        suspended:  ['pill pill--bad',     'Suspended'],
+        invited:    ['pill pill--info',    'Invited'],
+        terminated: ['pill pill--neutral', 'Terminated'],
+        revoked:    ['pill pill--bad',     'Revoked'],
+      };
+      const m = map[status] || ['pill pill--neutral', status || '—'];
+      return '<span class="' + m[0] + '">' + escapeHtml(m[1]) + '</span>';
     }
 
     // Single source of truth for the title-row pill, its popover,
