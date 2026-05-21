@@ -141,11 +141,9 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   margin: 0 auto;   /* centre within the main column (excludes sidebar) */
 }
 
-/* ── Sidebar: brand + nav + footer ────────────────────────────── */
-/* Brand and nav icons share the same left edge — 20px from the
-   sidebar's left border. Brand padding-left + nav padding-left +
-   item border + item padding-left all contribute and have to add
-   to 20px on both rows for the icons to vertically line up. */
+/* ── Sidebar: brand + nav ─────────────────────────────────────── */
+/* Brand glyph and nav icons share a vertical centre line; the exact
+   on-grid math lives in the alignment note on .app-brand below. */
 
 .app-brand {
   display: flex; align-items: center;
@@ -364,21 +362,25 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 
 /* ── Page heading (top of every route) ────────────────────────── */
 .page-head {
-  margin-bottom: var(--s8);
+  margin-bottom: var(--space-2xl);
   display: flex; align-items: flex-start; justify-content: space-between;
-  gap: var(--s4); flex-wrap: wrap;
+  gap: var(--space-lg); flex-wrap: wrap;
 }
+/* Fixed display size for now; fluid clamp() arrives with the
+   responsive-layer integration (rule 14). Weight pinned to 500 —
+   the global h1 rule's 600 isn't in the two-weight scale (rule 5). */
 .page-head__title {
-  font-size: var(--t-3xl);
+  font-size: var(--type-display-size);
+  font-weight: var(--weight-medium);
   letter-spacing: -0.01em;
-  color: var(--text);
+  color: var(--text-primary);
 }
 .page-head__sub {
-  margin-top: var(--s2);
-  color: var(--text-muted);
-  font-size: var(--t-base);
+  margin-top: var(--space-sm);
+  color: var(--text-secondary);
+  font-size: var(--type-body-size);
 }
-.page-head__actions { display: flex; gap: var(--s2); }
+.page-head__actions { display: flex; gap: var(--space-sm); }
 
 /* ── Buttons ──────────────────────────────────────────────────── */
 .btn {
