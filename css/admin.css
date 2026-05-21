@@ -577,21 +577,28 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 
 /* ── Inputs ───────────────────────────────────────────────────── */
 .input {
+  display: block;
   width: 100%;
-  padding: 7px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--bg);
-  font-size: var(--t-sm);
-  color: var(--text);
-  transition: border-color var(--t-fast), box-shadow var(--t-fast);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  font-size: var(--type-body-size);
+  color: var(--text-primary);
+  /* Transition handled by the global interactive rule (rule 22). */
 }
-.input:focus {
+.input::placeholder { color: var(--text-tertiary); }
+.input:hover { border-color: var(--border-strong); }
+.input:focus-visible {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  border-color: var(--border-brand);
+  box-shadow: var(--shadow-focus-ring);
 }
-.input:disabled { background: var(--bg-subtle); color: var(--text-muted); }
+.input:disabled {
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
 
 /* ── Badges (status pills) ────────────────────────────────────── */
 .badge {
@@ -3428,7 +3435,7 @@ select.hd-bankf__input { appearance: auto; }
 }
 .pl-asset__upbtn { cursor: pointer; }
 .pl-asset__ext { font-size: var(--t-sm); font-weight: 600; }
-.input--sm { padding: 2px 6px; height: 28px; font-size: var(--t-xs); }
+.input--sm { padding: var(--space-xs) var(--space-sm); font-size: var(--type-caption-size); }
 
 /* Placement analytics dashboard (in-platform Short.io view). */
 .pl-an__url {
