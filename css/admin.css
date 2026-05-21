@@ -836,7 +836,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 /* ── Slide-over drawer ────────────────────────────────────────── */
 .drawer {
   position: fixed; inset: 0;
-  z-index: 200;
+  z-index: var(--z-drawer);
   display: flex; justify-content: flex-end;
 }
 .drawer[hidden] { display: none; }
@@ -844,58 +844,61 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
   /* Backdrop — click to close. */
   content: '';
   position: absolute; inset: 0;
-  background: rgba(26, 26, 46, 0.35);
+  background: var(--bg-overlay);
 }
 .drawer__panel {
   position: relative;
   width: 100%; max-width: 540px;
-  background: var(--bg);
+  background: var(--bg-surface);
   height: 100vh;
   overflow-y: auto;
-  box-shadow: -8px 0 30px rgba(0,0,0,0.1);
+  /* e3 (modal-tier) elevation. The system has no directional side-panel
+     shadow; revisit with a deliberate token if this reads wrong. */
+  box-shadow: var(--shadow-e3);
   display: flex; flex-direction: column;
 }
 .drawer__head {
   display: flex; justify-content: space-between; align-items: flex-start;
-  padding: var(--s5) var(--s6);
-  border-bottom: 1px solid var(--border);
-  gap: var(--s3);
+  padding: var(--space-lg) var(--space-xl);
+  border-bottom: 1px solid var(--border-subtle);
+  gap: var(--space-md);
   flex-shrink: 0;
 }
 .drawer__title {
   font-family: var(--font-display);
-  font-size: var(--t-xl); font-weight: 600;
-  color: var(--text);
+  font-size: var(--type-subheading-size); font-weight: var(--weight-medium);
+  color: var(--text-primary);
   letter-spacing: -0.01em;
 }
 .drawer__sub {
-  font-size: var(--t-sm); color: var(--text-muted);
-  margin-top: 2px;
+  font-size: var(--type-caption-size); color: var(--text-secondary);
+  margin-top: var(--space-xs);
   font-family: var(--font-mono);
 }
 .drawer__close {
   background: none; border: 0; cursor: pointer;
-  font-size: 24px; line-height: 1; color: var(--text-muted);
-  padding: 0 6px;
+  font-size: var(--type-heading-size); line-height: 1; color: var(--text-secondary);
+  padding: 0 var(--space-sm);
 }
-.drawer__close:hover { color: var(--text); }
+.drawer__close:hover { color: var(--text-primary); }
+.drawer__close:focus-visible { outline: none; box-shadow: var(--shadow-focus-ring); border-radius: var(--radius-sm); }
 .drawer__body {
-  padding: var(--s6);
+  padding: var(--space-xl);
   flex: 1;
 }
 
-.drawer-section + .drawer-section { margin-top: var(--s8); }
+.drawer-section + .drawer-section { margin-top: var(--space-2xl); }
 .drawer-section__head {
   display: flex; justify-content: space-between; align-items: baseline;
-  margin-bottom: var(--s3);
-  gap: var(--s3);
+  margin-bottom: var(--space-md);
+  gap: var(--space-md);
 }
 .drawer-section__title {
-  font-size: var(--t-xs);
+  font-size: var(--type-overline-size);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--text-muted);
-  font-weight: 600;
+  color: var(--text-secondary);
+  font-weight: var(--weight-medium);
   margin: 0;
 }
 
@@ -903,134 +906,132 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .drawer-fields {
   display: grid;
   grid-template-columns: 140px 1fr;
-  gap: var(--s3) var(--s4);
+  gap: var(--space-md) var(--space-lg);
   margin: 0;
-  font-size: var(--t-sm);
+  font-size: var(--type-body-size);
 }
 .drawer-fields dt {
-  color: var(--text-muted);
-  font-weight: 500;
+  color: var(--text-secondary);
+  font-weight: var(--weight-medium);
   align-self: center;
 }
 .drawer-fields dd {
   margin: 0;
-  color: var(--text);
+  color: var(--text-primary);
   word-break: break-word;
 }
 
-/* Highlight the row whose hotel is open in the drawer. */
-.row--selected > td { background: var(--bg-sunken) !important; }
+/* Highlight the row whose hotel is open in the drawer (selected-row tint). */
+.row--selected > td { background: var(--bg-brand-subtle) !important; }
 
 /* Drawer form (create / edit) — stacked label + input rows. */
 .drawer-form {
   display: flex; flex-direction: column;
-  gap: var(--s4);
+  gap: var(--space-lg);
 }
 .drawer-form__row {
   display: flex; flex-direction: column;
-  gap: 6px;
+  gap: var(--space-sm);
 }
 .drawer-form__label {
-  font-size: var(--t-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-muted);
-  font-weight: 600;
+  font-size: var(--type-label-size);
+  color: var(--text-body);
+  font-weight: var(--weight-medium);
   display: flex; justify-content: space-between; align-items: baseline;
-  gap: var(--s2);
+  gap: var(--space-sm);
 }
 .drawer-form__req {
-  font-size: 0.65rem;
-  text-transform: none;
-  letter-spacing: 0;
-  color: var(--text-faint);
-  font-weight: 400;
+  font-size: var(--type-caption-size);
+  color: var(--text-tertiary);
+  font-weight: var(--weight-regular);
 }
 .drawer-form__hint {
-  font-size: var(--t-xs);
-  color: var(--text-muted);
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
   line-height: 1.4;
 }
 .drawer-form__pair {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--s4);
+  gap: var(--space-lg);
 }
+/* Chevron colour is baked into the data URI (CSS vars can't reach inside
+   it); kept as a documented exception. */
 .drawer-form select.input {
   appearance: none;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2356595e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
   background-repeat: no-repeat;
-  background-position: right 10px center;
-  padding-right: 30px;
+  background-position: right var(--space-md) center;
+  padding-right: var(--space-2xl);
 }
 .drawer-actions {
   display: flex; justify-content: flex-end;
-  gap: var(--s3);
-  margin-top: var(--s8);
-  padding-top: var(--s5);
-  border-top: 1px solid var(--border);
+  gap: var(--space-md);
+  margin-top: var(--space-2xl);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--border-subtle);
 }
 
 /* Per-row Edit / Revoke buttons inside drawer tables. */
 .row-actions__col { width: 1%; white-space: nowrap; }
 .row-actions {
   white-space: nowrap; text-align: right;
-  display: flex; gap: 4px; justify-content: flex-end;
+  display: flex; gap: var(--space-xs); justify-content: flex-end;
 }
 .row-actions__btn {
   background: none; border: 0; cursor: pointer;
-  padding: 4px 8px; border-radius: var(--r-sm);
-  font-size: var(--t-xs); font-weight: 500;
-  color: var(--text-muted);
-  transition: background var(--t-fast), color var(--t-fast);
+  padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm);
+  font-size: var(--type-caption-size); font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+  /* Transition handled by the global interactive rule (rule 22). */
 }
 .row-actions__btn:hover {
   background: var(--bg-subtle);
-  color: var(--text);
+  color: var(--text-primary);
 }
-.row-actions__btn--danger { color: var(--bad-fg); }
+.row-actions__btn--danger { color: var(--text-danger); }
 .row-actions__btn--danger:hover {
-  background: var(--bad-bg);
-  color: var(--bad-fg);
+  background: var(--feedback-danger-bg);
+  color: var(--text-danger);
 }
 
 /* Add/edit form rendered below the staff (and managers) tables. */
 .drawer-subform {
-  margin-top: var(--s4);
-  padding: var(--s5);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
+  margin-top: var(--space-lg);
+  padding: var(--space-lg);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
   background: var(--bg-subtle);
 }
 .drawer-subform__title {
   font-family: var(--font-display);
-  font-size: var(--t-sm); font-weight: 600;
-  color: var(--text);
-  margin: 0 0 var(--s4);
+  font-size: var(--type-label-size); font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-lg);
 }
 .drawer-subform__actions {
-  display: flex; justify-content: flex-end; gap: var(--s2);
-  margin-top: var(--s4);
+  display: flex; justify-content: flex-end; gap: var(--space-sm);
+  margin-top: var(--space-lg);
 }
 
 /* Danger zone — terminate / reinstate inside the hotel drawer. */
-.drawer-danger { margin-top: var(--s8); }
-.drawer-danger .drawer-section__title { color: var(--bad-fg); }
+.drawer-danger { margin-top: var(--space-2xl); }
+.drawer-danger .drawer-section__title { color: var(--text-danger); }
 .drawer-danger__row {
   display: flex; align-items: center; justify-content: space-between;
-  gap: var(--s4);
-  padding: var(--s4);
-  border: 1px solid var(--bad-border);
-  border-radius: var(--r-md);
-  background: var(--bad-bg);
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  border: 1px solid var(--feedback-danger-border);
+  border-radius: var(--radius-md);
+  background: var(--feedback-danger-bg);
 }
 .drawer-danger__label {
-  font-size: var(--t-sm); font-weight: 600;
-  color: var(--text);
-  margin-bottom: 2px;
+  font-size: var(--type-body-size); font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  margin-bottom: var(--space-xs);
 }
 .drawer-danger__hint {
-  font-size: var(--t-xs); color: var(--text-muted);
+  font-size: var(--type-caption-size); color: var(--text-secondary);
   line-height: 1.4;
   max-width: 38ch;
 }
@@ -3524,8 +3525,8 @@ select.hd-bankf__input { appearance: auto; }
 }
 /* drawer-form__optional — de-emphasised label suffix used by sl modals */
 .drawer-form__optional {
-  font-weight: 400;
-  color: var(--text-muted);
+  font-weight: var(--weight-regular);
+  color: var(--text-secondary);
   font-size: 0.9em;
 }
 
