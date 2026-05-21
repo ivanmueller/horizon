@@ -178,14 +178,14 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
   color: var(--text-tertiary);
 }
 /* Icon displays the first letter of the signed-in account (admin email
-   or hotel name). Background matches the neutral wash the nav row hovers
-   to, so on hover the icon merges into the row. */
+   or hotel name). Violet brand glyph with a white letter — the one place
+   the workspace switcher carries the primary brand colour. */
 .app-brand__icon {
   width: 24px; height: 24px;
   border-radius: var(--radius-md);
-  background: var(--bg-subtle);
+  background: var(--action-primary-default);
   display: inline-flex; align-items: center; justify-content: center;
-  color: var(--text-primary);
+  color: #fff;
   flex-shrink: 0;
 }
 .app-brand__letter {
@@ -194,12 +194,20 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
   font-weight: var(--weight-medium);
   line-height: 1;
 }
+.app-brand__meta { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .app-brand__name {
   font-family: var(--font-display);
   font-weight: var(--weight-medium);
   font-size: var(--type-label-size);
   color: var(--text-primary);
   letter-spacing: -0.003em;
+  line-height: 1.2;
+}
+.app-brand__role {
+  font-size: var(--type-overline-size);
+  line-height: 1.2;
+  font-weight: var(--weight-regular);
+  color: var(--text-secondary);
 }
 
 .app-nav {
@@ -211,10 +219,11 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
   display: flex; flex-direction: column; gap: var(--space-lg);   /* group→group spacing */
 }
 .app-nav__heading {
-  font-size: var(--type-caption-size);
-  letter-spacing: 0;
-  color: var(--text-secondary);
-  font-weight: var(--weight-regular);
+  font-size: var(--type-overline-size);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  font-weight: var(--weight-medium);
   padding: 0 var(--space-md) var(--space-sm);
   margin-top: var(--space-sm);
 }
@@ -227,7 +236,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
   border-radius: var(--radius-md);
   color: var(--text-body);
   font-size: var(--type-label-size);
-  font-weight: var(--weight-regular);
+  font-weight: var(--weight-medium);
   letter-spacing: -0.003em;
   cursor: pointer;
   background: none;
@@ -238,18 +247,17 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
 .app-nav__item:hover {
   background: var(--bg-subtle);
 }
-/* Active state: only text + icon turn the brand colour. No background
-   at rest; hover paints the faint brand wash for click affordance. */
+/* Active state: faint brand wash background + brand-colour text/icon. */
 .app-nav__item--active {
-  background: transparent;
-  color: var(--action-primary-default);
+  background: var(--bg-brand-subtle);
+  color: var(--text-brand);
   font-weight: var(--weight-medium);
 }
 .app-nav__item--active:hover {
-  background: var(--bg-brand-subtle);
-  color: var(--action-primary-default);
+  background: var(--bg-brand-muted);
+  color: var(--text-brand);
 }
-.app-nav__item--active .app-nav__icon { color: var(--action-primary-default); }
+.app-nav__item--active .app-nav__icon { color: var(--text-brand); }
 .app-nav__icon {
   width: 16px; height: 16px;
   display: inline-flex; align-items: center; justify-content: center;
@@ -270,6 +278,26 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
   border-radius: var(--radius-pill);
   min-width: 18px;
   text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Resting count on nav items (e.g. Bookings, Hotels totals) — quieter
+   than the pending badge: plain tertiary number, no pill. */
+.app-nav__count {
+  margin-left: auto;
+  font-size: var(--type-caption-size);
+  font-weight: var(--weight-medium);
+  line-height: 1;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Sidebar footer — quiet utility links pinned below the nav. */
+.app-foot {
+  margin: var(--space-sm) var(--space-sm) var(--space-md);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--border-subtle);
+  display: flex; flex-direction: column; gap: 2px;
 }
 
 /* ── Workspace dropdown menu (anchored under .app-brand) ──────── */
