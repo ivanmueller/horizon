@@ -603,18 +603,17 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 /* ── Badges (status pills) ────────────────────────────────────── */
 .badge {
   display: inline-flex; align-items: center;
-  padding: 2px 8px;
-  border-radius: var(--r-full);
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-pill);
+  font-size: var(--type-caption-size);
+  font-weight: var(--weight-medium);
   white-space: nowrap;
 }
-.badge--ok      { background: var(--ok-bg);      color: var(--ok-fg); }
-.badge--warn    { background: var(--warn-bg);    color: var(--warn-fg); }
-.badge--bad     { background: var(--bad-bg);     color: var(--bad-fg); }
-.badge--neutral { background: var(--neutral-bg); color: var(--neutral-fg); }
+.badge--ok      { background: var(--feedback-success-bg); color: var(--feedback-success-text); }
+.badge--warn    { background: var(--feedback-warning-bg); color: var(--feedback-warning-text); }
+.badge--bad     { background: var(--feedback-danger-bg);  color: var(--feedback-danger-text); }
+.badge--neutral { background: var(--bg-muted);            color: var(--text-body); }
 
 /* ── Empty / placeholder state ────────────────────────────────── */
 .empty {
@@ -798,19 +797,17 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 
 /* ── Status pill (select element styled as a pill) ────────────── */
 .status {
-  font: inherit; font-size: 0.6875rem; font-weight: 600;
-  padding: 3px 8px;
-  border-radius: var(--r-full);
+  font: inherit; font-size: var(--type-caption-size); font-weight: var(--weight-medium);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-pill);
   border: 1px solid transparent;
   cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 .status:disabled { opacity: 0.6; cursor: progress; }
-.status--confirmed      { background: var(--ok-bg);      color: var(--ok-fg);      border-color: var(--ok-border); }
-.status--cancelled      { background: var(--bad-bg);     color: var(--bad-fg);     border-color: var(--bad-border); }
-.status--refunded       { background: var(--neutral-bg); color: var(--neutral-fg); border-color: var(--border); }
-.status--pending_refund { background: var(--warn-bg);    color: var(--warn-fg);    border-color: var(--warn-border); }
+.status--confirmed      { background: var(--feedback-success-bg); color: var(--feedback-success-text); border-color: var(--feedback-success-border); }
+.status--cancelled      { background: var(--feedback-danger-bg);  color: var(--feedback-danger-text);  border-color: var(--feedback-danger-border); }
+.status--refunded       { background: var(--bg-muted);            color: var(--text-body);             border-color: var(--border-subtle); }
+.status--pending_refund { background: var(--feedback-warning-bg); color: var(--feedback-warning-text); border-color: var(--feedback-warning-border); }
 
 /* ── PDF preview modal ────────────────────────────────────────── */
 .pdf-modal {
