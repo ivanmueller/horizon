@@ -43,7 +43,7 @@ If a custom property polyfill or PostCSS plugin is in use, prefer `@media (min-w
 
 No content spans the full width of the viewport. Every page has a `.container` (or equivalent) with a max-width. Defaults:
 
-- Product UI: `--container-xl` (1200px max)
+- Product UI: `--container-xl` (1280px max)
 - Marketing pages: `--container-2xl` (1440px max)
 - Long-form text (terms, privacy, blog posts): `--container-prose` (720px max)
 
