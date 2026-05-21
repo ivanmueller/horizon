@@ -7,10 +7,10 @@
    apart means the partner-facing site can't accidentally break when
    we iterate on admin styling, and vice versa.
 
-   Visual language: neutral white + gentle greys, Stripe-style. The
-   accent teal (--accent) is reserved for primary CTAs, the active
-   sidebar row, and a small number of high-priority badges. Headings,
-   links, hover states default to neutrals.
+   Visual language: pure-white surfaces + cool violet-tinted neutrals.
+   The Horizon Violet primary (--action-primary-default) carries CTAs,
+   the active sidebar row, and key badges. Headings, links, and hover
+   states default to neutrals.
    ───────────────────────────────────────────────────────────────── */
 
 /* ── Tokens ───────────────────────────────────────────────────── */
@@ -18,7 +18,6 @@
   /* Backgrounds */
   --bg:           #FFFFFF;
   --bg-subtle:    #FAFAF9;   /* cards / hover states */
-  --bg-sunken:    #F5F5F0;   /* table head, code chips */
 
   /* Borders */
   --border:       #EAEAE5;
@@ -28,11 +27,6 @@
   --text:         #1A1A2E;
   --text-muted:   #6B7280;
   --text-faint:   #9CA3AF;
-
-  /* Accent — used sparingly (primary CTA, active nav, key badges) */
-  --accent:       #209F95;
-  --accent-hover: #1C8C83;
-  --accent-soft:  rgba(32, 159, 149, 0.08);
 
   /* Status palette for badges + alerts */
   --ok-bg:        #ECFDF5;
@@ -1463,271 +1457,6 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
   margin-bottom: var(--space-sm);
 }
 .bk-empty__body { font-size: var(--type-body-size); max-width: 32em; margin: 0 auto; }
-
-/* ─────────────────────────────────────────────────────────────────
-   Home page — Stripe-style overview shell.
-   Two stacked sections: "Today" (KPIs + intraday chart on the left,
-   balance + payouts panel on the right), and "Your overview" (filter
-   chips + grid of six metric widgets).
-   ─────────────────────────────────────────────────────────────── */
-
-.hm-section { margin-bottom: var(--space-2xl); }
-.hm-section__head {
-  border-bottom: 1px solid var(--border-subtle);
-  padding-bottom: var(--space-md);
-  margin-bottom: var(--space-lg);
-}
-.hm-section__title {
-  font-family: var(--font-display);
-  font-size: var(--type-heading-size);
-  font-weight: var(--weight-medium);
-  color: var(--text-primary);
-  margin: 0;
-  letter-spacing: -0.01em;
-}
-
-/* ── Today block — chart + side panel ─────────────────────────── */
-.hm-today {
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: var(--space-3xl);
-  align-items: start;
-}
-.hm-today__main { min-width: 0; }
-
-.hm-today__kpis {
-  display: flex;
-  gap: var(--space-3xl);
-  margin-bottom: var(--space-lg);
-}
-.hm-kpi {
-  background: none; border: 0; padding: 0;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  display: flex; flex-direction: column;
-  gap: var(--space-xs);
-  color: var(--text-primary);
-}
-.hm-kpi__label {
-  display: inline-flex; align-items: center; gap: var(--space-xs);
-  font-size: var(--type-label-size);
-  font-weight: var(--weight-medium);
-  color: var(--text-body);
-}
-.hm-kpi__chev {
-  width: 12px; height: 12px;
-  color: var(--text-secondary);
-}
-.hm-kpi__value {
-  font-family: var(--font-display);
-  font-size: var(--type-heading-size);
-  font-weight: var(--weight-medium);
-  color: var(--text-primary);
-  letter-spacing: -0.01em;
-  font-feature-settings: 'tnum' 1;
-}
-.hm-kpi__time {
-  font-size: var(--type-caption-size);
-  color: var(--text-secondary);
-}
-
-.hm-chart {
-  position: relative;
-  margin-top: var(--space-sm);
-}
-.hm-chart__note {
-  position: absolute;
-  top: -22px;
-  right: 0;
-  font-size: var(--type-caption-size);
-  color: var(--text-secondary);
-}
-.hm-chart__svg {
-  display: block;
-  width: 100%;
-  height: 200px;
-}
-.hm-chart__axis {
-  display: flex; justify-content: space-between;
-  font-size: var(--type-caption-size);
-  color: var(--text-secondary);
-  margin-top: var(--space-xs);
-}
-
-/* ── Today right side panel — balance + payouts ───────────────── */
-.hm-today__side {
-  padding-left: var(--space-2xl);
-  border-left: 1px solid var(--border-subtle);
-}
-.hm-side__row {
-  display: flex; align-items: flex-start; justify-content: space-between;
-  gap: var(--space-lg);
-}
-.hm-side__col { display: flex; flex-direction: column; gap: var(--space-xs); }
-.hm-side__label {
-  font-size: var(--type-label-size);
-  font-weight: var(--weight-medium);
-  color: var(--text-body);
-}
-.hm-side__value {
-  font-family: var(--font-display);
-  font-size: var(--type-heading-size);
-  font-weight: var(--weight-medium);
-  color: var(--text-primary);
-  font-feature-settings: 'tnum' 1;
-}
-.hm-side__value--muted { color: var(--text-secondary); }
-.hm-side__hint {
-  font-size: var(--type-caption-size);
-  color: var(--text-secondary);
-}
-.hm-side__link {
-  font-size: var(--type-label-size);
-  font-weight: var(--weight-medium);
-  color: var(--action-primary-default);
-  text-decoration: none;
-}
-.hm-side__link:hover { text-decoration: underline; }
-.hm-side__divider {
-  border: 0; border-top: 1px solid var(--border-subtle);
-  margin: var(--space-lg) 0;
-}
-
-/* ── Filter row above the widgets grid ────────────────────────── */
-.hm-toolbar {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: var(--space-md);
-  margin-bottom: var(--space-lg);
-}
-.hm-filters { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
-.hm-toolbar__actions { display: flex; gap: var(--space-sm); }
-
-.hm-filter {
-  display: inline-flex; align-items: center; gap: var(--space-xs);
-  background: var(--bg-surface);
-  border: 1px dashed var(--border-default);
-  border-radius: var(--radius-pill);
-  padding: var(--space-xs) var(--space-md);
-  font: inherit;
-  font-size: var(--type-label-size);
-  font-weight: var(--weight-medium);
-  color: var(--text-primary);
-  cursor: pointer;
-  /* Transition handled by the global interactive rule (rule 22). */
-}
-.hm-filter:hover {
-  border-color: var(--border-strong);
-  background: var(--bg-subtle);
-}
-.hm-filter__label { color: var(--text-primary); font-weight: var(--weight-medium); }
-.hm-filter__sep   { color: var(--text-tertiary); }
-.hm-filter__value { color: var(--action-primary-default); font-weight: var(--weight-medium); }
-.hm-filter__chev,
-.hm-filter__close {
-  width: 12px; height: 12px;
-  color: var(--text-secondary);
-}
-.hm-filter--removable .hm-filter__close {
-  width: 14px; height: 14px;
-  color: var(--text-secondary);
-}
-.hm-filter--removable:hover .hm-filter__close { color: var(--text-primary); }
-
-/* ── Widgets grid ─────────────────────────────────────────────── */
-/* Tiles sitting on a --bg-subtle wash. Auto-fit grid with a 360px floor
-   and a 1fr ceiling: tiles stretch to fill the row instead of capping at a
-   fixed width, so there's no trailing dead space. The 360px floor yields
-   3 columns at the 1280 product width (six tiles -> even 3+3) and 2 on
-   tablet (-> 2+2+2). min(100%, 360px) prevents overflow on narrow
-   viewports. The wash (--space-sm gap + padding) stays even around the
-   tiles regardless of width. */
-.hm-widgets {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
-  grid-auto-rows: 404px;
-  gap: var(--space-sm);
-  background: var(--bg-subtle);
-  border-radius: var(--radius-lg);
-  padding: var(--space-sm);
-  width: 100%;
-}
-/* No per-tile border — the wash provides the only visual seam.
-   Each tile keeps its own white fill + rounded corners so the
-   wash reads as the gap between tiles. */
-.hm-widget {
-  background: var(--bg-surface);
-  border-radius: var(--radius-lg);
-  padding: var(--space-lg) var(--space-xl) var(--space-lg);
-  display: flex; flex-direction: column;
-  min-width: 0;
-}
-.hm-widget__head {
-  display: flex; align-items: center; gap: var(--space-xs);
-  margin-bottom: var(--space-xs);
-}
-.hm-widget__title {
-  font-size: var(--type-label-size);
-  font-weight: var(--weight-medium);
-  color: var(--text-primary);
-}
-.hm-widget__info {
-  width: 13px; height: 13px;
-  color: var(--text-secondary);
-  flex-shrink: 0;
-}
-.hm-widget__value {
-  font-family: var(--font-display);
-  font-size: var(--type-heading-size);
-  font-weight: var(--weight-medium);
-  color: var(--text-primary);
-  letter-spacing: -0.01em;
-  line-height: 1.15;
-  font-feature-settings: 'tnum' 1;
-}
-.hm-widget__sub {
-  font-size: var(--type-caption-size);
-  color: var(--text-secondary);
-  margin-bottom: var(--space-md);
-}
-.hm-widget__chart {
-  position: relative;
-  flex: 1;            /* fills the remaining vertical space in the tile */
-  min-height: 0;
-}
-.hm-widget__svg {
-  display: block;
-  width: 100%; height: 100%;
-}
-.hm-widget__yaxis {
-  position: absolute; top: 0; right: 0;
-  display: flex; flex-direction: column; justify-content: space-between;
-  height: 100%;
-  font-size: var(--type-caption-size);
-  color: var(--text-secondary);
-  text-align: right;
-  pointer-events: none;
-}
-.hm-widget__xaxis {
-  display: flex; justify-content: space-between;
-  font-size: var(--type-caption-size);
-  color: var(--text-secondary);
-  margin-top: var(--space-xs);
-}
-.hm-widget__foot {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-top: var(--space-md);
-  padding-top: var(--space-md);
-  border-top: 1px solid var(--border-subtle);
-  font-size: var(--type-caption-size);
-}
-.hm-widget__updated { color: var(--text-secondary); }
-.hm-widget__more {
-  color: var(--action-primary-default);
-  font-weight: var(--weight-medium);
-  text-decoration: none;
-}
-.hm-widget__more:hover { text-decoration: underline; }
 
 /* ─────────────────────────────────────────────────────────────────
    Bookings — Date and time filter popover.
@@ -4404,3 +4133,129 @@ select.hd-bankf__input { appearance: auto; }
   margin-left: 4px;
 }
 .app__primary:hover { background: var(--action-primary-hover); }
+
+/* ── Overview (Home) — KPI cards, leaderboard, activity feed ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-md);
+}
+.kpi {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.kpi__head { display: flex; align-items: center; justify-content: space-between; }
+.kpi__label {
+  font: var(--weight-medium) var(--type-overline-size)/1 var(--font-sans);
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.kpi__icon {
+  width: 28px; height: 28px;
+  border-radius: var(--radius-md);
+  background: var(--bg-brand-subtle);
+  color: var(--text-brand);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.kpi__value {
+  font: var(--weight-medium) 26px/1.1 var(--font-sans);
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.kpi__delta {
+  display: inline-flex; align-items: center; gap: var(--space-xs);
+  font: var(--weight-medium) var(--type-caption-size)/1 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  margin-left: 6px;
+}
+.kpi__delta--up { color: var(--text-success); }
+.kpi__delta--down { color: var(--text-danger); }
+.kpi__sub {
+  font: var(--weight-regular) var(--type-caption-size)/1.4 var(--font-sans);
+  color: var(--text-secondary);
+}
+
+/* Two-up split: leaderboard (wider) + activity feed. */
+.split { display: grid; grid-template-columns: 1.4fr 1fr; gap: var(--space-lg); }
+@media (max-width: 1100px) { .split { grid-template-columns: 1fr; } }
+
+/* Flush data card (no inner padding; head + body manage their own). */
+.ov-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.ov-card__head {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--space-md);
+}
+.ov-card__title { font: var(--weight-medium) var(--type-subheading-size)/1.3 var(--font-sans); color: var(--text-primary); }
+.ov-card__sub { font: var(--weight-regular) var(--type-caption-size)/1.4 var(--font-sans); color: var(--text-secondary); margin-top: 2px; }
+
+/* Lightweight overview table (leaderboard). */
+.tbl { width: 100%; border-collapse: collapse; font: var(--weight-regular) var(--type-body-size)/1.4 var(--font-sans); }
+.tbl th {
+  font: var(--weight-medium) var(--type-overline-size)/1 var(--font-sans);
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-secondary);
+  padding: var(--space-md) var(--space-lg);
+  text-align: left;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-subtle);
+}
+.tbl td {
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+.tbl tbody tr:last-child td { border-bottom: 0; }
+.tbl tbody tr { cursor: pointer; }
+.tbl tbody tr:hover td { background: var(--bg-subtle); }
+.tbl .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Hotel identity cell (avatar + name + slug). */
+.hotel { display: flex; align-items: center; gap: var(--space-md); }
+.hotel__avatar {
+  width: 32px; height: 32px; border-radius: var(--radius-md);
+  background: var(--bg-muted);
+  color: var(--text-body);
+  display: inline-flex; align-items: center; justify-content: center;
+  font: var(--weight-medium) var(--type-caption-size) var(--font-sans);
+  flex: none;
+}
+.hotel__meta { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.hotel__name { font: var(--weight-medium) var(--type-label-size)/1.3 var(--font-sans); color: var(--text-primary); }
+.hotel__slug { font: var(--weight-regular) var(--type-overline-size)/1 var(--font-mono); color: var(--text-secondary); }
+
+/* Activity feed (icon + title/sub + amount/time). */
+.feed { display: flex; flex-direction: column; padding: 6px 0; }
+.feed__row {
+  display: grid; grid-template-columns: auto 1fr auto;
+  gap: var(--space-md); align-items: center;
+  padding: var(--space-md) var(--space-xl);
+}
+.feed__row + .feed__row { border-top: 1px solid var(--border-subtle); }
+.feed__icon {
+  width: 30px; height: 30px;
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle); color: var(--text-secondary);
+  display: inline-flex; align-items: center; justify-content: center;
+  flex: none;
+}
+.feed__icon--ok { background: var(--feedback-success-bg); color: var(--feedback-success-text); }
+.feed__icon--warn { background: var(--feedback-warning-bg); color: var(--feedback-warning-text); }
+.feed__icon--info { background: var(--feedback-info-bg); color: var(--feedback-info-text); }
+.feed__icon--brand { background: var(--bg-brand-subtle); color: var(--text-brand); }
+.feed__title { font: var(--weight-regular) var(--type-body-size)/1.4 var(--font-sans); color: var(--text-primary); }
+.feed__title strong { font-weight: var(--weight-medium); }
+.feed__sub { font: var(--weight-regular) var(--type-caption-size)/1.4 var(--font-sans); color: var(--text-secondary); margin-top: 1px; }
+.feed__amt { font: var(--weight-medium) var(--type-label-size)/1 var(--font-sans); color: var(--text-primary); font-variant-numeric: tabular-nums; text-align: right; }
+.feed__when { font: var(--weight-regular) var(--type-caption-size)/1 var(--font-sans); color: var(--text-tertiary); margin-top: 2px; text-align: right; }
