@@ -1,0 +1,56 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"/>
+<title>Status palette</title>
+<link rel="stylesheet" href="../colors_and_type.css"/>
+<style>
+  html,body{margin:0;background:var(--bg-surface);padding:24px;}
+  .row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+  .col{display:flex;flex-direction:column;gap:6px;}
+  .head{font:var(--weight-medium) 12px/1.4 var(--font-sans);color:var(--text-primary);}
+  .stack{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;}
+  .sw{height:38px;border-radius:var(--radius-sm);position:relative;display:flex;align-items:flex-end;padding:4px 6px;}
+  .sw small{font:400 9px/1 var(--font-mono);color:rgba(255,255,255,.85);}
+  .sw.lt small{color:rgba(14,14,20,.55);}
+</style></head><body>
+<div class="row">
+  <div class="col">
+    <div class="head">Success</div>
+    <div class="stack">
+      <div class="sw lt" style="background:#ECFDF5"><small>50</small></div>
+      <div class="sw lt" style="background:#D1FAE5"><small>100</small></div>
+      <div class="sw lt" style="background:#A7F3D0"><small>200</small></div>
+      <div class="sw" style="background:#059669"><small>600</small></div>
+      <div class="sw" style="background:#047857"><small>700</small></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="head">Warning · Aurora</div>
+    <div class="stack">
+      <div class="sw lt" style="background:#FFFAF0"><small>50</small></div>
+      <div class="sw lt" style="background:#FEF3DC"><small>100</small></div>
+      <div class="sw lt" style="background:#FCE3B0"><small>200</small></div>
+      <div class="sw" style="background:#C77E18"><small>600</small></div>
+      <div class="sw" style="background:#9C5F0F"><small>700</small></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="head">Danger</div>
+    <div class="stack">
+      <div class="sw lt" style="background:#FEF2F2"><small>50</small></div>
+      <div class="sw lt" style="background:#FEE2E2"><small>100</small></div>
+      <div class="sw lt" style="background:#FECACA"><small>200</small></div>
+      <div class="sw" style="background:#DC2626"><small>600</small></div>
+      <div class="sw" style="background:#B91C1C"><small>700</small></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="head">Info</div>
+    <div class="stack">
+      <div class="sw lt" style="background:#EFF8FF"><small>50</small></div>
+      <div class="sw lt" style="background:#DBEEFE"><small>100</small></div>
+      <div class="sw lt" style="background:#B0DCFD"><small>200</small></div>
+      <div class="sw" style="background:#0269C5"><small>600</small></div>
+      <div class="sw" style="background:#0455A0"><small>700</small></div>
+    </div>
+  </div>
+</div>
+</body></html>

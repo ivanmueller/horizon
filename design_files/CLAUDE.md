@@ -1,8 +1,14 @@
 # Horizon Design System — AI Integration Prompt v1.2
 
-> **Update from v1.1:** this version adds motion rules (22–27), the Tours sibling brand context, the context-vs-variant decision rule, and brand selection at the start of every redesign. Replace the v1.1 prompt with this one.
+> **Update from v1.1:** v1.2 ratifies the design-system kit reviewed in
+> May 2026. Three substantive changes from v1.1: (1) Horizon Violet
+> anchors at `--color-violet-500` (`#5B2DE8`) instead of `-600`; (2)
+> `--bg-page` is pure `#FFFFFF`, not a tinted neutral; (3) chrome
+> patterns are now codified (no breadcrumbs, search in the topbar,
+> setup pill on partner surfaces, full-page hotel detail).
 >
-> The full design system now consists of these files. All should be in the project, accessible to you:
+> The full design system now consists of these files. All should be in
+> the project, accessible to you:
 >
 > **Core architecture (shared by both brands)**
 > - `horizon-connect-tokens.css` — core tokens (colours, typography, spacing, radius, shadows, motion)
@@ -47,6 +53,31 @@ Do not skip this step. Do not respond with code until you have confirmed.
 
 ---
 
+## Brand colour anchors (v1.2)
+
+Memorise these values — they're the only place primitives are
+referenced directly. Everywhere else, route through the semantic
+tokens.
+
+| Role | Token | Hex |
+|---|---|---|
+| Connect primary (default) | `--color-violet-500` | `#5B2DE8` |
+| Connect primary (hover) | `--color-violet-600` | `#4920C4` |
+| Connect primary (pressed) | `--color-violet-700` | `#3A189E` |
+| Connect primary (disabled) | `--color-violet-200` | `#D4C4FA` |
+| Aurora accent (≤2 % coverage) | `--color-brand-aurora` | `#F4B860` |
+| Page surface (all routes) | `--bg-page` | `#FFFFFF` |
+| Obsidian (text/dark chrome) | `--color-neutral-900` | `#0E0E14` |
+| Tours primary (default) | `--color-amber-600` | `#B8862F` |
+| Sibling-link accent (Tours → Connect) | `--color-brand-deep-violet` | `#5B2DE8` |
+
+There is **no** separate "Marketing Vivid" token in v1.2. The earlier
+`#4920C4` / `#5B2DE8` product-vs-marketing split has been collapsed —
+`#5B2DE8` reads correctly in both registers and is friendlier on
+hotel-facing surfaces. `#4920C4` is now only the hover state.
+
+---
+
 ## The 27 unbreakable rules
 
 All 27 rules carry equal authority. If a redesign would require breaking one, the design is wrong — push back and propose an alternative inside the system.
@@ -54,7 +85,7 @@ All 27 rules carry equal authority. If a redesign would require breaking one, th
 ### Rules 1–10 — visual token rules
 
 1. **Every value references a token.** No hardcoded hex, no hardcoded pixel values. Use `var(--token-name)`.
-2. **Reach for semantic tokens, not primitives.** Use `--text-primary`, not `--color-neutral-800`. Use `--action-primary-default`, not `--color-violet-600`. Components should be brand-agnostic — semantic tokens flip values based on which brand theme is loaded.
+2. **Reach for semantic tokens, not primitives.** Use `--text-primary`, not `--color-neutral-800`. Use `--action-primary-default`, not `--color-violet-500`. Components should be brand-agnostic — semantic tokens flip values based on which brand theme is loaded.
 3. **Spacing snaps to the 4px grid.** Allowed: 0, 4, 8, 12, 16, 24, 32, 48, 64. Nothing else exists. The grid is universal across both brands.
 4. **Radius hierarchy is fixed within each brand.** Connect: inputs 4 / buttons 8 / cards 12 / modals 16. Tours: inputs 8 / buttons 12 / cards 16 / modals 20. Pills (999px) only for tags and status badges in both.
 5. **Typography uses the defined scale only.** Seven type tokens (display, heading, subheading, label, body, caption, overline, mono). Two weights (400, 500). No italics in product chrome. Identical across both brands.
@@ -62,7 +93,7 @@ All 27 rules carry equal authority. If a redesign would require breaking one, th
 7. **Sibling-link accents are rare.** In Connect, Aurora amber appears at ≤2% coverage (premium/celebration). In Tours, Deep Violet appears at ≤1% coverage (parent-brand attribution only). Each brand uses the other's primary as its rare accent.
 8. **Interactive states are mandatory.** Default, hover, pressed, disabled, plus focus ring. Use defined token pairs. For custom elements: one ramp stop darker on hover, two stops darker on pressed.
 9. **Elevation has three levels.** `e1` cards, `e2` popovers, `e3` modals, plus focus ring. Tours uses warm-tinted shadows; Connect uses cool-tinted. Token names are identical.
-10. **No forbidden patterns.** No gradients, no glass/blur effects, no improvised shadows, no coloured section backgrounds, no more than two button variants in a single view.
+10. **No forbidden patterns.** No gradients, no glass/blur effects, no improvised shadows, no coloured section backgrounds, no more than two button variants in a single view. **The page surface is pure white (`#FFFFFF`) — never a tinted off-white.** Subtle tints (`--bg-subtle`) are reserved for hover backdrops, table column-headers, and active sidebar items — contextual surfaces only, never the page.
 
 ### Rules 11–21 — responsive behavior rules
 
@@ -86,6 +117,50 @@ All 27 rules carry equal authority. If a redesign would require breaking one, th
 25. **`prefers-reduced-motion` is non-negotiable.** Do not override. Some users get migraines or vertigo from motion.
 26. **Motion does not earn brand differentiation.** Tours and Connect use identical motion tokens. Brand warmth comes from radius, spacing, and colour — not from making interactions slower.
 27. **Defer page transitions, scroll animations, decorative motion.** Not in v1.0. Animate only `transform` and `opacity` (never width/height/margin/padding — they trigger layout). Never use `transition: all` (specify properties).
+
+---
+
+## Canonical chrome patterns (v1.2)
+
+These are codified so the AI never re-derives them from scratch and so they stay consistent across surfaces.
+
+### The hero topbar — every product route (Connect partner dashboard AND Connect admin)
+
+A single sticky bar at the top of `app__main`. **No breadcrumbs. No page title in the topbar.** The page's `<h1>` lives inside the page body next to the controls it belongs with.
+
+Left side: search input, capped at 480 px, with a ⌘K hint.
+Right side, in order: help, notifications, settings, primary `+` (round, violet). On the **partner-facing** dashboard only, append a **Setup-guide pill** between settings and the primary CTA — circular progress ring + "Complete profile · N/M" label. The pill auto-hides when `done === total`. The admin topbar does **not** carry this pill (admins manage hotels; their own profile doesn't have a setup state).
+
+### Sidebar (admin only)
+
+Left-anchored, sticky, 240 px wide. Workspace switcher button at the top (Stripe pattern) that opens a dropdown with workspace settings + sign-out. Two nav sections: "Main" (Home, Bookings, Hotels, Short Links, Access requests, Tour catalog) and "Finance" (Payments, Billing, Invoices). Access requests carries a numeric badge when pending count > 0.
+
+The sidebar **does not contain a search input** — search lives in the topbar.
+
+### Hotel detail surface
+
+A **full-page navigation** (`/admin/hotels/<slug>/`), never a slide-in drawer. The drawer pattern was deprecated in v1.2. Layout:
+
+- **Header** — back link → hotel name + status pill → master referral URL with copy dropdown → `Send email` / `+ Add employee` / `⋯` actions.
+- **Hero metric strip** — exactly four tiles: Total commission · Bookings · Conversion rate · Pending payout.
+- **Two-column body**:
+  - **Main column** (9 sections, top-to-bottom): Placements · Managers · Employees · Bookings · Invoices · Payments · Recent activity · Sent emails · Events.
+  - **Right rail** (5 cards): Notes (sticky-yellow panel) · Setup guide · Details · Banking · Commission structure.
+- **The right rail scrolls with the main column.** No `position: sticky` on `.hd-side`.
+- Row alignment inside Placements / Managers / Employees uses fixed slots — pill `min-width: 96px`, trailing meta `min-width: 120px`, right-aligned — so status pills line up vertically across rows regardless of trailing text width.
+- Manager / Employee row avatars use `--bg-muted` background with `--text-primary` text (same as the Hotels table avatar). Initials are computed as first+last words of the name (`HC`, `MK`); single-word names fall back to first two characters.
+
+### Bookings table
+
+- No "Customer" column. Customer/guest detail lives in the expanded funnel row.
+- The status pill sits **inline next to Amount**, not in its own column.
+- Six statcards above the chip rail: All / Upcoming / Confirmed / Refunded / Cancelled / Pending refund. Click one to scope the table.
+- Filter chips: Date and time (popover) · Amount · Currency · Hotel · Source · More filters.
+- Row click toggles an attribution funnel detail row underneath — left column lists every touch (numbered, credited one highlighted in violet); right column shows booking metadata.
+
+### Notes card (hotel detail right rail)
+
+Sticky-yellow note cards stacked vertically. Each note is body text + `Note by <name>` (no timestamp). Most recent shown by default with a `View N more note(s)` link below; expand toggles. `+` button in the card head for adding a new note.
 
 ---
 
@@ -135,6 +210,8 @@ Output a terse audit identifying:
 - Hardcoded hex, pixel values, font sizes, shadows, easing curves, or durations
 - Components or patterns violating rules 1–10
 - Use of primitive tokens where semantic equivalents exist (rule 2 violation)
+- Page surfaces using anything other than `#FFFFFF` (rule 10 in v1.2)
+- Stale violet hex (`#4920C4` as default — should be `#5B2DE8`; `#4920C4` is the hover-state)
 
 **Responsive violations:**
 - Hardcoded breakpoints not referencing tokens
@@ -150,6 +227,14 @@ Output a terse audit identifying:
 - `transition: all` usage
 - Animated `width`, `height`, `margin`, or `padding`
 - Missing `prefers-reduced-motion` handling on custom animations
+
+**Chrome violations (v1.2):**
+- Breadcrumb in the topbar
+- Page `<h1>` in the topbar instead of in the page body
+- Search input in the sidebar instead of the topbar
+- Hotel detail rendered as a drawer instead of a full page
+- Setup-guide pill on the admin topbar (it belongs on the partner dashboard only)
+- Bookings table with a "Customer" column or with the status pill in its own column
 
 **Architectural violations:**
 - Component variants or layout patterns defined inside token files
@@ -183,6 +268,8 @@ Append a self-check confirming:
 - Sibling-link accent coverage estimate (≤2% Connect / ≤1% Tours)
 - 4px grid compliance: confirmed
 - Brand-correct radius hierarchy applied (Connect 4/8/12/16 or Tours 8/12/16/20): confirmed
+- Page surface is `#FFFFFF`: confirmed
+- Primary CTA uses `--color-violet-500` (not `-600`): confirmed
 - Interactive states defined for: [list]
 - Tokens used uncertainly: [list, or "none"]
 
@@ -199,6 +286,13 @@ Append a self-check confirming:
 - Only `transform` and `opacity` animated: confirmed
 - Reduced-motion respected (no override): confirmed
 - Custom motion patterns: [list, or "uses standard patterns only"]
+
+**Chrome rules (v1.2):**
+- No breadcrumb in topbar: confirmed
+- Page title lives in page body, not topbar: confirmed
+- Search is in topbar (not sidebar): confirmed
+- If admin hotel detail: rendered as a full page, right rail scrolls with main column: confirmed
+- If admin bookings: no Customer column, status inline with amount: confirmed
 
 **Architecture:**
 - No modifications to token files: confirmed
@@ -225,6 +319,9 @@ If any check fails, fix the code before sending. Don't ship known violations.
 **Motion violations:**
 [bullets]
 
+**Chrome violations:**
+[bullets]
+
 **Architectural violations:**
 [bullets]
 
@@ -242,6 +339,8 @@ If any check fails, fix the code before sending. Don't ship known violations.
 - Sibling-link accent coverage: ~X%
 - 4px grid: confirmed
 - Brand-correct radius: confirmed
+- Page surface is #FFFFFF: confirmed
+- Primary CTA uses violet-500: confirmed
 - Interactive states: confirmed for [list]
 - Tokens used uncertainly: [list]
 
@@ -258,6 +357,13 @@ If any check fails, fix the code before sending. Don't ship known violations.
 - Only transform/opacity animated: confirmed
 - Reduced-motion respected: confirmed
 - Custom motion patterns: [list]
+
+**Chrome:**
+- No breadcrumb: confirmed
+- Page title in body: confirmed
+- Search in topbar: confirmed
+- (hotel detail) Full-page + scrolling right rail: confirmed / N/A
+- (bookings) No Customer column, status inline: confirmed / N/A
 
 **Architecture:**
 - No token-file modifications: confirmed
@@ -306,6 +412,9 @@ If I forget to specify any of these, ask before designing. Do not guess.
 - **You do not add motion that wasn't requested or required.** Motion is either part of a standard pattern or it doesn't exist.
 - **You do not add complexity preemptively.** No chart palettes, illustrations, page transitions, scroll animations, or dark mode polish unless I specifically ask.
 - **You do not soften rules under pressure.** When a request would violate a rule, propose an alternative. Hold the line. The system is the product.
+- **You do not reintroduce the old anchor `#4920C4` as the default primary.** That's the hover state in v1.2. The default is `#5B2DE8`.
+- **You do not put a breadcrumb in the topbar.** The page title lives in the page body next to its controls.
+- **You do not render the hotel detail as a slide-in drawer.** It's a full page route at `/admin/hotels/<slug>/`.
 
 ---
 
@@ -314,5 +423,6 @@ If I forget to specify any of these, ask before designing. Do not guess.
 Confirm:
 1. You've read all seven files.
 2. One sentence: the difference between Connect and Tours.
+3. One sentence: the three substantive shifts in v1.2 (violet anchor, white page, codified chrome patterns).
 
 Then wait for my first page redesign request.

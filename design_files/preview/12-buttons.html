@@ -1,0 +1,41 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"/>
+<title>Buttons</title>
+<link rel="stylesheet" href="../colors_and_type.css"/>
+<style>
+  html,body{margin:0;background:var(--bg-surface);padding:24px;}
+  .row{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+  .lbl{font:500 11px/1 var(--font-sans);letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary);width:88px;flex:none;}
+
+  .btn{display:inline-flex;align-items:center;gap:var(--space-sm);padding:8px 16px;border:1px solid var(--action-secondary-border);border-radius:var(--radius-md);background:#fff;color:var(--text-primary);font:var(--weight-medium) 14px/1.4 var(--font-sans);cursor:pointer;white-space:nowrap;}
+  .btn:hover{background:var(--action-secondary-hover);}
+  .btn--primary{background:var(--action-primary-default);border-color:transparent;color:var(--text-inverse);}
+  .btn--primary:hover{background:var(--action-primary-hover);}
+  .btn--primary[data-state=pressed]{background:var(--action-primary-pressed);transform:scale(0.98);}
+  .btn--primary[data-state=focus]{box-shadow:var(--shadow-focus-ring);}
+  .btn--primary[disabled]{background:var(--action-primary-disabled);opacity:1;cursor:not-allowed;}
+  .btn--danger{background:var(--action-destructive-default);border-color:transparent;color:#fff;}
+  .btn--ghost{background:transparent;border-color:transparent;color:var(--text-body);}
+  .btn--sm{padding:4px 12px;font-size:12px;}
+  .arrow{font-size:14px;}
+</style></head><body>
+<div class="row"><span class="lbl">Primary</span>
+  <button class="btn btn--primary">Save changes</button>
+  <button class="btn btn--primary" data-state=focus>Focused</button>
+  <button class="btn btn--primary" data-state=pressed>Pressed</button>
+  <button class="btn btn--primary" disabled>Disabled</button>
+</div>
+<div class="row"><span class="lbl">Secondary</span>
+  <button class="btn">Cancel</button>
+  <button class="btn">Filter <span class="arrow">▾</span></button>
+  <button class="btn" disabled>Disabled</button>
+</div>
+<div class="row"><span class="lbl">Destructive</span>
+  <button class="btn btn--danger">Remove partner</button>
+  <button class="btn btn--ghost">Skip</button>
+</div>
+<div class="row"><span class="lbl">Small</span>
+  <button class="btn btn--primary btn--sm">Download QR</button>
+  <button class="btn btn--sm">Refresh</button>
+  <button class="btn btn--ghost btn--sm">Dismiss</button>
+</div>
+</body></html>

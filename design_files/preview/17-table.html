@@ -1,0 +1,30 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"/>
+<title>Data table</title>
+<link rel="stylesheet" href="../colors_and_type.css"/>
+<style>
+  html,body{margin:0;background:var(--bg-page);padding:24px;}
+  .wrap{background:#fff;border:1px solid var(--border-subtle);border-radius:var(--radius-lg);overflow:hidden;}
+  table{width:100%;border-collapse:collapse;font:400 13px/1.4 var(--font-sans);}
+  th{font:500 11px/1 var(--font-sans);letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary);padding:10px 14px;text-align:left;border-bottom:1px solid var(--border-subtle);background:var(--bg-subtle);}
+  td{padding:11px 14px;border-bottom:1px solid var(--border-subtle);color:var(--text-primary);}
+  tr:last-child td{border-bottom:0;}
+  .num{text-align:right;font-variant-numeric:tabular-nums;}
+  .mono{font:400 12px var(--font-mono);color:var(--text-secondary);}
+  tr:hover td{background:rgba(73,32,196,.03);}
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:999px;font:500 11px/1 var(--font-sans);}
+  .pill::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+  .ok{background:#ECFDF5;color:#047857;}
+  .warn{background:#FFFAF0;color:#9C5F0F;}
+</style></head><body>
+<div class="wrap">
+  <table>
+    <thead><tr><th>Booked</th><th>Tour</th><th>Guest</th><th class="num">Travelers</th><th class="num">Amount</th><th class="num">Commission</th><th>Status</th><th>Confirmation</th></tr></thead>
+    <tbody>
+      <tr><td>May 18</td><td>Lake Louise Canoe + Moraine</td><td>Sarah K.</td><td class="num">4</td><td class="num">$ 996.00</td><td class="num">$ 124.50</td><td><span class="pill ok">Credited</span></td><td><span class="mono">HRZ-3DK29F</span></td></tr>
+      <tr><td>May 18</td><td>Banff Highlights + Gondola</td><td>Marcus T.</td><td class="num">2</td><td class="num">$ 498.00</td><td class="num">$ 62.25</td><td><span class="pill ok">Credited</span></td><td><span class="mono">HRZ-J47P11</span></td></tr>
+      <tr><td>May 17</td><td>Hidden Gem Canoe Tour</td><td>Jenny L.</td><td class="num">3</td><td class="num">$ 749.97</td><td class="num">$ 93.75</td><td><span class="pill warn">Pending</span></td><td><span class="mono">HRZ-WQ8A02</span></td></tr>
+      <tr><td>May 17</td><td>Lake Louise Canoe + Moraine</td><td>Amal R.</td><td class="num">2</td><td class="num">$ 498.00</td><td class="num">$ 62.25</td><td><span class="pill ok">Credited</span></td><td><span class="mono">HRZ-2VX880</span></td></tr>
+    </tbody>
+  </table>
+</div>
+</body></html>
