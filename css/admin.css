@@ -1619,15 +1619,16 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .hm-filter--removable:hover .hm-filter__close { color: var(--text-primary); }
 
 /* ── Widgets grid ─────────────────────────────────────────────── */
-/* Six tiles sitting on a --bg-subtle wash. Auto-fit grid: tiles aim
-   for 416×404 max but shrink to a 280px floor before wrapping to
-   the next row, so the layout reorganises itself as the viewport
-   narrows. min(100%, 280px) keeps it from overflowing on very
-   narrow viewports. The wash (--space-sm gap + padding) stays an even
-   thickness around the tiles regardless of width. */
+/* Tiles sitting on a --bg-subtle wash. Auto-fit grid with a 360px floor
+   and a 1fr ceiling: tiles stretch to fill the row instead of capping at a
+   fixed width, so there's no trailing dead space. The 360px floor yields
+   3 columns at the 1280 product width (six tiles -> even 3+3) and 2 on
+   tablet (-> 2+2+2). min(100%, 360px) prevents overflow on narrow
+   viewports. The wash (--space-sm gap + padding) stays even around the
+   tiles regardless of width. */
 .hm-widgets {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 416px));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
   grid-auto-rows: 404px;
   gap: var(--space-sm);
   background: var(--bg-subtle);
