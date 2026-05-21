@@ -1055,32 +1055,24 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
    Replicates the layout of stripe.com/dashboard/transactions:
    page title + right-side actions, sub-tabs, status stat cards,
    filter chips, then a wide flat data table.
-   Variables only — accent comes from --accent (#209F95).
+   Brand accent comes from --action-primary-default.
    ─────────────────────────────────────────────────────────────── */
 .bk-page__head {
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 0;
-  gap: var(--s4);
+  gap: var(--space-lg);
 }
 /* Bigger gap below the page head when the page goes title→stat-cards
    directly (no sub-tabs row). Used by Hotels; Bookings still has the
    tabs row and stays at margin-bottom: 0. */
 .bk-page__head--md {
-  margin-bottom: 21px;
+  margin-bottom: var(--space-xl);
 }
 
 /* Stacked head — small breadcrumb-style back link sitting above the
-   page title. The link's TOP edge lines up with where the title sits
-   on a regular (non-stacked) page, so the title itself shifts down
-   by the link's height + gap. Used by /admin/hotels/<slug>/.
-
-   Targets (Inter, line-height 1 on the back link, 1.25 on the h1):
-     • baseline of the back-link "Hotels"     = 100 px from page top
-     • cap-top of the hotel-name h1           = 120 px (20 px gap)
-     • cap-top of the sub-tabs text           = 158 px (20 px gap
-       between the h1 baseline at ~138 and the tab cap-top)
-   .app__content's 85px padding-top is the anchor; the margins below
-   add the rest. */
+   page title, anchored to .app__content's --content-top. The -2px
+   nudges optically align the stacked block to where a regular page
+   title sits. Used by /admin/hotels/<slug>/. */
 .bk-page__head--stack {
   display: block;
   margin-top: -2px;
@@ -1088,88 +1080,87 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 }
 .bk-page__back {
   display: inline-block;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--accent);
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  color: var(--action-primary-default);
   text-decoration: none;
   line-height: 1;
-  margin-bottom: 11px;
+  margin-bottom: var(--space-md);
   cursor: pointer;
-  transition: color var(--t-fast);
 }
-.bk-page__back:hover { color: var(--accent-hover); }
+.bk-page__back:hover { color: var(--action-primary-hover); }
 .bk-page__title {
   font-family: var(--font-display);
-  font-size: 1.625rem;
-  font-weight: 700;
+  font-size: var(--type-heading-size);
+  font-weight: var(--weight-medium);
   letter-spacing: -0.015em;
-  color: var(--text);
+  color: var(--text-primary);
   margin: 0;
 }
-.bk-page__actions { display: flex; gap: var(--s2); flex-shrink: 0; }
+.bk-page__actions { display: flex; gap: var(--space-sm); flex-shrink: 0; }
 
 /* ── Sub-tabs (Bookings / Payouts / All activity) ─────────────── */
 .bk-tabs {
   display: flex;
-  gap: var(--s5);
-  border-bottom: 1px solid var(--border);
-  margin-bottom: var(--s6);
+  gap: var(--space-lg);
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: var(--space-xl);
 }
 .bk-tabs__btn {
   background: none; border: 0;
-  padding: var(--s2) 0;
+  padding: var(--space-sm) 0;
   margin-bottom: -1px;
   font: inherit;
-  font-size: var(--t-sm);
-  font-weight: 500;
-  color: #1a2c44;
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
   cursor: pointer;
   border-bottom: 2px solid transparent;
-  transition: color var(--t-fast), border-color var(--t-fast);
+  /* Transition handled by the global interactive rule (rule 22). */
 }
-.bk-tabs__btn:hover { color: var(--text); }
+.bk-tabs__btn:hover { color: var(--text-primary); }
 .bk-tabs__btn--active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-  font-weight: 600;
+  color: var(--action-primary-default);
+  border-bottom-color: var(--action-primary-default);
+  font-weight: var(--weight-medium);
 }
-.bk-tabs__btn--active:hover { color: var(--accent); }
+.bk-tabs__btn--active:hover { color: var(--action-primary-default); }
 
 /* ── Status stat cards (All / Confirmed / Refunded …) ─────────── */
 .bk-statcards {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: var(--s3);
-  margin-bottom: 14px;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
 }
 .bk-statcard {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  padding: 14px var(--s4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
   text-align: left;
   cursor: pointer;
   font: inherit;
   color: inherit;
-  transition: border-color var(--t-fast), background var(--t-fast);
+  /* Transition handled by the global interactive rule (rule 22). */
 }
 .bk-statcard:hover { border-color: var(--border-strong); }
 .bk-statcard--active {
-  border-color: var(--accent);
-  box-shadow: inset 0 0 0 1px var(--accent);
+  border-color: var(--action-primary-default);
+  box-shadow: inset 0 0 0 1px var(--action-primary-default);
 }
 .bk-statcard__label {
-  font-size: var(--t-sm);
-  color: #1a2c44;
-  font-weight: 500;
-  margin-bottom: 6px;
+  font-size: var(--type-label-size);
+  color: var(--text-primary);
+  font-weight: var(--weight-medium);
+  margin-bottom: var(--space-xs);
 }
-.bk-statcard--active .bk-statcard__label { color: var(--accent); }
+.bk-statcard--active .bk-statcard__label { color: var(--action-primary-default); }
 .bk-statcard__value {
   font-family: var(--font-display);
-  font-size: 1.375rem;
-  font-weight: 600;
-  color: var(--text);
+  font-size: var(--type-subheading-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
   font-feature-settings: 'tnum' 1;
   line-height: 1.1;
 }
@@ -1197,7 +1188,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .bk-statcards--hotels .bk-statcard {
   width: 180px;
   height: 46px;
-  padding: 0 var(--s4);
+  padding: 0 var(--space-lg);
   justify-content: flex-start;
   text-align: left;
 }
@@ -1222,22 +1213,19 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
    content cap with 6 px of slack. */
 .bk-statcards--invoices {
   display: flex;
-  gap: 6px;
+  gap: var(--space-sm);
 }
 .bk-statcards--invoices .bk-statcard {
   width: 250px;
   height: 42px;
-  padding: 0 14px;
+  padding: 0 var(--space-md);
   display: flex; align-items: center; justify-content: center;
   text-align: center;
 }
 
-/* Invoices page-head modifier — pulls the head up by 5 px so the
-   title baseline lands at 105 px from the top of the page (with
-   .app__content's 85 px padding-top + h1 line-box ≈ 25 px ascent
-   = 110 → minus 5 px head margin-top = 105). margin-bottom of 13 px
-   adds to the h1's ~7 px below-baseline descent so the stat-cards
-   row top sits exactly 20 px below the title baseline. */
+/* Invoices page-head modifier — small optical nudges that pull the head
+   up and add a gap so the title baseline and stat-cards row sit at the
+   intended positions relative to --content-top. */
 .bk-page__head--invoices {
   margin-top: -5px;
   margin-bottom: 13px;
@@ -1246,61 +1234,60 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 /* ── Toolbar: filter chips + right-side actions ───────────────── */
 .bk-toolbar {
   display: flex; flex-wrap: wrap;
-  align-items: center; gap: var(--s2);
-  margin-bottom: var(--s4);
+  align-items: center; gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
 }
-.bk-filters { display: flex; flex-wrap: wrap; gap: var(--s2); flex: 1; }
-.bk-toolbar__actions { display: flex; gap: var(--s2); margin-left: auto; }
+.bk-filters { display: flex; flex-wrap: wrap; gap: var(--space-sm); flex: 1; }
+.bk-toolbar__actions { display: flex; gap: var(--space-sm); margin-left: auto; }
 
 .bk-chip {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: var(--bg);
+  display: inline-flex; align-items: center; gap: var(--space-xs);
+  background: var(--bg-surface);
   border: 1px dashed var(--border-strong);
-  border-radius: var(--r-full);
-  padding: 5px 12px 5px 8px;
+  border-radius: var(--radius-pill);
+  padding: var(--space-xs) var(--space-md) var(--space-xs) var(--space-sm);
   font: inherit;
-  font-size: var(--t-sm);
-  color: #1a2c44;
+  font-size: var(--type-label-size);
+  color: var(--text-primary);
   cursor: pointer;
-  transition: color var(--t-fast), border-color var(--t-fast), background var(--t-fast);
+  /* Transition handled by the global interactive rule (rule 22). */
 }
 .bk-chip:hover {
-  color: var(--text);
-  border-color: var(--text-muted);
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
   background: var(--bg-subtle);
 }
 .bk-chip__plus {
   width: 14px; height: 14px;
   display: inline-flex; align-items: center; justify-content: center;
   border-radius: 50%;
-  border: 1px solid var(--text-faint);
-  color: var(--text-muted);
-  font-size: 11px;
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-size: var(--type-overline-size);
   line-height: 1;
 }
-.bk-chip:hover .bk-chip__plus { border-color: var(--text-muted); color: var(--text); }
+.bk-chip:hover .bk-chip__plus { border-color: var(--border-strong); color: var(--text-primary); }
 
 .bk-iconbtn {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  padding: 6px 12px;
+  display: inline-flex; align-items: center; gap: var(--space-xs);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
   font: inherit;
-  font-size: var(--t-sm);
-  font-weight: 500;
-  color: var(--text);
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
   cursor: pointer;
-  transition: background var(--t-fast), border-color var(--t-fast);
+  /* Transition handled by the global interactive rule (rule 22). */
 }
 .bk-iconbtn:hover { background: var(--bg-subtle); border-color: var(--border-strong); }
 .bk-iconbtn svg { width: 14px; height: 14px; flex-shrink: 0; }
 
 /* ── Data table ───────────────────────────────────────────────── */
 /* No card wrapper — table sits directly on the page background to
-   match Stripe's transactions list. Header gets a tinted gray-blue
-   background; row separators use the same #d4dee9 outline that the
-   status pills do. */
+   match Stripe's transactions list. Row separators use --border-subtle;
+   the header rule uses --border-default. */
 .bk-table-wrap {
   background: transparent;
   border: 0;
@@ -1310,143 +1297,143 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .bk-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: var(--t-sm);
+  font-size: var(--type-body-size);
 }
 .bk-table thead th {
-  font-weight: 600;
-  font-size: var(--t-sm);
-  color: #1a2c44;
+  font-weight: var(--weight-medium);
+  font-size: var(--type-label-size);
+  color: var(--text-primary);
   text-align: left;
-  padding: 10px var(--s4);
+  padding: var(--space-sm) var(--space-lg);
   background: transparent;
-  border-top: 1px solid #d4dee9;
-  border-bottom: 1px solid #ecf1f6;
+  border-top: 1px solid var(--border-default);
+  border-bottom: 1px solid var(--border-subtle);
   white-space: nowrap;
 }
 .bk-table tbody td {
-  padding: 12px var(--s4);
-  border-bottom: 1px solid #ecf1f6;
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--border-subtle);
   white-space: nowrap;
-  color: #1a2c44;
+  color: var(--text-primary);
   vertical-align: middle;
-  font-weight: 500;
+  font-weight: var(--weight-medium);
 }
 .bk-table tbody tr:last-child > td { border-bottom: 0; }
-.bk-table tbody tr:hover > td { background: #f4f7fa; }
-.bk-table tbody tr.row--selected > td { background: #ecf1f6; }
+.bk-table tbody tr:hover > td { background: var(--bg-subtle); }
+.bk-table tbody tr.row--selected > td { background: var(--bg-brand-subtle); }
 .bk-table tbody tr[data-hotel-idx],
 .bk-table tbody tr[data-bk-clickable] { cursor: pointer; }
 
 /* Hotels table — drops the rule above the header (the toolbar above
    already provides separation), and tunes the hotel-name cell to read
-   slightly bigger and a touch lighter than the table headers above it
-   (header: 13px / 600; name: 15px / 600 with the same #1a2c44). Every
-   other body cell stays at 13px / 400 to match the filter chips. */
+   slightly heavier than the other body cells, which stay at the regular
+   weight to match the filter chips. */
 .bk-table--hotels thead th { border-top: 0; }
-.bk-table--hotels tbody td { font-weight: 400; }
+.bk-table--hotels tbody td { font-weight: var(--weight-regular); }
 .bk-table--hotels tbody td.bk-table__name {
-  font-weight: 600;
-  font-size: var(--t-base);
+  font-weight: var(--weight-medium);
+  font-size: var(--type-body-size);
 }
 .bk-table__check { width: 28px; padding-right: 0 !important; }
 .bk-table__check input { cursor: pointer; }
 .bk-table__kebab { width: 36px; text-align: right; }
 .bk-table__amount {
-  font-weight: 600;
+  font-weight: var(--weight-medium);
   font-feature-settings: 'tnum' 1;
-  color: #1a2c44;
+  color: var(--text-primary);
 }
 .bk-table__currency {
-  color: #35455a;
-  font-weight: 500;
-  margin-left: 6px;
-  font-size: var(--t-sm);
+  color: var(--text-body);
+  font-weight: var(--weight-medium);
+  margin-left: var(--space-xs);
+  font-size: var(--type-caption-size);
   letter-spacing: 0.01em;
 }
 .bk-table__desc {
   font-family: var(--font-mono);
-  font-size: 0.8125rem;
-  color: #1a2c44;
-  font-weight: 500;
+  font-size: var(--type-caption-size);
+  color: var(--text-primary);
+  font-weight: var(--weight-medium);
 }
-.bk-table__muted { color: #35455a; font-weight: 500; }
+.bk-table__muted { color: var(--text-body); font-weight: var(--weight-medium); }
 
 .bk-kebab {
   background: none; border: 0;
-  padding: 4px 6px;
-  border-radius: var(--r-sm);
-  color: #50617a;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
   cursor: pointer;
   line-height: 1;
 }
-.bk-kebab:hover { color: #1a2c44; background: #ecf1f6; }
+.bk-kebab:hover { color: var(--text-primary); background: var(--bg-subtle); }
 
 .bk-table__footer {
-  padding: 10px 0 0;
-  font-size: var(--t-sm);
-  color: #35455a;
-  font-weight: 500;
-  border-top: 1px solid #d4dee9;
+  padding: var(--space-sm) 0 0;
+  font-size: var(--type-caption-size);
+  color: var(--text-body);
+  font-weight: var(--weight-medium);
+  border-top: 1px solid var(--border-default);
   background: transparent;
 }
 
 /* ── Status badge next to amount (Stripe pill style) ──────────── */
-/* Pills are 1px-bordered, ~6px radius, light fill. Two flavours:
-   succeeded (light green) and a neutral cool-gray for everything
-   that ended in a non-success state — refunded, reversed, cancelled,
-   pending refund. */
+/* 1px-bordered pills with a light fill. Deliberately only two visual
+   flavours: succeeded (green) and a subdued neutral grey for every
+   non-success state (refunded, reversed, cancelled, pending refund) —
+   non-success isn't alarmed in red here. This diverges from the .status
+   pills, which use the full feedback palette; reconcile if we unify. */
 .bk-pill {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 1px 7px;
-  border-radius: 5px;
+  display: inline-flex; align-items: center; gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-pill);
   border: 1px solid transparent;
-  font-size: var(--t-xs);
-  font-weight: 500;
-  margin-left: var(--s2);
+  font-size: var(--type-caption-size);
+  font-weight: var(--weight-medium);
+  margin-left: var(--space-sm);
   white-space: nowrap;
   line-height: 1.5;
 }
 .bk-pill svg { width: 11px; height: 11px; }
 .bk-pill--ok {
-  background: #eafcdd;
-  border-color: #a8f170;
-  color:        #217005;
+  background: var(--feedback-success-bg);
+  border-color: var(--feedback-success-border);
+  color:        var(--feedback-success-text);
 }
 .bk-pill--neutral {
-  background: #ecf1f6;
-  border-color: #d4dee9;
-  color:        #50617a;
+  background: var(--bg-subtle);
+  border-color: var(--border-default);
+  color:        var(--text-secondary);
 }
 .bk-pill--warn {
-  background: #ecf1f6;
-  border-color: #d4dee9;
-  color:        #50617a;
+  background: var(--bg-subtle);
+  border-color: var(--border-default);
+  color:        var(--text-secondary);
 }
 .bk-pill--bad {
-  background: #ecf1f6;
-  border-color: #d4dee9;
-  color:        #50617a;
+  background: var(--bg-subtle);
+  border-color: var(--border-default);
+  color:        var(--text-secondary);
 }
 .bk-pill--info {
-  background: #eff5ff;
-  border-color: #bcd4ff;
-  color:        #1d4ed8;
+  background: var(--feedback-info-bg);
+  border-color: var(--feedback-info-border);
+  color:        var(--feedback-info-text);
 }
 
 /* ── Empty state inside the table card ────────────────────────── */
 .bk-empty {
-  padding: var(--s12) var(--s5);
+  padding: var(--space-3xl) var(--space-lg);
   text-align: center;
-  color: #35455a;
+  color: var(--text-body);
 }
 .bk-empty__title {
   font-family: var(--font-display);
-  font-size: var(--t-lg);
-  font-weight: 600;
-  color: #1a2c44;
-  margin-bottom: var(--s2);
+  font-size: var(--type-subheading-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
 }
-.bk-empty__body { font-size: var(--t-sm); max-width: 32em; margin: 0 auto; }
+.bk-empty__body { font-size: var(--type-body-size); max-width: 32em; margin: 0 auto; }
 
 /* ─────────────────────────────────────────────────────────────────
    Home page — Stripe-style overview shell.
@@ -1722,39 +1709,38 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
    ─────────────────────────────────────────────────────────────── */
 .bk-datepop {
   position: absolute;
-  z-index: 100;
+  z-index: var(--z-popover);
   width: 280px;
-  background: var(--bg);
-  border: 1px solid #d4dee9;
-  border-radius: 12px;
-  box-shadow: 0 12px 32px rgba(20, 30, 50, 0.10),
-              0  2px  6px rgba(20, 30, 50, 0.06);
-  padding: 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-e2);
+  padding: var(--space-lg);
   display: flex; flex-direction: column;
-  gap: 12px;
-  font-size: var(--t-sm);
-  color: #1a2c44;
+  gap: var(--space-md);
+  font-size: var(--type-body-size);
+  color: var(--text-primary);
 }
 .bk-datepop[hidden] { display: none; }
 .bk-datepop__title {
-  font-weight: 600;
-  color: #1a2c44;
-  font-size: 0.8125rem;
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  font-size: var(--type-label-size);
 }
 
 .bk-datepop__op,
 .bk-datepop__unit,
 .bk-datepop__num {
   height: 32px;
-  border: 1px solid #d4dee9;
-  border-radius: 6px;
-  background: var(--bg);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
   font: inherit;
-  font-size: var(--t-sm);
-  color: #1a2c44;
-  padding: 0 8px;
+  font-size: var(--type-body-size);
+  color: var(--text-primary);
+  padding: 0 var(--space-sm);
 }
-.bk-datepop__op { width: 100%; padding-right: 24px; }
+.bk-datepop__op { width: 100%; padding-right: var(--space-xl); }
 .bk-datepop__num { width: 60px; text-align: left; }
 .bk-datepop__unit { flex: 1; min-width: 0; }
 
@@ -1762,133 +1748,132 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .bk-datepop__unit:focus,
 .bk-datepop__num:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  border-color: var(--border-brand);
+  box-shadow: var(--shadow-focus-ring);
 }
 
 .bk-datepop__row {
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; gap: var(--space-sm);
 }
 .bk-datepop__row[hidden] { display: none; }
 .bk-datepop__hook {
   display: inline-flex; align-items: center; justify-content: center;
   width: 14px; height: 14px;
-  color: var(--accent);
+  color: var(--action-primary-default);
   flex-shrink: 0;
 }
 .bk-datepop__hook svg { width: 14px; height: 14px; }
 .bk-datepop__and {
-  font-size: var(--t-sm);
-  color: #50617a;
+  font-size: var(--type-body-size);
+  color: var(--text-secondary);
 }
 
 .bk-datepop__date-btn {
   flex: 1; min-width: 0;
   height: 32px;
-  background: var(--bg);
-  border: 1px solid #d4dee9;
-  border-radius: 6px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
   font: inherit;
-  font-size: var(--t-sm);
-  color: #1a2c44;
-  padding: 0 10px;
+  font-size: var(--type-body-size);
+  color: var(--text-primary);
+  padding: 0 var(--space-md);
   text-align: left;
   cursor: pointer;
-  transition: border-color var(--t-fast);
+  /* Transition handled by the global interactive rule (rule 22). */
 }
-.bk-datepop__date-btn:hover { border-color: var(--text-muted); }
+.bk-datepop__date-btn:hover { border-color: var(--border-strong); }
 
 .bk-datepop__check {
-  display: flex; align-items: center; gap: 8px;
-  font-size: var(--t-sm);
-  color: #1a2c44;
+  display: flex; align-items: center; gap: var(--space-sm);
+  font-size: var(--type-body-size);
+  color: var(--text-primary);
   cursor: pointer;
 }
-.bk-datepop__check input { accent-color: var(--accent); }
+.bk-datepop__check input { accent-color: var(--action-primary-default); }
 
 .bk-datepop__tz {
-  display: flex; align-items: center; gap: 12px;
-  font-size: var(--t-sm);
-  color: #35455a;
+  display: flex; align-items: center; gap: var(--space-md);
+  font-size: var(--type-body-size);
+  color: var(--text-body);
 }
-.bk-datepop__tz-label { color: #35455a; }
+.bk-datepop__tz-label { color: var(--text-body); }
 .bk-datepop__radio {
-  display: inline-flex; align-items: center; gap: 6px;
+  display: inline-flex; align-items: center; gap: var(--space-xs);
   cursor: pointer;
-  color: #1a2c44;
+  color: var(--text-primary);
 }
-.bk-datepop__radio input { accent-color: var(--accent); }
+.bk-datepop__radio input { accent-color: var(--action-primary-default); }
 
 .bk-datepop__apply {
   height: 36px;
-  background: var(--accent);
+  background: var(--action-primary-default);
   border: 0;
-  border-radius: 6px;
-  color: #fff;
+  border-radius: var(--radius-md);
+  color: var(--text-inverse);
   font: inherit;
-  font-size: var(--t-sm);
-  font-weight: 600;
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
   cursor: pointer;
-  transition: background var(--t-fast);
+  /* Transition handled by the global interactive rule (rule 22). */
 }
-.bk-datepop__apply:hover { background: var(--accent-hover); }
+.bk-datepop__apply:hover { background: var(--action-primary-hover); }
 
 /* ── Calendar (separate floating panel, anchored next to the date
    popover; positioned in JS via getBoundingClientRect) ────────── */
 .bk-cal {
   position: absolute;
-  z-index: 110;
+  z-index: var(--z-popover);
   width: 280px;
-  background: var(--bg);
-  border: 1px solid #d4dee9;
-  border-radius: 12px;
-  box-shadow: 0 12px 32px rgba(20, 30, 50, 0.10),
-              0  2px  6px rgba(20, 30, 50, 0.06);
-  padding: 14px 14px 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-e2);
+  padding: var(--space-md) var(--space-md) var(--space-lg);
   display: flex; flex-direction: column;
-  gap: 10px;
+  gap: var(--space-sm);
 }
 .bk-cal[hidden] { display: none; }
 .bk-cal__input {
   width: 100%;
   height: 34px;
-  border: 1px solid #a7e7fc;
-  border-radius: 6px;
+  border: 1px solid var(--border-brand);
+  border-radius: var(--radius-sm);
   font: inherit;
-  font-size: var(--t-sm);
-  color: #1a2c44;
-  padding: 0 10px;
-  background: var(--bg);
-  box-shadow: 0 0 0 3px rgba(167, 231, 252, 0.35);
+  font-size: var(--type-body-size);
+  color: var(--text-primary);
+  padding: 0 var(--space-md);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-focus-ring);
 }
 .bk-cal__input:focus { outline: none; }
 .bk-cal__nav {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #1a2c44;
-  padding-top: 4px;
-  border-top: 1px solid #ecf1f6;
+  display: flex; align-items: center; gap: var(--space-sm);
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  padding-top: var(--space-xs);
+  border-top: 1px solid var(--border-subtle);
 }
 .bk-cal__month { flex: 1; }
 .bk-cal__navbtn {
   width: 24px; height: 24px;
   background: none; border: 0;
-  border-radius: 4px;
-  color: #50617a;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
   display: inline-flex; align-items: center; justify-content: center;
   cursor: pointer;
-  transition: background var(--t-fast), color var(--t-fast);
+  /* Transition handled by the global interactive rule (rule 22). */
 }
-.bk-cal__navbtn:hover { background: #f4f7fa; color: #1a2c44; }
+.bk-cal__navbtn:hover { background: var(--bg-subtle); color: var(--text-primary); }
 .bk-cal__navbtn svg { width: 14px; height: 14px; }
 .bk-cal__dows {
   display: grid; grid-template-columns: repeat(7, 1fr);
   justify-items: center;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #50617a;
-  padding: 4px 0;
+  font-size: var(--type-caption-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+  padding: var(--space-xs) 0;
 }
 .bk-cal__dows span {
   width: 32px;
@@ -1897,39 +1882,39 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 .bk-cal__grid {
   display: grid; grid-template-columns: repeat(7, 1fr);
   justify-items: center;
-  row-gap: 2px;
+  row-gap: var(--space-xs);
 }
 .bk-cal__day {
   width: 32px; height: 32px;
   background: none; border: 0;
   border-radius: 50%;
   font: inherit;
-  font-size: var(--t-sm);
-  color: #1a2c44;
+  font-size: var(--type-body-size);
+  color: var(--text-primary);
   cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
-  transition: background var(--t-fast), color var(--t-fast);
+  /* Transition handled by the global interactive rule (rule 22). */
 }
-.bk-cal__day:hover { background: #f4f7fa; }
+.bk-cal__day:hover { background: var(--bg-subtle); }
 .bk-cal__day--empty { visibility: hidden; cursor: default; }
 
 /* ── Active filter chip (e.g. "✕ Date and time | Last 7 days") ── */
 .bk-chip--active {
   border-style: solid;
-  border-color: #d4dee9;
-  background: var(--bg);
-  padding-left: 6px;
+  border-color: var(--border-default);
+  background: var(--bg-surface);
+  padding-left: var(--space-sm);
 }
-.bk-chip__sep   { color: #d4dee9; margin: 0 2px; }
-.bk-chip__value { color: var(--accent); font-weight: 600; }
+.bk-chip__sep   { color: var(--text-tertiary); margin: 0 var(--space-xs); }
+.bk-chip__value { color: var(--action-primary-default); font-weight: var(--weight-medium); }
 .bk-chip__close {
   display: inline-flex; align-items: center; justify-content: center;
   width: 14px; height: 14px;
-  color: #50617a;
+  color: var(--text-secondary);
   cursor: pointer;
 }
 .bk-chip__close svg { width: 14px; height: 14px; }
-.bk-chip--active:hover .bk-chip__close { color: #1a2c44; }
+.bk-chip--active:hover .bk-chip__close { color: var(--text-primary); }
 
 /* ── Hotel detail page (/admin/hotels/<slug>/) ────────── */
 /* Stripe customer-page architecture: header → metadata strip
@@ -2590,7 +2575,7 @@ select.hd-bankf__input { appearance: auto; }
    matching the bookings row pattern. */
 .bk-table--payouts thead th { border-top: 0; }
 .bk-table--payouts .bk-table__kebab { width: 36px; text-align: right; }
-.bk-table--payouts .bk-pill { margin-left: var(--s2); }
+.bk-table--payouts .bk-pill { margin-left: var(--space-sm); }
 
 /* Optional note attached to a payout renders as a muted subrow
    directly under its parent record so it stays associated visually
@@ -2632,7 +2617,7 @@ select.hd-bankf__input { appearance: auto; }
    per-entry only and rolling sums live elsewhere in reporting. */
 .bk-table--payments thead th { border-top: 0; }
 .bk-table--payments .bk-table__kebab { width: 36px; text-align: right; }
-.bk-table--payments .bk-pill { margin-left: var(--s2); }
+.bk-table--payments .bk-pill { margin-left: var(--space-sm); }
 .hd-payments__footer {
   display: flex;
   align-items: center;
@@ -3287,9 +3272,9 @@ select.hd-bankf__input { appearance: auto; }
 }
 /* Compact pill variant for inline use inside other cells. */
 .bk-pill--xs {
-  padding: 1px 6px;
-  font-size: 10px;
-  font-weight: 600;
+  padding: 0 var(--space-xs);
+  font-size: var(--type-overline-size);
+  font-weight: var(--weight-medium);
   letter-spacing: 0.02em;
 }
 
@@ -3896,12 +3881,12 @@ select.hd-bankf__input { appearance: auto; }
 .bk-statcards--shortlinks {
   display: flex;
   justify-content: flex-start;
-  gap: 6px;
+  gap: var(--space-sm);
 }
 .bk-statcards--shortlinks .bk-statcard {
   width: 120px;
   height: 46px;
-  padding: 0 var(--s4);
+  padding: 0 var(--space-lg);
   justify-content: flex-start;
   text-align: left;
 }
@@ -3966,7 +3951,7 @@ select.hd-bankf__input { appearance: auto; }
 
 /* Short Links table modifier */
 .bk-table--shortlinks thead th { border-top: 0; }
-.bk-table--shortlinks tbody td { font-weight: 400; }
+.bk-table--shortlinks tbody td { font-weight: var(--weight-regular); }
 
 /* Short URL cell — monospace, truncates to fit the column.
    Max-width keeps the table from blowing out at 1280px content. */
@@ -4295,7 +4280,7 @@ select.hd-bankf__input { appearance: auto; }
 .bk-row__amount {
   display: flex;
   align-items: center;
-  gap: var(--s2);
+  gap: var(--space-sm);
   white-space: nowrap;
 }
 /* Fix the amount column width so the status pills line up
@@ -4305,13 +4290,13 @@ select.hd-bankf__input { appearance: auto; }
   min-width: 5.5rem;
   font-variant-numeric: tabular-nums;
 }
-.bk-row__amount--muted .mono { color: var(--text-muted); }
+.bk-row__amount--muted .mono { color: var(--text-secondary); }
 .bk-row__commission {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.bk-row__commission--pos   { color: #217005; }
-.bk-row__commission--muted { color: var(--text-muted); }
+.bk-row__commission--pos   { color: var(--text-success); }
+.bk-row__commission--muted { color: var(--text-secondary); }
 
 /* Pax column — narrow, numeric, centred. Just a count of passengers
    on the booking; no unit label, no decoration. */
