@@ -100,6 +100,7 @@
   --bg-inverse:       var(--color-neutral-900);
   --bg-brand-subtle:  var(--color-violet-50);
   --bg-brand-muted:   var(--color-violet-100);
+  --bg-overlay:       rgba(14, 14, 20, 0.40);  /* modal/drawer scrim — neutral-900 channels @ 40% */
 
   /* Text */
   --text-primary:    var(--color-neutral-800);
@@ -196,6 +197,20 @@
   --shadow-e2: 0 4px 12px rgba(14, 14, 20, 0.08), 0 1px 2px rgba(14, 14, 20, 0.04);
   --shadow-e3: 0 16px 40px rgba(14, 14, 20, 0.14), 0 4px 8px rgba(14, 14, 20, 0.06);
   --shadow-focus-ring: 0 0 0 3px rgba(73, 32, 196, 0.18);
+
+  /* ========================================================
+     SYSTEM — z-index (single source of stacking order)
+     ========================================================
+     One ordered scale so layered surfaces never collide.
+     Ordering is what matters, not the absolute numbers:
+     dropdown < popover < drawer < modal < toast.
+     ======================================================== */
+
+  --z-dropdown: 100;   /* brand menu, select popups        */
+  --z-popover:  200;   /* date popover, calendar, tooltips */
+  --z-drawer:   300;   /* slide-over drawer                */
+  --z-modal:    400;   /* centred modal dialogs            */
+  --z-toast:    500;   /* transient notifications          */
 
   /* ========================================================
      SYSTEM — typography
