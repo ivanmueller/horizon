@@ -135,10 +135,13 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
 
 .app__content {
   flex: 1;
-  /* Fill the main column with consistent side padding so page content
-     left-aligns with the full-width topbar (matches the kit). Fixed top
-     anchor (--content-top), lighter contextual bottom. */
-  padding: var(--content-top) var(--space-2xl) var(--space-page);
+  /* Cap content at the product container width and centre it, but via
+     symmetric gutter padding (min 32px) rather than max-width+margin —
+     so the content left edge lines up with the topbar, which uses the
+     same gutter while its bar still spans the full main column. */
+  padding: var(--content-top)
+           max(var(--space-2xl), calc((100% - var(--container-xl)) / 2))
+           var(--space-page);
   width: 100%;
 }
 
@@ -1151,8 +1154,8 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
 /* ── Status stat cards (All / Confirmed / Refunded …) ─────────── */
 .bk-statcards {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: var(--space-md);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--space-sm);
   margin-bottom: var(--space-md);
 }
 .bk-statcard {
@@ -4158,7 +4161,9 @@ select.hd-bankf__input { appearance: auto; }
   position: sticky; top: 0; z-index: 50;
   display: flex; align-items: center;
   gap: var(--space-lg);
-  padding: var(--space-sm) var(--space-2xl);
+  /* Bar spans the full main column; its content sits in the same
+     centred gutter as .app__content so the two left-align. */
+  padding: var(--space-sm) max(var(--space-2xl), calc((100% - var(--container-xl)) / 2));
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border-subtle);
 }
