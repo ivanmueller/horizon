@@ -36,7 +36,10 @@
         <span class="app-brand__icon" aria-hidden="true">
           <span class="app-brand__letter" id="appBrandLetter">H</span>
         </span>
-        <span class="app-brand__name">Horizon Tours</span>
+        <span class="app-brand__meta">
+          <span class="app-brand__name">Horizon Tours</span>
+          <span class="app-brand__role">Admin · main workspace</span>
+        </span>
         <span class="app-brand__chevron" aria-hidden="true">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="6 9 12 15 18 9"/>
@@ -100,6 +103,21 @@
 
       </nav>
 
+      <div class="app-foot">
+        <button type="button" class="app-nav__item" id="navWhatsNew">
+          <span class="app-nav__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          </span>
+          <span>What's new</span>
+        </button>
+        <button type="button" class="app-nav__item" id="navDocs">
+          <span class="app-nav__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </span>
+          <span>Docs</span>
+        </button>
+      </div>
+
     </aside>
 
     <!-- ── Main content ─────────────────────────────────────── -->
@@ -115,6 +133,9 @@
           <span class="app__kbd">⌘K</span>
         </label>
         <div class="app__topbar-actions">
+          <button type="button" class="app__icbtn" id="appQuickGrid" aria-label="Quick add">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><line x1="17.5" y1="14" x2="17.5" y2="21"/><line x1="14" y1="17.5" x2="21" y2="17.5"/></svg>
+          </button>
           <button type="button" class="app__icbtn" id="appHelp" aria-label="Help">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           </button>
@@ -909,10 +930,10 @@
     /* ── Sidebar nav ─────────────────────────────────────── */
     const ROUTES = [
       { id: 'home',            label: 'Home',            group: 'main',    icon: iconHome },
-      { id: 'bookings',        label: 'Bookings',        group: 'main',    icon: iconBookings },
-      { id: 'hotels',          label: 'Hotels',          group: 'main',    icon: iconHotels },
-      { id: 'short-links',    label: 'Short Links',    group: 'main',    icon: iconLink },
-      { id: 'access-requests', label: 'Access Requests', group: 'main',    icon: iconInbox, badge: 'arNavBadge' },
+      { id: 'bookings',        label: 'Bookings',        group: 'main',    icon: iconBookings, count: true },
+      { id: 'hotels',          label: 'Hotels',          group: 'main',    icon: iconHotels,   count: true },
+      { id: 'short-links',    label: 'Short links',    group: 'main',    icon: iconLink },
+      { id: 'access-requests', label: 'Access requests', group: 'main',    icon: iconInbox, badge: 'arNavBadge' },
       { id: 'tours',           label: 'Tour catalog',    group: 'main',    icon: iconCompass },
       { id: 'payments',        label: 'Payments',        group: 'finance', icon: iconCard },
       { id: 'billing',         label: 'Billing',         group: 'finance', icon: iconReceipt },
@@ -938,10 +959,13 @@
       const badgeHtml = route.badge
         ? '<span class="app-nav__badge" id="' + route.badge + '" hidden></span>'
         : '';
+      const countHtml = route.count
+        ? '<span class="app-nav__count" id="navCount-' + route.id + '" hidden></span>'
+        : '';
       a.innerHTML =
         '<span class="app-nav__icon">' + route.icon() + '</span>' +
         '<span>' + route.label + '</span>' +
-        badgeHtml;
+        badgeHtml + countHtml;
       a.addEventListener('click', (e) => {
         // Cmd/Ctrl/middle-click → let the browser open in a new tab.
         if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
@@ -961,6 +985,19 @@
         badge.hidden = false;
       } else {
         badge.hidden = true;
+      }
+    }
+
+    // Resting nav counts (e.g. Bookings, Hotels) populate from live data
+    // as each section loads; they stay hidden until a real count exists.
+    function updateNavCount(routeId, count) {
+      const el = document.getElementById('navCount-' + routeId);
+      if (!el) return;
+      if (count != null && count >= 0) {
+        el.textContent = String(count);
+        el.hidden = false;
+      } else {
+        el.hidden = true;
       }
     }
 
@@ -4135,6 +4172,7 @@
     }
 
     function renderBookingRows(els) {
+      updateNavCount('bookings', bkRecords.length);
       const filtered = bkStatusFilter === 'all'
         ? bkRecords
         : bkRecords.filter(r => deriveBookingDisplayStatus(r) === bkStatusFilter);
@@ -7212,6 +7250,7 @@
       // Update stat-card counts from the full unfiltered list every
       // render — counts always reflect totals, not the current filter.
       updateHotelsStatcardCounts(hotels);
+      updateNavCount('hotels', hotels.length);
 
       const filtered = hotels.filter((h) => matchesHotelsFilter(h, hotelsFilter));
 
