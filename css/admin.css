@@ -135,8 +135,11 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: 600; 
 
 .app__content {
   flex: 1;
-  padding: 85px 0 var(--s12);
-  max-width: 1280px;
+  /* Contextual page padding (rule 15): generous top air, fluid side
+     gutter so content never touches the edge below the cap, lighter
+     bottom. Product width cap 1200px (rule 13). */
+  padding: var(--space-section) var(--gutter) var(--space-page);
+  max-width: var(--container-xl);
   width: 100%;
   margin: 0 auto;   /* centre within the main column (excludes sidebar) */
 }
