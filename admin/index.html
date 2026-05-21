@@ -6091,45 +6091,31 @@
         const initials = (name
           ? name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('')
           : email.slice(0, 2).toUpperCase()) || '?';
-        // Email is intentionally not shown in the table — it would
-        // duplicate the manager lightbox's primary identifier and
-        // make rows wider than they need to be. Lightbox (opened
-        // via the kebab) carries the full email + invite history.
-        const userCell =
-          '<td class="hd-user">' +
-            '<span class="hd-avatar" aria-hidden="true">' + escapeHtml(initials) + '</span>' +
-            '<div class="hd-user__body">' +
-              '<div class="hd-user__name">' + escapeHtml(primary) + '</div>' +
-            '</div>' +
-          '</td>';
-        const rolePill   = mgrRolePill(m.role);
+        const roleLabel  = m.role === 'owner' ? 'Owner'
+                         : m.role === 'read_only' ? 'Read-only' : 'Manager';
         const statusPill = mgrStatusPill(m);
         const lastSeen   = mgrLastSeenLabel(m);
-        const added      = mgrAddedLabel(m);
+        // Row layout mirrors the kit (avatar · name/role·email · status
+        // pill + last-sign-in). The kebab is kept so the edit lightbox
+        // (wired via [data-manager-edit-id]) still works.
         return (
-          '<tr data-manager-row="' + escapeHtml(m.id) + '">' +
-            userCell +
-            '<td>' + rolePill + '</td>' +
-            '<td>' + statusPill + '</td>' +
-            '<td class="muted">' + lastSeen + '</td>' +
-            '<td class="muted">' + added + '</td>' +
-            '<td class="bk-table__kebab">' +
-              '<button type="button" class="bk-kebab"' +
-                ' data-manager-edit-id="' + escapeHtml(m.id) + '"' +
-                ' aria-label="Edit ' + escapeHtml(primary) + '">⋯</button>' +
-            '</td>' +
-          '</tr>'
+          '<div class="hd-row" data-manager-row="' + escapeHtml(m.id) + '">' +
+            '<div class="hd-row__main">' +
+              '<span class="hd-row__avatar">' + escapeHtml(initials) + '</span>' +
+              '<div>' +
+                '<div class="hd-row__name">' + escapeHtml(primary) + '</div>' +
+                '<div class="hd-row__meta">' + escapeHtml(roleLabel) + ' · ' + escapeHtml(email) + '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="hd-row__right">' +
+              statusPill +
+              '<span class="hd-row__meta">' + lastSeen + '</span>' +
+              '<button type="button" class="bk-kebab" data-manager-edit-id="' + escapeHtml(m.id) + '" aria-label="Edit ' + escapeHtml(primary) + '">⋯</button>' +
+            '</div>' +
+          '</div>'
         );
       }).join('');
-      els.mgrBody.innerHTML =
-        '<div class="bk-table-wrap"><div class="bk-table-scroll">' +
-          '<table class="bk-table">' +
-            '<thead><tr>' +
-              '<th>User</th><th>Role</th><th>Status</th><th>Last sign-in</th><th>Added</th><th></th>' +
-            '</tr></thead>' +
-            '<tbody>' + rows + '</tbody>' +
-          '</table>' +
-        '</div></div>';
+      els.mgrBody.innerHTML = rows;
     }
 
     // ── Manager cell helpers (used by table + lightbox) ───────────
