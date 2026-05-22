@@ -166,18 +166,44 @@ export async function getLinkStats(env, shortIoId, period = "total") {
   return parseResponse(res, `GET ${SHORT_IO_STATS}/${shortIoId}`);
 }
 
-// Lower-case + hyphen-normalise a tracking code into a short URL
-// path. e.g. "X7K2_E_0042" → "x7k2-e0042". Drops the separator
-// underscore between {prefix}_{type}_{seq} because the result reads
-// better as a short URL: "x7k2-e0042" vs "x7k2-e-0042".
+// Short.io's statistics payload has drifted across API versions: the
+// lifetime click total has appeared as totalClicks, humanClicks, and
+// plain clicks, and the last-click timestamp as lastClick /
+// lastClickDate / lastClickAt. Coerce numeric strings too. Returns
+// { totalClicks: number|null, lastClickDate: string|null } — null
+// total means "could not parse", which callers MUST treat as
+// unknown (do not write 0, or you clobber the real cached value).
+export function normalizeLinkStats(raw) {
+  if (!raw || typeof raw !== "object") {
+    return { totalClicks: null, lastClickDate: null };
+  }
+  const numFields = ["totalClicks", "humanClicks", "clicks", "totalClicksLink"];
+  let total = null;
+  for (const f of numFields) {
+    const v = raw[f];
+    if (typeof v === "number" && Number.isFinite(v)) { total = v; break; }
+    if (typeof v === "string" && v.trim() !== "" && Number.isFinite(Number(v))) {
+      total = Number(v);
+      break;
+    }
+  }
+  const dateFields = ["lastClick", "lastClickDate", "lastClickAt", "updatedAt"];
+  let last = null;
+  for (const f of dateFields) {
+    if (raw[f]) { last = raw[f]; break; }
+  }
+  return { totalClicks: total, lastClickDate: last };
+}
+
+// The tracking code IS the short-URL path: lowercase, hyphenated and
+// URL-safe by construction (htl-7q4k9, htl-7q4k9-e001 — see
+// PARTNERS_NAMING.md). There is no underscore↔hyphen translation
+// any more; this returns the code verbatim (lowercased defensively)
+// and exists only so call sites read intently and we keep a single
+// normalisation choke point.
 export function trackingCodeToShortPath(trackingCode) {
-  if (typeof trackingCode !== "string") return null;
-  const parts = trackingCode.toLowerCase().split("_");
-  if (parts.length < 2) return null;
-  // Hotel format:  prefix_h         → prefix-h
-  // Staff format:  prefix_e_NNNN    → prefix-eNNNN
-  if (parts.length === 2) return `${parts[0]}-${parts[1]}`;
-  return `${parts[0]}-${parts[1]}${parts[2]}`;
+  if (typeof trackingCode !== "string" || !trackingCode) return null;
+  return trackingCode.toLowerCase();
 }
 
 export { ShortIoError };

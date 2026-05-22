@@ -1,0 +1,33 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"/>
+<title>Alerts</title>
+<link rel="stylesheet" href="../colors_and_type.css"/>
+<style>
+  html,body{margin:0;background:var(--bg-surface);padding:24px;}
+  .stack{display:flex;flex-direction:column;gap:10px;}
+  .alert{display:flex;gap:10px;padding:12px 14px;border:1px solid transparent;border-radius:var(--radius-md);font:400 13px/1.5 var(--font-sans);}
+  .alert svg{flex:none;margin-top:1px;}
+  .alert b{font-weight:500;}
+  .ok{background:#ECFDF5;border-color:#A7F3D0;color:#047857;}
+  .warn{background:#FFFAF0;border-color:#FCE3B0;color:#9C5F0F;}
+  .bad{background:#FEF2F2;border-color:#FECACA;color:#B91C1C;}
+  .info{background:#EFF8FF;border-color:#B0DCFD;color:#0455A0;}
+</style></head><body>
+<div class="stack">
+  <div class="alert ok">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+    <div><b>Payout sent.</b> CA$ 4,820.50 routed to your Stripe account · settlement in 1–2 business days.</div>
+  </div>
+  <div class="alert warn">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+    <div><b>One referral link expires Friday.</b> Rotate the kiosk code or extend the campaign before May 24.</div>
+  </div>
+  <div class="alert bad">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+    <div><b>Bookings sync failed.</b> The Bokun connector returned 502. Retry, or contact Horizon if it keeps failing.</div>
+  </div>
+  <div class="alert info">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+    <div><b>Heads up:</b> Last-touch attribution is enabled. Switch to multi-touch under Settings &rsaquo; Attribution.</div>
+  </div>
+</div>
+</body></html>

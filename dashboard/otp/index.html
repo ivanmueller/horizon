@@ -6,7 +6,7 @@
   <title>Verify your email — Horizon partner dashboard</title>
   <meta name="description" content="Enter the code sent to your email to continue.">
   <meta name="robots" content="noindex,nofollow">
-  <link rel="canonical" href="https://gowithhorizon.com/dashboard/otp/">
+  <link rel="canonical" href="https://connect.gowithhorizon.com/otp/">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
@@ -255,7 +255,7 @@
       <button type="button" class="auth-link-btn" id="resendBtn">Resend code</button>
     </p>
     <p class="auth-meta-row auth-meta-row--tight">
-      <a class="auth-text-link" href="/dashboard/login/" id="backLink">Use a different email</a>
+      <a class="auth-text-link" href="/login/" id="backLink">Use a different email</a>
     </p>
   </main>
 
@@ -268,15 +268,16 @@
 
   <script type="module">
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+    import { cookieStorage } from '/js/supabase-cookie-storage.js';
 
     const SUPABASE_URL  = 'https://lxdltzrntphnkhsniwin.supabase.co';
     const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4ZGx0enJudHBobmtoc25pd2luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNjA0OTAsImV4cCI6MjA5MjYzNjQ5MH0.toebJTpWH-_tRLOmwPCeTprGfQfH_JU_ZKgbqkGuz3M';
-    const LOGIN_PAGE = '/dashboard/login/';
-    const SETUP_PAGE = '/dashboard/setup/';
+    const LOGIN_PAGE = '/login/';
+    const SETUP_PAGE = '/setup/';
     const CODE_LEN   = 8;
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: cookieStorage },
     });
 
     const params = new URLSearchParams(window.location.search);

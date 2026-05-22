@@ -1,0 +1,4325 @@
+/* ─────────────────────────────────────────────────────────────────────
+   Horizon admin — isolated design system.
+
+   Loaded only by /admin/. Does NOT extend or share variables with
+   /css/style.css; the gowithhorizon.com site stays on its own
+   stylesheet until we do a full site-wide refresh. Keeping these
+   apart means the partner-facing site can't accidentally break when
+   we iterate on admin styling, and vice versa.
+
+   Visual language: neutral white + gentle greys, Stripe-style. The
+   accent teal (--accent) is reserved for primary CTAs, the active
+   sidebar row, and a small number of high-priority badges. Headings,
+   links, hover states default to neutrals.
+   ───────────────────────────────────────────────────────────────── */
+
+/* ── Tokens ───────────────────────────────────────────────────── */
+:root {
+  /* Backgrounds */
+  --bg:           #FFFFFF;
+  --bg-subtle:    #FAFAF9;   /* cards / hover states */
+  --bg-sunken:    #F5F5F0;   /* table head, code chips */
+
+  /* Borders */
+  --border:       #EAEAE5;
+  --border-strong:#D4D4CE;
+
+  /* Text */
+  --text:         #1A1A2E;
+  --text-muted:   #6B7280;
+  --text-faint:   #9CA3AF;
+
+  /* Accent — used sparingly (primary CTA, active nav, key badges) */
+  --accent:       #209F95;
+  --accent-hover: #1C8C83;
+  --accent-soft:  rgba(32, 159, 149, 0.08);
+
+  /* Status palette for badges + alerts */
+  --ok-bg:        #ECFDF5;
+  --ok-fg:        #065F46;
+  --ok-border:    #A7F3D0;
+  --warn-bg:      #FEF3C7;
+  --warn-fg:      #92400E;
+  --warn-border:  #FDE68A;
+  --bad-bg:       #FEF2F2;
+  --bad-fg:       #991B1B;
+  --bad-border:   #FECACA;
+  --neutral-bg:   #F3F4F6;
+  --neutral-fg:   #374151;
+
+  /* Sidebar-specific palette */
+  --nav-text:           #30313d;   /* unselected nav label */
+  --nav-icon:           #667691;   /* unselected nav icon */
+  --nav-hover:          #f4f7fa;   /* unselected hover bg */
+  --nav-hover-active:   #E8F5F4;   /* hover bg when item is already active (faint accent wash) */
+
+  /* Type */
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-sans:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono:    'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+
+  --t-xs:   0.75rem;
+  --t-sm:   0.8125rem;
+  --t-base: 0.9375rem;
+  --t-md:   1rem;
+  --t-lg:   1.125rem;
+  --t-xl:   1.25rem;
+  --t-2xl:  1.5rem;
+  --t-3xl:  1.875rem;
+
+  /* Spacing scale (4px grid) */
+  --s1:  4px;
+  --s2:  8px;
+  --s3:  12px;
+  --s4:  16px;
+  --s5:  20px;
+  --s6:  24px;
+  --s8:  32px;
+  --s10: 40px;
+  --s12: 48px;
+  --s16: 64px;
+
+  /* Radii */
+  --r-sm:   6px;
+  --r-md:   8px;
+  --r-lg:   12px;
+  --r-full: 999px;
+
+  /* Layout */
+  --sidebar-w: 240px;
+  /* Content-area top padding. Fixed anchor: page-head modifiers
+     (.bk-page__head--stack, --invoices) pixel-tune title baselines
+     against this value, so it stays fixed rather than contextual. */
+  --content-top: 85px;
+
+  /* Motion */
+  --t-fast: 120ms ease-out;
+  --t-base: 200ms ease-out;
+}
+
+/* ── Reset / base ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--type-body-size);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button { font: inherit; cursor: pointer; }
+input, select, textarea { font: inherit; }
+a { color: inherit; text-decoration: none; }
+h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(--weight-medium); line-height: 1.25; }
+
+/* ── Layout shell ─────────────────────────────────────────────── */
+.app {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  min-height: 100vh;
+}
+
+.app__sidebar {
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
+  display: flex; flex-direction: column;
+  position: sticky; top: 0;
+  height: 100vh;
+}
+
+.app__main {
+  display: flex; flex-direction: column;
+  min-width: 0;
+}
+
+.app__content {
+  flex: 1;
+  /* Content sits flat at the product container width (--container-xl,
+     1280px in the system) with no side padding; the leftover space on
+     wide screens becomes the side gutter via the auto margins below.
+     Fixed top anchor (--content-top), lighter contextual bottom. */
+  padding: var(--content-top) 0 var(--space-page);
+  max-width: var(--container-xl);
+  width: 100%;
+  margin: 0 auto;   /* centre within the main column (excludes sidebar) */
+}
+
+/* ── Sidebar: brand + nav ─────────────────────────────────────── */
+/* Brand glyph and nav icons share a vertical centre line; the exact
+   on-grid math lives in the alignment note on .app-brand below. */
+
+.app-brand {
+  display: flex; align-items: center;
+  /* Icon-centring math, re-derived on the 4px grid so the brand glyph
+     centre and the nav-icon centres below all sit at x=28 from the
+     sidebar edge, and the brand label aligns with the nav labels at x=48.
+       brand icon centre = margin-left 8 + padding-left 8 + 24/2  = 28
+       nav   icon centre = nav pad 8 + item pad-left 12 + 16/2    = 28
+       brand label x     = 8 + 8 + 24(icon) + 8(gap)              = 48
+       nav   label x     = 8 + 12 + 16(icon) + 12(gap)            = 48 */
+  gap: var(--space-sm);
+  margin: var(--space-lg) var(--space-sm) var(--space-2xl);
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition-default);
+}
+/* Hover: the inset rectangle picks up the same wash + radius the
+   nav rows below use for unselected hover. */
+.app-brand:hover { background: var(--bg-subtle); }
+.app-brand__chevron {
+  margin-left: auto;
+  display: inline-flex; align-items: center;
+  color: var(--text-tertiary);
+}
+/* Icon displays the first letter of the signed-in account (admin email
+   or hotel name). Background matches the neutral wash the nav row hovers
+   to, so on hover the icon merges into the row. */
+.app-brand__icon {
+  width: 24px; height: 24px;
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+.app-brand__letter {
+  font-family: var(--font-display);
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  line-height: 1;
+}
+.app-brand__name {
+  font-family: var(--font-display);
+  font-weight: var(--weight-medium);
+  font-size: var(--type-label-size);
+  color: var(--text-primary);
+  letter-spacing: -0.003em;
+}
+
+.app-nav {
+  flex: 1;
+  /* 8px horizontal inset; nav icons stay centred with the brand glyph
+     above them (see .app-brand alignment note). */
+  padding: 0 var(--space-sm);
+  overflow-y: auto;
+  display: flex; flex-direction: column; gap: var(--space-lg);   /* group→group spacing */
+}
+.app-nav__heading {
+  font-size: var(--type-caption-size);
+  letter-spacing: 0;
+  color: var(--text-secondary);
+  font-weight: var(--weight-regular);
+  padding: 0 var(--space-md) var(--space-sm);
+  margin-top: var(--space-sm);
+}
+.app-nav__group { display: flex; flex-direction: column; gap: 0; }
+
+.app-nav__item {
+  display: flex; align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  color: var(--text-body);
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-regular);
+  letter-spacing: -0.003em;
+  cursor: pointer;
+  background: none;
+  text-decoration: none;
+  border: 0;
+  transition: background var(--transition-default), color var(--transition-default);
+}
+.app-nav__item:hover {
+  background: var(--bg-subtle);
+}
+/* Active state: only text + icon turn the brand colour. No background
+   at rest; hover paints the faint brand wash for click affordance. */
+.app-nav__item--active {
+  background: transparent;
+  color: var(--action-primary-default);
+  font-weight: var(--weight-medium);
+}
+.app-nav__item--active:hover {
+  background: var(--bg-brand-subtle);
+  color: var(--action-primary-default);
+}
+.app-nav__item--active .app-nav__icon { color: var(--action-primary-default); }
+.app-nav__icon {
+  width: 16px; height: 16px;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+.app-nav__icon svg { width: 100%; height: 100%; }
+
+/* Pending-count badge on nav items (e.g. Access Requests inbox) */
+.app-nav__badge {
+  margin-left: auto;
+  background: var(--action-primary-default);
+  color: var(--text-inverse);
+  font-size: var(--type-overline-size);
+  font-weight: var(--weight-medium);
+  line-height: 1;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-pill);
+  min-width: 18px;
+  text-align: center;
+}
+
+/* ── Workspace dropdown menu (anchored under .app-brand) ──────── */
+/* Opens when the user clicks the brand row at the top of the sidebar.
+   Mirrors Stripe's workspace switcher: avatar + name on top, then a
+   group of workspace actions, then a divider, then the user row +
+   sign out. The panel sits on top of the sidebar's right edge so it
+   can extend beyond it without resizing the sidebar. */
+.brand-menu {
+  position: absolute;
+  top: 56px;          /* flush under the brand row (margin 16 + box 40) */
+  left: var(--space-sm);
+  width: 268px;
+  z-index: var(--z-dropdown);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-e2);
+  padding: var(--space-sm);
+}
+.brand-menu[hidden] { display: none; }
+
+.brand-menu__head {
+  display: flex; flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-sm) var(--space-lg);
+}
+.brand-menu__avatar {
+  width: 36px; height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-size: var(--type-caption-size);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.02em;
+}
+.brand-menu__title {
+  font-family: var(--font-display);
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+
+.brand-menu__section {
+  display: flex; flex-direction: column;
+  gap: 0;
+}
+.brand-menu__divider {
+  border: 0; border-top: 1px solid var(--border-subtle);
+  margin: var(--space-sm) 0;
+}
+
+.brand-menu__item {
+  display: flex; align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+  background: none; border: 0;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--transition-default);
+}
+.brand-menu__item:hover { background: var(--bg-subtle); }
+.brand-menu__item:disabled { opacity: 0.55; cursor: progress; }
+
+.brand-menu__icon {
+  width: 16px; height: 16px;
+  flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--text-secondary);
+}
+.brand-menu__icon svg { width: 16px; height: 16px; }
+
+.brand-menu__label { flex: 1; }
+.brand-menu__chev,
+.brand-menu__info {
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--text-secondary);
+}
+.brand-menu__chev svg,
+.brand-menu__info svg { width: 14px; height: 14px; }
+
+.brand-menu__item--user .brand-menu__label {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Chevron in the brand row flips when the menu is open. */
+.app-brand--open .app-brand__chevron { transform: rotate(180deg); }
+.app-brand__chevron { transition: transform var(--transition-default); }
+
+/* ── Page heading (top of every route) ────────────────────────── */
+.page-head {
+  margin-bottom: var(--space-2xl);
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: var(--space-lg); flex-wrap: wrap;
+}
+/* Fixed display size for now; fluid clamp() arrives with the
+   responsive-layer integration (rule 14). Weight pinned to 500 —
+   the global h1 rule's 600 isn't in the two-weight scale (rule 5). */
+.page-head__title {
+  font-size: var(--type-display-size);
+  font-weight: var(--weight-medium);
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+.page-head__sub {
+  margin-top: var(--space-sm);
+  color: var(--text-secondary);
+  font-size: var(--type-body-size);
+}
+.page-head__actions { display: flex; gap: var(--space-sm); }
+
+/* ── Buttons ──────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-lg);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  white-space: nowrap;
+  /* Transition handled by the global interactive rule (rule 22). */
+}
+.btn:hover { background: var(--bg-subtle); border-color: var(--border-strong); }
+.btn:active { background: var(--bg-muted); }
+.btn:focus-visible { outline: none; box-shadow: var(--shadow-focus-ring); }
+.btn:disabled { opacity: 0.55; cursor: progress; }
+.btn--primary {
+  background: var(--action-primary-default);
+  border-color: var(--action-primary-default);
+  color: var(--text-inverse);
+}
+.btn--primary:hover { background: var(--action-primary-hover); border-color: var(--action-primary-hover); }
+.btn--primary:active { background: var(--action-primary-pressed); border-color: var(--action-primary-pressed); }
+
+/* Hotels page primary CTA — fixed pill size + slightly bolder label,
+   with a translucent "n" key hint at the right edge (mirrors Stripe's
+   keyboard-shortcut chip on Add customer). 3-column grid so the plus
+   pins to the left padding, the kbd pins to the right padding, and
+   the label centres in the column between them. */
+.hotels-add-btn {
+  width: 130px;
+  height: 30px;
+  padding: 0 var(--space-sm);
+  font-weight: var(--weight-medium);
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0;
+}
+.hotels-add-btn__label {
+  text-align: center;
+}
+/* Tall, thin plus glyph — sized to the cap-line of the label text and
+   stroked thinner than the label itself so the icon reads light. */
+.hotels-add-btn__plus {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  display: block;
+}
+/* Hover: keep the same teal fill (no darken) and add a barely-there
+   drop shadow so the affordance is felt rather than seen. */
+.hotels-add-btn:hover {
+  background: var(--action-primary-default);
+  border-color: var(--action-primary-default);
+  box-shadow: var(--shadow-e1);
+}
+
+/* Tour-catalog "Create product" — same shape, wider so the longer
+   label has air around it. The 3-col grid keeps plus + kbd pinned
+   to the edges; the extra width is absorbed by the 1fr label
+   column, leaving more breathing room around "Create product". */
+.tours-create-btn {
+  width: 175px;
+  padding: 0 var(--space-md);
+}
+/* Keyboard hint chip sitting on the accent CTA fill. The translucent
+   white is a deliberate exception — no semantic token exists for an
+   alpha-white overlay on a coloured surface. */
+.btn__kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 var(--space-xs);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.22);
+  color: var(--text-inverse);
+  font-family: var(--font-sans);
+  font-size: var(--type-overline-size);
+  font-weight: var(--weight-medium);
+  line-height: 1;
+  flex-shrink: 0;
+}
+.btn--ghost {
+  background: none; border-color: transparent;
+  color: var(--text-body);
+}
+.btn--ghost:hover { background: var(--bg-subtle); color: var(--text-primary); }
+.btn--ghost:active { background: var(--bg-muted); }
+.btn--danger {
+  background: var(--action-destructive-default);
+  border-color: transparent;
+  color: var(--text-inverse);
+}
+.btn--danger:hover { background: var(--action-destructive-hover); }
+.btn--danger:active { background: var(--action-destructive-pressed); }
+.btn--sm { padding: var(--space-xs) var(--space-sm); font-size: var(--type-caption-size); }
+
+/* ── Cards ────────────────────────────────────────────────────── */
+/* Value-identical to the css_new .card (horizon-connect-responsive.css);
+   kept explicit during values-first migration, ready to consume directly
+   at flip-time. */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-card);
+  box-shadow: var(--shadow-e1);
+}
+.card__head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+.card__title {
+  font-size: var(--type-subheading-size); font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+.card__sub { color: var(--text-secondary); font-size: var(--type-caption-size); margin-top: var(--space-xs); }
+
+/* ── Stat / metric cards ──────────────────────────────────────── */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-lg);
+}
+.stat {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg) var(--space-xl);
+}
+.stat__label {
+  font-size: var(--type-caption-size);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  font-weight: var(--weight-medium);
+  margin-bottom: var(--space-sm);
+}
+.stat__value {
+  font-family: var(--font-display);
+  font-size: var(--type-heading-size); font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  line-height: 1.1;
+  font-feature-settings: 'tnum' 1;
+}
+.stat__sub {
+  margin-top: var(--space-xs);
+  font-size: var(--type-caption-size);
+  color: var(--text-tertiary);
+}
+
+/* ── Tables (Stripe-style: airy, tabular nums, no zebra) ──────── */
+.table-wrap {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--type-body-size);
+}
+.table th, .table td {
+  padding: 12px var(--space-lg);
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.table tbody tr:last-child > td { border-bottom: 0; }
+.table th {
+  font-weight: var(--weight-medium);
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--bg-subtle);
+}
+.table td { color: var(--text-primary); }
+.table td.num,
+.table th.num { text-align: right; font-feature-settings: 'tnum' 1; }
+
+/* ── Inputs ───────────────────────────────────────────────────── */
+.input {
+  display: block;
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  font-size: var(--type-body-size);
+  color: var(--text-primary);
+  /* Transition handled by the global interactive rule (rule 22). */
+}
+.input::placeholder { color: var(--text-tertiary); }
+.input:hover { border-color: var(--border-strong); }
+.input:focus-visible {
+  outline: none;
+  border-color: var(--border-brand);
+  box-shadow: var(--shadow-focus-ring);
+}
+.input:disabled {
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+
+/* ── Badges (status pills) ────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-pill);
+  font-size: var(--type-caption-size);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+}
+.badge--ok      { background: var(--feedback-success-bg); color: var(--feedback-success-text); }
+.badge--warn    { background: var(--feedback-warning-bg); color: var(--feedback-warning-text); }
+.badge--bad     { background: var(--feedback-danger-bg);  color: var(--feedback-danger-text); }
+.badge--neutral { background: var(--bg-muted);            color: var(--text-body); }
+
+/* ── Empty / placeholder state ────────────────────────────────── */
+.empty {
+  background: var(--bg-surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3xl) var(--space-2xl);
+  text-align: center;
+  color: var(--text-secondary);
+}
+.empty__title {
+  font-family: var(--font-display);
+  font-size: var(--type-subheading-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+.empty__body { font-size: var(--type-body-size); max-width: 32em; margin: 0 auto; }
+
+/* ── Modal ────────────────────────────────────────────────────── */
+.modal {
+  position: fixed; inset: 0;
+  background: var(--bg-overlay);
+  display: flex; align-items: center; justify-content: center;
+  z-index: var(--z-modal); padding: var(--space-lg);
+}
+.modal[hidden] { display: none; }
+.modal__card {
+  background: var(--bg-surface);
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl);
+  width: 100%; max-width: 420px;
+  box-shadow: var(--shadow-e3);
+}
+.modal__head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: var(--space-sm);
+}
+.modal__title {
+  font-family: var(--font-display);
+  font-size: var(--type-subheading-size); font-weight: var(--weight-medium);
+}
+.modal__close {
+  background: none; border: 0; cursor: pointer;
+  font-size: var(--type-heading-size); line-height: 1; color: var(--text-secondary);
+  padding: 0 var(--space-sm);
+}
+.modal__close:hover { color: var(--text-primary); }
+.modal__close:focus-visible { outline: none; box-shadow: var(--shadow-focus-ring); border-radius: var(--radius-sm); }
+.modal__sub { font-size: var(--type-body-size); color: var(--text-secondary); margin: 0 0 var(--space-lg); }
+.modal__actions {
+  display: flex; gap: var(--space-md); justify-content: flex-end;
+  margin-top: var(--space-sm);
+}
+
+/* ── Inline alerts ────────────────────────────────────────────── */
+/* Block message (admin alerts are text, not icon+text spans). Carries
+   its own bottom spacing for now; css_new's flex/marginless alert is the
+   flip-time target once markup is restructured. */
+.alert {
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  font-size: var(--type-body-size);
+  margin-bottom: var(--space-md);
+  border: 1px solid transparent;
+}
+.alert--ok   { background: var(--feedback-success-bg); color: var(--feedback-success-text); border-color: var(--feedback-success-border); }
+.alert--bad  { background: var(--feedback-danger-bg);  color: var(--feedback-danger-text);  border-color: var(--feedback-danger-border); }
+.alert[hidden] { display: none; }
+
+/* ── Range custom + bookings controls row ─────────────────────── */
+.bookings-controls {
+  display: flex; flex-wrap: wrap; gap: var(--space-md);
+  align-items: center; justify-content: space-between;
+  margin-bottom: var(--space-xl);
+}
+.range-custom {
+  display: none;
+  align-items: center; gap: var(--space-sm);
+}
+.range-custom--show { display: inline-flex; }
+.range-custom input[type="date"] {
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font: inherit; font-size: var(--type-body-size);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+/* ── Hotel-row expand / detail ────────────────────────────────── */
+.hotel-row { cursor: pointer; }
+.hotel-row:hover > td { background: var(--bg-subtle); }
+.hotel-row--open > td { background: var(--bg-muted); }
+.row-caret {
+  display: inline-block; width: 0; height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--text-tertiary);
+  margin-right: 8px;
+  transition: transform var(--transition-default);
+  vertical-align: middle;
+}
+.hotel-row--open .row-caret { transform: rotate(-180deg); }
+
+.detail-row > td {
+  padding: 0;
+  background: var(--bg-subtle);
+}
+.detail-inner {
+  padding: var(--space-lg) var(--space-xl) var(--space-xl);
+}
+.detail-inner h3 {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin: 0 0 var(--space-sm);
+  font-weight: var(--weight-medium);
+}
+.detail-inner h3 + table { margin-bottom: var(--space-lg); }
+.detail-inner table {
+  width: 100%; border-collapse: collapse;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  font-size: var(--type-body-size);
+}
+.detail-inner th, .detail-inner td {
+  padding: 8px var(--space-md);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.detail-inner tbody tr:last-child > td { border-bottom: 0; }
+.detail-inner th {
+  font-size: var(--type-caption-size);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  background: var(--bg-muted);
+  text-align: left;
+  font-weight: var(--weight-medium);
+}
+.detail-inner td.num,
+.detail-inner th.num { text-align: right; font-feature-settings: 'tnum' 1; }
+
+/* ── Type pill (kickback / pool) ──────────────────────────────── */
+.type-pill {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 0.6875rem;
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.type-pill--kickback { background: var(--bg-brand-subtle); color: var(--action-primary-default); }
+.type-pill--pool     { background: var(--bg-muted);   color: var(--text-body); }
+
+/* ── Status pill (select element styled as a pill) ────────────── */
+.status {
+  font: inherit; font-size: var(--type-caption-size); font-weight: var(--weight-medium);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.status:disabled { opacity: 0.6; cursor: progress; }
+.status--confirmed      { background: var(--feedback-success-bg); color: var(--feedback-success-text); border-color: var(--feedback-success-border); }
+.status--cancelled      { background: var(--feedback-danger-bg);  color: var(--feedback-danger-text);  border-color: var(--feedback-danger-border); }
+.status--refunded       { background: var(--bg-muted);            color: var(--text-body);             border-color: var(--border-subtle); }
+.status--pending_refund { background: var(--feedback-warning-bg); color: var(--feedback-warning-text); border-color: var(--feedback-warning-border); }
+
+/* ── PDF preview modal ────────────────────────────────────────── */
+.pdf-modal {
+  position: fixed; inset: 0;
+  background: rgba(26, 26, 46, 0.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200; padding: var(--space-lg);
+}
+.pdf-modal[hidden] { display: none; }
+.pdf-modal__card {
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  width: 100%; max-width: 1000px; height: 90vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  overflow: hidden;
+}
+.pdf-modal__head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: var(--space-lg) var(--space-lg);
+  border-bottom: 1px solid var(--border);
+  gap: var(--space-md);
+}
+.pdf-modal__title {
+  font-family: var(--font-display);
+  font-size: var(--type-subheading-size); font-weight: var(--weight-medium); color: var(--text-primary);
+  line-height: 1.2;
+}
+.pdf-modal__sub { font-size: var(--type-body-size); color: var(--text-secondary); }
+.pdf-modal__close {
+  background: none; border: 0; cursor: pointer;
+  font-size: 24px; line-height: 1; color: var(--text-secondary);
+  padding: 0 6px;
+}
+.pdf-modal__close:hover { color: var(--text-primary); }
+.pdf-modal__frame { flex: 1; width: 100%; border: 0; background: #525659; }
+.pdf-modal__actions {
+  display: flex; gap: var(--space-md); justify-content: flex-end;
+  padding: var(--space-md) var(--space-lg);
+  border-top: 1px solid var(--border);
+  background: var(--bg-subtle);
+}
+
+/* ── Slide-over drawer ────────────────────────────────────────── */
+.drawer {
+  position: fixed; inset: 0;
+  z-index: var(--z-drawer);
+  display: flex; justify-content: flex-end;
+}
+.drawer[hidden] { display: none; }
+.drawer::before {
+  /* Backdrop — click to close. */
+  content: '';
+  position: absolute; inset: 0;
+  background: var(--bg-overlay);
+}
+.drawer__panel {
+  position: relative;
+  width: 100%; max-width: 540px;
+  background: var(--bg-surface);
+  height: 100vh;
+  overflow-y: auto;
+  /* e3 (modal-tier) elevation. The system has no directional side-panel
+     shadow; revisit with a deliberate token if this reads wrong. */
+  box-shadow: var(--shadow-e3);
+  display: flex; flex-direction: column;
+}
+.drawer__head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding: var(--space-lg) var(--space-xl);
+  border-bottom: 1px solid var(--border-subtle);
+  gap: var(--space-md);
+  flex-shrink: 0;
+}
+.drawer__title {
+  font-family: var(--font-display);
+  font-size: var(--type-subheading-size); font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+.drawer__sub {
+  font-size: var(--type-caption-size); color: var(--text-secondary);
+  margin-top: var(--space-xs);
+  font-family: var(--font-mono);
+}
+.drawer__close {
+  background: none; border: 0; cursor: pointer;
+  font-size: var(--type-heading-size); line-height: 1; color: var(--text-secondary);
+  padding: 0 var(--space-sm);
+}
+.drawer__close:hover { color: var(--text-primary); }
+.drawer__close:focus-visible { outline: none; box-shadow: var(--shadow-focus-ring); border-radius: var(--radius-sm); }
+.drawer__body {
+  padding: var(--space-xl);
+  flex: 1;
+}
+
+.drawer-section + .drawer-section { margin-top: var(--space-2xl); }
+.drawer-section__head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: var(--space-md);
+  gap: var(--space-md);
+}
+.drawer-section__title {
+  font-size: var(--type-overline-size);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  font-weight: var(--weight-medium);
+  margin: 0;
+}
+
+/* Definition-list field grid: label on the left, value on the right. */
+.drawer-fields {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: var(--space-md) var(--space-lg);
+  margin: 0;
+  font-size: var(--type-body-size);
+}
+.drawer-fields dt {
+  color: var(--text-secondary);
+  font-weight: var(--weight-medium);
+  align-self: center;
+}
+.drawer-fields dd {
+  margin: 0;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+/* Highlight the row whose hotel is open in the drawer (selected-row tint). */
+.row--selected > td { background: var(--bg-brand-subtle) !important; }
+
+/* Drawer form (create / edit) — stacked label + input rows. */
+.drawer-form {
+  display: flex; flex-direction: column;
+  gap: var(--space-lg);
+}
+.drawer-form__row {
+  display: flex; flex-direction: column;
+  gap: var(--space-sm);
+}
+.drawer-form__label {
+  font-size: var(--type-label-size);
+  color: var(--text-body);
+  font-weight: var(--weight-medium);
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: var(--space-sm);
+}
+.drawer-form__req {
+  font-size: var(--type-caption-size);
+  color: var(--text-tertiary);
+  font-weight: var(--weight-regular);
+}
+.drawer-form__hint {
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+.drawer-form__pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+}
+/* Chevron colour is baked into the data URI (CSS vars can't reach inside
+   it); kept as a documented exception. */
+.drawer-form select.input {
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2356595e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right var(--space-md) center;
+  padding-right: var(--space-2xl);
+}
+.drawer-actions {
+  display: flex; justify-content: flex-end;
+  gap: var(--space-md);
+  margin-top: var(--space-2xl);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* Per-row Edit / Revoke buttons inside drawer tables. */
+.row-actions__col { width: 1%; white-space: nowrap; }
+.row-actions {
+  white-space: nowrap; text-align: right;
+  display: flex; gap: var(--space-xs); justify-content: flex-end;
+}
+.row-actions__btn {
+  background: none; border: 0; cursor: pointer;
+  padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm);
+  font-size: var(--type-caption-size); font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+  /* Transition handled by the global interactive rule (rule 22). */
+}
+.row-actions__btn:hover {
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+}
+.row-actions__btn--danger { color: var(--text-danger); }
+.row-actions__btn--danger:hover {
+  background: var(--feedback-danger-bg);
+  color: var(--text-danger);
+}
+
+/* Add/edit form rendered below the staff (and managers) tables. */
+.drawer-subform {
+  margin-top: var(--space-lg);
+  padding: var(--space-lg);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+}
+.drawer-subform__title {
+  font-family: var(--font-display);
+  font-size: var(--type-label-size); font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-lg);
+}
+.drawer-subform__actions {
+  display: flex; justify-content: flex-end; gap: var(--space-sm);
+  margin-top: var(--space-lg);
+}
+
+/* Danger zone — terminate / reinstate inside the hotel drawer. */
+.drawer-danger { margin-top: var(--space-2xl); }
+.drawer-danger .drawer-section__title { color: var(--text-danger); }
+.drawer-danger__row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  border: 1px solid var(--feedback-danger-border);
+  border-radius: var(--radius-md);
+  background: var(--feedback-danger-bg);
+}
+.drawer-danger__label {
+  font-size: var(--type-body-size); font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  margin-bottom: var(--space-xs);
+}
+.drawer-danger__hint {
+  font-size: var(--type-caption-size); color: var(--text-secondary);
+  line-height: 1.4;
+  max-width: 38ch;
+}
+
+/* ── Utilities ────────────────────────────────────────────────── */
+.muted { color: var(--text-secondary); }
+.faint { color: var(--text-tertiary); }
+.mono  {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  /* Literal codes/URLs must render verbatim: kill ligatures and
+     contextual alternates so a digit-x-digit run (e.g. "8x7" in a
+     tracking code) is never rewritten to "8×7" by the font. */
+  font-variant-ligatures: none;
+  font-feature-settings: 'calt' 0, 'liga' 0;
+}
+.hide  { display: none !important; }
+
+/* ─────────────────────────────────────────────────────────────────
+   Bookings page — Stripe-style transactions surface.
+   Replicates the layout of stripe.com/dashboard/transactions:
+   page title + right-side actions, sub-tabs, status stat cards,
+   filter chips, then a wide flat data table.
+   Brand accent comes from --action-primary-default.
+   ─────────────────────────────────────────────────────────────── */
+.bk-page__head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 0;
+  gap: var(--space-lg);
+}
+/* Bigger gap below the page head when the page goes title→stat-cards
+   directly (no sub-tabs row). Used by Hotels; Bookings still has the
+   tabs row and stays at margin-bottom: 0. */
+.bk-page__head--md {
+  margin-bottom: var(--space-xl);
+}
+
+/* Stacked head — small breadcrumb-style back link sitting above the
+   page title, anchored to .app__content's --content-top. The -2px
+   nudges optically align the stacked block to where a regular page
+   title sits. Used by /admin/hotels/<slug>/. */
+.bk-page__head--stack {
+  display: block;
+  margin-top: -2px;
+  margin-bottom: -2px;
+}
+.bk-page__back {
+  display: inline-block;
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  color: var(--action-primary-default);
+  text-decoration: none;
+  line-height: 1;
+  margin-bottom: var(--space-md);
+  cursor: pointer;
+}
+.bk-page__back:hover { color: var(--action-primary-hover); }
+.bk-page__title {
+  font-family: var(--font-display);
+  font-size: var(--type-heading-size);
+  font-weight: var(--weight-medium);
+  letter-spacing: -0.015em;
+  color: var(--text-primary);
+  margin: 0;
+}
+.bk-page__actions { display: flex; gap: var(--space-sm); flex-shrink: 0; }
+
+/* ── Sub-tabs (Bookings / Payouts / All activity) ─────────────── */
+.bk-tabs {
+  display: flex;
+  gap: var(--space-lg);
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: var(--space-xl);
+}
+.bk-tabs__btn {
+  background: none; border: 0;
+  padding: var(--space-sm) 0;
+  margin-bottom: -1px;
+  font: inherit;
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  /* Transition handled by the global interactive rule (rule 22). */
+}
+.bk-tabs__btn:hover { color: var(--text-primary); }
+.bk-tabs__btn--active {
+  color: var(--action-primary-default);
+  border-bottom-color: var(--action-primary-default);
+  font-weight: var(--weight-medium);
+}
+.bk-tabs__btn--active:hover { color: var(--action-primary-default); }
+
+/* ── Status stat cards (All / Confirmed / Refunded …) ─────────── */
+.bk-statcards {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+.bk-statcard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  /* Transition handled by the global interactive rule (rule 22). */
+}
+.bk-statcard:hover { border-color: var(--border-strong); }
+.bk-statcard--active {
+  border-color: var(--action-primary-default);
+  box-shadow: inset 0 0 0 1px var(--action-primary-default);
+}
+.bk-statcard__label {
+  font-size: var(--type-label-size);
+  color: var(--text-primary);
+  font-weight: var(--weight-medium);
+  margin-bottom: var(--space-xs);
+}
+.bk-statcard--active .bk-statcard__label { color: var(--action-primary-default); }
+.bk-statcard__value {
+  font-family: var(--font-display);
+  font-size: var(--type-subheading-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  font-feature-settings: 'tnum' 1;
+  line-height: 1.1;
+}
+
+/* Label-only variant — used by Hotels where each card is just a
+   filter chip, not a stat. Drops the bottom margin between (now-absent)
+   value; alignment is handled per-page (left for Hotels, see
+   .bk-statcards--hotels below). */
+.bk-statcard--label-only {
+  display: flex;
+  align-items: center;
+}
+.bk-statcard--label-only .bk-statcard__label { margin-bottom: 0; }
+
+/* Hotels: 7 fixed-size 180×46 cards spread across the full content
+   width via space-between. The gap between cards flexes with the
+   viewport so the row always reaches the same right edge as the
+   page head above it (where the Add hotel button sits) — Canmore's
+   right edge tracks the button's right edge at every width. */
+.bk-statcards--hotels {
+  display: flex;
+  justify-content: space-between;
+  gap: 0;
+}
+.bk-statcards--hotels .bk-statcard {
+  width: 180px;
+  height: 46px;
+  padding: 0 var(--space-lg);
+  justify-content: flex-start;
+  text-align: left;
+}
+
+/* Tour catalog: 3 fixed-size 395×66 stat cards spread across a
+   1200 px row via space-between. 3 × 395 + 2 × ~7.5 gap = 1200. */
+.bk-statcards--tours {
+  display: flex;
+  justify-content: space-between;
+  width: 1200px;
+  max-width: 100%;
+  gap: 0;
+}
+.bk-statcards--tours .bk-statcard {
+  width: 395px;
+  height: 66px;
+  flex-shrink: 0;
+}
+
+/* Invoices: 5 fixed-size 250×42 filter cards in a row, 6px gap. The
+   row total is 5 × 250 + 4 × 6 = 1274 px which sits inside the 1280
+   content cap with 6 px of slack. */
+.bk-statcards--invoices {
+  display: flex;
+  gap: var(--space-sm);
+}
+.bk-statcards--invoices .bk-statcard {
+  width: 250px;
+  height: 42px;
+  padding: 0 var(--space-md);
+  display: flex; align-items: center; justify-content: center;
+  text-align: center;
+}
+
+/* Invoices page-head modifier — small optical nudges that pull the head
+   up and add a gap so the title baseline and stat-cards row sit at the
+   intended positions relative to --content-top. */
+.bk-page__head--invoices {
+  margin-top: -5px;
+  margin-bottom: 13px;
+}
+
+/* ── Toolbar: filter chips + right-side actions ───────────────── */
+.bk-toolbar {
+  display: flex; flex-wrap: wrap;
+  align-items: center; gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+.bk-filters { display: flex; flex-wrap: wrap; gap: var(--space-sm); flex: 1; }
+.bk-toolbar__actions { display: flex; gap: var(--space-sm); margin-left: auto; }
+
+.bk-chip {
+  display: inline-flex; align-items: center; gap: var(--space-xs);
+  background: var(--bg-surface);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-pill);
+  padding: var(--space-xs) var(--space-md) var(--space-xs) var(--space-sm);
+  font: inherit;
+  font-size: var(--type-label-size);
+  color: var(--text-primary);
+  cursor: pointer;
+  /* Transition handled by the global interactive rule (rule 22). */
+}
+.bk-chip:hover {
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+  background: var(--bg-subtle);
+}
+.bk-chip__plus {
+  width: 14px; height: 14px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-size: var(--type-overline-size);
+  line-height: 1;
+}
+.bk-chip:hover .bk-chip__plus { border-color: var(--border-strong); color: var(--text-primary); }
+
+.bk-iconbtn {
+  display: inline-flex; align-items: center; gap: var(--space-xs);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  font: inherit;
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  cursor: pointer;
+  /* Transition handled by the global interactive rule (rule 22). */
+}
+.bk-iconbtn:hover { background: var(--bg-subtle); border-color: var(--border-strong); }
+.bk-iconbtn svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+/* ── Data table ───────────────────────────────────────────────── */
+/* No card wrapper — table sits directly on the page background to
+   match Stripe's transactions list. Row separators use --border-subtle;
+   the header rule uses --border-default. */
+.bk-table-wrap {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+.bk-table-scroll { overflow-x: auto; }
+.bk-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--type-body-size);
+}
+.bk-table thead th {
+  font-weight: var(--weight-medium);
+  font-size: var(--type-label-size);
+  color: var(--text-primary);
+  text-align: left;
+  padding: var(--space-sm) var(--space-lg);
+  background: transparent;
+  border-top: 1px solid var(--border-default);
+  border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
+}
+.bk-table tbody td {
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
+  color: var(--text-primary);
+  vertical-align: middle;
+  font-weight: var(--weight-medium);
+}
+.bk-table tbody tr:last-child > td { border-bottom: 0; }
+.bk-table tbody tr:hover > td { background: var(--bg-subtle); }
+.bk-table tbody tr.row--selected > td { background: var(--bg-brand-subtle); }
+.bk-table tbody tr[data-hotel-idx],
+.bk-table tbody tr[data-bk-clickable] { cursor: pointer; }
+
+/* Hotels table — drops the rule above the header (the toolbar above
+   already provides separation), and tunes the hotel-name cell to read
+   slightly heavier than the other body cells, which stay at the regular
+   weight to match the filter chips. */
+.bk-table--hotels thead th { border-top: 0; }
+.bk-table--hotels tbody td { font-weight: var(--weight-regular); }
+.bk-table--hotels tbody td.bk-table__name {
+  font-weight: var(--weight-medium);
+  font-size: var(--type-body-size);
+}
+.bk-table__check { width: 28px; padding-right: 0 !important; }
+.bk-table__check input { cursor: pointer; }
+.bk-table__kebab { width: 36px; text-align: right; }
+.bk-table__amount {
+  font-weight: var(--weight-medium);
+  font-feature-settings: 'tnum' 1;
+  color: var(--text-primary);
+}
+.bk-table__currency {
+  color: var(--text-body);
+  font-weight: var(--weight-medium);
+  margin-left: var(--space-xs);
+  font-size: var(--type-caption-size);
+  letter-spacing: 0.01em;
+}
+.bk-table__desc {
+  font-family: var(--font-mono);
+  font-size: var(--type-caption-size);
+  color: var(--text-primary);
+  font-weight: var(--weight-medium);
+}
+.bk-table__muted { color: var(--text-body); font-weight: var(--weight-medium); }
+
+.bk-kebab {
+  background: none; border: 0;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  line-height: 1;
+}
+.bk-kebab:hover { color: var(--text-primary); background: var(--bg-subtle); }
+
+.bk-table__footer {
+  padding: var(--space-sm) 0 0;
+  font-size: var(--type-caption-size);
+  color: var(--text-body);
+  font-weight: var(--weight-medium);
+  border-top: 1px solid var(--border-default);
+  background: transparent;
+}
+
+/* ── Status badge next to amount (Stripe pill style) ──────────── */
+/* 1px-bordered pills with a light fill. Deliberately only two visual
+   flavours: succeeded (green) and a subdued neutral grey for every
+   non-success state (refunded, reversed, cancelled, pending refund) —
+   non-success isn't alarmed in red here. This diverges from the .status
+   pills, which use the full feedback palette; reconcile if we unify. */
+.bk-pill {
+  display: inline-flex; align-items: center; gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  font-size: var(--type-caption-size);
+  font-weight: var(--weight-medium);
+  margin-left: var(--space-sm);
+  white-space: nowrap;
+  line-height: 1.5;
+}
+.bk-pill svg { width: 11px; height: 11px; }
+.bk-pill--ok {
+  background: var(--feedback-success-bg);
+  border-color: var(--feedback-success-border);
+  color:        var(--feedback-success-text);
+}
+.bk-pill--neutral {
+  background: var(--bg-subtle);
+  border-color: var(--border-default);
+  color:        var(--text-secondary);
+}
+.bk-pill--warn {
+  background: var(--bg-subtle);
+  border-color: var(--border-default);
+  color:        var(--text-secondary);
+}
+.bk-pill--bad {
+  background: var(--bg-subtle);
+  border-color: var(--border-default);
+  color:        var(--text-secondary);
+}
+.bk-pill--info {
+  background: var(--feedback-info-bg);
+  border-color: var(--feedback-info-border);
+  color:        var(--feedback-info-text);
+}
+
+/* ── Empty state inside the table card ────────────────────────── */
+.bk-empty {
+  padding: var(--space-3xl) var(--space-lg);
+  text-align: center;
+  color: var(--text-body);
+}
+.bk-empty__title {
+  font-family: var(--font-display);
+  font-size: var(--type-subheading-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+.bk-empty__body { font-size: var(--type-body-size); max-width: 32em; margin: 0 auto; }
+
+/* ─────────────────────────────────────────────────────────────────
+   Home page — Stripe-style overview shell.
+   Two stacked sections: "Today" (KPIs + intraday chart on the left,
+   balance + payouts panel on the right), and "Your overview" (filter
+   chips + grid of six metric widgets).
+   ─────────────────────────────────────────────────────────────── */
+
+.hm-section { margin-bottom: var(--space-2xl); }
+.hm-section__head {
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+.hm-section__title {
+  font-family: var(--font-display);
+  font-size: var(--type-heading-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+/* ── Today block — chart + side panel ─────────────────────────── */
+.hm-today {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: var(--space-3xl);
+  align-items: start;
+}
+.hm-today__main { min-width: 0; }
+
+.hm-today__kpis {
+  display: flex;
+  gap: var(--space-3xl);
+  margin-bottom: var(--space-lg);
+}
+.hm-kpi {
+  background: none; border: 0; padding: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  display: flex; flex-direction: column;
+  gap: var(--space-xs);
+  color: var(--text-primary);
+}
+.hm-kpi__label {
+  display: inline-flex; align-items: center; gap: var(--space-xs);
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-body);
+}
+.hm-kpi__chev {
+  width: 12px; height: 12px;
+  color: var(--text-secondary);
+}
+.hm-kpi__value {
+  font-family: var(--font-display);
+  font-size: var(--type-heading-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  font-feature-settings: 'tnum' 1;
+}
+.hm-kpi__time {
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+}
+
+.hm-chart {
+  position: relative;
+  margin-top: var(--space-sm);
+}
+.hm-chart__note {
+  position: absolute;
+  top: -22px;
+  right: 0;
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+}
+.hm-chart__svg {
+  display: block;
+  width: 100%;
+  height: 200px;
+}
+.hm-chart__axis {
+  display: flex; justify-content: space-between;
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+  margin-top: var(--space-xs);
+}
+
+/* ── Today right side panel — balance + payouts ───────────────── */
+.hm-today__side {
+  padding-left: var(--space-2xl);
+  border-left: 1px solid var(--border-subtle);
+}
+.hm-side__row {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: var(--space-lg);
+}
+.hm-side__col { display: flex; flex-direction: column; gap: var(--space-xs); }
+.hm-side__label {
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-body);
+}
+.hm-side__value {
+  font-family: var(--font-display);
+  font-size: var(--type-heading-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  font-feature-settings: 'tnum' 1;
+}
+.hm-side__value--muted { color: var(--text-secondary); }
+.hm-side__hint {
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+}
+.hm-side__link {
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  color: var(--action-primary-default);
+  text-decoration: none;
+}
+.hm-side__link:hover { text-decoration: underline; }
+.hm-side__divider {
+  border: 0; border-top: 1px solid var(--border-subtle);
+  margin: var(--space-lg) 0;
+}
+
+/* ── Filter row above the widgets grid ────────────────────────── */
+.hm-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+.hm-filters { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+.hm-toolbar__actions { display: flex; gap: var(--space-sm); }
+
+.hm-filter {
+  display: inline-flex; align-items: center; gap: var(--space-xs);
+  background: var(--bg-surface);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-pill);
+  padding: var(--space-xs) var(--space-md);
+  font: inherit;
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  cursor: pointer;
+  /* Transition handled by the global interactive rule (rule 22). */
+}
+.hm-filter:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-subtle);
+}
+.hm-filter__label { color: var(--text-primary); font-weight: var(--weight-medium); }
+.hm-filter__sep   { color: var(--text-tertiary); }
+.hm-filter__value { color: var(--action-primary-default); font-weight: var(--weight-medium); }
+.hm-filter__chev,
+.hm-filter__close {
+  width: 12px; height: 12px;
+  color: var(--text-secondary);
+}
+.hm-filter--removable .hm-filter__close {
+  width: 14px; height: 14px;
+  color: var(--text-secondary);
+}
+.hm-filter--removable:hover .hm-filter__close { color: var(--text-primary); }
+
+/* ── Widgets grid ─────────────────────────────────────────────── */
+/* Tiles sitting on a --bg-subtle wash. Auto-fit grid with a 360px floor
+   and a 1fr ceiling: tiles stretch to fill the row instead of capping at a
+   fixed width, so there's no trailing dead space. The 360px floor yields
+   3 columns at the 1280 product width (six tiles -> even 3+3) and 2 on
+   tablet (-> 2+2+2). min(100%, 360px) prevents overflow on narrow
+   viewports. The wash (--space-sm gap + padding) stays even around the
+   tiles regardless of width. */
+.hm-widgets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+  grid-auto-rows: 404px;
+  gap: var(--space-sm);
+  background: var(--bg-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-sm);
+  width: 100%;
+}
+/* No per-tile border — the wash provides the only visual seam.
+   Each tile keeps its own white fill + rounded corners so the
+   wash reads as the gap between tiles. */
+.hm-widget {
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg) var(--space-xl) var(--space-lg);
+  display: flex; flex-direction: column;
+  min-width: 0;
+}
+.hm-widget__head {
+  display: flex; align-items: center; gap: var(--space-xs);
+  margin-bottom: var(--space-xs);
+}
+.hm-widget__title {
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+.hm-widget__info {
+  width: 13px; height: 13px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+.hm-widget__value {
+  font-family: var(--font-display);
+  font-size: var(--type-heading-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  font-feature-settings: 'tnum' 1;
+}
+.hm-widget__sub {
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-md);
+}
+.hm-widget__chart {
+  position: relative;
+  flex: 1;            /* fills the remaining vertical space in the tile */
+  min-height: 0;
+}
+.hm-widget__svg {
+  display: block;
+  width: 100%; height: 100%;
+}
+.hm-widget__yaxis {
+  position: absolute; top: 0; right: 0;
+  display: flex; flex-direction: column; justify-content: space-between;
+  height: 100%;
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+  text-align: right;
+  pointer-events: none;
+}
+.hm-widget__xaxis {
+  display: flex; justify-content: space-between;
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+  margin-top: var(--space-xs);
+}
+.hm-widget__foot {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border-subtle);
+  font-size: var(--type-caption-size);
+}
+.hm-widget__updated { color: var(--text-secondary); }
+.hm-widget__more {
+  color: var(--action-primary-default);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+}
+.hm-widget__more:hover { text-decoration: underline; }
+
+/* ─────────────────────────────────────────────────────────────────
+   Bookings — Date and time filter popover.
+   Anchored under the "Date and time" chip; mirrors Stripe's filter
+   widget (operator dropdown, conditional fields, inline calendar,
+   timezone radio, Apply button). Lives in <body> so it can extend
+   beyond the bookings card.
+   ─────────────────────────────────────────────────────────────── */
+.bk-datepop {
+  position: absolute;
+  z-index: var(--z-popover);
+  width: 280px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-e2);
+  padding: var(--space-lg);
+  display: flex; flex-direction: column;
+  gap: var(--space-md);
+  font-size: var(--type-body-size);
+  color: var(--text-primary);
+}
+.bk-datepop[hidden] { display: none; }
+.bk-datepop__title {
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  font-size: var(--type-label-size);
+}
+
+.bk-datepop__op,
+.bk-datepop__unit,
+.bk-datepop__num {
+  height: 32px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  font: inherit;
+  font-size: var(--type-body-size);
+  color: var(--text-primary);
+  padding: 0 var(--space-sm);
+}
+.bk-datepop__op { width: 100%; padding-right: var(--space-xl); }
+.bk-datepop__num { width: 60px; text-align: left; }
+.bk-datepop__unit { flex: 1; min-width: 0; }
+
+.bk-datepop__op:focus,
+.bk-datepop__unit:focus,
+.bk-datepop__num:focus {
+  outline: none;
+  border-color: var(--border-brand);
+  box-shadow: var(--shadow-focus-ring);
+}
+
+.bk-datepop__row {
+  display: flex; align-items: center; gap: var(--space-sm);
+}
+.bk-datepop__row[hidden] { display: none; }
+.bk-datepop__hook {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 14px; height: 14px;
+  color: var(--action-primary-default);
+  flex-shrink: 0;
+}
+.bk-datepop__hook svg { width: 14px; height: 14px; }
+.bk-datepop__and {
+  font-size: var(--type-body-size);
+  color: var(--text-secondary);
+}
+
+.bk-datepop__date-btn {
+  flex: 1; min-width: 0;
+  height: 32px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: var(--type-body-size);
+  color: var(--text-primary);
+  padding: 0 var(--space-md);
+  text-align: left;
+  cursor: pointer;
+  /* Transition handled by the global interactive rule (rule 22). */
+}
+.bk-datepop__date-btn:hover { border-color: var(--border-strong); }
+
+.bk-datepop__check {
+  display: flex; align-items: center; gap: var(--space-sm);
+  font-size: var(--type-body-size);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.bk-datepop__check input { accent-color: var(--action-primary-default); }
+
+.bk-datepop__tz {
+  display: flex; align-items: center; gap: var(--space-md);
+  font-size: var(--type-body-size);
+  color: var(--text-body);
+}
+.bk-datepop__tz-label { color: var(--text-body); }
+.bk-datepop__radio {
+  display: inline-flex; align-items: center; gap: var(--space-xs);
+  cursor: pointer;
+  color: var(--text-primary);
+}
+.bk-datepop__radio input { accent-color: var(--action-primary-default); }
+
+.bk-datepop__apply {
+  height: 36px;
+  background: var(--action-primary-default);
+  border: 0;
+  border-radius: var(--radius-md);
+  color: var(--text-inverse);
+  font: inherit;
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  /* Transition handled by the global interactive rule (rule 22). */
+}
+.bk-datepop__apply:hover { background: var(--action-primary-hover); }
+
+/* ── Calendar (separate floating panel, anchored next to the date
+   popover; positioned in JS via getBoundingClientRect) ────────── */
+.bk-cal {
+  position: absolute;
+  z-index: var(--z-popover);
+  width: 280px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-e2);
+  padding: var(--space-md) var(--space-md) var(--space-lg);
+  display: flex; flex-direction: column;
+  gap: var(--space-sm);
+}
+.bk-cal[hidden] { display: none; }
+.bk-cal__input {
+  width: 100%;
+  height: 34px;
+  border: 1px solid var(--border-brand);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: var(--type-body-size);
+  color: var(--text-primary);
+  padding: 0 var(--space-md);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-focus-ring);
+}
+.bk-cal__input:focus { outline: none; }
+.bk-cal__nav {
+  display: flex; align-items: center; gap: var(--space-sm);
+  font-size: var(--type-label-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  padding-top: var(--space-xs);
+  border-top: 1px solid var(--border-subtle);
+}
+.bk-cal__month { flex: 1; }
+.bk-cal__navbtn {
+  width: 24px; height: 24px;
+  background: none; border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  /* Transition handled by the global interactive rule (rule 22). */
+}
+.bk-cal__navbtn:hover { background: var(--bg-subtle); color: var(--text-primary); }
+.bk-cal__navbtn svg { width: 14px; height: 14px; }
+.bk-cal__dows {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  justify-items: center;
+  font-size: var(--type-caption-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+  padding: var(--space-xs) 0;
+}
+.bk-cal__dows span {
+  width: 32px;
+  text-align: center;
+}
+.bk-cal__grid {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  justify-items: center;
+  row-gap: var(--space-xs);
+}
+.bk-cal__day {
+  width: 32px; height: 32px;
+  background: none; border: 0;
+  border-radius: 50%;
+  font: inherit;
+  font-size: var(--type-body-size);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  /* Transition handled by the global interactive rule (rule 22). */
+}
+.bk-cal__day:hover { background: var(--bg-subtle); }
+.bk-cal__day--empty { visibility: hidden; cursor: default; }
+
+/* ── Active filter chip (e.g. "✕ Date and time | Last 7 days") ── */
+.bk-chip--active {
+  border-style: solid;
+  border-color: var(--border-default);
+  background: var(--bg-surface);
+  padding-left: var(--space-sm);
+}
+.bk-chip__sep   { color: var(--text-tertiary); margin: 0 var(--space-xs); }
+.bk-chip__value { color: var(--action-primary-default); font-weight: var(--weight-medium); }
+.bk-chip__close {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 14px; height: 14px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.bk-chip__close svg { width: 14px; height: 14px; }
+.bk-chip--active:hover .bk-chip__close { color: var(--text-primary); }
+
+/* ── Hotel detail page (/admin/hotels/<slug>/) ────────── */
+/* Stripe customer-page architecture: header → metadata strip
+   → two-column body (main + sidebar). Layout-only — colors,
+   fonts, and tokens are reused from existing primitives. */
+.hd-head { gap: 6px; margin-bottom: var(--space-2xl); }
+.hd-head__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  flex-wrap: wrap;
+}
+.hd-head__lead { display: flex; flex-direction: column; gap: 6px; }
+.hd-head__titlerow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+/* Status pill beside the hotel name — GitHub "Verified"-style
+   bordered chip. Click toggles the verification popover below. */
+.hd-statwrap { position: relative; display: inline-flex; }
+.hd-statwrap[hidden] { display: none; }
+.hd-statpill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-surface);
+  font-size: var(--type-caption-size);
+  font-weight: var(--weight-medium);
+  line-height: 1.4;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--transition-default), border-color var(--transition-default);
+}
+.hd-statpill:hover { background: var(--bg-subtle); }
+.hd-statpill--green { color: var(--text-success); border-color: var(--border); }
+.hd-statpill--amber { color: var(--text-warning); border-color: var(--feedback-warning-border); }
+.hd-statpill--gray  { color: var(--text-secondary); border-color: var(--border); }
+
+/* Verification popover — same visual language as the copy-URL
+   dropdown: white card, soft shadow, opens directly below. */
+.hd-statpop {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 50;
+  width: 300px;
+  padding: var(--space-lg);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.14);
+}
+.hd-statpop[hidden] { display: none; }
+.hd-statpop__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--type-body-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+.hd-statwrap--green .hd-statpop__icon { color: var(--text-success); }
+.hd-statwrap--amber .hd-statpop__icon { color: var(--text-warning); }
+.hd-statwrap--gray  .hd-statpop__icon { color: var(--text-tertiary); }
+.hd-statpop__icon { flex-shrink: 0; }
+.hd-statpop__note {
+  margin: 6px 0 0;
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.hd-statpop__list {
+  list-style: none;
+  margin: var(--space-md) 0 0;
+  padding: var(--space-md) 0 0;
+  border-top: 1px solid var(--border);
+  display: grid;
+  gap: 8px;
+}
+.hd-statpop__list[hidden] { display: none; }
+.hd-statpop__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--type-body-size);
+  color: var(--text-primary);
+}
+.hd-statpop__item svg { flex-shrink: 0; }
+.hd-statpop__item.is-done  svg { color: var(--text-success); }
+.hd-statpop__item.is-todo      { color: var(--text-secondary); }
+.hd-statpop__item.is-todo  svg { color: var(--text-warning); }
+
+/* Setup guide — Stripe-style checklist card in the sidebar above
+   Details. Flat white card, plain grey border, no shadow and no
+   recessed look. Closes when every item is done (pill flips
+   Active) or archived. */
+.hd-setup {
+  display: flex;
+  flex-direction: column;
+  border-radius: 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.hd-setup[hidden] { display: none; }
+.hd-setup__bar {
+  height: 4px;
+  width: 100%;
+  background: rgba(15, 23, 42, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.hd-setup__fill {
+  display: block;
+  height: 100%;
+  background: var(--action-primary-default);
+  border-radius: 999px;
+  transition: width 320ms ease;
+}
+.hd-setup__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+}
+.hd-setup__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+.hd-setup__title {
+  font-size: var(--type-body-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+.hd-setup__count {
+  font-size: var(--type-caption-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.hd-setup__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+}
+.hd-setup__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  margin: 0 -4px;
+  border-radius: 6px;
+  font-size: var(--type-body-size);
+  cursor: default;
+  transition: background var(--transition-default);
+}
+.hd-setup__item:hover { background: var(--bg-subtle); }
+.hd-setup__mark {
+  flex-shrink: 0;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-default);
+  background: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hd-setup__mark--done {
+  border-color: var(--action-primary-default);
+  background: var(--action-primary-default);
+  color: var(--text-inverse);
+}
+.hd-setup__label { color: var(--text-primary); flex: 1; min-width: 0; }
+.hd-setup__item.is-done .hd-setup__label {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+/* Clickable (actionable, incomplete) — pointer + a trailing
+   chevron that nudges on hover. Says "you can fix this now". */
+.hd-setup__item.is-clickable { cursor: pointer; }
+.hd-setup__go {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  opacity: 0;
+  transform: translateX(-2px);
+  transition: opacity var(--transition-default), transform var(--transition-default);
+}
+.hd-setup__item.is-clickable:hover .hd-setup__go,
+.hd-setup__item.is-clickable:focus-visible .hd-setup__go {
+  opacity: 1;
+  transform: translateX(0);
+}
+.hd-setup__item.is-clickable:focus-visible {
+  outline: 2px solid var(--action-primary-default);
+  outline-offset: -2px;
+}
+/* Waiting (external event) — visually distinct, NOT actionable:
+   no hover highlight, no pointer, muted, italicised label. */
+.hd-setup__item.is-waiting { cursor: default; }
+.hd-setup__item.is-waiting:hover { background: transparent; }
+.hd-setup__item.is-waiting .hd-setup__mark {
+  border-style: dashed;
+  border-color: var(--border-default);
+}
+.hd-setup__item.is-waiting .hd-setup__label {
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+
+/* Hero metric strip — labels + numbers, no charts. Sits directly
+   below the identity row, above the body grid. Four columns
+   spread evenly across the full width with generous vertical
+   padding; divider below only. */
+.hd-herostat {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-lg) var(--space-xl);
+  padding: 0 0 var(--space-xl);
+  margin-bottom: var(--space-2xl);
+  border-bottom: 1px solid var(--border);
+}
+@media (max-width: 720px) {
+  .hd-herostat { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.hd-herostat__col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.hd-herostat__label {
+  font-size: var(--type-caption-size);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.hd-herostat__value {
+  font-size: var(--type-subheading-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.hd-head__sub {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  margin: 0;
+  font-size: var(--type-body-size);
+  color: var(--text-secondary);
+}
+.hd-head__actions { flex-shrink: 0; }
+
+.hd-body {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 0.75fr);
+  gap: var(--space-xl);
+  align-items: flex-start;
+}
+@media (max-width: 1024px) {
+  .hd-body { grid-template-columns: 1fr; }
+}
+
+.hd-main { display: flex; flex-direction: column; gap: var(--space-xl); min-width: 0; }
+.hd-side { display: flex; flex-direction: column; gap: var(--space-2xl); min-width: 0; }
+
+/* Sticky-notes panel in the right rail. Mirrors the timeline notes
+   as yellow cards so the most recent admin context sits a glance
+   away from the section that produced it. The whole section is
+   hidden via the [hidden] attribute when there are no notes — no
+   header, no empty state — so it appears only when there's
+   something to read. */
+.hd-notespanel { display: flex; flex-direction: column; gap: var(--space-md); }
+.hd-notespanel[hidden] { display: none; }
+.hd-notespanel__title {
+  font-size: 1rem;
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  margin: 0;
+}
+.hd-notespanel__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.hd-stickynote {
+  padding: 10px 12px;
+  background: var(--feedback-warning-bg);
+  border: 1px solid var(--feedback-warning-border);
+  border-radius: 6px;
+}
+.hd-stickynote__text {
+  font-size: var(--type-body-size);
+  color: var(--text-primary);
+  line-height: 1.4;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+.hd-stickynote__text strong { font-weight: var(--weight-medium); }
+.hd-stickynote__text em { font-style: italic; }
+.hd-stickynote__by {
+  margin-top: 4px;
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+}
+/* "View N more note(s)" lives inside the same sticky card,
+   separated by a hairline rule that picks up the yellow border
+   colour so it reads as part of the same surface. Purple matches
+   the accent used for in-page navigation affordances. */
+.hd-stickynote__more {
+  display: block;
+  width: calc(100% + 24px);
+  margin: 10px -12px -10px;
+  padding: 8px 12px 8px;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--feedback-warning-border);
+  text-align: left;
+  font: inherit;
+  font-size: var(--type-caption-size);
+  color: var(--action-primary-default);
+  cursor: pointer;
+  transition: color var(--transition-default);
+}
+.hd-stickynote__more:hover { color: var(--text-primary); }
+
+/* Audit events timeline — Stripe-style two-column rows.
+   Description on the left, timestamp on the right. Same font
+   weight across both columns so the row reads at a single tone;
+   timestamp picks up the same dark navy as the description (not
+   muted grey) so it sits as part of the same line. Soft horizontal
+   rules between rows mirror the screenshot exactly — no card
+   chrome, no icons, just the facts. */
+.hd-events { list-style: none; margin: 0; padding: 0; }
+.hd-events__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: var(--type-body-size);
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+.hd-events__row:last-child { border-bottom: 0; }
+.hd-events__desc {
+  font-weight: var(--weight-medium);
+  word-wrap: break-word;
+  min-width: 0;
+}
+.hd-events__time {
+  font-weight: 400;
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding-top: 1px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* "Load more events" sits centred under the list when the
+   aggregator reports has_more — same ghost button chrome as the
+   rest of the section actions so the affordance stays quiet. */
+.hd-events__more {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-lg) 0 0;
+}
+
+.hd-section { display: flex; flex-direction: column; gap: var(--space-md); }
+.hd-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+/* Wrapper when there are multiple right-side controls (Sync + Add) */
+.hd-section__head-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.hd-section__title {
+  font-size: 1rem;
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  margin: 0;
+}
+.hd-section__add {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+}
+.hd-section__link {
+  background: transparent;
+  border: 0;
+  color: var(--action-primary-default);
+  font-size: var(--type-body-size);
+  cursor: pointer;
+  padding: 4px 6px;
+}
+.hd-section__link:disabled { color: var(--text-tertiary); cursor: default; }
+.hd-section__link:hover:not(:disabled) { color: var(--action-primary-hover); }
+
+.hd-empty {
+  border: 1px dashed var(--border-strong);
+  border-radius: 6px;
+  padding: var(--space-xl) var(--space-lg);
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: var(--type-body-size);
+  background: transparent;
+}
+
+.hd-emp { display: flex; align-items: center; gap: var(--space-sm); min-width: 0; }
+.hd-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--bg-muted);
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: var(--weight-medium);
+  flex-shrink: 0;
+}
+.hd-emp__name { font-weight: 500; color: var(--text-primary); }
+.hd-emp__role { color: var(--text-secondary); font-size: var(--type-caption-size); }
+
+.hd-num { font-feature-settings: 'tnum' 1; font-variant-numeric: tabular-nums; }
+
+/* Compact column-header info icon. Sits inline after the title so the
+   user can hover for a definition without taking up row chrome.
+   Lives at the muted-text color so it never competes with the title. */
+.hd-colinfo {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  color: var(--text-secondary);
+  cursor: help;
+  vertical-align: -2px;
+}
+.hd-colinfo:focus-visible {
+  outline: 2px solid var(--border-brand);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+
+/* Clicks cell: sparkline floats to the left of the number with a
+   little gap so the visual + numeric reading happen together.
+   Right-aligned because the column is numeric. */
+/* Placements table column widths. Without these the Placement
+   column absorbs all the extra space and the metric columns bunch
+   together under their info-icon headers. Anchoring the metrics
+   to explicit minimums keeps the row scannable left → right. */
+#hdPlacementsBody .bk-table th:nth-child(1) { width: auto; }                       /* Placement (flex) */
+#hdPlacementsBody .bk-table th:nth-child(2) { width: 96px; }                       /* Status */
+#hdPlacementsBody .bk-table th:nth-child(3) { width: 140px; text-align: right; }   /* Clicks */
+#hdPlacementsBody .bk-table th:nth-child(4) { width: 96px;  text-align: right; }   /* Bookings */
+#hdPlacementsBody .bk-table th:nth-child(5) { width: 120px; text-align: right; }   /* Revenue */
+#hdPlacementsBody .bk-table th:nth-child(6) { width: 120px; }                      /* Last scan */
+#hdPlacementsBody .bk-table th:nth-child(7) { width: 60px; }                       /* Actions */
+
+.pl-clicks-cell {
+  white-space: nowrap;
+}
+.pl-clicks-cell .pl-clicks-sparkline {
+  display: inline-block;
+  width: 60px;
+  height: 16px;
+  margin-right: 8px;
+  vertical-align: middle;
+  color: var(--text-secondary);
+}
+.pl-clicks-cell .pl-clicks-sparkline svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.pl-clicks-cell .pl-clicks-num {
+  vertical-align: middle;
+}
+
+.hd-copy {
+  background: transparent;
+  border: 0;
+  padding: 2px 4px;
+  margin: -2px -4px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hd-copy:hover { background: var(--bg-subtle); }
+.hd-copy.mono { font-family: var(--font-mono); font-size: 0.85em; }
+.hd-copy--url { color: var(--action-primary-default); }
+
+/* Sidebar cards are borderless — visual rhythm comes from the
+   wide gap between sections (hd-side), not from card chrome. */
+.hd-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+.hd-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+.hd-card__title {
+  margin: 0;
+  font-size: var(--type-body-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+.hd-card__edit {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background var(--transition-default), color var(--transition-default), border-color var(--transition-default);
+}
+.hd-card__edit:hover {
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+/* Banking information — Stripe-style accordion. The whole header is
+   the toggle: brand mark + title + status tag + chevron. Open by
+   default when no banking is connected (Pending), collapsed once
+   Verified. */
+.hd-bank__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text-primary);
+}
+.hd-bank__brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--action-primary-default);            /* Stripe brand purple */
+  color: var(--text-inverse);
+}
+.hd-bank__title { flex: 0 1 auto; min-width: 0; }
+.hd-bank__tag {
+  flex-shrink: 0;                 /* sits directly beside the title */
+  cursor: inherit;                /* non-interactive; header is the toggle */
+}
+.hd-bank__chev {
+  margin-left: auto;              /* pushed to the far right */
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  transition: transform var(--transition-default);
+}
+.hd-bank.is-open .hd-bank__chev { transform: rotate(180deg); }
+.hd-bank__body { margin-top: var(--space-xs); }
+.hd-bank__body[hidden] { display: none; }
+.hd-bank__live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+.hd-bank__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-success);            /* live green */
+  flex-shrink: 0;
+}
+
+/* Manual payout banking form (pilot phase). */
+.hd-bankf { display: flex; flex-direction: column; gap: var(--space-md); }
+.hd-bankf__seg { display: flex; gap: var(--space-sm); }
+.hd-bankf__seg-btn.is-active {
+  background: var(--bg-brand-subtle);
+  border-color: var(--action-primary-default);
+  color: var(--action-primary-default);
+}
+.hd-bankf__field { display: flex; flex-direction: column; gap: var(--space-xs); }
+.hd-bankf__label {
+  font-size: var(--type-body-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+.hd-bankf__input {
+  font: inherit;
+  font-size: var(--type-body-size);
+  padding: 7px var(--space-md);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+.hd-bankf__input:focus {
+  outline: none;
+  border-color: var(--action-primary-default);
+  box-shadow: var(--shadow-focus-ring);
+}
+.hd-bankf__input[hidden], #hdBankEtransfer[hidden], #hdBankEft[hidden] { display: none; }
+.hd-bankf__err {
+  margin: 0;
+  font-size: var(--type-body-size);
+  color: var(--feedback-danger-text);
+}
+.hd-bankf__err[hidden] { display: none; }
+select.hd-bankf__input { appearance: auto; }
+
+/* Manual payment records — Stripe-style table.
+   Reuses .bk-table chrome (header rule, row separators, hover tint)
+   so payouts read identically to the bookings table on the same
+   page. The trailing actions column sits flush-right with a kebab,
+   matching the bookings row pattern. */
+.bk-table--payouts thead th { border-top: 0; }
+.bk-table--payouts .bk-table__kebab { width: 36px; text-align: right; }
+.bk-table--payouts .bk-pill { margin-left: var(--space-sm); }
+
+/* Optional note attached to a payout renders as a muted subrow
+   directly under its parent record so it stays associated visually
+   without inflating the main row height. */
+.hd-payouts__noterow td { border-bottom: 1px solid var(--border-subtle); }
+.hd-payouts__note {
+  padding-top: 0 !important;
+  padding-left: var(--space-lg);
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+  white-space: normal;
+  font-weight: 400;
+}
+
+/* Table footer — "N results" link on the left in the brand accent
+   (mirrors Stripe's pagination affordance), running-total chip on
+   the right so admins keep the recorded total at a glance. */
+.hd-payouts__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) 0 0;
+  font-size: var(--type-body-size);
+}
+.hd-payouts__results {
+  color: var(--action-primary-default);
+  font-weight: 500;
+}
+.hd-payouts__total { color: var(--text-secondary); }
+.hd-payouts__total strong {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-medium);
+  margin-left: 4px;
+}
+
+/* Payments table footer — single "N results" link in the brand
+   accent, left-aligned. No running total: payments are tracked
+   per-entry only and rolling sums live elsewhere in reporting. */
+.bk-table--payments thead th { border-top: 0; }
+.bk-table--payments .bk-table__kebab { width: 36px; text-align: right; }
+.bk-table--payments .bk-pill { margin-left: var(--space-sm); }
+.hd-payments__footer {
+  display: flex;
+  align-items: center;
+  padding: var(--space-md) 0 0;
+  font-size: var(--type-body-size);
+}
+.hd-payments__results {
+  color: var(--action-primary-default);
+  font-weight: 500;
+}
+
+/* Row-action popover. The kebab itself is non-destructive — it
+   only toggles this menu. Destructive options live inside as
+   explicit choices so a single click on the dots can never
+   trigger a deletion. Card surface mirrors the standard popover
+   pattern used elsewhere in /admin/: 1px border, 8px radius,
+   two-layer soft shadow. */
+.hd-rowmenu { position: relative; display: inline-block; }
+.hd-rowmenu__pop {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 50;
+  min-width: 160px;
+  padding: 4px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow:
+    0 8px 24px rgba(15, 23, 42, 0.10),
+    0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.hd-rowmenu__pop[hidden] { display: none; }
+.hd-rowmenu__item {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  border: 0;
+  background: transparent;
+  border-radius: 4px;
+  text-align: left;
+  font-size: var(--type-body-size);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background var(--transition-default), color var(--transition-default);
+}
+.hd-rowmenu__item:hover,
+.hd-rowmenu__item:focus-visible { background: var(--bg-subtle); }
+.hd-rowmenu__item:focus-visible { outline: none; }
+.hd-rowmenu__item--danger { color: var(--feedback-danger-text); }
+.hd-rowmenu__item--danger:hover { background: var(--feedback-danger-bg); }
+.hd-rowmenu__item:disabled { opacity: .5; cursor: default; }
+
+/* Stripe-style rows: label bolded above the value, tight inner
+   gap, generous outer spacing between fields. The whole sidebar
+   reads like a definition list rather than a table. */
+.hd-side__list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+.hd-side__row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2px;
+  font-size: var(--type-body-size);
+}
+.hd-side__row--block { gap: 2px; }
+.hd-side__label {
+  margin: 0;
+  font-size: var(--type-body-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+.hd-side__value {
+  margin: 0;
+  font-size: var(--type-body-size);
+  color: var(--text-primary);
+  word-break: break-word;
+  text-align: left;
+}
+.hd-side__row--block .hd-side__value { text-align: left; }
+.hd-side__more { display: contents; }
+.hd-side__more[hidden] { display: none; }
+.hd-side__toggle {
+  background: transparent;
+  border: 0;
+  padding: 2px 0;
+  margin-top: var(--space-sm);
+  color: var(--action-primary-default);
+  font-size: var(--type-caption-size);
+  cursor: pointer;
+  text-align: left;
+  align-self: flex-start;
+}
+.hd-side__toggle:hover { color: var(--action-primary-hover); }
+.hd-side__link {
+  color: var(--action-primary-default);
+  text-decoration: none;
+}
+.hd-side__link:hover { text-decoration: underline; }
+
+/* Flag glyph inline with location label */
+.hd-flag {
+  font-size: 1em;
+  margin-right: 2px;
+  display: inline-block;
+  line-height: 1;
+}
+
+/* Header contact subtitle — quiet secondary text in both states. With
+   an email: plain mono address + tiny copy icon. Without: a small +
+   icon + "Add primary contact". Never accent-coloured — accent on an
+   empty state reads as an error. */
+.hd-head__sub[hidden] { display: none; }
+
+/* Master referral URL + Copy dropdown (Supabase-style) under
+   the hotel title. */
+.hd-refurl {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-lg);
+  min-width: 0;
+}
+.hd-refurl[hidden] { display: none; }
+/* Non-interactive label — regular sans weight, muted, no hover
+   or pointer affordance (matches the Supabase project header). */
+/* The link is a grid stack — URL text and the "Copied" confirm
+   occupy the same cell so they crossfade in place without the
+   row width jumping. */
+.hd-refurl__link {
+  display: inline-grid;
+  font-family: inherit;
+  font-size: var(--type-body-size);
+  font-weight: 400;
+  color: var(--text-secondary);
+  text-decoration: none;
+  cursor: pointer;
+  max-width: 42ch;
+  padding: 2px 6px;
+  margin: -2px -6px;
+  border-radius: 5px;
+  transition: background var(--transition-default), color var(--transition-default);
+}
+/* Same highlight the "Master referral URL" menu row gets on hover. */
+.hd-refurl__link:hover {
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+}
+.hd-refurl__urltext,
+.hd-refurl__urldone {
+  grid-area: 1 / 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+/* The referral URL under the hotel title (and its copy-menu echo)
+   renders in the body font, not .mono, so a digit-x-digit run in the
+   tracking code (e.g. "htl-8x7yu") was being rewritten to "8×7" by
+   the font's contextual alternates. Render these literal codes
+   verbatim — this is the only place x mis-rendered. */
+.hd-refurl__urltext,
+.hd-refurl__isub {
+  font-variant-ligatures: none;
+  font-feature-settings: 'calt' 0, 'liga' 0;
+}
+.hd-refurl__urldone {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-success);
+  font-weight: 500;
+  opacity: 0;
+  transform: translateY(2px);
+  pointer-events: none;
+}
+.hd-refurl__link.is-copied .hd-refurl__urltext {
+  opacity: 0;
+  transform: translateY(-2px);
+}
+.hd-refurl__link.is-copied .hd-refurl__urldone {
+  opacity: 1;
+  transform: translateY(0);
+}
+.hd-refurl__copywrap { position: relative; }
+.hd-refurl__copybtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background var(--transition-default), color var(--transition-default);
+}
+.hd-refurl__copybtn:hover { background: var(--bg-muted); color: var(--text-primary); }
+.hd-refurl__chev {
+  flex-shrink: 0;
+  transition: transform var(--transition-default);
+}
+.hd-refurl__copybtn[aria-expanded="true"] .hd-refurl__chev {
+  transform: rotate(180deg);
+}
+.hd-refurl__menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 50;
+  width: 320px;
+  padding: var(--space-sm);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.14);
+  display: grid;
+  gap: 2px;
+}
+.hd-refurl__menu[hidden] { display: none; }
+.hd-refurl__item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+.hd-refurl__item:hover { background: var(--bg-subtle); }
+.hd-refurl__item:disabled { opacity: 0.5; cursor: not-allowed; }
+.hd-refurl__ico {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--text-secondary);
+}
+.hd-refurl__itxt { display: grid; gap: 1px; min-width: 0; flex: 1; }
+.hd-refurl__ititle {
+  font-size: var(--type-body-size);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.hd-refurl__isub {
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Right-side action slot on the copy row: copy glyph on hover,
+   green check after a successful copy (Supabase pattern). */
+.hd-refurl__act {
+  position: relative;
+  flex-shrink: 0;
+  align-self: center;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hd-refurl__copyico,
+.hd-refurl__checkico {
+  position: absolute;
+  opacity: 0;
+  transition: opacity var(--transition-default);
+}
+.hd-refurl__copyico { color: var(--text-secondary); }
+.hd-refurl__checkico { color: var(--text-success); }
+.hd-refurl__item--copy:hover .hd-refurl__copyico { opacity: 1; }
+.hd-refurl__item--copy.is-copied .hd-refurl__copyico { opacity: 0; }
+.hd-refurl__item--copy.is-copied .hd-refurl__checkico { opacity: 1; }
+.hd-refurl__qrbox {
+  margin-top: var(--space-sm);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border);
+  display: grid;
+  justify-items: center;
+  gap: var(--space-md);
+}
+.hd-refurl__qr {
+  width: 168px;
+  height: 168px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hd-refurl__qr canvas,
+.hd-refurl__qr svg { display: block; max-width: 100%; height: auto; }
+.hd-refurl__qractions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+/* Override indicator — small accent dot next to a rate that differs
+   from the hotel default. Quiet by design: the title attribute
+   carries the explanation on hover, so the dot just earmarks which
+   rows need a closer look. */
+.hd-override-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 6px;
+  border-radius: 999px;
+  background: var(--action-primary-default);
+  vertical-align: 2px;
+  flex-shrink: 0;
+}
+
+/* Tighten the Employees table so it fits without horizontal scroll
+   at the standard sidebar-on width — narrower side padding only
+   inside this section, so other tables stay untouched. */
+#hdEmployeesBody .bk-table thead th,
+#hdEmployeesBody .bk-table tbody td {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+#hdEmployeesBody .bk-table-scroll { overflow-x: visible; }
+
+/* Inline copy icon for IDs / codes / URLs */
+.hd-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.hd-copy__icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  opacity: 0;
+  transition: opacity 100ms;
+}
+.hd-copy:hover .hd-copy__icon,
+.hd-copy:focus-visible .hd-copy__icon { opacity: 1; }
+.hd-copy--id { font-size: 0.85em; }
+
+/* Referral Links table — fixed column widths so Code stays visible
+   and the Full URL truncates with ellipsis instead of clipping. */
+.hd-links-table { table-layout: fixed; width: 100%; }
+.hd-links__code-col { width: 160px; }
+.hd-links__url-col  { width: auto; }
+.hd-links__num-col  { width: 90px; }
+.hd-links__time-col { width: 130px; }
+.hd-links__qr-col   { width: 44px; }
+.hd-links__url { overflow: hidden; }
+.hd-links__url .hd-copy { display: inline-flex; max-width: 100%; }
+.hd-links__url .hd-trunc {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
+}
+.hd-links__qr-cell { text-align: center; }
+.hd-qr-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background-color var(--motion-fast) var(--motion-ease-out),
+              color           var(--motion-fast) var(--motion-ease-out),
+              border-color    var(--motion-fast) var(--motion-ease-out);
+}
+.hd-qr-btn svg { width: 16px; height: 16px; }
+.hd-qr-btn:hover {
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+.hd-qr-btn:active {
+  background: var(--bg-muted);
+}
+
+/* ── QR preview modal ───────────────────────────────────── */
+.qr-modal__card {
+  max-width: 360px;
+  width: 100%;
+}
+.qr-modal__canvas {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-lg) 0;
+  min-height: 264px;
+}
+.qr-modal__canvas canvas {
+  border-radius: 8px;
+  display: block;
+}
+
+/* ── Short link action column ───────────────────────────── */
+.hd-links__act-col  { width: 120px; }
+.hd-links__act-cell { white-space: nowrap; }
+.sl-act-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  height: 24px;
+  font-size: var(--type-caption-size);
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background-color var(--motion-fast) var(--motion-ease-out),
+              color           var(--motion-fast) var(--motion-ease-out),
+              border-color    var(--motion-fast) var(--motion-ease-out);
+}
+.sl-act-btn + .sl-act-btn { margin-left: 4px; }
+.sl-act-btn:hover {
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+.sl-act-btn--danger { color: var(--text-secondary); }
+.sl-act-btn--danger:hover {
+  background: var(--feedback-danger-bg);
+  color: var(--text-danger);
+  border-color: var(--feedback-danger-border);
+}
+.sl-act-btn--armed,
+.sl-act-btn--armed:hover {
+  background: var(--feedback-danger-bg);
+  color: var(--text-danger);
+  border-color: var(--feedback-danger-border);
+  font-weight: var(--weight-medium);
+}
+/* Placement row actions — resting state shows only the kebab; the
+   edit + retire icons fade in when the kebab/cluster is hovered (or
+   keyboard focus, or a kebab tap on touch). transform/opacity only,
+   motion tokens only. */
+.pl-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  white-space: nowrap;
+  /* Resting state: no box — just the bare kebab. The container chrome
+     (border, radius, bg, shadow) only appears on hover/focus. */
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  box-shadow: none;
+  transition: background-color var(--motion-fast) var(--motion-ease-out),
+              border-color     var(--motion-fast) var(--motion-ease-out),
+              box-shadow       var(--motion-fast) var(--motion-ease-out);
+}
+.pl-actions:hover,
+.pl-actions:focus-within,
+.pl-actions--open {
+  background: var(--bg-surface);
+  border-color: var(--border);
+  box-shadow: 0 1px 3px rgba(20, 30, 50, 0.12);
+}
+.pl-act {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 30px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background-color var(--motion-fast) var(--motion-ease-out),
+              color            var(--motion-fast) var(--motion-ease-out),
+              opacity          var(--motion-fast) var(--motion-ease-out),
+              transform        var(--motion-fast) var(--motion-ease-out);
+}
+.pl-act svg { width: 16px; height: 16px; }
+.pl-act:first-child  { border-top-left-radius: var(--radius-md); border-bottom-left-radius: var(--radius-md); }
+.pl-act:last-child   { border-top-right-radius: var(--radius-md); border-bottom-right-radius: var(--radius-md); }
+.pl-act:hover { background: var(--bg-subtle); color: var(--text-primary); }
+.pl-act--retire:hover { background: var(--feedback-danger-bg); color: var(--text-danger); }
+/* Thin dividers between segments — only drawn in the revealed state
+   so a stray line never shows next to the bare resting kebab. */
+.pl-actions:hover .pl-act + .pl-act,
+.pl-actions:focus-within .pl-act + .pl-act,
+.pl-actions--open .pl-act + .pl-act {
+  border-left: 1px solid var(--border);
+}
+/* Hidden at rest — sit to the left of the kebab and slide in only
+   when the kebab/cluster itself is hovered or focused. */
+.pl-act:not(.pl-act--menu) {
+  opacity: 0;
+  transform: translateX(6px);
+  pointer-events: none;
+}
+.pl-actions:hover .pl-act:not(.pl-act--menu),
+.pl-actions:focus-within .pl-act:not(.pl-act--menu),
+.pl-actions--open .pl-act:not(.pl-act--menu) {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+/* Placement asset manager (Phase 4). */
+.modal__card--wide { max-width: 720px; }
+.modal__card--xl   { max-width: 920px; }
+
+/* ── Placement detail lightbox ──────────────────────────────────────
+   Replaces the separate Edit + Analytics modals. One scrollable pane,
+   section-divided, with a header strip that owns status + shortlink +
+   actions so the body can stay focused on its section content. */
+.pl-modal {
+  display: flex;
+  flex-direction: column;
+  /* The consolidated lightbox stacks four sections in one card and
+     can easily outgrow the viewport. Cap the card height and scroll
+     the body internally so the header + footer stay visible. */
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+}
+
+.pl-modal__head {
+  /* Stick to the top of the scroll container so the title, status,
+     shortlink, kebab, and close X stay visible while the user
+     scrolls through Performance / Materials / Configuration. */
+  position: sticky;
+  top: calc(var(--space-xl) * -1);
+  margin: calc(var(--space-xl) * -1) calc(var(--space-xl) * -1) var(--space-lg);
+  padding: var(--space-xl) var(--space-xl) var(--space-sm);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-lg);
+}
+.pl-modal__headmain {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.pl-modal__title {
+  font-size: var(--type-subheading-size);
+  font-weight: var(--weight-medium);
+  margin: 0;
+  color: var(--text-primary);
+}
+.pl-modal__statuswrap { display: inline-flex; }
+.pl-modal__short {
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+}
+.pl-modal__headactions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* Section dividers — a thin rule + small caption above each block so
+   the four sections (Performance / Materials / Configuration /
+   Activity) feel like one continuous scroll, not stacked cards. */
+.pl-modal__section {
+  padding-top: var(--space-lg);
+  margin-top: var(--space-lg);
+  border-top: 1px solid var(--border);
+}
+.pl-modal__section:first-of-type {
+  padding-top: 0;
+  margin-top: 0;
+  border-top: 0;
+}
+.pl-modal__sectiontitle {
+  font-size: var(--type-caption-size);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  margin: 0 0 var(--space-sm);
+}
+
+/* Activity log timeline — a dot-stem-row list. Each row carries a
+   colour-keyed dot, a short title, and a meta line (time + actor).
+   The list lives inside the Configuration / Activity log section
+   so it inherits the section's padding. */
+.pl-act-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+.pl-act-row {
+  display: flex;
+  gap: var(--space-md);
+  align-items: flex-start;
+}
+.pl-act-row__dot {
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  margin-top: 6px;
+  border-radius: 999px;
+  background: var(--action-primary-default);
+}
+.pl-act-row__body { min-width: 0; }
+.pl-act-row__title {
+  font-size: var(--type-body-size);
+  color: var(--text-primary);
+}
+.pl-act-row__meta {
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* ── Manager table + lightbox patterns ──────────────────────────
+   User cell stacks name over email — Linear/Notion style. Saves a
+   column and reads better than three side-by-side cells. */
+.hd-user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+.hd-user__body { min-width: 0; }
+.hd-user__name {
+  font-weight: 500;
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.hd-user__sub {
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+  margin-top: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+/* Compact pill variant for inline use inside other cells. */
+.bk-pill--xs {
+  padding: 0 var(--space-xs);
+  font-size: var(--type-overline-size);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.02em;
+}
+
+/* Permissions checklist below the role select. Each row is a
+   role-keyed permission with a green ✓ or muted ✗. Compact so it
+   doesn't dominate the Access section. */
+.mgr-perms {
+  list-style: none;
+  margin: var(--space-sm) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 16px;
+}
+.mgr-perms__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--type-body-size);
+}
+.mgr-perms__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  font-weight: var(--weight-medium);
+}
+.mgr-perms__row--on  .mgr-perms__mark  { color: var(--feedback-success-text); }
+.mgr-perms__row--off .mgr-perms__mark  { color: var(--text-tertiary); }
+.mgr-perms__row--off .mgr-perms__label { color: var(--text-secondary); }
+
+/* Key/value pairs used by the Activity + Account sections. Each
+   row is a label/value pair with the label muted-and-narrow and
+   the value taking the rest. */
+.mgr-keyvals {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mgr-keyvals__row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: var(--space-md);
+  font-size: var(--type-body-size);
+}
+.mgr-keyvals dt {
+  color: var(--text-secondary);
+}
+.mgr-keyvals dd {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+/* Danger zone in the manager lightbox — separated rule + soft tint
+   so destructive actions don't blend with neutral Account fields. */
+.pl-modal__danger { border-top-color: var(--feedback-danger-border); }
+.mgr-danger__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  padding: var(--space-md) 0;
+  border-bottom: 1px solid var(--border);
+}
+.mgr-danger__row:last-child { border-bottom: 0; }
+.mgr-danger__label { font-size: var(--type-body-size); font-weight: 500; color: var(--text-primary); }
+.mgr-danger__hint  { font-size: var(--type-caption-size); color: var(--text-secondary); margin-top: 2px; }
+
+/* Materials & QR section inside the Edit modal. */
+.pl-mat {
+  margin-top: var(--space-lg);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--border);
+}
+.pl-mat__head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+.pl-mat__title {
+  font-size: var(--type-body-size); font-weight: var(--weight-medium); color: var(--text-primary);
+}
+.pl-mat__qr {
+  display: flex; gap: var(--space-lg); align-items: center;
+  padding: var(--space-md);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-md);
+}
+.pl-mat__qrbox {
+  flex: 0 0 auto;
+  width: 140px; height: 140px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.pl-mat__qrbox canvas, .pl-mat__qrbox svg { width: 124px; height: 124px; }
+.pl-mat__qrbox img { max-width: 124px; max-height: 124px; object-fit: contain; }
+.pl-mat__qrbox--add {
+  border-style: dashed;
+  cursor: pointer;
+  font-size: 22px; font-weight: 400;
+  color: var(--text-secondary);
+  transition: border-color var(--motion-fast) var(--motion-ease-out);
+}
+.pl-mat__qrbox--add:hover { border-color: var(--action-primary-default); color: var(--action-primary-default); }
+.pl-mat__qrbox--err { color: var(--text-secondary); }
+.pl-mat__qrnone { font-size: var(--type-caption-size); }
+.pl-mat__qrside { flex: 1 1 auto; min-width: 0; }
+.pl-mat__qrlabel { font-weight: var(--weight-medium); font-size: var(--type-body-size); }
+.pl-mat__qrhint {
+  color: var(--text-secondary); font-size: var(--type-caption-size);
+  margin: 2px 0 var(--space-sm);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.pl-mat__qrbtns { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.pl-mat__qrbtns .pl-asset-status { width: auto; min-width: 96px; }
+.pl-mat__sub {
+  font-size: var(--type-caption-size); font-weight: var(--weight-medium); color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: 0.04em;
+  margin: var(--space-md) 0 var(--space-sm);
+}
+.pl-asset__upbtn { cursor: pointer; }
+.pl-asset__ext { font-size: var(--type-body-size); font-weight: var(--weight-medium); }
+.input--sm { padding: var(--space-xs) var(--space-sm); font-size: var(--type-caption-size); }
+
+/* Placement analytics dashboard (in-platform Short.io view). */
+.pl-an__url {
+  color: var(--text-secondary); font-size: var(--type-caption-size);
+  word-break: break-all; margin-bottom: var(--space-md);
+}
+/* Date-range dropdown, right-aligned like Short.io's. */
+.pl-an__toolbar {
+  display: flex; justify-content: flex-end; align-items: flex-end;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+.pl-an__daterange {
+  display: inline-flex; flex-direction: column; gap: 2px;
+}
+.pl-an__daterange-lbl {
+  font-size: 11px; color: var(--text-secondary);
+  padding-left: 2px;
+}
+.pl-an__select { min-width: 160px; }
+
+.pl-an__cards { display: flex; gap: var(--space-md); margin-bottom: var(--space-lg); }
+.pl-an__card {
+  flex: 1 1 0;
+  display: flex; flex-direction: column; gap: 2px;
+  padding: var(--space-md);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+.pl-an__k { color: var(--text-secondary); font-size: var(--type-caption-size); }
+.pl-an__v {
+  font-size: var(--type-subheading-size); font-weight: var(--weight-medium);
+  font-variant-numeric: tabular-nums;
+}
+.pl-an-chart { width: 100%; }
+.pl-an-chart svg { width: 100%; height: auto; display: block; }
+.pl-an-chart__area  { fill: url(#plAnGrad); }
+.pl-an-chart__g0 { stop-color: var(--action-primary-default); stop-opacity: 0.28; }
+.pl-an-chart__g1 { stop-color: var(--action-primary-default); stop-opacity: 0; }
+.pl-an-chart__line  { fill: none; stroke: var(--action-primary-default); stroke-width: 2; }
+.pl-an-chart__grid  { stroke: var(--border); stroke-width: 1; }
+.pl-an-chart__lbl   { fill: var(--text-secondary); font-size: 11px; }
+
+/* Breakdown bar lists (Top browsers / Top operating systems). */
+.pl-an__breakdowns {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: var(--space-md); margin-top: var(--space-lg);
+}
+.pl-an__panel {
+  display: flex; flex-direction: column; gap: var(--space-sm);
+  padding: var(--space-md);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+.pl-an-bar { display: flex; flex-direction: column; gap: 4px; }
+.pl-an-bar__top {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: var(--type-caption-size);
+}
+.pl-an-bar__name {
+  color: var(--text-primary);
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.pl-an-bar__ic {
+  width: 14px; height: 14px; flex: 0 0 auto;
+}
+.pl-an-bar__val {
+  color: var(--text-secondary); font-variant-numeric: tabular-nums;
+}
+.pl-an-bar__track {
+  height: 6px; border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+.pl-an-bar__fill {
+  height: 100%; border-radius: 999px;
+  background: var(--action-primary-default);
+}
+@media (max-width: 640px) {
+  .pl-an__breakdowns { grid-template-columns: 1fr; }
+}
+
+/* Inline confirm cancel link that appears next to the armed button */
+.sl-confirm { margin-left: 6px; }
+.sl-confirm__cancel {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-decoration: underline;
+}
+.sl-confirm__cancel:hover { color: var(--text-primary); }
+
+/* ── Short link create/edit modals ──────────────────────── */
+.sl-edit__readonly {
+  padding: 8px 10px;
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: var(--type-body-size);
+  color: var(--text-secondary);
+  word-break: break-all;
+}
+/* drawer-form__optional — de-emphasised label suffix used by sl modals */
+.drawer-form__optional {
+  font-weight: var(--weight-regular);
+  color: var(--text-secondary);
+  font-size: 0.9em;
+}
+
+/* ── Hotel detail page — round-3 additions ──────────── */
+
+.hd-delta {
+  grid-column: 2;
+  grid-row: 2;
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-align: right;
+  font-feature-settings: 'tnum' 1;
+  font-variant-numeric: tabular-nums;
+}
+.hd-delta--positive { color: var(--text-success); } /* ok-fg analogue */
+.hd-delta--neutral  { color: var(--text-secondary); }
+
+/* Commission split block inside Details card. */
+.hd-split {
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.hd-split__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+.hd-split__title { font-size: var(--type-body-size); font-weight: var(--weight-medium); color: var(--text-primary); }
+.hd-split__bar {
+  display: flex;
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bg-muted);
+  overflow: hidden;
+}
+.hd-split__seg { display: block; height: 100%; transition: width 120ms; }
+.hd-split__seg--op,    .hd-split__swatch--op    { background: var(--action-primary-default); }
+.hd-split__seg--hotel, .hd-split__swatch--hotel { background: var(--action-primary-default); }
+.hd-split__seg--platf, .hd-split__swatch--platf { background: var(--border-strong); }
+
+.hd-split__legend {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.hd-split__row {
+  display: grid;
+  grid-template-columns: 10px 1fr auto;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--type-caption-size);
+}
+.hd-split__swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+}
+.hd-split__label { color: var(--text-secondary); }
+.hd-split__pct   { color: var(--text-primary); font-feature-settings: 'tnum' 1; }
+
+/* Financial card. */
+.hd-fin__cta { display: flex; justify-content: stretch; }
+.hd-fin__cta .btn { width: 100%; }
+
+/* Master Referral card. */
+.hd-mref {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+}
+.hd-mref__qr {
+  width: 88px;
+  height: 88px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-surface);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.hd-mref__qr canvas {
+  width: 80px !important;
+  height: 80px !important;
+  display: block;
+  border-radius: 2px;
+}
+/* Mono pill — same treatment used for referral codes in the
+   Employees table (sunken background, dark mono text, copy icon
+   on the right edge, single-line ellipsis on overflow). */
+.hd-mref__url {
+  display: flex;
+  max-width: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 6px 10px;
+  background: var(--bg-muted);
+  color: var(--text-primary);
+  border: 0;
+  border-radius: 999px;
+  font-size: 0.8em;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+.hd-mref__url:hover { background: var(--bg-muted); }
+.hd-mref__url .hd-trunc {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+.hd-mref__url .hd-copy__icon {
+  opacity: 1;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+.hd-mref__actions {
+  display: flex;
+  gap: var(--space-sm);
+  width: 100%;
+}
+.hd-mref__actions .btn { flex: 1; }
+.hd-mref__help {
+  margin: 0;
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* Recent activity — Stripe-style timeline. Items stack with a subtle
+   vertical connector running through the icon column so the feed
+   reads as a sequence, not a list. Notes carry a byline + kebab;
+   system events (e.g. "Hotel was created") show just the title and
+   timestamp. */
+.hd-activity { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.hd-activity__item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 20px 1fr auto;
+  gap: var(--space-md);
+  align-items: flex-start;
+  padding: var(--space-sm) 0 var(--space-md);
+}
+.hd-activity__item:last-child { padding-bottom: 0; }
+.hd-activity__item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 9px;   /* center of the 20px icon column */
+  top: 32px;   /* below the icon */
+  bottom: -2px;
+  width: 1px;
+  background: var(--border);
+}
+.hd-activity__icon {
+  position: relative;
+  z-index: 1;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.hd-activity__icon svg { width: 16px; height: 16px; }
+.hd-activity__icon--hotel_created { color: var(--text-success); }   /* green person */
+.hd-activity__icon--note          { color: var(--text-secondary); }
+.hd-activity__icon--booking { color: var(--action-primary-default); }
+.hd-activity__icon--email   { color: var(--feedback-info-icon); }
+.hd-activity__icon--payout  { color: var(--text-success); }
+.hd-activity__icon--other,
+.hd-activity__icon--system  { color: var(--text-tertiary); }
+.hd-activity__text { min-width: 0; }
+.hd-activity__title {
+  font-size: var(--type-body-size);
+  color: var(--text-primary);
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+.hd-activity__title strong { font-weight: var(--weight-medium); }
+.hd-activity__title em { font-style: italic; }
+
+/* Kebab column for note rows; events have no kebab and the column
+   collapses to zero width via the auto track. */
+.hd-activity__actions {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 2px;
+}
+/* Inline mono pill — used for referral codes inside activity titles
+   and for HTTP status codes in the Logs table. */
+.hd-pill-mono {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--bg-muted);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+.hd-activity__meta {
+  margin-top: 2px;
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+}
+.hd-pos { color: var(--text-success); font-feature-settings: 'tnum' 1; }
+/* Timestamp reads as a quiet link — underlined, muted blue-grey —
+   matching the Stripe reference. Hover deepens the colour without
+   moving the underline. */
+.hd-activity__time {
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 2px;
+  white-space: nowrap;
+  transition: color var(--transition-default), text-decoration-color var(--transition-default);
+}
+.hd-activity__time:hover {
+  color: var(--text-primary);
+  text-decoration-color: var(--text-secondary);
+}
+.hd-activity__meta-by {
+  color: var(--text-tertiary);
+  margin-left: 6px;
+}
+
+/* Note composer. Renders inline above the feed when "+ Add note"
+   is open. Focus ring on the textarea matches the standard input
+   pattern; the hint chips render below the textarea on the left,
+   action buttons on the right with their keyboard shortcut chips
+   inline. */
+.hd-notef {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding-bottom: var(--space-md);
+  margin-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--border);
+}
+.hd-notef__input {
+  width: 100%;
+  min-height: 88px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: var(--type-body-size);
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  resize: vertical;
+  transition: border-color var(--transition-default), box-shadow var(--transition-default);
+}
+.hd-notef__input::placeholder { color: var(--text-tertiary); }
+.hd-notef__input:focus {
+  outline: none;
+  border-color: var(--action-primary-default);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--action-primary-default) 18%, transparent);
+}
+.hd-notef__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+.hd-notef__hints {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+}
+.hd-notef__hint {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0;
+}
+.hd-notef__hint strong { font-weight: var(--weight-medium); }
+.hd-notef__hint em { font-style: italic; }
+.hd-notef__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* Inline keyboard-shortcut chip — used inside Cancel / Add note
+   buttons to mirror the Stripe reference. The "on-primary" variant
+   tones down for the accent-filled Add note button. */
+.hd-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  margin-left: 6px;
+  padding: 0 4px;
+  font: inherit;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  line-height: 1;
+  color: var(--text-secondary);
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+}
+.hd-kbd--on-primary {
+  color: var(--text-inverse);
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+.hd-kbd-plus {
+  margin-left: 4px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* The "+ Add note" trigger lives in the section header. White
+   surface, soft blue-grey hairline border, hint of elevation —
+   reads as a discrete affordance rather than a header chip. The
+   leading "+" sits at the same weight as the label so the pair
+   reads together. */
+.hd-activity__addbtn {
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+.hd-activity__addbtn:hover {
+  background: var(--bg-subtle);
+  border-color: var(--border-strong);
+}
+.hd-activity__addbtn:disabled {
+  opacity: 0.55;
+  cursor: default;
+  box-shadow: none;
+}
+.hd-activity__addbtn-plus {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* ── Short Links global page (Phase 6) ────────────────────────── */
+
+/* 3 label-only filter cards (All / Active / Retired).
+   Width is set to let them sit flush with the toolbar below. */
+.bk-statcards--shortlinks {
+  display: flex;
+  justify-content: flex-start;
+  gap: var(--space-sm);
+}
+.bk-statcards--shortlinks .bk-statcard {
+  width: 120px;
+  height: 46px;
+  padding: 0 var(--space-lg);
+  justify-content: flex-start;
+  text-align: left;
+}
+
+/* Search input with leading magnifier icon */
+.slg-search-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.slg-search__icon {
+  position: absolute;
+  left: 9px;
+  width: 14px;
+  height: 14px;
+  color: var(--text-tertiary);
+  pointer-events: none;
+  flex-shrink: 0;
+}
+.slg-search {
+  width: 240px;
+  padding: 7px 10px 7px 30px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  font: inherit;
+  font-size: var(--type-body-size);
+  color: var(--text-primary);
+  transition: border-color var(--transition-default), box-shadow var(--transition-default);
+}
+.slg-search:focus {
+  outline: none;
+  border-color: var(--action-primary-default);
+  box-shadow: var(--shadow-focus-ring);
+}
+.slg-search::placeholder { color: var(--text-tertiary); }
+
+/* Bulk-action bar — appears between toolbar and table when ≥1 row
+   selected. Soft tinted row that reads as a continuation of the
+   table head rather than a separate card. */
+.slg-bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: 8px var(--space-lg);
+  background: var(--border-subtle);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-md);
+}
+.slg-bulk-bar[hidden] { display: none; }
+.slg-bulk-bar__count {
+  font-size: var(--type-body-size);
+  font-weight: 500;
+  color: var(--text-body);
+  flex: 1;
+}
+.slg-bulk-bar__actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+/* Short Links table modifier */
+.bk-table--shortlinks thead th { border-top: 0; }
+.bk-table--shortlinks tbody td { font-weight: var(--weight-regular); }
+
+/* Short URL cell — monospace, truncates to fit the column.
+   Max-width keeps the table from blowing out at 1280px content. */
+.slg-url-cell {
+  max-width: 200px;
+}
+.slg-url-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: var(--type-caption-size);
+  color: var(--action-primary-default);
+}
+
+/* Destination column — muted mono, truncated */
+.slg-dest-cell {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* "Load more" inline button in the table footer */
+.slg-load-more {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: var(--type-body-size);
+  font-weight: 500;
+  color: var(--action-primary-default);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color var(--transition-default);
+}
+.slg-load-more:hover { color: var(--action-primary-hover); }
+
+/* ── Referral Link Anatomy panel ─────────────────────────────
+   Sits in the right sidebar of the hotel detail drawer. Every
+   immutable segment of the tracking codes is wrapped in a
+   danger-red highlight so the admin sees at a glance what
+   can't be changed without invalidating printed QR codes. */
+.hd-anatomy {
+  padding: var(--space-lg);
+  display: grid;
+  gap: var(--space-lg);
+}
+.hd-anatomy__intro {
+  font-size: var(--type-body-size);
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+.hd-anatomy__block {
+  display: grid;
+  gap: var(--space-xs);
+}
+.hd-anatomy__label {
+  font-size: var(--type-caption-size);
+  font-weight: 500;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.hd-anatomy__value {
+  font-size: var(--type-body-size);
+  line-height: 1.5;
+  word-break: break-all;
+}
+.hd-anatomy__hint {
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+.hd-anatomy__hint-inline {
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+.hd-anatomy__faint {
+  color: var(--text-tertiary);
+}
+.hd-anatomy__seq {
+  background: var(--feedback-warning-bg);
+  color: var(--feedback-warning-text);
+  border: 1px solid var(--feedback-warning-border);
+  border-radius: 3px;
+  padding: 0 4px;
+}
+/* The headline visual — every locked segment gets a red pill so
+   admins literally cannot miss what's immutable. */
+.hd-anatomy__locked {
+  background: var(--feedback-danger-bg);
+  color: var(--feedback-danger-text);
+  border: 1px solid var(--feedback-danger-border);
+  border-radius: 3px;
+  padding: 0 4px;
+  font-weight: 500;
+}
+.hd-anatomy__locked-pill {
+  background: var(--feedback-danger-bg);
+  color: var(--feedback-danger-text);
+  border: 1px solid var(--feedback-danger-border);
+  border-radius: 3px;
+  padding: 0 6px;
+  font-weight: 500;
+  font-size: 0.85em;
+}
+.hd-anatomy__warning {
+  background: var(--feedback-danger-bg);
+  color: var(--feedback-danger-text);
+  border: 1px solid var(--feedback-danger-border);
+  border-left: 3px solid var(--feedback-danger-text);
+  border-radius: 4px;
+  padding: var(--space-md);
+  font-size: var(--type-body-size);
+  line-height: 1.5;
+}
+
+/* Master Referral card: "no short link yet" placeholder for the
+   QR area when Short.io was down at create-time. */
+.hd-mref__qr-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 176px;
+  height: 176px;
+  background: var(--feedback-warning-bg);
+  border: 1px dashed var(--feedback-warning-border);
+  border-radius: 4px;
+  font-size: var(--type-body-size);
+  color: var(--feedback-warning-text);
+  text-align: center;
+  padding: var(--space-md);
+}
+
+/* ── Short Links Ops Hub: grouped-by-hotel rows ───────────────
+   Top-level rows are hotel headers; child .slg-row--child rows
+   are individual links shown when the header is expanded. */
+.slg-row--group {
+  background: var(--bg-muted);
+  cursor: pointer;
+  user-select: none;
+}
+.slg-row--group:hover {
+  background: var(--bg-subtle);
+}
+.slg-group__cell {
+  padding: var(--space-sm) var(--space-md);
+}
+.slg-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+.slg-group__chev {
+  display: inline-block;
+  width: 16px;
+  text-align: center;
+  font-size: 0.7em;
+  color: var(--text-secondary);
+  transition: transform var(--transition-default);
+}
+.slg-group__chev--open {
+  transform: rotate(90deg);
+}
+.slg-group__name {
+  font-weight: 500;
+  font-size: var(--type-body-size);
+  color: var(--text-primary);
+}
+.slg-group__meta {
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+}
+.slg-group__meta--num {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+/* Child rows get a subtle left padding-indent on the first cell
+   to make the hierarchy obvious. */
+.slg-row--child > td:first-child {
+  padding-left: var(--space-lg);
+}
+
+/* ── Short-link Edit modal: change history ───────────────────
+   Audit log rendered inside the Edit modal. Collapsed by default
+   so the form stays compact for the common case of just editing
+   the destination. */
+.sl-edit__history {
+  margin-top: var(--space-lg);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border-subtle);
+}
+.sl-edit__history-summary {
+  cursor: pointer;
+  font-size: var(--type-body-size);
+  font-weight: 500;
+  color: var(--text-primary);
+  user-select: none;
+  padding: var(--space-sm) 0;
+}
+.sl-edit__history-summary:hover { color: var(--action-primary-default); }
+.sl-edit__history-body {
+  margin-top: var(--space-md);
+  max-height: 280px;
+  overflow-y: auto;
+  display: grid;
+  gap: var(--space-md);
+}
+.sl-edit__history-row {
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-muted);
+  border-radius: 4px;
+  border-left: 2px solid var(--action-primary-default);
+  display: grid;
+  gap: var(--space-xs);
+}
+.sl-edit__history-meta {
+  display: flex;
+  gap: var(--space-md);
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+.sl-edit__history-when   { font-variant-numeric: tabular-nums; }
+.sl-edit__history-actor  { color: var(--text-primary); }
+.sl-edit__history-field  {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+.sl-edit__history-diff {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+  font-size: var(--type-caption-size);
+  flex-wrap: wrap;
+  line-height: 1.4;
+  word-break: break-all;
+}
+.sl-edit__history-from {
+  color: var(--feedback-danger-text);
+  text-decoration: line-through;
+  text-decoration-color: var(--feedback-danger-border);
+}
+.sl-edit__history-to {
+  color: var(--text-success);
+  font-weight: 500;
+}
+.sl-edit__history-arrow {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+
+/* ── Commission structure (sidebar card) ─────────────────────
+   Thin stacked bar with a coloured-swatch legend. Shows how a
+   booking's revenue divides between the tour operator, the
+   hotel, and Horizon. Default to 5% platform fee when empty so
+   the design never reads as broken. */
+.hd-comm { display: grid; gap: var(--space-md); }
+.hd-comm__head { display: grid; gap: 2px; }
+.hd-comm__tier {
+  font-size: var(--type-body-size);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+.hd-comm__sub {
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+}
+.hd-comm__bar {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bg-muted);
+  margin-top: var(--space-xs);
+}
+.hd-comm__seg {
+  display: block;
+  height: 100%;
+  transition: width var(--type-body-size);
+}
+.hd-comm__seg--op       { background: var(--text-primary); }
+.hd-comm__seg--hotel    { background: var(--action-primary-default); }
+.hd-comm__seg--platform { background: var(--border-strong); }
+.hd-comm__legend {
+  display: grid;
+  gap: var(--space-sm);
+  margin: 0;
+}
+.hd-comm__row {
+  display: grid;
+  grid-template-columns: 12px 1fr auto;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--type-body-size);
+}
+.hd-comm__swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.hd-comm__swatch--op       { background: var(--text-primary); }
+.hd-comm__swatch--hotel    { background: var(--action-primary-default); }
+.hd-comm__swatch--platform { background: var(--border-strong); }
+.hd-comm__label { color: var(--text-secondary); }
+.hd-comm__pct {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* ── Bookings table (Stripe-style) ────────────────────────────
+   Amount column holds the dollar value + inline status pill
+   (no separate Status header). Commission is green for positive,
+   muted "Refunded" for refunded rows. */
+.bk-table--bookings tbody td { vertical-align: middle; }
+.bk-row__amount {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  white-space: nowrap;
+}
+/* Fix the amount column width so the status pills line up
+   vertically across rows regardless of price magnitude. */
+.bk-row__amount .mono {
+  display: inline-block;
+  min-width: 5.5rem;
+  font-variant-numeric: tabular-nums;
+}
+.bk-row__amount--muted .mono { color: var(--text-secondary); }
+.bk-row__commission {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.bk-row__commission--pos   { color: var(--text-success); }
+.bk-row__commission--muted { color: var(--text-secondary); }
+
+/* Pax column — narrow, numeric, centred. Just a count of passengers
+   on the booking; no unit label, no decoration. */
+.bk-row__pax {
+  width: 1%;
+  white-space: nowrap;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Footer beneath the bookings table: "Showing X of Y" on the
+   left, "View all bookings →" link in the brand accent on the
+   right. */
+.hd-bookings__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) 0 0;
+  font-size: var(--type-body-size);
+}
+.hd-bookings__viewall {
+  color: var(--action-primary-default);
+  text-decoration: none;
+  font-weight: 500;
+}
+.hd-bookings__viewall:hover { text-decoration: underline; }

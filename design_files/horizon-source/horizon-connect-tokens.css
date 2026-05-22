@@ -1,0 +1,365 @@
+/* ============================================================
+   HORIZON CONNECT — Design Tokens v1.0
+   ============================================================
+   CSS custom properties generated from the master tokens file.
+   Import this once at the root of your application.
+
+   Architecture:
+     1. PRIMITIVES — raw values (don't reference these directly in components)
+     2. SEMANTIC — what components actually use (--color-text-primary, etc.)
+     3. SYSTEM — radius, spacing, shadow, typography
+   ============================================================ */
+
+:root {
+
+  /* ========================================================
+     PRIMITIVES — color
+     ======================================================== */
+
+  /* Brand anchors */
+  --color-brand-horizon-violet:   #4920C4;
+  --color-brand-marketing-vivid:  #5B2DE8;
+  --color-brand-aurora:           #F4B860;
+
+  /* Violet ramp — primary brand */
+  --color-violet-50:   #F5F2FE;
+  --color-violet-100:  #EBE4FD;
+  --color-violet-200:  #D4C4FA;
+  --color-violet-300:  #B69BF5;
+  --color-violet-400:  #8C61EE;
+  --color-violet-500:  #5B2DE8;
+  --color-violet-600:  #4920C4;  /* anchor */
+  --color-violet-700:  #3A189E;
+  --color-violet-800:  #2D1378;
+
+  /* Neutral ramp — violet-tinted */
+  --color-neutral-50:   #FAFAFC;
+  --color-neutral-100:  #F4F3F8;
+  --color-neutral-200:  #ECEAF4;
+  --color-neutral-300:  #D8D5E2;
+  --color-neutral-400:  #B0AAC0;
+  --color-neutral-500:  #807A92;
+  --color-neutral-600:  #5C5670;
+  --color-neutral-700:  #3F3A4D;
+  --color-neutral-800:  #25222E;
+  --color-neutral-900:  #0E0E14;
+
+  /* Success ramp */
+  --color-success-50:   #ECFDF5;
+  --color-success-100:  #D1FAE5;
+  --color-success-200:  #A7F3D0;
+  --color-success-300:  #6EE7B7;
+  --color-success-400:  #34D399;
+  --color-success-500:  #10B981;
+  --color-success-600:  #059669;  /* anchor */
+  --color-success-700:  #047857;
+  --color-success-800:  #064E3B;
+
+  /* Warning ramp — Aurora at 400 */
+  --color-warning-50:   #FFFAF0;
+  --color-warning-100:  #FEF3DC;
+  --color-warning-200:  #FCE3B0;
+  --color-warning-300:  #F8CD80;
+  --color-warning-400:  #F4B860;  /* Aurora */
+  --color-warning-500:  #E69D32;
+  --color-warning-600:  #C77E18;  /* anchor */
+  --color-warning-700:  #9C5F0F;
+  --color-warning-800:  #6E430A;
+
+  /* Danger ramp */
+  --color-danger-50:   #FEF2F2;
+  --color-danger-100:  #FEE2E2;
+  --color-danger-200:  #FECACA;
+  --color-danger-300:  #FCA5A5;
+  --color-danger-400:  #F87171;
+  --color-danger-500:  #EF4444;
+  --color-danger-600:  #DC2626;  /* anchor */
+  --color-danger-700:  #B91C1C;
+  --color-danger-800:  #7F1D1D;
+
+  /* Info ramp */
+  --color-info-50:   #EFF8FF;
+  --color-info-100:  #DBEEFE;
+  --color-info-200:  #B0DCFD;
+  --color-info-300:  #74C2FB;
+  --color-info-400:  #38A4F7;
+  --color-info-500:  #0E87E8;
+  --color-info-600:  #0269C5;  /* anchor */
+  --color-info-700:  #0455A0;
+  --color-info-800:  #084985;
+
+  /* ========================================================
+     SEMANTIC — color (use these in components)
+     ======================================================== */
+
+  /* Backgrounds */
+  --bg-page:          var(--color-neutral-50);
+  --bg-surface:       #FFFFFF;
+  --bg-subtle:        var(--color-neutral-100);
+  --bg-muted:         var(--color-neutral-200);
+  --bg-inverse:       var(--color-neutral-900);
+  --bg-brand-subtle:  var(--color-violet-50);
+  --bg-brand-muted:   var(--color-violet-100);
+  --bg-overlay:       rgba(14, 14, 20, 0.40);  /* modal/drawer scrim — neutral-900 channels @ 40% */
+
+  /* Text */
+  --text-primary:    var(--color-neutral-800);
+  --text-body:       var(--color-neutral-700);
+  --text-secondary:  var(--color-neutral-500);
+  --text-tertiary:   var(--color-neutral-400);
+  --text-inverse:    var(--color-neutral-50);
+  --text-brand:      var(--color-violet-600);
+  --text-success:    var(--color-success-700);
+  --text-warning:    var(--color-warning-700);
+  --text-danger:     var(--color-danger-700);
+  --text-info:       var(--color-info-700);
+
+  /* Borders */
+  --border-default:  var(--color-neutral-300);
+  --border-subtle:   var(--color-neutral-200);
+  --border-strong:   var(--color-neutral-400);
+  --border-brand:    var(--color-violet-600);
+  --border-success:  var(--color-success-200);
+  --border-warning:  var(--color-warning-200);
+  --border-danger:   var(--color-danger-200);
+  --border-info:     var(--color-info-200);
+
+  /* Action — primary */
+  --action-primary-default:  var(--color-violet-600);
+  --action-primary-hover:    var(--color-violet-700);
+  --action-primary-pressed:  var(--color-violet-800);
+  --action-primary-disabled: var(--color-violet-300);
+
+  /* Action — secondary */
+  --action-secondary-default:  #FFFFFF;
+  --action-secondary-hover:    var(--color-neutral-100);
+  --action-secondary-pressed:  var(--color-neutral-200);
+  --action-secondary-border:   var(--color-neutral-300);
+
+  /* Action — destructive */
+  --action-destructive-default:  var(--color-danger-600);
+  --action-destructive-hover:    var(--color-danger-700);
+  --action-destructive-pressed:  var(--color-danger-800);
+
+  /* Feedback — success */
+  --feedback-success-bg:      var(--color-success-50);
+  --feedback-success-border:  var(--color-success-200);
+  --feedback-success-icon:    var(--color-success-600);
+  --feedback-success-text:    var(--color-success-700);
+
+  /* Feedback — warning */
+  --feedback-warning-bg:      var(--color-warning-50);
+  --feedback-warning-border:  var(--color-warning-200);
+  --feedback-warning-icon:    var(--color-warning-600);
+  --feedback-warning-text:    var(--color-warning-700);
+
+  /* Feedback — danger */
+  --feedback-danger-bg:      var(--color-danger-50);
+  --feedback-danger-border:  var(--color-danger-200);
+  --feedback-danger-icon:    var(--color-danger-600);
+  --feedback-danger-text:    var(--color-danger-700);
+
+  /* Feedback — info */
+  --feedback-info-bg:      var(--color-info-50);
+  --feedback-info-border:  var(--color-info-200);
+  --feedback-info-icon:    var(--color-info-600);
+  --feedback-info-text:    var(--color-info-700);
+
+  /* ========================================================
+     SYSTEM — radius
+     ======================================================== */
+
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-xl:   16px;
+  --radius-pill: 999px;
+
+  /* ========================================================
+     SYSTEM — spacing (4px base grid)
+     ======================================================== */
+
+  --space-0:   0px;
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  12px;
+  --space-lg:  16px;
+  --space-xl:  24px;
+  --space-2xl: 32px;
+  --space-3xl: 48px;
+  --space-4xl: 64px;
+
+  /* ========================================================
+     SYSTEM — elevation
+     ======================================================== */
+
+  --shadow-e1: 0 1px 2px rgba(14, 14, 20, 0.04), 0 1px 1px rgba(14, 14, 20, 0.06);
+  --shadow-e2: 0 4px 12px rgba(14, 14, 20, 0.08), 0 1px 2px rgba(14, 14, 20, 0.04);
+  --shadow-e3: 0 16px 40px rgba(14, 14, 20, 0.14), 0 4px 8px rgba(14, 14, 20, 0.06);
+  --shadow-focus-ring: 0 0 0 3px rgba(73, 32, 196, 0.18);
+
+  /* ========================================================
+     SYSTEM — z-index (single source of stacking order)
+     ========================================================
+     One ordered scale so layered surfaces never collide.
+     Ordering is what matters, not the absolute numbers:
+     dropdown < popover < drawer < modal < toast.
+     ======================================================== */
+
+  --z-dropdown: 100;   /* brand menu, select popups        */
+  --z-popover:  200;   /* date popover, calendar, tooltips */
+  --z-drawer:   300;   /* slide-over drawer                */
+  --z-modal:    400;   /* centred modal dialogs            */
+  --z-toast:    500;   /* transient notifications          */
+
+  /* ========================================================
+     SYSTEM — typography
+     ======================================================== */
+
+  --font-sans: Inter, "Söhne", -apple-system, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+
+  /* font-size / line-height pairs */
+  --type-display-size:    28px;
+  --type-display-line:    1.1;
+  --type-heading-size:    22px;
+  --type-heading-line:    1.2;
+  --type-subheading-size: 18px;
+  --type-subheading-line: 1.3;
+  --type-label-size:      14px;
+  --type-label-line:      1.4;
+  --type-body-size:       14px;
+  --type-body-line:       1.5;
+  --type-caption-size:    12px;
+  --type-caption-line:    1.5;
+  --type-overline-size:   11px;
+  --type-overline-line:   1.4;
+
+  --weight-regular: 400;
+  --weight-medium:  500;
+
+  /* ========================================================
+     SYSTEM — motion: duration
+     ========================================================
+     Three durations cover ~95% of UI motion. Faster = abrupt.
+     Slower = sluggish. The premium-feel range is narrow.
+     ======================================================== */
+
+  --motion-fast:    150ms;   /* hover, focus, button press, small color/opacity */
+  --motion-base:    200ms;   /* dropdown, tooltip, accordion, tab switch */
+  --motion-slow:    300ms;   /* modal, drawer, full-screen overlay */
+
+  /* ========================================================
+     SYSTEM — motion: easing
+     ========================================================
+     ease-out for entering/appearing (decelerates as it arrives).
+     ease-in for exiting/disappearing (accelerates as it leaves).
+     Linear and ease-in-out are almost always wrong; do not add.
+     ======================================================== */
+
+  --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);   /* entering */
+  --motion-ease-in:  cubic-bezier(0.7, 0, 0.84, 0);   /* exiting */
+
+  /* ========================================================
+     SYSTEM — motion: composed defaults
+     ========================================================
+     Pre-composed duration + easing for the most common case.
+     ======================================================== */
+
+  --transition-default: var(--motion-fast) var(--motion-ease-out);
+  --transition-base:    var(--motion-base) var(--motion-ease-out);
+  --transition-slow:    var(--motion-slow) var(--motion-ease-out);
+}
+
+/* ============================================================
+   DARK MODE — semantic tokens flip; primitives stay constant
+   ============================================================ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-page:         var(--color-neutral-900);
+    --bg-surface:      var(--color-neutral-800);
+    --bg-subtle:       #1A1822;
+    --bg-muted:        var(--color-neutral-700);
+    --bg-inverse:      var(--color-neutral-50);
+    --bg-brand-subtle: rgba(73, 32, 196, 0.12);
+    --bg-brand-muted:  rgba(73, 32, 196, 0.20);
+
+    --text-primary:    var(--color-neutral-50);
+    --text-body:       var(--color-neutral-200);
+    --text-secondary:  var(--color-neutral-400);
+    --text-tertiary:   var(--color-neutral-500);
+    --text-inverse:    var(--color-neutral-900);
+    --text-brand:      var(--color-violet-400);
+
+    --border-default:  var(--color-neutral-700);
+    --border-subtle:   var(--color-neutral-800);
+    --border-strong:   var(--color-neutral-600);
+  }
+}
+
+/* ============================================================
+   READY-MADE TYPOGRAPHY UTILITY CLASSES (optional)
+   ============================================================ */
+.t-display    { font: var(--weight-medium)  var(--type-display-size)/var(--type-display-line)       var(--font-sans); letter-spacing: -0.02em; }
+.t-heading    { font: var(--weight-medium)  var(--type-heading-size)/var(--type-heading-line)       var(--font-sans); letter-spacing: -0.01em; }
+.t-subheading { font: var(--weight-medium)  var(--type-subheading-size)/var(--type-subheading-line) var(--font-sans); }
+.t-label      { font: var(--weight-medium)  var(--type-label-size)/var(--type-label-line)           var(--font-sans); }
+.t-body       { font: var(--weight-regular) var(--type-body-size)/var(--type-body-line)             var(--font-sans); }
+.t-caption    { font: var(--weight-regular) var(--type-caption-size)/var(--type-caption-line)       var(--font-sans); }
+.t-overline   { font: var(--weight-medium)  var(--type-overline-size)/var(--type-overline-line)     var(--font-sans); letter-spacing: 0.06em; text-transform: uppercase; }
+.t-mono       { font: var(--weight-regular) 13px/1.5                                                  var(--font-mono); }
+
+/* ============================================================
+   GLOBAL — default state transitions on interactive elements
+   ============================================================
+   This single block transforms how the product feels. Every
+   button, link, input, and interactive element gets smooth
+   transitions on color, border, shadow, opacity, and transform
+   changes. Imperceptible per interaction; transformative across
+   a session.
+   ============================================================ */
+
+button,
+a,
+input,
+select,
+textarea,
+[role="button"],
+[role="link"],
+[role="tab"],
+[role="menuitem"] {
+  transition:
+    background-color var(--transition-default),
+    border-color     var(--transition-default),
+    color            var(--transition-default),
+    box-shadow       var(--transition-default),
+    opacity          var(--transition-default),
+    transform        var(--transition-default);
+}
+
+/* ============================================================
+   ACCESSIBILITY — respect prefers-reduced-motion
+   ============================================================
+   Users who have enabled reduced motion in their OS get instant
+   state changes. This is a non-negotiable accessibility
+   requirement — some users get migraines or vertigo from motion.
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+  }
+
+  /* Belt-and-suspenders: also kill animations and transitions
+     globally for any code that doesn't reference the tokens. */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

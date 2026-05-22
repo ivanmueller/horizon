@@ -6,7 +6,7 @@
   <title>Set your password — Horizon partner dashboard</title>
   <meta name="description" content="Pick a password for future Horizon partner-dashboard sign-ins.">
   <meta name="robots" content="noindex,nofollow">
-  <link rel="canonical" href="https://gowithhorizon.com/dashboard/setup/">
+  <link rel="canonical" href="https://connect.gowithhorizon.com/setup/">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
@@ -240,13 +240,21 @@
 
   <script type="module">
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+    import { cookieStorage } from '/js/supabase-cookie-storage.js';
 
     const SUPABASE_URL  = 'https://lxdltzrntphnkhsniwin.supabase.co';
     const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4ZGx0enJudHBobmtoc25pd2luIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNjA0OTAsImV4cCI6MjA5MjYzNjQ5MH0.toebJTpWH-_tRLOmwPCeTprGfQfH_JU_ZKgbqkGuz3M';
     const BOKUN_API     = 'https://horizon-bokun.ivan-mueller02.workers.dev';
 
+    // Read the link type before supabase-js consumes (and strips) the
+    // URL hash. Supabase recovery links carry type=recovery; invite /
+    // magic-link / signup do not — used only to word the page as a
+    // password *reset* vs first-time *setup*.
+    const IS_RECOVERY =
+      new URLSearchParams(window.location.hash.replace(/^#/, '')).get('type') === 'recovery';
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: cookieStorage },
     });
 
     const els = {
@@ -261,14 +269,24 @@
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      window.location.replace('/dashboard/login/');
+      window.location.replace('/login/');
       throw new Error('redirecting to /dashboard/login/');
     }
 
     document.body.style.visibility = 'visible';
 
-    if (window.location.hash && window.location.hash.indexOf('access_token=') !== -1) {
+    // supabase-js has already parsed the session out of the hash by
+    // now; clear any residue (token params or a bare "#") so the URL
+    // bar reads cleanly.
+    if (window.location.hash) {
       history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+
+    if (IS_RECOVERY) {
+      document.title = 'Reset your password — Horizon partner dashboard';
+      document.querySelector('.auth-card__title').textContent = 'Reset your password';
+      document.querySelector('.auth-card__sub').textContent =
+        'Choose a new password for your account.';
     }
 
     els.email.value = (session.user && session.user.email) || '';
@@ -300,7 +318,7 @@
           }).catch(() => {});
         }
 
-        window.location.replace('/dashboard/hotel/');
+        window.location.replace('/');
       } catch (err) {
         console.error('updateUser failed', err);
         showError(err.message || 'Could not save password.');
@@ -312,7 +330,7 @@
     els.signout.addEventListener('click', async () => {
       els.signout.disabled = true;
       await supabase.auth.signOut();
-      window.location.replace('/dashboard/login/');
+      window.location.replace('/login/');
     });
   </script>
 

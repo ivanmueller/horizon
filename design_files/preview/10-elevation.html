@@ -1,0 +1,22 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"/>
+<title>Elevation</title>
+<link rel="stylesheet" href="../colors_and_type.css"/>
+<style>
+  html,body{margin:0;background:var(--bg-page);padding:38px;}
+  .row{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;}
+  .item{display:flex;flex-direction:column;align-items:center;gap:10px;}
+  .box{width:120px;height:80px;background:var(--bg-surface);border-radius:var(--radius-lg);border:1px solid var(--border-subtle);}
+  .tag{font:500 12px/1 var(--font-sans);color:var(--text-primary);}
+  .ref{font:400 11px/1.3 var(--font-mono);color:var(--text-secondary);text-align:center;}
+  .e1{box-shadow:var(--shadow-e1);}
+  .e2{box-shadow:var(--shadow-e2);}
+  .e3{box-shadow:var(--shadow-e3);}
+  .fr{box-shadow:var(--shadow-focus-ring);border-color:var(--color-violet-600);}
+</style></head><body>
+<div class="row">
+  <div class="item"><div class="box e1"></div><div class="tag">e1 — card</div><div class="ref">resting state</div></div>
+  <div class="item"><div class="box e2"></div><div class="tag">e2 — popover</div><div class="ref">dropdowns, tooltips</div></div>
+  <div class="item"><div class="box e3"></div><div class="tag">e3 — modal</div><div class="ref">dialogs, palettes</div></div>
+  <div class="item"><div class="box fr"></div><div class="tag">focus ring</div><div class="ref">keyboard focus</div></div>
+</div>
+</body></html>

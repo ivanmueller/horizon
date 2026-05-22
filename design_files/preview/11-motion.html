@@ -1,0 +1,24 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"/>
+<title>Motion tokens</title>
+<link rel="stylesheet" href="../colors_and_type.css"/>
+<style>
+  html,body{margin:0;background:var(--bg-surface);padding:24px;font-family:var(--font-sans);}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th{text-align:left;font:500 11px/1.4 var(--font-sans);letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary);padding:8px 10px;border-bottom:1px solid var(--border-default);}
+  td{padding:10px;border-bottom:1px solid var(--border-subtle);vertical-align:top;}
+  td:first-child{font:500 13px/1.4 var(--font-sans);color:var(--text-primary);width:140px;}
+  td:nth-child(2){font:400 12px/1 var(--font-mono);color:var(--text-secondary);width:90px;}
+  td:nth-child(3){color:var(--text-body);}
+  .curve{display:inline-block;width:48px;height:18px;background:linear-gradient(90deg,var(--color-violet-100),var(--color-violet-600));border-radius:var(--radius-sm);vertical-align:middle;margin-right:8px;}
+</style></head><body>
+<table>
+  <thead><tr><th>Token</th><th>Value</th><th>Use</th></tr></thead>
+  <tbody>
+    <tr><td>--motion-fast</td><td>150ms</td><td>Hover, focus ring, button press, colour/opacity changes</td></tr>
+    <tr><td>--motion-base</td><td>200ms</td><td>Dropdown, tooltip, accordion, tab switch, small slides</td></tr>
+    <tr><td>--motion-slow</td><td>300ms</td><td>Modal, drawer, full-screen overlay, large content swaps</td></tr>
+    <tr><td>--motion-ease-out</td><td>cubic-bezier(.16,1,.3,1)</td><td><span class="curve"></span>Entering / appearing (default ~80% of use)</td></tr>
+    <tr><td>--motion-ease-in</td><td>cubic-bezier(.7,0,.84,0)</td><td><span class="curve" style="background:linear-gradient(90deg,var(--color-violet-600),var(--color-violet-100));"></span>Exiting / dismissing</td></tr>
+  </tbody>
+</table>
+</body></html>

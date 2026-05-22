@@ -10,6 +10,11 @@
  */
 
 const ALLOWED_ORIGIN = 'https://gowithhorizon.com';
+const ALLOWED_ORIGINS = [
+  ALLOWED_ORIGIN,
+  'https://connect.gowithhorizon.com',
+  'https://admin.gowithhorizon.com',
+];
 
 export default {
   async fetch(request, env) {
@@ -85,9 +90,9 @@ export default {
 
 function corsHeaders(request) {
   const origin = request?.headers?.get('Origin') || '';
-  // Allow gowithhorizon.com and localhost for local testing
+  // Allow gowithhorizon.com (+ Connect/admin subdomains) and localhost
   const allowed =
-    origin === ALLOWED_ORIGIN || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1');
+    ALLOWED_ORIGINS.includes(origin) || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1');
   return {
     'Access-Control-Allow-Origin': allowed ? origin : ALLOWED_ORIGIN,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',

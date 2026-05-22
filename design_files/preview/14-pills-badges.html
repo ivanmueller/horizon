@@ -1,0 +1,40 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"/>
+<title>Status pills &amp; badges</title>
+<link rel="stylesheet" href="../colors_and_type.css"/>
+<style>
+  html,body{margin:0;background:var(--bg-surface);padding:24px;}
+  .group{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px;}
+  .lbl{font:500 11px/1 var(--font-sans);letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary);width:84px;flex:none;}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid transparent;border-radius:999px;font:500 12px/1 var(--font-sans);}
+  .pill::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;}
+  .ok{background:#ECFDF5;border-color:#A7F3D0;color:#047857;}
+  .warn{background:#FFFAF0;border-color:#FCE3B0;color:#9C5F0F;}
+  .bad{background:#FEF2F2;border-color:#FECACA;color:#B91C1C;}
+  .info{background:#EFF8FF;border-color:#B0DCFD;color:#0455A0;}
+  .neutral{background:var(--bg-muted);border-color:var(--border-subtle);color:var(--text-body);}
+  .badge{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:999px;background:var(--bg-muted);color:var(--text-body);font:500 12px/1 var(--font-sans);}
+  .badge--brand{background:var(--color-violet-100);color:var(--color-violet-700);}
+  .badge--aurora{background:#FEF3DC;color:#9C5F0F;}
+  .badge::before{display:none;}
+</style></head><body>
+  <div class="group"><span class="lbl">Status</span>
+    <span class="pill ok">Active</span>
+    <span class="pill ok">Paid</span>
+    <span class="pill warn">Pending</span>
+    <span class="pill bad">Failed</span>
+    <span class="pill info">In review</span>
+    <span class="pill neutral">Draft</span>
+  </div>
+  <div class="group"><span class="lbl">Tag</span>
+    <span class="badge">12 partners</span>
+    <span class="badge badge--brand">Connect</span>
+    <span class="badge badge--aurora">Premium tier</span>
+    <span class="badge">+24%</span>
+    <span class="badge">EN · FR</span>
+  </div>
+  <div class="group"><span class="lbl">Inline</span>
+    <span style="font:400 13px/1.4 var(--font-sans);color:var(--text-body)">Banff Springs Hotel</span>
+    <span class="pill ok" style="font-size:11px;padding:2px 8px;">Credited</span>
+    <span style="font:400 12px/1 var(--font-mono);color:var(--text-secondary);">·  +18%  · last 7 days</span>
+  </div>
+</body></html>

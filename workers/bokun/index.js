@@ -89,22 +89,35 @@
 // needed for either path.
 
 import { bokunFetch } from "./bokun-auth.js";
-import { supabaseRequest, supabaseSelect, supabaseInsert, supabaseUpdate } from "./supabase.js";
+import {
+  supabaseRequest, supabaseSelect, supabaseInsert, supabaseUpdate,
+  supabaseStorageSignUpload, supabaseStorageSignDownload,
+} from "./supabase.js";
 import {
   createShortLink,
   updateShortLink,
   isShortIoConfigured,
   trackingCodeToShortPath,
+  getLinkStats,
+  normalizeLinkStats,
   ShortIoError,
 } from "./short-io.js";
 
 const ALLOWED_ORIGIN = "https://gowithhorizon.com";
+// Connect (hotel portal) and the internal ops console live on their own
+// subdomains; both call this worker, so both origins are allowlisted.
+const ALLOWED_ORIGINS = [
+  ALLOWED_ORIGIN,
+  "https://connect.gowithhorizon.com",
+  "https://admin.gowithhorizon.com",
+];
 const CURRENCY = "CAD";
 
 const TTL_PRODUCT = 3600; // 1h — product config rarely changes
 const TTL_PICKUP = 3600; // 1h — pickup places rarely change
 const TTL_AVAIL = 300; // 5min — overridable with ?fresh=1
 const TTL_BOOKING = 15 * 60; // 15min — checkout spot-hold window
+const TTL_ATTR = 30 * 24 * 60 * 60; // 30d — referral funnel, decoupled from the spot-hold
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default {
@@ -206,6 +219,14 @@ export default {
         return await handleAdminSummary(url, env, request);
       }
       if (
+        request.method === "POST" &&
+        segs[0] === "api" &&
+        segs[1] === "admin" &&
+        segs[2] === "recompute-attribution"
+      ) {
+        return await handleAdminRecomputeAttribution(request, env);
+      }
+      if (
         request.method === "PATCH" &&
         segs[0] === "api" &&
         segs[1] === "admin" &&
@@ -213,6 +234,51 @@ export default {
         segs[3]
       ) {
         return await handleAdminBookingPatch(segs[3], request, env);
+      }
+
+      // ── Manual payout records ───────────────────────────────────
+      // Hand-entered "we paid hotel X $Y on date Z" log. No
+      // automation — just the paid/unpaid record.
+      if (segs[0] === "api" && segs[1] === "admin" && segs[2] === "payouts") {
+        if (request.method === "GET" && !segs[3]) {
+          return await handleAdminPayoutsList(url, env, request);
+        }
+        if (request.method === "POST" && !segs[3]) {
+          return await handleAdminPayoutCreate(request, env);
+        }
+        if (request.method === "DELETE" && segs[3]) {
+          return await handleAdminPayoutDelete(segs[3], request, env);
+        }
+      }
+
+      // Per-hotel manual payment records. Distinct from payouts:
+      // these are amounts the hotel RECEIVED against an invoice,
+      // hand-entered from the profile until a real processor is wired.
+      if (segs[0] === "api" && segs[1] === "admin" && segs[2] === "payments") {
+        if (request.method === "GET" && !segs[3]) {
+          return await handleAdminPaymentsList(url, env, request);
+        }
+        if (request.method === "POST" && !segs[3]) {
+          return await handleAdminPaymentCreate(request, env);
+        }
+        if (request.method === "DELETE" && segs[3]) {
+          return await handleAdminPaymentDelete(segs[3], request, env);
+        }
+      }
+
+      // Admin-authored notes attached to a hotel. Stored in
+      // hotel_notes — shared across browsers/devices, unlike the
+      // v1 localStorage backing.
+      if (segs[0] === "api" && segs[1] === "admin" && segs[2] === "hotel-notes") {
+        if (request.method === "GET" && !segs[3]) {
+          return await handleAdminHotelNotesList(url, env, request);
+        }
+        if (request.method === "POST" && !segs[3]) {
+          return await handleAdminHotelNoteCreate(request, env);
+        }
+        if (request.method === "DELETE" && segs[3]) {
+          return await handleAdminHotelNoteDelete(segs[3], request, env);
+        }
       }
 
       // ── Hotels CRUD ─────────────────────────────────────────────
@@ -225,13 +291,55 @@ export default {
         if (request.method === "GET" && segs[3] && segs[4] === "short-links") {
           return await handleAdminHotelShortLinksList(segs[3], request, env);
         }
+        // GET /api/admin/hotels/:id/events — aggregator timeline
+        if (request.method === "GET" && segs[3] && segs[4] === "events") {
+          return await handleAdminHotelEvents(segs[3], request, env);
+        }
       }
 
       // ── Hotel staff CRUD ────────────────────────────────────────
       if (segs[0] === "api" && segs[1] === "admin" && segs[2] === "hotel-staff") {
+        // Stats endpoint: /hotel-staff/:id/stats?period=last30
+        if (segs[3] && segs[4] === "stats" && !segs[5] && request.method === "GET") {
+          return await handleAdminStaffStats(segs[3], request, env);
+        }
+        // Activity log: /hotel-staff/:id/events
+        if (segs[3] && segs[4] === "events" && !segs[5] && request.method === "GET") {
+          return await handleAdminStaffEvents(segs[3], request, env);
+        }
         if (request.method === "POST" && !segs[3]) return await handleAdminStaffCreate(request, env);
         if (request.method === "PATCH" && segs[3]) return await handleAdminStaffUpdate(segs[3], request, env);
         if (request.method === "DELETE" && segs[3]) return await handleAdminStaffTerminate(segs[3], request, env);
+      }
+
+      // ── Placements CRUD ─────────────────────────────────────────
+      if (segs[0] === "api" && segs[1] === "admin" && segs[2] === "placements") {
+        // Assets: /placements/:id/assets[/sign-upload | /:assetId[/url]]
+        if (segs[3] && segs[4] === "assets") {
+          if (request.method === "POST" && segs[5] === "sign-upload") {
+            return await handleAdminPlacementAssetSignUpload(segs[3], request, env);
+          }
+          if (request.method === "POST" && !segs[5]) {
+            return await handleAdminPlacementAssetRecord(segs[3], request, env);
+          }
+          if (request.method === "GET" && segs[5] && segs[6] === "url") {
+            return await handleAdminPlacementAssetUrl(segs[3], segs[5], request, env);
+          }
+          if (request.method === "PATCH" && segs[5] && !segs[6]) {
+            return await handleAdminPlacementAssetUpdate(segs[3], segs[5], request, env);
+          }
+        }
+        // Analytics: /placements/:id/stats?period=last30|last7|last24|total
+        if (segs[3] && segs[4] === "stats" && !segs[5] && request.method === "GET") {
+          return await handleAdminPlacementStats(segs[3], request, env);
+        }
+        // Activity log: /placements/:id/events
+        if (segs[3] && segs[4] === "events" && !segs[5] && request.method === "GET") {
+          return await handleAdminPlacementEvents(segs[3], request, env);
+        }
+        if (request.method === "POST" && !segs[3]) return await handleAdminPlacementCreate(request, env);
+        if (request.method === "PATCH" && segs[3] && !segs[4]) return await handleAdminPlacementUpdate(segs[3], request, env);
+        if (request.method === "DELETE" && segs[3] && !segs[4]) return await handleAdminPlacementRetire(segs[3], request, env);
       }
 
       // ── Short.io short_links CRUD ───────────────────────────────
@@ -374,6 +482,48 @@ async function handleCheckoutSubmit(request, env) {
 //
 // This is purely a state pouch for the surface handoff. The real Bokun hold
 // still happens at /api/checkout/options time, exactly as before.
+//
+// Phase 1b: the inbound referral funnel (window.HORIZON.funnel) is
+// sanitised and stored under a SEPARATE attr:<booking_id> key with a
+// 30-day TTL — decoupled from the 15-min spot-hold so the full
+// touchpoint history outlives a single checkout attempt.
+function sanitizeFunnel(raw) {
+  if (!raw || typeof raw !== "object" || !Array.isArray(raw.touchpoints)) {
+    return null;
+  }
+  const HOTEL_SLUG_RE = /^[a-z0-9-]{2,40}$/;
+  const STREAMS = ["hotel-slug", "hotel", "employee", "placement", "unknown"];
+  const out = [];
+  for (const t of raw.touchpoints) {
+    if (!t || typeof t !== "object") continue;
+    const stream = STREAMS.includes(t.stream) ? t.stream : null;
+    const code = typeof t.code === "string" ? t.code.trim().toLowerCase() : "";
+    if (!stream || !code) continue;
+    const codeOk =
+      stream === "hotel-slug"
+        ? HOTEL_SLUG_RE.test(code)
+        : TRACKING_CODE_RE.test(code);
+    if (!codeOk) continue;
+    const ts = Number(t.ts);
+    out.push({
+      code,
+      stream,
+      ts: Number.isFinite(ts) ? ts : null,
+      page: typeof t.page === "string" ? t.page.slice(0, 256) : null,
+      kind: t.kind === "ref" ? "ref" : undefined,
+    });
+    if (out.length >= 25) break; // §5.2 cap
+  }
+  if (!out.length) return null;
+  const firstTs = Number(raw.first_ts);
+  const lastTs = Number(raw.last_ts);
+  return {
+    touchpoints: out,
+    first_ts: Number.isFinite(firstTs) ? firstTs : out[0].ts,
+    last_ts: Number.isFinite(lastTs) ? lastTs : out[out.length - 1].ts,
+  };
+}
+
 async function handleBookingInitiate(request, env) {
   if (!env.BOOKINGS) {
     return jsonResponse(
@@ -404,14 +554,16 @@ async function handleBookingInitiate(request, env) {
   const expiresAt = now + TTL_BOOKING * 1000;
   const bookingId = crypto.randomUUID();
 
-  // Optional employee-attribution slug (FAIRMONT_LL_JS form). Same shape
-  // as the URL ?ref=<code> param that originates this; matched against
-  // hotel_staff.tracking_code at insert time on the checkout page side
-  // → /api/dashboard/record. Hotel-default codes (FAIRMONT_LL) ride
-  // through too and harmlessly fail to match any staff row, leaving the
-  // booking attributed to the hotel pool.
-  const refRaw = typeof body.ref === "string" ? body.ref.trim() : "";
-  const ref = /^[A-Z0-9_]{2,40}$/.test(refRaw) ? refRaw : null;
+  // Optional employee-attribution code (htl-7q4k9-e001 form). Same
+  // shape as the URL ?ref=<code> param that originates this; matched
+  // against hotel_staff.tracking_code at insert time on the checkout
+  // page side → /api/dashboard/record. Hotel-default codes
+  // (bare htl-7q4k9) ride through too and harmlessly fail to match any
+  // staff row, leaving the booking attributed to the hotel pool.
+  // Lowercase-normalised defensively so a mistyped capital from a
+  // hand-typed URL still attributes.
+  const refRaw = typeof body.ref === "string" ? body.ref.trim().toLowerCase() : "";
+  const ref = TRACKING_CODE_RE.test(refRaw) ? refRaw : null;
 
   const state = {
     booking_id: bookingId,
@@ -435,7 +587,53 @@ async function handleBookingInitiate(request, env) {
     expirationTtl: TTL_BOOKING,
   });
 
+  // Referral funnel — separate key, 30-day TTL. Best-effort: a malformed
+  // or absent funnel never blocks a booking (attribution still falls back
+  // to state.hotel / state.ref exactly as before Phase 1b).
+  const funnel = sanitizeFunnel(body.funnel);
+  if (funnel) {
+    await env.BOOKINGS.put(
+      `attr:${bookingId}`,
+      JSON.stringify({ booking_id: bookingId, ...funnel, created_at: now }),
+      { expirationTtl: TTL_ATTR },
+    );
+  }
+
   return jsonResponse({ booking_id: bookingId, expires_at: expiresAt }, 200, request);
+}
+
+// ── Credit resolution (pure) ───────────────────────────────────────────────
+// §4.1 default policy: employees outrank hotel/placement; among employees
+// the LAST wins; otherwise the FIRST hotel-level touch wins. Pure and
+// deterministic (no DB, no clock) so it can be replayed to recompute
+// historical credit if a hotel switches policy.
+//   touchpoints: ordered [{ code, stream, position, staff_id }]
+export function resolveCredit(touchpoints, policy) {
+  if (!touchpoints.length) return null;
+  let chosen;
+  if (policy === "first_touch_wins") {
+    chosen = touchpoints[0];
+  } else if (policy === "last_touch_wins") {
+    chosen = touchpoints[touchpoints.length - 1];
+  } else {
+    // employee_last_then_hotel_first (default — also the fallback for any
+    // unrecognised policy string).
+    const employees = touchpoints.filter((t) => t.staff_id);
+    const hotelRefs = touchpoints.filter(
+      (t) => !t.staff_id && (t.stream === "hotel" || t.stream === "hotel-slug"),
+    );
+    chosen = employees.length
+      ? employees[employees.length - 1]
+      : hotelRefs.length
+        ? hotelRefs[0]
+        : touchpoints[0];
+  }
+  return {
+    credited_position: chosen.position,
+    staff_id: chosen.staff_id || null,
+    policy_used: policy,
+    first_touch_code: touchpoints[0].code,
+  };
 }
 
 // ── Hotel-manager dashboard ledger ─────────────────────────────────────────
@@ -451,7 +649,7 @@ async function handleDashboardRecord(request, env) {
   const code = typeof body.confirmation_code === "string" ? body.confirmation_code.trim() : "";
   const bookingId = typeof body.booking_id === "string" ? body.booking_id.trim() : "";
   const trackingCode =
-    typeof body.tracking_code === "string" ? body.tracking_code.trim() : "";
+    typeof body.tracking_code === "string" ? body.tracking_code.trim().toLowerCase() : "";
   if (!hotel || !/^[a-z0-9-]{2,40}$/.test(hotel)) {
     return jsonResponse({ error: "hotel slug required" }, 400, request);
   }
@@ -461,14 +659,18 @@ async function handleDashboardRecord(request, env) {
 
   // Parallel lookups — saves a round trip vs. sequential. Staff
   // resolution matches on the partner-controlled slug
-  // (hotel_staff.tracking_code, e.g. FAIRMONT_LL_JS) rather than the
+  // (hotel_staff.tracking_code, e.g. htl-7q4k9-e001) rather than the
   // hex tracking codes Bokun used to mint.
   const [hotelRows, staffRows] = await Promise.all([
-    supabaseSelect(env, `hotels?code=eq.${encodeURIComponent(hotel)}&select=id`),
+    supabaseSelect(
+      env,
+      `hotels?code=eq.${encodeURIComponent(hotel)}` +
+        `&select=id,type,commission_pct,platform_fee_pct,attribution_policy`,
+    ),
     trackingCode
       ? supabaseSelect(
           env,
-          `hotel_staff?tracking_code=eq.${encodeURIComponent(trackingCode)}&select=id,hotel_id`,
+          `hotel_staff?tracking_code=eq.${encodeURIComponent(trackingCode)}&select=id,hotel_id,kickback_pct`,
         )
       : Promise.resolve([]),
   ]);
@@ -480,15 +682,92 @@ async function handleDashboardRecord(request, env) {
 
   // Only attribute to staff if their hotel matches — defends against a
   // tracking-code collision between hotels. Hotel-level codes (e.g.
-  // FAIRMONT_LL) won't match any hotel_staff row and so resolve to
+  // bare htl-7q4k9) won't match any hotel_staff row and so resolve to
   // staff_id=null, which is the correct "hotel pool" attribution.
   const staffMatch = staffRows[0];
-  const staffId = staffMatch && staffMatch.hotel_id === hotelId ? staffMatch.id : null;
+  const legacyStaffId = staffMatch && staffMatch.hotel_id === hotelId ? staffMatch.id : null;
+
+  // ── Full-funnel attribution (Phase 1c) ───────────────────────────────────
+  // Read the sanitised funnel stored at initiate (attr:<booking_id>, 30-day
+  // TTL). When present it drives the credited staff_id + audit columns and
+  // the immutable booking_touchpoints rows. Best-effort: any failure here
+  // falls back to the legacy single-code attribution, never blocking the
+  // booking insert.
+  let staffId = legacyStaffId;
+  let auditPolicy = null;
+  let auditFirstTouch = null;
+  let auditCreditedPos = null;
+  let touchpointRows = null;
+  try {
+    const funnel =
+      bookingId && env.BOOKINGS
+        ? await env.BOOKINGS.get(`attr:${bookingId}`, "json")
+        : null;
+    const tps = funnel && Array.isArray(funnel.touchpoints) ? funnel.touchpoints : [];
+    if (tps.length) {
+      // Resolve every employee-stream code to a staff row in one query;
+      // collision-guarded to this booking's hotel (same rule as legacy).
+      const empCodes = [
+        ...new Set(
+          tps.filter((t) => t.stream === "employee" && t.code).map((t) => t.code),
+        ),
+      ];
+      const staffByCode = new Map();
+      if (empCodes.length) {
+        const inList = empCodes.map((c) => encodeURIComponent(c)).join(",");
+        const rows = await supabaseSelect(
+          env,
+          `hotel_staff?tracking_code=in.(${inList})&select=id,hotel_id,tracking_code`,
+        );
+        for (const s of rows) {
+          if (s.hotel_id === hotelId) staffByCode.set(s.tracking_code, s.id);
+        }
+      }
+
+      const annotated = tps.map((t, i) => ({
+        code: t.code,
+        stream: t.stream,
+        position: i,
+        ts: Number.isFinite(Number(t.ts)) ? Number(t.ts) : null,
+        staff_id:
+          t.stream === "employee" ? staffByCode.get(t.code) || null : null,
+      }));
+
+      const credit = resolveCredit(
+        annotated,
+        hotelRows[0].attribution_policy || "employee_last_then_hotel_first",
+      );
+      if (credit) {
+        staffId = credit.staff_id;
+        auditPolicy = credit.policy_used;
+        auditFirstTouch = credit.first_touch_code;
+        auditCreditedPos = credit.credited_position;
+      }
+
+      touchpointRows = annotated.map((t) => ({
+        booking_id:        bookingId || null,
+        confirmation_code: code,
+        position:          t.position,
+        code:              t.code,
+        stream_type:       t.stream,
+        hotel_id:          hotelId,
+        staff_id:          t.staff_id,
+        touched_at:        t.ts ? new Date(t.ts).toISOString() : null,
+        is_credited:       t.position === auditCreditedPos,
+      }));
+    }
+  } catch (e) {
+    // Funnel processing is non-critical — fall back to legacy attribution.
+    touchpointRows = null;
+  }
 
   const row = {
     booking_id:        bookingId || null,
     hotel_id:          hotelId,
     staff_id:          staffId,
+    attribution_policy_used: auditPolicy,
+    first_touch_code:        auditFirstTouch,
+    credited_position:       auditCreditedPos,
     confirmation_code: code,
     tour_id:           body.tour_id ?? null,
     tour_title:        typeof body.tour_title === "string" ? body.tour_title : null,
@@ -511,6 +790,25 @@ async function handleDashboardRecord(request, env) {
     body: [row],
     prefer: "resolution=ignore-duplicates,return=minimal",
   });
+
+  // Immutable funnel rows. Idempotent on (confirmation_code, position) so
+  // the page's fire-and-forget retries don't duplicate. Non-critical: a
+  // failure here must not fail the (already inserted) booking.
+  if (touchpointRows && touchpointRows.length) {
+    try {
+      await supabaseRequest(
+        env,
+        "POST",
+        "/booking_touchpoints?on_conflict=confirmation_code,position",
+        {
+          body: touchpointRows,
+          prefer: "resolution=ignore-duplicates,return=minimal",
+        },
+      );
+    } catch (e) {
+      /* booking already recorded — funnel rows are best-effort */
+    }
+  }
 
   return jsonResponse({ ok: true }, 200, request);
 }
@@ -582,7 +880,11 @@ async function handleDashboardBookings(url, env, request) {
     "id,booking_id,confirmation_code,tour_id,tour_title,date,time," +
     "adults,youth,infants,amount,currency,lead_name,lead_email," +
     "status,created_at,updated_at," +
-    "staff:hotel_staff(id,name,tracking_code,kickback_pct)";
+    "attribution_policy_used,first_touch_code,credited_position," +
+    "staff:hotel_staff(id,name,tracking_code,kickback_pct)," +
+    "touchpoints:booking_touchpoints(" +
+    "position,code,stream_type,touched_at,is_credited," +
+    "touch_staff:hotel_staff(name,tracking_code))";
   let q =
     `bookings?hotel_id=eq.${h.id}` +
     `&select=${fields}` +
@@ -597,6 +899,9 @@ async function handleDashboardBookings(url, env, request) {
   const records = rows.map((r) => ({
     ...r,
     amount: r.amount != null ? Number(r.amount) : null,
+    touchpoints: Array.isArray(r.touchpoints)
+      ? r.touchpoints.slice().sort((a, b) => a.position - b.position)
+      : [],
   }));
 
   // KPIs only count confirmed — cancelled and refunded bookings show in
@@ -631,6 +936,107 @@ async function handleDashboardBookings(url, env, request) {
     200,
     request,
   );
+}
+
+// ── Retroactive attribution recompute ──────────────────────────────────────
+// Replays resolveCredit over the stored funnel for every booking at a hotel
+// using that hotel's CURRENT attribution_policy, then rewrites the credited
+// staff_id + audit columns + is_credited flags where they changed. This is
+// what makes a policy switch non-destructive (§3): the immutable
+// booking_touchpoints rows are never mutated, only the derived credit.
+// Horizon-admin gated; scoped to one hotel per call to stay bounded.
+async function handleAdminRecomputeAttribution(request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+  const hotel = typeof body.hotel === "string" ? body.hotel.trim().toLowerCase() : "";
+  if (!hotel || !/^[a-z0-9-]{2,40}$/.test(hotel)) {
+    return jsonResponse({ error: "hotel slug required" }, 400, request);
+  }
+
+  const hotelRows = await supabaseSelect(
+    env,
+    `hotels?code=eq.${encodeURIComponent(hotel)}&select=id,attribution_policy`,
+  );
+  if (!hotelRows.length) {
+    return jsonResponse({ error: `unknown hotel slug: ${hotel}` }, 404, request);
+  }
+  const hotelId = hotelRows[0].id;
+  const policy = hotelRows[0].attribution_policy || "employee_last_then_hotel_first";
+
+  const bookings = await supabaseSelect(
+    env,
+    `bookings?hotel_id=eq.${hotelId}` +
+      `&select=confirmation_code,staff_id,credited_position,` +
+      `touchpoints:booking_touchpoints(position,code,stream_type)` +
+      `&limit=2000`,
+  );
+
+  // One staff lookup for every employee code across all funnels.
+  const empCodes = new Set();
+  for (const b of bookings) {
+    for (const t of b.touchpoints || []) {
+      if (t.stream_type === "employee" && t.code) empCodes.add(t.code);
+    }
+  }
+  const staffByCode = new Map();
+  if (empCodes.size) {
+    const inList = [...empCodes].map((c) => encodeURIComponent(c)).join(",");
+    const rows = await supabaseSelect(
+      env,
+      `hotel_staff?tracking_code=in.(${inList})&select=id,hotel_id,tracking_code`,
+    );
+    for (const s of rows) {
+      if (s.hotel_id === hotelId) staffByCode.set(s.tracking_code, s.id);
+    }
+  }
+
+  let scanned = 0;
+  let updated = 0;
+  for (const b of bookings) {
+    const tps = (b.touchpoints || []).slice().sort((a, c) => a.position - c.position);
+    if (!tps.length) continue;
+    scanned += 1;
+    const annotated = tps.map((t) => ({
+      code: t.code,
+      stream: t.stream_type,
+      position: t.position,
+      staff_id: t.stream_type === "employee" ? staffByCode.get(t.code) || null : null,
+    }));
+    const credit = resolveCredit(annotated, policy);
+    if (!credit) continue;
+
+    const changed =
+      (b.staff_id || null) !== (credit.staff_id || null) ||
+      b.credited_position !== credit.credited_position;
+    if (!changed) continue;
+
+    await supabaseUpdate(
+      env,
+      `bookings?confirmation_code=eq.${encodeURIComponent(b.confirmation_code)}`,
+      {
+        staff_id: credit.staff_id,
+        attribution_policy_used: credit.policy_used,
+        first_touch_code: credit.first_touch_code,
+        credited_position: credit.credited_position,
+      },
+    );
+    // Re-flag the credited touch: clear all, then set the winner.
+    const confFilter = `confirmation_code=eq.${encodeURIComponent(b.confirmation_code)}`;
+    await supabaseUpdate(env, `booking_touchpoints?${confFilter}`, {
+      is_credited: false,
+    });
+    await supabaseUpdate(
+      env,
+      `booking_touchpoints?${confFilter}&position=eq.${credit.credited_position}`,
+      { is_credited: true },
+    );
+    updated += 1;
+  }
+
+  return jsonResponse({ hotel, policy, scanned, updated }, 200, request);
 }
 
 // ── Horizon admin (internal) ───────────────────────────────────────────────
@@ -813,7 +1219,358 @@ async function handleAdminBookingPatch(id, request, env) {
   }
 
   logMutation(request, auth.claims, "update", "booking", id, { status });
+
   return jsonResponse({ ok: true, booking: updated[0] }, 200, request);
+}
+
+// ── Manual payout records ──────────────────────────────────────────────────
+// A hand-entered log of commission actually paid to a hotel (Interac
+// e-Transfer / EFT / other). No accrual, no automation, no Stripe —
+// the admin records each payment after sending it so the dashboard
+// can show outstanding vs. paid. Correcting a typo = delete + re-add.
+
+const PAYOUT_METHODS = new Set(["etransfer", "eft", "other"]);
+
+async function handleAdminPayoutsList(url, env, request) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const hotelId = (url.searchParams.get("hotel_id") || "").trim();
+  let q =
+    "payouts?select=id,hotel_id,period,amount,currency,paid_at,method," +
+    "reference,note,created_at&order=paid_at.desc,created_at.desc";
+  if (hotelId) {
+    if (!UUID_RE.test(hotelId)) {
+      return jsonResponse({ error: "invalid hotel_id" }, 400, request);
+    }
+    q += `&hotel_id=eq.${encodeURIComponent(hotelId)}`;
+  }
+  const rows = await supabaseSelect(env, q);
+  const payouts = (Array.isArray(rows) ? rows : []).map((r) => ({
+    ...r,
+    amount: r.amount != null ? Number(r.amount) : null,
+  }));
+  return jsonResponse({ payouts }, 200, request);
+}
+
+async function handleAdminPayoutCreate(request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+
+  const hotelId = typeof body.hotel_id === "string" ? body.hotel_id.trim() : "";
+  if (!UUID_RE.test(hotelId)) {
+    return jsonResponse({ error: "valid hotel_id required" }, 400, request);
+  }
+  const amount = typeof body.amount === "number" ? body.amount : NaN;
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return jsonResponse({ error: "amount must be a positive number" }, 400, request);
+  }
+  const paidAt = typeof body.paid_at === "string" ? body.paid_at.trim() : "";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(paidAt)) {
+    return jsonResponse({ error: "paid_at must be YYYY-MM-DD" }, 400, request);
+  }
+  const row = {
+    hotel_id: hotelId,
+    amount: Math.round(amount * 100) / 100,
+    paid_at: paidAt,
+  };
+  if (typeof body.period === "string" && body.period.trim()) {
+    if (!/^\d{4}-\d{2}$/.test(body.period.trim())) {
+      return jsonResponse({ error: "period must be YYYY-MM" }, 400, request);
+    }
+    row.period = body.period.trim();
+  }
+  if (body.method != null && body.method !== "") {
+    if (!PAYOUT_METHODS.has(body.method)) {
+      return jsonResponse(
+        { error: "method must be etransfer, eft, or other" }, 400, request,
+      );
+    }
+    row.method = body.method;
+  }
+  if (typeof body.currency === "string" && body.currency.trim()) {
+    row.currency = body.currency.trim().toUpperCase().slice(0, 3);
+  }
+  const ref = typeof body.reference === "string" ? body.reference.trim() : "";
+  if (ref) row.reference = ref.slice(0, 200);
+  const note = typeof body.note === "string" ? body.note.trim() : "";
+  if (note) row.note = note.slice(0, 1000);
+
+  // Confirm the hotel exists so a typo'd id can't orphan a payment.
+  const hotelRows = await supabaseSelect(
+    env, `hotels?id=eq.${encodeURIComponent(hotelId)}&select=id`,
+  );
+  if (!hotelRows.length) {
+    return jsonResponse({ error: "hotel not found" }, 404, request);
+  }
+
+  const inserted = await supabaseInsert(env, "payouts", [row], { returnRow: true });
+  const created = Array.isArray(inserted) ? inserted[0] : inserted;
+  logMutation(request, auth.claims, "create", "payout", created && created.id, {
+    hotel_id: hotelId, amount: row.amount, paid_at: paidAt,
+  });
+  return jsonResponse({ payout: created }, 201, request);
+}
+
+async function handleAdminPayoutDelete(id, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(id)) {
+    return jsonResponse({ error: "invalid payout id" }, 400, request);
+  }
+  const deleted = await supabaseRequest(
+    env, "DELETE", `/payouts?id=eq.${encodeURIComponent(id)}`,
+    { prefer: "return=representation" },
+  );
+  if (!Array.isArray(deleted) || deleted.length === 0) {
+    return jsonResponse({ error: "payout not found" }, 404, request);
+  }
+  logMutation(request, auth.claims, "delete", "payout", id);
+  return jsonResponse({ ok: true }, 200, request);
+}
+
+// ── Payments (hand-entered) ────────────────────────────────────────
+// Pilot phase: the admin records each payment received against an
+// invoice. No accrual, no processor sync — just the hand-entered
+// receipt. handleAdminPaymentCreate also writes a hotel_events row
+// so the profile's Events timeline picks up "Payment was created".
+// We intentionally do NOT emit an event for delete: the user asked
+// the timeline to track payment generation only, not housekeeping.
+const PAYMENT_STATUSES = new Set(["succeeded", "canceled"]);
+
+async function handleAdminPaymentsList(url, env, request) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const hotelId = url.searchParams.get("hotel_id");
+  if (!hotelId || !UUID_RE.test(hotelId)) {
+    return jsonResponse({ error: "hotel_id required" }, 400, request);
+  }
+  const rows = await supabaseSelect(
+    env,
+    `payments?hotel_id=eq.${encodeURIComponent(hotelId)}` +
+      `&select=id,hotel_id,amount,currency,description,status,occurred_at,actor_email,created_at` +
+      `&order=occurred_at.desc&limit=500`,
+  );
+  return jsonResponse({ payments: rows || [] }, 200, request);
+}
+
+async function handleAdminPaymentCreate(request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+
+  const hotelId = typeof body.hotel_id === "string" ? body.hotel_id.trim() : "";
+  if (!UUID_RE.test(hotelId)) {
+    return jsonResponse({ error: "valid hotel_id required" }, 400, request);
+  }
+  const amount = typeof body.amount === "number" ? body.amount : NaN;
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return jsonResponse({ error: "amount must be a positive number" }, 400, request);
+  }
+  const status = typeof body.status === "string" ? body.status.trim() : "succeeded";
+  if (!PAYMENT_STATUSES.has(status)) {
+    return jsonResponse({ error: "status must be succeeded or canceled" }, 400, request);
+  }
+
+  const row = {
+    hotel_id: hotelId,
+    amount: Math.round(amount * 100) / 100,
+    status,
+    actor_email: auth.claims?.email || null,
+  };
+  if (typeof body.currency === "string" && body.currency.trim()) {
+    row.currency = body.currency.trim().toUpperCase().slice(0, 3);
+  }
+  if (typeof body.description === "string" && body.description.trim()) {
+    row.description = body.description.trim().slice(0, 200);
+  }
+  if (typeof body.occurred_at === "string" && body.occurred_at.trim()) {
+    const oa = body.occurred_at.trim();
+    if (!/^\d{4}-\d{2}-\d{2}/.test(oa)) {
+      return jsonResponse({ error: "occurred_at must be ISO date" }, 400, request);
+    }
+    row.occurred_at = oa;
+  }
+
+  // Idempotency: client mints a key per form-open and resends it on
+  // retries. (hotel_id, idempotency_key) carries a unique partial
+  // index — a duplicate insert raises 23505, which we catch and
+  // resolve to the original row. The payment_created event is only
+  // written on the first successful insert, never on dedupe.
+  const idemKey =
+    (request.headers.get("Idempotency-Key") || "").trim() ||
+    (typeof body.idempotency_key === "string" ? body.idempotency_key.trim() : "");
+  if (idemKey) {
+    if (idemKey.length > 80) {
+      return jsonResponse(
+        { error: "Idempotency-Key too long (80 chars max)" }, 400, request,
+      );
+    }
+    row.idempotency_key = idemKey;
+  }
+
+  const hotelRows = await supabaseSelect(
+    env, `hotels?id=eq.${encodeURIComponent(hotelId)}&select=id`,
+  );
+  if (!hotelRows.length) {
+    return jsonResponse({ error: "hotel not found" }, 404, request);
+  }
+
+  let created;
+  try {
+    const inserted = await supabaseInsert(env, "payments", [row], { returnRow: true });
+    created = Array.isArray(inserted) ? inserted[0] : inserted;
+  } catch (err) {
+    if (idemKey && isUniqueViolation(err, "payments_idempotency_key_uq")) {
+      // Retry of an already-processed request — return the original
+      // row without writing a second event. Status 200 (not 201)
+      // signals "found", not "created", in case a future client
+      // wants to distinguish.
+      const existing = await supabaseSelect(
+        env,
+        `payments?hotel_id=eq.${encodeURIComponent(hotelId)}` +
+          `&idempotency_key=eq.${encodeURIComponent(idemKey)}` +
+          `&select=id,hotel_id,amount,currency,description,status,occurred_at,actor_email,created_at,idempotency_key` +
+          `&limit=1`,
+      );
+      if (Array.isArray(existing) && existing.length) {
+        return jsonResponse(
+          { payment: existing[0], deduped: true }, 200, request,
+        );
+      }
+    }
+    throw err;
+  }
+  logMutation(request, auth.claims, "create", "payment", created && created.id, {
+    hotel_id: hotelId, amount: row.amount, status,
+  });
+  await writeHotelEvent(env, hotelId, "payment_created", {
+    payment_id:  created && created.id,
+    amount:      row.amount,
+    currency:    row.currency || "CAD",
+    status,
+    description: row.description || null,
+  }, auth.claims?.email);
+  return jsonResponse({ payment: created }, 201, request);
+}
+
+async function handleAdminPaymentDelete(id, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(id)) {
+    return jsonResponse({ error: "invalid payment id" }, 400, request);
+  }
+  // Fetch first so the hotel_events row we write afterwards
+  // carries the original hotel_id + amount/currency for the
+  // timeline label, then DELETE.
+  const existing = await supabaseSelect(
+    env,
+    `payments?id=eq.${encodeURIComponent(id)}` +
+      `&select=id,hotel_id,amount,currency,status,description&limit=1`,
+  );
+  if (!Array.isArray(existing) || !existing.length) {
+    return jsonResponse({ error: "payment not found" }, 404, request);
+  }
+  const row = existing[0];
+  const deleted = await supabaseRequest(
+    env, "DELETE", `/payments?id=eq.${encodeURIComponent(id)}`,
+    { prefer: "return=representation" },
+  );
+  if (!Array.isArray(deleted) || deleted.length === 0) {
+    return jsonResponse({ error: "payment not found" }, 404, request);
+  }
+  logMutation(request, auth.claims, "delete", "payment", id);
+  await writeHotelEvent(env, row.hotel_id, "payment_deleted", {
+    payment_id:  id,
+    amount:      row.amount,
+    currency:    row.currency || "CAD",
+    status:      row.status,
+    description: row.description || null,
+  }, auth.claims?.email);
+  return jsonResponse({ ok: true }, 200, request);
+}
+
+// ── Hotel notes (admin-authored timeline entries) ──────────────────
+// Replaces the v1 localStorage backing so notes survive across
+// browsers / devices / cache clears. author_email + author_display
+// are denormalised on the row so the byline keeps rendering even
+// if the admin account is later renamed.
+async function handleAdminHotelNotesList(url, env, request) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const hotelId = url.searchParams.get("hotel_id");
+  if (!hotelId || !UUID_RE.test(hotelId)) {
+    return jsonResponse({ error: "hotel_id required" }, 400, request);
+  }
+  const rows = await supabaseSelect(
+    env,
+    `hotel_notes?hotel_id=eq.${encodeURIComponent(hotelId)}` +
+      `&select=id,hotel_id,text,author_email,author_display,created_at` +
+      `&order=created_at.desc&limit=500`,
+  );
+  return jsonResponse({ notes: rows || [] }, 200, request);
+}
+
+async function handleAdminHotelNoteCreate(request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+
+  const hotelId = typeof body.hotel_id === "string" ? body.hotel_id.trim() : "";
+  if (!UUID_RE.test(hotelId)) {
+    return jsonResponse({ error: "valid hotel_id required" }, 400, request);
+  }
+  const text = typeof body.text === "string" ? body.text.trim() : "";
+  if (!text) {
+    return jsonResponse({ error: "text required" }, 400, request);
+  }
+  // Cap incoming text so a runaway client can't bloat the row.
+  // Long-form operational context still fits comfortably.
+  if (text.length > 8000) {
+    return jsonResponse({ error: "text too long (8000 chars max)" }, 400, request);
+  }
+
+  const hotelRows = await supabaseSelect(
+    env, `hotels?id=eq.${encodeURIComponent(hotelId)}&select=id`,
+  );
+  if (!hotelRows.length) {
+    return jsonResponse({ error: "hotel not found" }, 404, request);
+  }
+
+  const row = {
+    hotel_id:       hotelId,
+    text,
+    author_email:   auth.claims?.email || null,
+    author_display: typeof body.author_display === "string"
+      ? body.author_display.trim().slice(0, 120) || null
+      : null,
+  };
+  const inserted = await supabaseInsert(env, "hotel_notes", [row], { returnRow: true });
+  const created  = Array.isArray(inserted) ? inserted[0] : inserted;
+  logMutation(request, auth.claims, "create", "hotel_note", created && created.id, {
+    hotel_id: hotelId,
+  });
+  return jsonResponse({ note: created }, 201, request);
+}
+
+async function handleAdminHotelNoteDelete(id, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(id)) {
+    return jsonResponse({ error: "invalid note id" }, 400, request);
+  }
+  const deleted = await supabaseRequest(
+    env, "DELETE", `/hotel_notes?id=eq.${encodeURIComponent(id)}`,
+    { prefer: "return=representation" },
+  );
+  if (!Array.isArray(deleted) || deleted.length === 0) {
+    return jsonResponse({ error: "note not found" }, 404, request);
+  }
+  logMutation(request, auth.claims, "delete", "hotel_note", id);
+  return jsonResponse({ ok: true }, 200, request);
 }
 
 // ── Hotels / staff / managers CRUD (/admin/hotels/) ────────────────────────
@@ -823,37 +1580,58 @@ async function handleAdminBookingPatch(id, request, env) {
 
 const HOTEL_FIELDS =
   "id,code,name,location,type,status,effective_date,default_tracking_code," +
-  "tracking_prefix,commission_pct,kickback_pool_pct,notes,created_at,updated_at," +
+  "tracking_prefix,commission_pct,kickback_pool_pct,created_at,updated_at," +
   "contract_start_date,property_type,star_rating,country," +
   "platform_fee_pct," +
+  "payout_method,payout_account_holder,payout_etransfer_email," +
+  "payout_eft_institution,payout_eft_transit,payout_eft_account,payout_updated_at," +
   "address,phone,primary_contact_name,primary_contact_email,website";
 const STAFF_FIELDS =
   "id,hotel_id,name,tracking_code,sequence_number,kickback_pct," +
   "status,created_at,updated_at";
-const MANAGER_FIELDS = "id,email,hotel_id,role,status,created_at,updated_at";
+const MANAGER_FIELDS =
+  "id,email,name,hotel_id,role,status,created_at,updated_at,password_set_at,invited_by_email";
+const MANAGER_ROLES = new Set(["owner", "manager", "read_only"]);
+const MANAGER_STATUSES = new Set(["active", "suspended", "revoked"]);
 
 const HOTEL_TYPES = new Set(["kickback", "pool"]);
 const HOTEL_LOCATIONS = new Set(["Banff", "Canmore"]);
 const HOTEL_STATUSES = new Set(["active", "terminated"]);
 const STAFF_STATUSES = new Set(["active", "terminated"]);
-const MANAGER_STATUSES = new Set(["active", "revoked"]);
+// MANAGER_STATUSES + MANAGER_ROLES live at the top of the placements
+// constants block above so the manager invite handler can validate
+// against the same source.
 // 60-char ceiling lets us hold full property names like
 // "the-rimrock-resort-hotel-banff-springs" instead of forcing
 // abbreviation. Slugs stay lowercase + hyphen + digit only.
 const SLUG_RE = /^[a-z0-9-]{2,60}$/;
-const TRACKING_CODE_RE = /^[A-Z0-9_]{2,40}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// 4-char random alphanumeric, e.g. "X7K2". Omits I, O, 0, 1 so the
-// printed prefix is never ambiguous on paper or read aloud. 32^4 ≈
-// 1M combinations — collision probability stays negligible even at
-// 10k+ hotels, and the UNIQUE constraint catches any that slip through.
-const PREFIX_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-const PREFIX_LENGTH = 4;
-const TRACKING_PREFIX_RE = /^[A-HJ-NP-Z2-9]{4}$/;
+// The hotel's human/support-facing ID and tracking prefix, one value:
+// "htl-" + 5 chars from an unambiguous lowercase set (no i, l, o, 0, 1)
+// so it's safe to read aloud, print, and drop straight into a URL.
+// 31^5 ≈ 28M combinations — collision probability is negligible even
+// at 100k+ hotels, and the UNIQUE constraint on hotels.tracking_prefix
+// backstops any that slip through. The "htl-" tag makes the ID
+// self-describing in logs and support tickets (cf. Stripe's cus_).
+const PREFIX_TAG = "htl-";
+const PREFIX_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789";
+const PREFIX_LENGTH = 5;
+const TRACKING_PREFIX_RE = /^htl-[a-hjkmnp-z2-9]{5}$/;
+// Full tracking code: the bare prefix ("<prefix>") IS the hotel
+// default code; staff append "-eNNN" (3-digit zero-padded, room for
+// 999 per property — bump to 4 if a property ever needs it);
+// placements append "-pNN" (2-digit zero-padded, room for 99 passive
+// marketing surfaces per property). A "-pNN" code never matches a
+// hotel_staff row, so it resolves to hotel-pool attribution — exactly
+// what a passive placement should do (no employee, no kickback).
+// Lowercase + hyphen by construction, so the code IS the short-URL
+// path verbatim — there is no underscore↔hyphen translation layer
+// (see trackingCodeToShortPath). One format everywhere.
+const TRACKING_CODE_RE = /^htl-[a-hjkmnp-z2-9]{5}(-e\d{3}|-p\d{2})?$/;
 
 function generateTrackingPrefix() {
-  let s = "";
+  let s = PREFIX_TAG;
   for (let i = 0; i < PREFIX_LENGTH; i++) {
     s += PREFIX_ALPHABET[Math.floor(Math.random() * PREFIX_ALPHABET.length)];
   }
@@ -966,6 +1744,14 @@ function hotelTargetUrl(env, hotelCode) {
 function staffTargetUrl(env, hotelCode, trackingCode) {
   return `${hotelTargetUrl(env, hotelCode)}?ref=${encodeURIComponent(trackingCode)}`;
 }
+// A placement redirects to the hotel master URL with its own code as
+// ?ref. The code carries a "-pNN" suffix that never matches a
+// hotel_staff row, so checkout resolves it to hotel-pool attribution
+// (no employee, no kickback) — identical URL shape to staff, distinct
+// attribution outcome by construction.
+function placementTargetUrl(env, hotelCode, code) {
+  return `${hotelTargetUrl(env, hotelCode)}?ref=${encodeURIComponent(code)}`;
+}
 
 // Hotel insert wrapper. Generates a unique tracking_prefix and seeds
 // default_tracking_code from it. Retries on the (unlikely) prefix
@@ -978,13 +1764,13 @@ async function insertHotelWithPrefix(env, row, maxAttempts = 8) {
     const candidate = {
       ...row,
       tracking_prefix: prefix,
-      // Hotel-level default — sent as tracking_code when a guest
-      // arrives via the master link with no employee ?ref=. Worker
-      // fails the staff lookup against it (no staff row matches
-      // X7K2_H), so staff_id stays null and the booking attributes
-      // to the hotel pool. Format is consistent with X7K2_E_0042
-      // for staff so the admin UI can render both uniformly.
-      default_tracking_code: `${prefix}_H`,
+      // Hotel-level default — the bare prefix itself, used when a
+      // guest arrives via the master link with no employee ?ref=.
+      // No staff row ever matches it (staff always carry "-eNNN"),
+      // so staff_id stays null and the booking attributes to the
+      // hotel pool. Equal to tracking_prefix by design — one ID
+      // per hotel.
+      default_tracking_code: prefix,
     };
     try {
       const inserted = await supabaseInsert(env, "hotels", [candidate], { returnRow: true });
@@ -996,7 +1782,7 @@ async function insertHotelWithPrefix(env, row, maxAttempts = 8) {
       // admin — silent loss would leave a hotel with no QR.
       // The short path is derived from the tracking code, not the
       // hotel slug, so every short URL on the platform follows the
-      // same {prefix}-h / {prefix}-eNNNN format. Slugs live in the
+      // same htl-7q4k9 / htl-7q4k9-eNNN format. Slugs live in the
       // long URL only — see PARTNERS_NAMING.md.
       const { error: shortLinkWarning } = await mintShortLinkAndRecord(env, {
         shortPath: trackingCodeToShortPath(hotel.default_tracking_code),
@@ -1019,8 +1805,8 @@ async function insertHotelWithPrefix(env, row, maxAttempts = 8) {
 }
 
 // Staff insert wrapper. Computes the next sequence_number for the
-// hotel (max + 1) and mints the tracking_code from
-// {hotel.tracking_prefix}_E_{padded sequence}. The UNIQUE
+// hotel (max + 1) and mints the tracking_code as
+// {hotel.tracking_prefix}-e{3-digit padded sequence}. The UNIQUE
 // (hotel_id, sequence_number) index catches concurrent inserts;
 // on collision we re-read max and try again.
 async function insertStaffWithSequence(env, row, maxAttempts = 5) {
@@ -1049,7 +1835,7 @@ async function insertStaffWithSequence(env, row, maxAttempts = 5) {
     const candidate = {
       ...row,
       sequence_number: nextSeq,
-      tracking_code: `${prefix}_E_${String(nextSeq).padStart(4, "0")}`,
+      tracking_code: `${prefix}-e${String(nextSeq).padStart(3, "0")}`,
     };
     try {
       const inserted = await supabaseInsert(env, "hotel_staff", [candidate], { returnRow: true });
@@ -1095,6 +1881,69 @@ async function insertStaffWithSequence(env, row, maxAttempts = 5) {
   throw e;
 }
 
+// Placement insert wrapper. Mirrors insertStaffWithSequence: computes
+// the next per-hotel sequence_number, mints the "htl-<prefix>-pNN"
+// code, inserts, then best-effort mints the Short.io link. The
+// (hotel_id, sequence_number) unique index catches concurrent
+// inserts; on collision we re-read max and retry.
+async function insertPlacementWithSequence(env, row, maxAttempts = 5) {
+  const hotelRows = await supabaseSelect(
+    env,
+    `hotels?id=eq.${encodeURIComponent(row.hotel_id)}&select=tracking_prefix,code,name`,
+  );
+  if (!hotelRows.length) {
+    const e = new Error("hotel not found");
+    e.status = 404;
+    throw e;
+  }
+  const prefix = hotelRows[0].tracking_prefix;
+  if (!prefix || !TRACKING_PREFIX_RE.test(prefix)) {
+    throw new Error(`hotel ${row.hotel_id} has no valid tracking_prefix`);
+  }
+  const hotel = hotelRows[0];
+
+  let lastErr;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const maxRows = await supabaseSelect(
+      env,
+      `placements?hotel_id=eq.${encodeURIComponent(row.hotel_id)}` +
+        `&select=sequence_number&order=sequence_number.desc&limit=1`,
+    );
+    const nextSeq = (maxRows.length && maxRows[0].sequence_number ? maxRows[0].sequence_number : 0) + 1;
+    const candidate = {
+      ...row,
+      sequence_number: nextSeq,
+      code: `${prefix}-p${String(nextSeq).padStart(2, "0")}`,
+    };
+    try {
+      const inserted = await supabaseInsert(env, "placements", [candidate], { returnRow: true });
+      const placement = inserted[0];
+      let shortLinkWarning = null;
+      ({ error: shortLinkWarning } = await mintShortLinkAndRecord(env, {
+        shortPath: trackingCodeToShortPath(placement.code),
+        targetUrl: placementTargetUrl(env, hotel.code, placement.code),
+        title: `${hotel.name} — ${placement.name}`,
+        linkType: "placement",
+        hotelId: row.hotel_id,
+        label: placement.name,
+      }));
+      return { placement, shortLinkWarning };
+    } catch (err) {
+      lastErr = err;
+      if (
+        isUniqueViolation(err, "sequence_number") ||
+        isUniqueViolation(err, "code")
+      ) {
+        continue;
+      }
+      throw err;
+    }
+  }
+  const e = new Error(`could not allocate sequence_number for hotel ${row.hotel_id} after ${maxAttempts} attempts`);
+  e.cause = lastErr;
+  throw e;
+}
+
 async function handleAdminHotelsList(env, request) {
   const auth = await requireHorizonAdmin(request, env);
   if (auth.error) return auth.error;
@@ -1103,7 +1952,9 @@ async function handleAdminHotelsList(env, request) {
     HOTEL_FIELDS +
     `,staff:hotel_staff(${STAFF_FIELDS})` +
     `,managers:hotel_users(${MANAGER_FIELDS})` +
-    `,short_links:short_links(${SHORT_LINK_FIELDS})`;
+    `,short_links:short_links(${SHORT_LINK_FIELDS})` +
+    `,placements:placements(${PLACEMENT_FIELDS},` +
+      `assets:placement_assets(${PLACEMENT_ASSET_FIELDS}))`;
   const rows = await supabaseSelect(env, `hotels?select=${select}&order=code.asc`);
   return jsonResponse({ hotels: rows.map(normaliseHotel) }, 200, request);
 }
@@ -1122,6 +1973,9 @@ async function handleAdminHotelCreate(request, env) {
     logMutation(request, auth.claims, "create", "hotel", hotel.id, {
       code: hotel.code, name: hotel.name,
     });
+    await writeHotelEvent(env, hotel.id, "created", {
+      name: hotel.name, code: hotel.code,
+    }, auth.claims?.email);
     const payload = { hotel: normaliseHotel(hotel) };
     if (shortLinkWarning) payload.short_link_warning = shortLinkWarning;
     return jsonResponse(payload, 201, request);
@@ -1152,6 +2006,26 @@ async function handleAdminHotelUpdate(id, request, env) {
     return jsonResponse({ error: "hotel not found" }, 404, request);
   }
   logMutation(request, auth.claims, "update", "hotel", id, { fields: Object.keys(v.row) });
+  // Persist a hotel_events row so the profile's Events timeline picks
+  // up this change. Specialised event types fire when commission or
+  // banking fields are touched so the timeline reads meaningfully
+  // ("Commission changed to 5%") instead of a generic "updated".
+  const fields = Object.keys(v.row);
+  const touchedBanking = fields.some((f) => f.startsWith("payout_"));
+  const wasBankingSet  = updated[0].payout_method
+    && !v.row.payout_method ? false : !!updated[0].payout_method;
+  const actor = auth.claims?.email;
+  if (v.row.commission_pct != null) {
+    await writeHotelEvent(env, id, "commission_changed", {
+      to: Number(v.row.commission_pct),
+    }, actor);
+  } else if (touchedBanking) {
+    await writeHotelEvent(env, id,
+      wasBankingSet ? "banking_updated" : "banking_set",
+      { method: updated[0].payout_method || null }, actor);
+  } else {
+    await writeHotelEvent(env, id, "updated", { fields }, actor);
+  }
   return jsonResponse({ hotel: normaliseHotel(updated[0]) }, 200, request);
 }
 
@@ -1168,7 +2042,177 @@ async function handleAdminHotelTerminate(id, request, env) {
     return jsonResponse({ error: "hotel not found" }, 404, request);
   }
   logMutation(request, auth.claims, "terminate", "hotel", id);
+  await writeHotelEvent(env, id, "terminated", {}, auth.claims?.email);
   return jsonResponse({ hotel: normaliseHotel(updated[0]) }, 200, request);
+}
+
+// Activity log writer for the hotel record itself. Fire-and-forget —
+// audit data never blocks a user mutation. Mirrors writePlacementEvent
+// / writeStaffEvent so the aggregator endpoint can UNION all three
+// tables into a single Stripe-style timeline on the hotel profile.
+async function writeHotelEvent(env, hotelId, eventType, payload, actorEmail) {
+  try {
+    await supabaseInsert(env, "hotel_events", [{
+      hotel_id:    hotelId,
+      event_type:  eventType,
+      actor_email: actorEmail || null,
+      payload:     payload || {},
+    }]);
+  } catch (err) {
+    console.warn(`hotel_event ${eventType} for ${hotelId} failed: ${err && err.message}`);
+  }
+}
+
+// Aggregator: pulls the three event sources scoped to one hotel and
+// returns them as a single sorted array. Each row carries `source`
+// so the frontend can format the description per source type without
+// re-querying. Limit 50 per source keeps the round-trip cheap;
+// pagination ships as a follow-up if a hotel ever produces enough
+// events to need it.
+async function handleAdminHotelEvents(hotelId, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(hotelId)) {
+    return jsonResponse({ error: "invalid hotel id" }, 400, request);
+  }
+
+  // Cursor pagination: `before` is the created_at of the oldest row
+  // the client already has. lt is exclusive so we never re-emit the
+  // boundary row. PAGE is the per-source cap AND the response cap;
+  // has_more conservatively flags when any source returned a full
+  // page (likely more available) or when the merged set exceeded
+  // PAGE before slicing.
+  const url = new URL(request.url);
+  const beforeRaw = url.searchParams.get("before");
+  let beforeFilter = "";
+  if (beforeRaw) {
+    if (Number.isNaN(Date.parse(beforeRaw))) {
+      return jsonResponse({ error: "before must be an ISO timestamp" }, 400, request);
+    }
+    beforeFilter = `&created_at=lt.${encodeURIComponent(beforeRaw)}`;
+  }
+  const PAGE = 50;
+
+  // Hotel events live in their own table keyed by hotel_id — direct fetch.
+  const hotelRowsP = supabaseSelect(
+    env,
+    `hotel_events?hotel_id=eq.${encodeURIComponent(hotelId)}` +
+      `&select=id,event_type,actor_email,payload,created_at` +
+      `&order=created_at.desc&limit=${PAGE}` +
+      beforeFilter,
+  );
+
+  // Placement and staff events join via their owning entity; fetch
+  // the entity ids for this hotel first, then the events by id list.
+  // Two-step keeps the queries simple and uses the proper indexes.
+  const placementsP = supabaseSelect(
+    env,
+    `placements?hotel_id=eq.${encodeURIComponent(hotelId)}&select=id,name`,
+  );
+  const staffP = supabaseSelect(
+    env,
+    `hotel_staff?hotel_id=eq.${encodeURIComponent(hotelId)}&select=id,name,tracking_code`,
+  );
+
+  const [hotelRows, placements, staff] = await Promise.all([
+    hotelRowsP, placementsP, staffP,
+  ]);
+
+  const placementById = new Map((placements || []).map((p) => [p.id, p]));
+  const staffById     = new Map((staff || []).map((s) => [s.id, s]));
+
+  const placementEvents = placementById.size
+    ? await supabaseSelect(
+        env,
+        `placement_events?placement_id=in.(${Array.from(placementById.keys()).join(",")})` +
+          `&select=id,placement_id,event_type,actor_email,payload,created_at` +
+          `&order=created_at.desc&limit=${PAGE}` +
+          beforeFilter,
+      )
+    : [];
+  const staffEvents = staffById.size
+    ? await supabaseSelect(
+        env,
+        `staff_events?staff_id=in.(${Array.from(staffById.keys()).join(",")})` +
+          `&select=id,staff_id,event_type,actor_email,payload,created_at` +
+          `&order=created_at.desc&limit=${PAGE}` +
+          beforeFilter,
+      )
+    : [];
+
+  // Normalise each source into a common envelope so the frontend has
+  // a single shape to render. `subject` carries the entity label
+  // (e.g. placement name, staff name) so descriptions can read
+  // "Lobby rack card status changed to Active" without an extra join
+  // on the client.
+  const merged = [];
+  for (const r of (hotelRows || [])) {
+    merged.push({
+      id: r.id, source: "hotel",
+      event_type: r.event_type, payload: r.payload || {},
+      actor_email: r.actor_email, created_at: r.created_at,
+      subject: null,
+    });
+  }
+  for (const r of (placementEvents || [])) {
+    const pl = placementById.get(r.placement_id);
+    merged.push({
+      id: r.id, source: "placement",
+      event_type: r.event_type, payload: r.payload || {},
+      actor_email: r.actor_email, created_at: r.created_at,
+      subject: pl ? { id: pl.id, name: pl.name } : null,
+    });
+  }
+  for (const r of (staffEvents || [])) {
+    const s = staffById.get(r.staff_id);
+    merged.push({
+      id: r.id, source: "staff",
+      event_type: r.event_type, payload: r.payload || {},
+      actor_email: r.actor_email, created_at: r.created_at,
+      subject: s ? { id: s.id, name: s.name, tracking_code: s.tracking_code } : null,
+    });
+  }
+  merged.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+  const page = merged.slice(0, PAGE);
+  // has_more is a conservative flag: any source that filled its
+  // PAGE quota probably has older rows, and a merged set that
+  // exceeded PAGE before slicing definitely has more. A false
+  // positive just means an empty "Load more" click; a false
+  // negative would silently truncate history, which is worse.
+  const hasMore =
+    merged.length > PAGE ||
+    (hotelRows && hotelRows.length === PAGE) ||
+    (placementEvents && placementEvents.length === PAGE) ||
+    (staffEvents && staffEvents.length === PAGE);
+  return jsonResponse({ events: page, has_more: hasMore }, 200, request);
+}
+
+// Activity log writer for staff. Same fire-and-forget contract as
+// writePlacementEvent — audit data never blocks a user mutation.
+async function writeStaffEvent(env, staffId, eventType, payload, actorEmail) {
+  try {
+    await supabaseInsert(env, "staff_events", [{
+      staff_id:    staffId,
+      event_type:  eventType,
+      actor_email: actorEmail || null,
+      payload:     payload || {},
+    }]);
+  } catch (err) {
+    console.warn(`staff_event ${eventType} for ${staffId} failed: ${err && err.message}`);
+  }
+}
+
+async function handleAdminStaffEvents(staffId, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(staffId)) return jsonResponse({ error: "invalid staff id" }, 400, request);
+  const rows = await supabaseSelect(
+    env,
+    `staff_events?staff_id=eq.${encodeURIComponent(staffId)}` +
+      `&select=id,event_type,actor_email,payload,created_at` +
+      `&order=created_at.desc&limit=50`,
+  );
+  return jsonResponse({ events: rows || [] }, 200, request);
 }
 
 async function handleAdminStaffCreate(request, env) {
@@ -1185,6 +2229,10 @@ async function handleAdminStaffCreate(request, env) {
     logMutation(request, auth.claims, "create", "staff", staff.id, {
       hotel_id: v.row.hotel_id, tracking_code: staff.tracking_code, name: staff.name,
     });
+    await writeStaffEvent(env, staff.id, "onboarded", {
+      tracking_code: staff.tracking_code,
+      kickback_pct: staff.kickback_pct,
+    }, auth.claims && auth.claims.email);
     const payload = { staff: normaliseStaff(staff) };
     if (shortLinkWarning) payload.short_link_warning = shortLinkWarning;
     return jsonResponse(payload, 201, request);
@@ -1205,6 +2253,16 @@ async function handleAdminStaffUpdate(id, request, env) {
   if (v.error) return jsonResponse({ error: v.error }, 400, request);
   delete v.row.hotel_id; // can't reassign staff to a different hotel
 
+  // Snapshot prior rate so a rate_changed event is only written
+  // when the kickback actually changes.
+  let priorRate = null;
+  if (v.row.kickback_pct !== undefined) {
+    const before = await supabaseSelect(
+      env, `hotel_staff?id=eq.${encodeURIComponent(id)}&select=kickback_pct&limit=1`,
+    );
+    priorRate = before[0] ? before[0].kickback_pct : null;
+  }
+
   const updated = await supabaseUpdate(
     env, `hotel_staff?id=eq.${encodeURIComponent(id)}`, v.row, { returnRow: true },
   );
@@ -1212,6 +2270,12 @@ async function handleAdminStaffUpdate(id, request, env) {
     return jsonResponse({ error: "staff not found" }, 404, request);
   }
   logMutation(request, auth.claims, "update", "staff", id, { fields: Object.keys(v.row) });
+  if (v.row.kickback_pct !== undefined &&
+      Number(priorRate) !== Number(v.row.kickback_pct)) {
+    await writeStaffEvent(env, id, "rate_changed", {
+      from: priorRate, to: v.row.kickback_pct,
+    }, auth.claims && auth.claims.email);
+  }
   return jsonResponse({ staff: normaliseStaff(updated[0]) }, 200, request);
 }
 
@@ -1220,6 +2284,10 @@ async function handleAdminStaffTerminate(id, request, env) {
   if (auth.error) return auth.error;
   if (!UUID_RE.test(id)) return jsonResponse({ error: "invalid staff id" }, 400, request);
 
+  const before = await supabaseSelect(
+    env, `hotel_staff?id=eq.${encodeURIComponent(id)}&select=status&limit=1`,
+  );
+  const priorStatus = before[0] && before[0].status;
   const updated = await supabaseUpdate(
     env, `hotel_staff?id=eq.${encodeURIComponent(id)}`,
     { status: "terminated" }, { returnRow: true },
@@ -1228,7 +2296,589 @@ async function handleAdminStaffTerminate(id, request, env) {
     return jsonResponse({ error: "staff not found" }, 404, request);
   }
   logMutation(request, auth.claims, "terminate", "staff", id);
+  await writeStaffEvent(env, id, "terminated", {
+    from: priorStatus, to: "terminated",
+  }, auth.claims && auth.claims.email);
   return jsonResponse({ staff: normaliseStaff(updated[0]) }, 200, request);
+}
+
+// Activity log writer. Fire-and-forget — events are audit data and
+// must never break the user-facing mutation if Supabase has a hiccup.
+// Caller passes the placement id, an event_type from the enum, an
+// optional payload (object that will be JSON-encoded into payload
+// jsonb), and the actor's email (auth.claims.email).
+async function writePlacementEvent(env, placementId, eventType, payload, actorEmail) {
+  try {
+    await supabaseInsert(env, "placement_events", [{
+      placement_id: placementId,
+      event_type:   eventType,
+      actor_email:  actorEmail || null,
+      payload:      payload || {},
+    }]);
+  } catch (err) {
+    console.warn(
+      `placement_event ${eventType} for ${placementId} failed: ${err && err.message}`,
+    );
+  }
+}
+
+async function handleAdminPlacementEvents(placementId, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const guard = await placementOr404(env, placementId, request);
+  if (guard.error) return guard.error;
+  const rows = await supabaseSelect(
+    env,
+    `placement_events?placement_id=eq.${encodeURIComponent(placementId)}` +
+      `&select=id,event_type,actor_email,payload,created_at` +
+      `&order=created_at.desc&limit=50`,
+  );
+  return jsonResponse({ events: rows || [] }, 200, request);
+}
+
+async function handleAdminPlacementCreate(request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+
+  const v = validatePlacement(body, { creating: true });
+  if (v.error) return jsonResponse({ error: v.error }, 400, request);
+
+  try {
+    const { placement, shortLinkWarning } = await insertPlacementWithSequence(env, v.row);
+    logMutation(request, auth.claims, "create", "placement", placement.id, {
+      hotel_id: v.row.hotel_id, code: placement.code, name: placement.name,
+    });
+    await writePlacementEvent(env, placement.id, "created", {
+      name: placement.name,
+      placement_type: placement.placement_type,
+      status: placement.status,
+    }, auth.claims && auth.claims.email);
+    const payload = { placement };
+    if (shortLinkWarning) payload.short_link_warning = shortLinkWarning;
+    return jsonResponse(payload, 201, request);
+  } catch (err) {
+    if (err.status === 404) return jsonResponse({ error: err.message }, 404, request);
+    throw err;
+  }
+}
+
+async function handleAdminPlacementUpdate(id, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(id)) return jsonResponse({ error: "invalid placement id" }, 400, request);
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+
+  const v = validatePlacement(body, { creating: false });
+  if (v.error) return jsonResponse({ error: v.error }, 400, request);
+  delete v.row.hotel_id; // can't reassign a placement to a different hotel
+
+  // Snapshot the prior status so we can write a status_changed
+  // event only when it actually changes.
+  let priorStatus = null;
+  if (v.row.status) {
+    const before = await supabaseSelect(
+      env, `placements?id=eq.${encodeURIComponent(id)}&select=status&limit=1`,
+    );
+    priorStatus = (before[0] && before[0].status) || null;
+  }
+
+  const updated = await supabaseUpdate(
+    env, `placements?id=eq.${encodeURIComponent(id)}`, v.row, { returnRow: true },
+  );
+  if (!Array.isArray(updated) || !updated.length) {
+    return jsonResponse({ error: "placement not found" }, 404, request);
+  }
+  logMutation(request, auth.claims, "update", "placement", id, { fields: Object.keys(v.row) });
+  if (v.row.status && priorStatus !== v.row.status) {
+    await writePlacementEvent(env, id, "status_changed", {
+      from: priorStatus, to: v.row.status,
+    }, auth.claims && auth.claims.email);
+  }
+  return jsonResponse({ placement: updated[0] }, 200, request);
+}
+
+async function handleAdminPlacementRetire(id, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(id)) return jsonResponse({ error: "invalid placement id" }, 400, request);
+
+  // Soft-delete: status flips to 'retired'. The Short.io redirect and
+  // short_links row stay alive so any printed QR keeps resolving and
+  // historical click data is preserved — same contract as staff.
+  const before = await supabaseSelect(
+    env, `placements?id=eq.${encodeURIComponent(id)}&select=status&limit=1`,
+  );
+  const priorStatus = (before[0] && before[0].status) || null;
+  const updated = await supabaseUpdate(
+    env, `placements?id=eq.${encodeURIComponent(id)}`,
+    { status: "retired" }, { returnRow: true },
+  );
+  if (!Array.isArray(updated) || !updated.length) {
+    return jsonResponse({ error: "placement not found" }, 404, request);
+  }
+  logMutation(request, auth.claims, "retire", "placement", id);
+  if (priorStatus !== "retired") {
+    await writePlacementEvent(env, id, "status_changed", {
+      from: priorStatus, to: "retired",
+    }, auth.claims && auth.claims.email);
+  }
+  return jsonResponse({ placement: updated[0] }, 200, request);
+}
+
+// Sanitise an uploaded filename for use inside a storage object key:
+// keep it readable but strip anything that isn't safe in a path.
+function safeAssetFilename(name) {
+  const base = String(name || "file").split(/[\\/]/).pop().trim();
+  const cleaned = base.replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "");
+  return cleaned.slice(0, 120) || "file";
+}
+
+async function placementOr404(env, id, request) {
+  if (!UUID_RE.test(id)) {
+    return { error: jsonResponse({ error: "invalid placement id" }, 400, request) };
+  }
+  const rows = await supabaseSelect(
+    env, `placements?id=eq.${encodeURIComponent(id)}&select=id`,
+  );
+  if (!rows.length) {
+    return { error: jsonResponse({ error: "placement not found" }, 404, request) };
+  }
+  return { placement: rows[0] };
+}
+
+// Step 1 of an upload: mint a one-shot signed URL the browser PUTs
+// the file to directly. No DB row yet — the row is recorded in step 2
+// only after the upload succeeds, so a failed upload leaves no
+// dangling asset record.
+async function handleAdminPlacementAssetSignUpload(placementId, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const guard = await placementOr404(env, placementId, request);
+  if (guard.error) return guard.error;
+
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+  const kind = typeof body.kind === "string" ? body.kind : "";
+  if (!PLACEMENT_ASSET_KINDS.has(kind)) {
+    return jsonResponse({ error: "invalid kind" }, 400, request);
+  }
+  const filename = safeAssetFilename(body.filename);
+  // Object key: <placement>/<kind>/<ts>-<filename>. The timestamp
+  // keeps versions side by side instead of overwriting.
+  const objectPath = `${placementId}/${kind}/${Date.now()}-${filename}`;
+
+  try {
+    const signed = await supabaseStorageSignUpload(env, PLACEMENT_ASSETS_BUCKET, objectPath);
+    return jsonResponse({
+      upload_url: signed.url,
+      token: signed.token,
+      storage_path: objectPath,
+      filename,
+    }, 200, request);
+  } catch (err) {
+    console.error("placement asset sign-upload failed:", err.message, err.body);
+    // Surface the underlying Supabase Storage error so a missing
+    // bucket / disabled storage / auth issue is diagnosable instead
+    // of a blanket "could not create upload URL".
+    const detail = err && err.body
+      ? (typeof err.body === "string" ? err.body : (err.body.message || err.body.error || JSON.stringify(err.body)))
+      : (err && err.message);
+    return jsonResponse({
+      error: "could not create upload URL",
+      detail: detail || null,
+      status: (err && err.status) || null,
+    }, 502, request);
+  }
+}
+
+// Step 2: record the uploaded object. Computes the next per-(placement,
+// kind) version so re-uploads keep history instead of clobbering.
+async function handleAdminPlacementAssetRecord(placementId, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const guard = await placementOr404(env, placementId, request);
+  if (guard.error) return guard.error;
+
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+  const kind = typeof body.kind === "string" ? body.kind : "";
+  if (!PLACEMENT_ASSET_KINDS.has(kind)) {
+    return jsonResponse({ error: "invalid kind" }, 400, request);
+  }
+  const storage_path = typeof body.storage_path === "string" ? body.storage_path.trim() : "";
+  if (!storage_path || !storage_path.startsWith(`${placementId}/`)) {
+    return jsonResponse({ error: "invalid storage_path" }, 400, request);
+  }
+  const filename = safeAssetFilename(body.filename);
+  const content_type = typeof body.content_type === "string" ? body.content_type.slice(0, 160) : null;
+  const byte_size = Number.isInteger(body.byte_size) && body.byte_size >= 0 ? body.byte_size : null;
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const maxRows = await supabaseSelect(
+      env,
+      `placement_assets?placement_id=eq.${encodeURIComponent(placementId)}` +
+        `&kind=eq.${encodeURIComponent(kind)}` +
+        `&select=version&order=version.desc&limit=1`,
+    );
+    const nextVer = (maxRows.length && maxRows[0].version ? maxRows[0].version : 0) + 1;
+    try {
+      const inserted = await supabaseInsert(env, "placement_assets", [{
+        placement_id: placementId,
+        kind,
+        filename,
+        storage_path,
+        content_type,
+        byte_size,
+        version: nextVer,
+      }], { returnRow: true });
+      await writePlacementEvent(env, placementId,
+        nextVer > 1 ? "asset_replaced" : "asset_uploaded",
+        { kind, version: nextVer, filename },
+        auth.claims && auth.claims.email,
+      );
+      logMutation(request, auth.claims, "create", "placement_asset", inserted[0].id, {
+        placement_id: placementId, kind, version: nextVer,
+      });
+      return jsonResponse({ asset: inserted[0] }, 201, request);
+    } catch (err) {
+      if (isUniqueViolation(err, "version")) continue;
+      if (isUniqueViolation(err, "storage_path")) {
+        return jsonResponse({ error: "asset already recorded" }, 409, request);
+      }
+      throw err;
+    }
+  }
+  return jsonResponse({ error: "could not allocate asset version" }, 409, request);
+}
+
+// Mint a short-lived signed GET URL for previewing/downloading a
+// recorded asset. The bucket is private; this is the only way a
+// browser ever reads it.
+async function handleAdminPlacementAssetUrl(placementId, assetId, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(placementId) || !UUID_RE.test(assetId)) {
+    return jsonResponse({ error: "invalid id" }, 400, request);
+  }
+  const rows = await supabaseSelect(
+    env,
+    `placement_assets?id=eq.${encodeURIComponent(assetId)}` +
+      `&placement_id=eq.${encodeURIComponent(placementId)}` +
+      `&select=id,storage_path,filename`,
+  );
+  if (!rows.length) {
+    return jsonResponse({ error: "asset not found" }, 404, request);
+  }
+  try {
+    const url = await supabaseStorageSignDownload(
+      env, PLACEMENT_ASSETS_BUCKET, rows[0].storage_path, 3600,
+    );
+    if (!url) return jsonResponse({ error: "could not sign asset URL" }, 502, request);
+    return jsonResponse({ url, filename: rows[0].filename }, 200, request);
+  } catch (err) {
+    console.error("placement asset sign-download failed:", err.message);
+    return jsonResponse({ error: "could not sign asset URL" }, 502, request);
+  }
+}
+
+const PLACEMENT_ASSET_STATUSES = new Set(["designed", "printed", "deployed", "retired"]);
+
+// Advance an asset version through its lifecycle (designed → printed →
+// deployed, or retired). Status is the only mutable field — the file
+// itself is immutable; a new file is a new version row.
+async function handleAdminPlacementAssetUpdate(placementId, assetId, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(placementId) || !UUID_RE.test(assetId)) {
+    return jsonResponse({ error: "invalid id" }, 400, request);
+  }
+  const body = await readJson(request);
+  if (body.__error) return jsonResponse({ error: body.__error }, 400, request);
+  const status = typeof body.status === "string" ? body.status : "";
+  if (!PLACEMENT_ASSET_STATUSES.has(status)) {
+    return jsonResponse({ error: "invalid status" }, 400, request);
+  }
+  const updated = await supabaseUpdate(
+    env,
+    `placement_assets?id=eq.${encodeURIComponent(assetId)}` +
+      `&placement_id=eq.${encodeURIComponent(placementId)}`,
+    { status },
+    { returnRow: true },
+  );
+  if (!Array.isArray(updated) || !updated.length) {
+    return jsonResponse({ error: "asset not found" }, 404, request);
+  }
+  logMutation(request, auth.claims, "update", "placement_asset", assetId, { status });
+  return jsonResponse({ asset: updated[0] }, 200, request);
+}
+
+// Click analytics for a placement's short link — a read-through to
+// Short.io for one period (no local time-series store). Returns
+// { configured, short_url, period, total_clicks, human_clicks,
+//   series: [{ x: ISO, y: number }] }. Short.io picks the bucket
+// granularity per period (daily for last30/last7, hourly for
+// total/last24); the client labels the axis accordingly.
+const PLACEMENT_STAT_PERIODS = new Set(["last24", "last7", "last30", "total"]);
+
+// Period → cutoff timestamp in ISO. 'total' returns null to mean
+// "no lower bound." Used for bookings/revenue windowing.
+function periodCutoffIso(period) {
+  const day = 86400 * 1000;
+  const now = Date.now();
+  if (period === "last24") return new Date(now - day).toISOString();
+  if (period === "last7")  return new Date(now - 7 * day).toISOString();
+  if (period === "last30") return new Date(now - 30 * day).toISOString();
+  return null;
+}
+
+// Bookings + revenue attributed to a placement in a time window.
+// Placements are funnel-only — they never "win" credit — but we count
+// bookings their tracking code appeared in as the honest measure of
+// the placement's contribution. Revenue is the sum of commission_amount
+// for those bookings.
+async function bookingsForPlacement(env, code, period) {
+  if (!code) return { bookings: 0, revenue: 0, currency: "CAD" };
+  const touches = await supabaseSelect(
+    env,
+    `booking_touchpoints?code=ilike.${encodeURIComponent(code)}` +
+      `&select=confirmation_code`,
+  );
+  const codes = Array.from(new Set(
+    (touches || []).map((t) => t.confirmation_code).filter(Boolean),
+  ));
+  if (!codes.length) return { bookings: 0, revenue: 0, currency: "CAD" };
+  const cutoff = periodCutoffIso(period);
+  const inList = codes.map((c) => `"${c.replace(/"/g, '""')}"`).join(",");
+  const filter = `confirmation_code=in.(${inList})` +
+    (cutoff ? `&created_at=gte.${encodeURIComponent(cutoff)}` : "");
+  const rows = await supabaseSelect(
+    env,
+    `bookings?${filter}&select=id,confirmation_code,amount,currency,hotel:hotels(commission_pct)`,
+  );
+  let revenue = 0;
+  let currency = "CAD";
+  for (const b of rows) {
+    const amount = Number(b.amount) || 0;
+    const pct = b.hotel && b.hotel.commission_pct != null
+      ? Number(b.hotel.commission_pct) : 0;
+    revenue += (amount * pct) / 100;
+    if (b.currency) currency = b.currency;
+  }
+  return { bookings: rows.length, revenue: round2(revenue), currency };
+}
+
+async function handleAdminPlacementStats(placementId, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  const guard = await placementOr404(env, placementId, request);
+  if (guard.error) return guard.error;
+
+  const url = new URL(request.url);
+  let period = url.searchParams.get("period") || "last30";
+  if (!PLACEMENT_STAT_PERIODS.has(period)) period = "last30";
+
+  const pRows = await supabaseSelect(
+    env, `placements?id=eq.${encodeURIComponent(placementId)}&select=code`,
+  );
+  const code = (pRows[0] && pRows[0].code ? pRows[0].code : "").toLowerCase();
+  // Bookings + revenue are independent of Short.io so we compute them
+  // unconditionally and merge into the response below.
+  const attribution = await bookingsForPlacement(env, code, period).catch((e) => {
+    console.warn("bookingsForPlacement failed:", e && e.message);
+    return { bookings: 0, revenue: 0, currency: "CAD" };
+  });
+  const links = code
+    ? await supabaseSelect(
+        env,
+        `short_links?short_path=eq.${encodeURIComponent(code)}` +
+          `&select=short_io_id,short_url,click_count_cached,last_clicked_at&limit=1`,
+      )
+    : [];
+  const link = links[0] || null;
+  if (!link) {
+    return jsonResponse({
+      configured: false,
+      bookings: attribution.bookings,
+      revenue: attribution.revenue,
+      currency: attribution.currency,
+    }, 200, request);
+  }
+  if (!isShortIoConfigured(env)) {
+    return jsonResponse({
+      configured: false,
+      short_url: link.short_url,
+      period,
+      total_clicks: link.click_count_cached || 0,
+      human_clicks: null,
+      series: [],
+      bookings: attribution.bookings,
+      revenue: attribution.revenue,
+      currency: attribution.currency,
+    }, 200, request);
+  }
+
+  try {
+    const raw = await getLinkStats(env, link.short_io_id, period);
+    const norm = normalizeLinkStats(raw);
+    const human = raw && raw.humanClicks != null && Number.isFinite(Number(raw.humanClicks))
+      ? Number(raw.humanClicks)
+      : null;
+    const ds = raw && raw.clickStatistics && Array.isArray(raw.clickStatistics.datasets)
+      ? raw.clickStatistics.datasets : [];
+    const points = ds.length && Array.isArray(ds[0].data) ? ds[0].data : [];
+    const series = points
+      .filter((p) => p && p.x)
+      .map((p) => ({
+        x: p.x,
+        y: p.y != null && Number.isFinite(Number(p.y)) ? Number(p.y) : 0,
+      }));
+    // Breakdown bar lists. Short.io returns raw.browser / raw.os as
+    // [{ browser|os, score }]; normalise to { name, score } and keep
+    // the top entries.
+    const breakdown = (arr, key) =>
+      (Array.isArray(arr) ? arr : [])
+        .map((e) => ({
+          name: e && e[key] ? String(e[key]) : "Unknown",
+          score: e && Number.isFinite(Number(e.score)) ? Number(e.score) : 0,
+        }))
+        .filter((e) => e.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 8);
+    return jsonResponse({
+      configured: true,
+      short_url: link.short_url,
+      period,
+      total_clicks: norm.totalClicks != null ? norm.totalClicks : (link.click_count_cached || 0),
+      human_clicks: human,
+      series,
+      browsers: breakdown(raw && raw.browser, "browser"),
+      os: breakdown(raw && raw.os, "os"),
+      bookings: attribution.bookings,
+      revenue: attribution.revenue,
+      currency: attribution.currency,
+    }, 200, request);
+  } catch (err) {
+    console.error("placement stats failed:", err && err.message);
+    // Degrade to the cached total rather than erroring the modal.
+    return jsonResponse({
+      configured: true,
+      short_url: link.short_url,
+      period,
+      total_clicks: link.click_count_cached || 0,
+      human_clicks: null,
+      series: [],
+      browsers: [],
+      os: [],
+      bookings: attribution.bookings,
+      revenue: attribution.revenue,
+      currency: attribution.currency,
+      error: "Short.io stats unavailable",
+    }, 200, request);
+  }
+}
+
+// Per-staff stats: bookings (total + this month + period), last
+// booking, clicks + conversion %, lifetime commission, recent
+// bookings (last 5 with their commission). Powers the Employees
+// table lazy-load + the Employee lightbox scoreboard.
+async function handleAdminStaffStats(staffId, request, env) {
+  const auth = await requireHorizonAdmin(request, env);
+  if (auth.error) return auth.error;
+  if (!UUID_RE.test(staffId)) return jsonResponse({ error: "invalid staff id" }, 400, request);
+
+  const url = new URL(request.url);
+  let period = url.searchParams.get("period") || "last30";
+  if (!PLACEMENT_STAT_PERIODS.has(period)) period = "last30";
+  const periodCutoff = periodCutoffIso(period);
+  const monthStart = (() => {
+    const d = new Date();
+    d.setUTCDate(1);
+    d.setUTCHours(0, 0, 0, 0);
+    return d.toISOString();
+  })();
+
+  // Pull a flat list of this staff's confirmed bookings (recent first
+  // so we can slice the top 5 for the lightbox without a second
+  // round-trip). At realistic per-employee volumes this is small.
+  // Commission is computed on the fly from amount × hotel.commission_pct
+  // — the old commission_ledger accrual table was dropped in
+  // migration 0017 when automated payouts were retired in favour of
+  // manual e-Transfer / EFT (see 0018). The cross-hotel summary at
+  // line ~1051 follows the same pattern.
+  const rows = await supabaseSelect(
+    env,
+    `bookings?staff_id=eq.${encodeURIComponent(staffId)}` +
+      `&status=eq.confirmed` +
+      `&select=id,created_at,date,tour_title,amount,currency,lead_name,status,confirmation_code,hotel:hotels(commission_pct)` +
+      `&order=created_at.desc&limit=500`,
+  );
+  const bookings = Array.isArray(rows) ? rows : [];
+  const bookings_total = bookings.length;
+  const bookings_30d = periodCutoff
+    ? bookings.filter((b) => b.created_at && b.created_at >= periodCutoff).length
+    : bookings_total;
+  const bookings_month = bookings.filter((b) => b.created_at && b.created_at >= monthStart).length;
+  const last_booking_at = bookings.length ? bookings[0].created_at : null;
+  const commissionFor = (b) => {
+    const amount = Number(b.amount) || 0;
+    const pct = b.hotel && b.hotel.commission_pct != null
+      ? Number(b.hotel.commission_pct) : 0;
+    return (amount * pct) / 100;
+  };
+  let lifetime_commission = 0;
+  let currency = "CAD";
+  for (const b of bookings) {
+    lifetime_commission += commissionFor(b);
+    if (b.currency) currency = b.currency;
+  }
+  lifetime_commission = round2(lifetime_commission);
+
+  // Per-staff click count comes from the personal short link
+  // (short_links.staff_id = this id). One row at most.
+  const links = await supabaseSelect(
+    env,
+    `short_links?staff_id=eq.${encodeURIComponent(staffId)}` +
+      `&link_type=eq.staff&status=eq.active` +
+      `&select=short_url,short_path,click_count_cached,last_clicked_at&limit=1`,
+  );
+  const link = (links && links[0]) || null;
+  const clicks_total = link && Number.isFinite(Number(link.click_count_cached))
+    ? Number(link.click_count_cached) : 0;
+  const conversion_pct = clicks_total > 0
+    ? Number(((bookings_total / clicks_total) * 100).toFixed(1))
+    : null;
+
+  // Recent 5 — already sorted from the bookings fetch.
+  const recent = bookings.slice(0, 5).map((b) => ({
+    id: b.id,
+    confirmation_code: b.confirmation_code,
+    created_at: b.created_at,
+    date: b.date,
+    tour_title: b.tour_title,
+    amount: b.amount,
+    currency: b.currency,
+    lead_name: b.lead_name,
+    status: b.status,
+    commission_amount: round2(commissionFor(b)),
+  }));
+
+  return jsonResponse({
+    period,
+    bookings_total,
+    bookings_30d,
+    bookings_month,
+    last_booking_at,
+    clicks_total,
+    clicks_last_at: link && link.last_clicked_at || null,
+    conversion_pct,
+    lifetime_commission,
+    currency,
+    short_url: link && link.short_url || null,
+    recent_bookings: recent,
+  }, 200, request);
 }
 
 async function handleAdminHotelUserCreate(request, env) {
@@ -1241,12 +2891,15 @@ async function handleAdminHotelUserCreate(request, env) {
   if (!EMAIL_RE.test(email)) return jsonResponse({ error: "valid email required" }, 400, request);
   const hotel_id = typeof body.hotel_id === "string" ? body.hotel_id.trim() : "";
   if (!UUID_RE.test(hotel_id)) return jsonResponse({ error: "valid hotel_id required" }, 400, request);
-  const role = body.role === "admin" ? "admin" : "manager";
+  const name = typeof body.name === "string" ? body.name.trim() : "";
+  if (!name) return jsonResponse({ error: "name required" }, 400, request);
+  const role = MANAGER_ROLES.has(body.role) ? body.role : "manager";
+  const invited_by_email = (auth.claims && auth.claims.email) || null;
 
   try {
     const inserted = await supabaseInsert(
       env, "hotel_users",
-      [{ email, hotel_id, role, status: "active" }],
+      [{ email, name, hotel_id, role, status: "active", invited_by_email }],
       { returnRow: true },
     );
     const invite_sent = await sendManagerInvite(env, email);
@@ -1263,13 +2916,13 @@ async function handleAdminHotelUserCreate(request, env) {
 }
 
 // Sends a Supabase Auth invite email to a newly-added hotel manager.
-// The invite link redirects to /dashboard/setup/ where they set a
+// The invite link redirects to connect.gowithhorizon.com/setup/ where they set a
 // password on first sign-in. Returns true if the email was sent,
 // false if the user already has a confirmed Supabase Auth account
 // (they can just sign in normally) or if the invite call fails for
 // any other reason (the hotel_users row is already saved either way).
 async function sendManagerInvite(env, email) {
-  const redirectTo = "https://gowithhorizon.com/dashboard/setup/";
+  const redirectTo = "https://connect.gowithhorizon.com/setup/";
   try {
     const res = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/users`, {
       method: "POST",
@@ -1307,10 +2960,15 @@ async function handleAdminHotelUserUpdate(id, request, env) {
     patch.status = body.status;
   }
   if (typeof body.role === "string") {
-    if (!["manager", "admin"].includes(body.role)) {
-      return jsonResponse({ error: "role must be manager or admin" }, 400, request);
+    if (!MANAGER_ROLES.has(body.role)) {
+      return jsonResponse({ error: "role must be owner, manager, or read_only" }, 400, request);
     }
     patch.role = body.role;
+  }
+  if (typeof body.name === "string") {
+    const trimmed = body.name.trim();
+    if (!trimmed) return jsonResponse({ error: "name cannot be empty" }, 400, request);
+    patch.name = trimmed;
   }
   if (Object.keys(patch).length === 0) {
     return jsonResponse({ error: "no editable fields in body" }, 400, request);
@@ -1343,8 +3001,22 @@ const SHORT_LINK_FIELDS =
   "id,short_io_id,domain,short_path,short_url,target_url,link_type," +
   "hotel_id,staff_id,label,notes,status,click_count_cached," +
   "last_clicked_at,created_at,updated_at";
-const SHORT_LINK_TYPES = new Set(["hotel", "staff", "campaign"]);
+const PLACEMENT_ASSET_FIELDS =
+  "id,placement_id,kind,filename,storage_path,content_type,byte_size," +
+  "version,status,uploaded_at,created_at,updated_at";
+const PLACEMENT_FIELDS =
+  "id,hotel_id,sequence_number,code,placement_type,name,status," +
+  "location_in_hotel,deployed_at,created_at,updated_at";
+const PLACEMENT_ASSETS_BUCKET = "placement-assets";
+const PLACEMENT_ASSET_KINDS = new Set(["design", "print_ready", "qr"]);
+const SHORT_LINK_TYPES = new Set(["hotel", "staff", "campaign", "placement"]);
 const SHORT_LINK_STATUSES = new Set(["active", "retired"]);
+
+const PLACEMENT_TYPES = new Set([
+  "rack_card", "table_tent", "welcome_packet",
+  "website_widget", "lobby_qr", "custom",
+]);
+const PLACEMENT_STATUSES = new Set(["designed", "printed", "active", "paused", "retired"]);
 // Short.io path constraints — alphanumeric plus the common
 // separators. Conservative; tighten if you find Short.io rejecting
 // edge cases.
@@ -1447,8 +3119,8 @@ async function handleAdminShortLinkCreate(request, env) {
 
   // Derive defaults — overridable by request body.
   // Both hotel and staff short paths come from the tracking code so
-  // every short URL on the platform follows the same {prefix}-h /
-  // {prefix}-eNNNN format. Slugs live in the long URL only — see
+  // every short URL on the platform follows the same htl-7q4k9 /
+  // htl-7q4k9-eNNN format. Slugs live in the long URL only — see
   // PARTNERS_NAMING.md.
   let shortPath = typeof body.short_path === "string" ? body.short_path.trim() : "";
   if (!shortPath) {
@@ -1645,12 +3317,14 @@ async function syncClickCounts(env) {
     return { skipped: true, reason: "SHORT_IO_API_KEY not configured" };
   }
 
-  // Fetch all active links (id + short_io_id only — we don't need full rows).
+  // Fetch all active links. short_path is included so we can auto-
+  // transition the placement that owns this link from 'printed' to
+  // 'active' on the first scan (see below).
   let links;
   try {
     links = await supabaseSelect(
       env,
-      "short_links?status=eq.active&select=id,short_io_id&order=created_at.asc",
+      "short_links?status=eq.active&select=id,short_io_id,short_path&order=created_at.asc",
     );
   } catch (err) {
     console.error("syncClickCounts: failed to fetch short_links:", err.message);
@@ -1659,31 +3333,88 @@ async function syncClickCounts(env) {
 
   let synced = 0;
   let errors = 0;
+  let unparsed = 0;
+  let firstError = null;
+  let sampleKeys = null;
 
   for (const link of links) {
     try {
       const stats = await getLinkStats(env, link.short_io_id, "total");
-      const clickCount = (stats && typeof stats.totalClicks === "number")
-        ? stats.totalClicks
-        : 0;
-      const lastClicked = (stats && stats.lastClickDate) ? stats.lastClickDate : null;
+      const { totalClicks, lastClickDate } = normalizeLinkStats(stats);
+
+      // Could not find a click count in the payload. Do NOT write 0 —
+      // that silently clobbers the real cached value and looks like
+      // "sync stuck at 0". Skip the write, count it, and capture the
+      // payload shape once so the cause is diagnosable from the
+      // sync result instead of the logs alone.
+      if (totalClicks == null) {
+        unparsed++;
+        if (!sampleKeys && stats && typeof stats === "object") {
+          sampleKeys = Object.keys(stats).slice(0, 20);
+        }
+        console.warn(
+          `syncClickCounts: link ${link.id} — no click count in Short.io payload; keys=${
+            stats && typeof stats === "object" ? Object.keys(stats).join(",") : typeof stats
+          }`,
+        );
+        continue;
+      }
+
       await supabaseUpdate(
         env,
         `short_links?id=eq.${encodeURIComponent(link.id)}`,
         {
-          click_count_cached: clickCount,
-          ...(lastClicked ? { last_clicked_at: lastClicked } : {}),
+          click_count_cached: totalClicks,
+          ...(lastClickDate ? { last_clicked_at: lastClickDate } : {}),
           updated_at: new Date().toISOString(),
         },
       );
       synced++;
+
+      // Auto-transition: a placement currently in 'printed' state
+      // flips to 'active' on its first recorded scan. The short
+      // link's short_path equals the placement's lowercased code, so
+      // one indexed lookup per link is enough. Failures here are
+      // logged but don't abort the sync run. We also write two
+      // activity events (first_scan + status_auto_active) when the
+      // transition actually fires.
+      if (totalClicks > 0 && link.short_path) {
+        try {
+          const flipped = await supabaseUpdate(
+            env,
+            `placements?code=ilike.${encodeURIComponent(link.short_path)}` +
+              `&status=eq.printed`,
+            { status: "active" },
+            { returnRow: true },
+          );
+          if (Array.isArray(flipped) && flipped.length) {
+            const pid = flipped[0].id;
+            await writePlacementEvent(env, pid, "first_scan",
+              { total_clicks: totalClicks, last_clicked_at: lastClickDate || null }, null);
+            await writePlacementEvent(env, pid, "status_auto_active",
+              { from: "printed", to: "active" }, null);
+          }
+        } catch (err) {
+          console.warn(
+            `syncClickCounts: placement auto-transition failed for ${link.short_path}: ${err.message}`,
+          );
+        }
+      }
     } catch (err) {
       console.error(`syncClickCounts: link ${link.id} failed:`, err.message);
+      if (!firstError) firstError = err.message;
       errors++;
     }
   }
 
-  return { synced, errors, total: links.length };
+  return {
+    synced,
+    errors,
+    unparsed,
+    total: links.length,
+    ...(firstError ? { first_error: firstError } : {}),
+    ...(sampleKeys ? { sample_keys: sampleKeys } : {}),
+  };
 }
 
 // GET /api/admin/short-links
@@ -2080,8 +3811,6 @@ function validateHotel(body, { creating }) {
     }
     row.platform_fee_pct = body.platform_fee_pct;
   }
-  if (body.notes === null) row.notes = null;
-  else if (typeof body.notes === "string") row.notes = body.notes;
   // Onboarding metadata — all nullable, all admin-editable. The
   // database CHECK on star_rating enforces 1..5, so we let invalid
   // values bubble up as a 5xx rather than silently sanitise.
@@ -2122,6 +3851,45 @@ function validateHotel(body, { creating }) {
   textField("primary_contact_email");
   textField("website");
 
+  // ── Manual payout banking (pilot phase — migration 0016) ──────────
+  // Admin-entered. Each field is independently nullable so a partial
+  // PATCH (e.g. just switching method) is valid; the UI enforces the
+  // method↔fields pairing. Any banking field touched stamps
+  // payout_updated_at so "last updated" is honest.
+  let bankingTouched = false;
+  const bankText = (key, re, errMsg) => {
+    if (!(key in body)) return null;
+    bankingTouched = true;
+    if (body[key] === null || body[key] === "") {
+      row[key] = null;
+      return null;
+    }
+    if (typeof body[key] !== "string") return errMsg;
+    const t = body[key].trim();
+    if (re && !re.test(t)) return errMsg;
+    row[key] = t;
+    return null;
+  };
+
+  if ("payout_method" in body) {
+    bankingTouched = true;
+    if (body.payout_method === null || body.payout_method === "") {
+      row.payout_method = null;
+    } else if (body.payout_method === "etransfer" || body.payout_method === "eft") {
+      row.payout_method = body.payout_method;
+    } else {
+      return { error: "payout_method must be 'etransfer', 'eft', or null" };
+    }
+  }
+  const bankErr =
+    bankText("payout_account_holder", null, "invalid account holder") ||
+    bankText("payout_etransfer_email", EMAIL_RE, "payout_etransfer_email must be a valid email") ||
+    bankText("payout_eft_institution", /^\d{3}$/, "institution number must be 3 digits") ||
+    bankText("payout_eft_transit", /^\d{5}$/, "transit number must be 5 digits") ||
+    bankText("payout_eft_account", /^\d{4,17}$/, "account number must be 4–17 digits");
+  if (bankErr) return { error: bankErr };
+  if (bankingTouched) row.payout_updated_at = new Date().toISOString();
+
   return { row };
 }
 
@@ -2149,6 +3917,53 @@ function validateStaff(body, { creating }) {
   return { row };
 }
 
+function validatePlacement(body, { creating }) {
+  const row = {};
+  if (creating) {
+    const hotel_id = typeof body.hotel_id === "string" ? body.hotel_id.trim() : "";
+    if (!UUID_RE.test(hotel_id)) return { error: "valid hotel_id required" };
+    row.hotel_id = hotel_id;
+  }
+  if (typeof body.name === "string" && body.name.trim()) {
+    row.name = body.name.trim();
+  } else if (creating) {
+    return { error: "name required" };
+  }
+  if (typeof body.placement_type === "string") {
+    if (!PLACEMENT_TYPES.has(body.placement_type)) {
+      return { error: "invalid placement_type" };
+    }
+    row.placement_type = body.placement_type;
+  } else if (creating) {
+    return { error: "placement_type required" };
+  }
+  if (typeof body.location_in_hotel === "string") {
+    const loc = body.location_in_hotel.trim();
+    row.location_in_hotel = loc || null;
+  }
+  if (body.deployed_at === null) {
+    row.deployed_at = null;
+  } else if (typeof body.deployed_at === "string" && body.deployed_at.trim()) {
+    const t = Date.parse(body.deployed_at);
+    if (Number.isNaN(t)) return { error: "deployed_at must be a valid date" };
+    row.deployed_at = new Date(t).toISOString();
+  }
+  if (typeof body.status === "string") {
+    if (!PLACEMENT_STATUSES.has(body.status)) {
+      return { error: "status must be pending, active, or retired" };
+    }
+    row.status = body.status;
+  } else if (creating) {
+    // New placements start Pending until the material is verified
+    // (printed / widget generated); activated manually in Edit.
+    row.status = "pending";
+  }
+  // code and sequence_number are auto-managed by
+  // insertPlacementWithSequence and locked thereafter — never accept
+  // them from the client.
+  return { row };
+}
+
 function normaliseHotel(h) {
   // PostgREST returns numeric as strings; coerce so the UI can do math.
   return {
@@ -2158,6 +3973,7 @@ function normaliseHotel(h) {
     staff:    Array.isArray(h.staff)    ? h.staff.map(normaliseStaff)    : [],
     managers: Array.isArray(h.managers) ? h.managers                     : [],
     short_links: Array.isArray(h.short_links) ? h.short_links             : [],
+    placements:  Array.isArray(h.placements)  ? h.placements              : [],
   };
 }
 
@@ -2502,14 +4318,14 @@ function logMutation(request, claims, action, entityType, entityId, extra) {
 function corsHeaders(request) {
   const origin = request?.headers?.get("Origin") || "";
   const allowed =
-    origin === ALLOWED_ORIGIN ||
+    ALLOWED_ORIGINS.includes(origin) ||
     origin.startsWith("http://localhost") ||
     origin.startsWith("http://127.0.0.1") ||
     origin.endsWith(".pages.dev");
   return {
     "Access-Control-Allow-Origin": allowed ? origin : ALLOWED_ORIGIN,
-    "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, Idempotency-Key",
     Vary: "Origin",
   };
 }

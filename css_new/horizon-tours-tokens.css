@@ -37,43 +37,40 @@
   /* ========================================================
      PRIMITIVES — Tours brand colour family
      ========================================================
-     Amber ramp replaces Violet as the primary brand spine.
-     Anchor at 600 (#D4A155) — deeper and more saturated than
-     the original Aurora accent (#F4B860, which lives at 400).
+     Orange ramp is the primary brand spine. Anchor at 600
+     (#E0691C) for CTAs that carry white text (clears WCAG AA);
+     #FF8A3D lives at 500 as the marketing-vivid stop — the
+     colour you see on horizontours.com hero sections.
      ======================================================== */
 
   /* Brand anchors — Tours overrides */
-  --color-brand-horizon-amber:    #D4A155;  /* primary — locked Tours brand */
-  --color-brand-marketing-warm:   #E8B85F;  /* vivid version for marketing surfaces */
-  --color-brand-deep-violet:      #4920C4;  /* sibling-link accent, not primary */
+  --color-brand-horizon-orange:  #FF8A3D;  /* primary — locked Tours brand */
+  --color-brand-marketing-warm:  #FFA66B;  /* lighter version for marketing hero panels */
+  --color-brand-deep-blue:       #4F5BFF;  /* sibling-link accent (Connect's primary) */
 
-  /* Amber ramp — primary brand spine, replaces Violet ramp's role */
-  --color-amber-50:   #FDF8EC;
-  --color-amber-100:  #FBEFD0;
-  --color-amber-200:  #F6DFA0;
-  --color-amber-300:  #EFC972;
-  --color-amber-400:  #E5B458;
-  --color-amber-500:  #D4A155;  /* marketing-vivid equivalent */
-  --color-amber-600:  #B8862F;  /* anchor — primary CTA, brand mark */
-  --color-amber-700:  #95691E;
-  --color-amber-800:  #704C12;
+  /* Orange ramp — primary brand spine */
+  --color-orange-50:   #FFF2E8;
+  --color-orange-100:  #FFE1CC;
+  --color-orange-200:  #FFC79C;
+  --color-orange-300:  #FFA66B;
+  --color-orange-400:  #FF9550;
+  --color-orange-500:  #FF8A3D;  /* marketing-vivid equivalent */
+  --color-orange-600:  #E0691C;  /* anchor — primary CTA, brand mark */
+  --color-orange-700:  #AD4F11;
+  --color-orange-800:  #803A0A;
 
-  /* Note on the anchor: #D4A155 was the proposed primary, but at the 600
-     position we deepen to #B8862F to ensure WCAG AA contrast on white
-     (4.5:1 minimum for body text, 3:1 for UI elements). #D4A155 lives at
-     500 as the marketing-vivid stop — used on hero panels and ad creative
-     where contrast against white doesn't need to clear AA.
-
-     The "marketing primary" you see on horizontours.com hero sections is
-     visually #D4A155. The "product primary" inside the booking app is
-     #B8862F. Same family, calibrated for context — same pattern Connect
-     uses with violet-500 (marketing) vs violet-600 (product). */
+  /* Note on the anchor: #FF8A3D is the brand colour you see on horizontours.com
+     hero panels and ad creative. Inside the booking app, primary CTAs use
+     #E0691C (orange-600) so white button labels clear WCAG AA contrast
+     (4.5:1 minimum for body text, 3:1 for UI elements). Same family,
+     calibrated for context — same pattern Connect uses with blue-500
+     (marketing) vs blue-600 (product). */
 
   /* ========================================================
      PRIMITIVES — Warm-tinted neutral ramp
      ========================================================
-     Connect's neutrals carry a faint violet undertone.
-     Tours' neutrals carry a faint warm undertone (~3% amber).
+     Connect's neutrals carry a faint cool (blue) undertone.
+     Tours' neutrals carry a faint warm undertone (~3% orange).
      Same role, different temperature — keeps the entire UI
      tonally unified with the warm primary.
      ======================================================== */
@@ -90,7 +87,7 @@
   --color-neutral-900:  #14120E;  /* warm Obsidian — replaces #0E0E14 */
 
   /* ========================================================
-     SEMANTIC remapping — point semantic tokens at amber, not violet
+     SEMANTIC remapping — point semantic tokens at orange, not blue
      ========================================================
      The semantic layer architecture stays identical. We only
      change what the semantic tokens point at. Components written
@@ -104,8 +101,8 @@
   --bg-subtle:        var(--color-neutral-100);
   --bg-muted:         var(--color-neutral-200);
   --bg-inverse:       var(--color-neutral-900);
-  --bg-brand-subtle:  var(--color-amber-50);   /* was violet-50 */
-  --bg-brand-muted:   var(--color-amber-100);  /* was violet-100 */
+  --bg-brand-subtle:  var(--color-orange-50);   /* was blue-50 */
+  --bg-brand-muted:   var(--color-orange-100);  /* was blue-100 */
 
   /* Text */
   --text-primary:    var(--color-neutral-800);
@@ -113,19 +110,19 @@
   --text-secondary:  var(--color-neutral-500);
   --text-tertiary:   var(--color-neutral-400);
   --text-inverse:    var(--color-neutral-50);
-  --text-brand:      var(--color-amber-700);   /* was violet-600. amber-700 for AA contrast on white */
+  --text-brand:      var(--color-orange-700);   /* was blue-500. orange-700 for AA contrast on white */
 
   /* Borders */
   --border-default:  var(--color-neutral-300);
   --border-subtle:   var(--color-neutral-200);
   --border-strong:   var(--color-neutral-400);
-  --border-brand:    var(--color-amber-600);   /* was violet-600 */
+  --border-brand:    var(--color-orange-600);   /* was blue-500 */
 
   /* Action — primary (CTA) */
-  --action-primary-default:  var(--color-amber-600);   /* was violet-600 */
-  --action-primary-hover:    var(--color-amber-700);
-  --action-primary-pressed:  var(--color-amber-800);
-  --action-primary-disabled: var(--color-amber-300);
+  --action-primary-default:  var(--color-orange-600);   /* was blue-500 */
+  --action-primary-hover:    var(--color-orange-700);
+  --action-primary-pressed:  var(--color-orange-800);
+  --action-primary-disabled: var(--color-orange-300);
 
   /* Action — secondary stays neutral, identical to Connect */
   --action-secondary-default:  #FFFFFF;
@@ -133,8 +130,8 @@
   --action-secondary-pressed:  var(--color-neutral-200);
   --action-secondary-border:   var(--color-neutral-300);
 
-  /* Focus ring — retinted to amber */
-  --shadow-focus-ring: 0 0 0 3px rgba(184, 134, 47, 0.18);  /* was rgba(73,32,196,0.18) */
+  /* Focus ring — retinted to orange */
+  --shadow-focus-ring: 0 0 0 3px rgba(224, 105, 28, 0.18);  /* was rgba(53,67,230,0.18) */
 
   /* Tinted shadows — warm undertone instead of cool */
   --shadow-e1: 0 1px 2px rgba(20, 18, 14, 0.04), 0 1px 1px rgba(20, 18, 14, 0.06);
@@ -195,22 +192,23 @@
 /* ========================================================
    THE SIBLING-LINK ACCENT
    ========================================================
-   Violet remains in the Tours system as a rare accent — used
-   only for "Operated by Horizon" trust signals, links to
-   Horizon Connect from Tours surfaces, and parent-brand badges.
-   ≤1% pixel coverage. This is what makes the two brands feel
+   Horizon Blue (Connect's primary) appears in the Tours
+   system as a rare accent — used only for "Operated by
+   Horizon" trust signals, links to Horizon Connect from
+   Tours surfaces, and parent-brand badges. ≤1% pixel
+   coverage. This is what makes the two brands feel
    like siblings rather than strangers.
 
    Use class .sibling-accent on relevant elements; do not
-   reach for --color-brand-deep-violet anywhere else.
+   reach for --color-brand-deep-blue anywhere else.
    ======================================================== */
 
 .sibling-accent {
-  color: var(--color-brand-deep-violet);
+  color: var(--color-brand-deep-blue);
 }
 
 .sibling-accent--bg {
-  background: var(--color-brand-deep-violet);
+  background: var(--color-brand-deep-blue);
   color: #FFFFFF;
 }
 
@@ -224,15 +222,15 @@
     --bg-subtle:       #1A1814;
     --bg-muted:        var(--color-neutral-700);
     --bg-inverse:      var(--color-neutral-50);
-    --bg-brand-subtle: rgba(184, 134, 47, 0.12);
-    --bg-brand-muted:  rgba(184, 134, 47, 0.20);
+    --bg-brand-subtle: rgba(224, 105, 28, 0.12);
+    --bg-brand-muted:  rgba(224, 105, 28, 0.20);
 
     --text-primary:    var(--color-neutral-50);
     --text-body:       var(--color-neutral-200);
     --text-secondary:  var(--color-neutral-400);
     --text-tertiary:   var(--color-neutral-500);
     --text-inverse:    var(--color-neutral-900);
-    --text-brand:      var(--color-amber-400);
+    --text-brand:      var(--color-orange-400);
 
     --border-default:  var(--color-neutral-700);
     --border-subtle:   var(--color-neutral-800);

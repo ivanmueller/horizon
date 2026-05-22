@@ -109,7 +109,8 @@ only the new ones are created. Safe to run after every merge.
 
 ## What *isn't* in here
 
-- No commission payout logic — that's Phase 1 and lives elsewhere.
+- No commission payout logic — payouts are handled manually (see the
+  hotel Banking card in the admin UI).
 - No booking-creation flows — checkout is still the Stripe worker. This
   tooling is validation + registration only.
 - No secrets. `scripts/bokun/.env` is gitignored; every script reads

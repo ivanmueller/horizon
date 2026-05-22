@@ -1,0 +1,39 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"/>
+<title>Card surface</title>
+<link rel="stylesheet" href="../colors_and_type.css"/>
+<style>
+  html,body{margin:0;background:var(--bg-page);padding:24px;}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .card{background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow-e1);}
+  .card h4{font:500 11px/1 var(--font-sans);letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary);margin:0 0 8px;}
+  .num{font:500 28px/1.1 var(--font-sans);color:var(--text-primary);letter-spacing:-.02em;font-variant-numeric:tabular-nums;display:block;}
+  .sub{font:400 12px/1.5 var(--font-sans);color:var(--text-secondary);margin-top:4px;}
+  .delta{font:500 12px/1 var(--font-sans);font-variant-numeric:tabular-nums;}
+  .up{color:var(--feedback-success-text);}
+  .down{color:var(--feedback-danger-text);}
+  .card--brand{background:var(--bg-brand-subtle);border-color:var(--color-violet-200);}
+  .card--brand h4{color:var(--text-brand);}
+</style></head><body>
+<div class="row">
+  <div class="card">
+    <h4>Bookings · last 30 days</h4>
+    <span class="num">347 <span class="delta up">+18%</span></span>
+    <div class="sub">vs. previous 30 days</div>
+  </div>
+  <div class="card">
+    <h4>Revenue</h4>
+    <span class="num">CA$ 226,684<span class="delta up" style="margin-left:8px;">+11%</span></span>
+    <div class="sub">Gross before commission</div>
+  </div>
+  <div class="card">
+    <h4>Estimated commission</h4>
+    <span class="num">CA$ 28,420.50</span>
+    <div class="sub">12.5% of revenue · paid net-30</div>
+  </div>
+  <div class="card card--brand">
+    <h4>Active referral links</h4>
+    <span class="num" style="color:var(--text-brand)">14</span>
+    <div class="sub" style="color:var(--color-violet-700);">9 hotel-card · 4 staff · 1 placement</div>
+  </div>
+</div>
+</body></html>

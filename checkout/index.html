@@ -17,6 +17,10 @@
   <!-- Stripe.js — loaded here so step 8 can mount the Payment Element. -->
   <script src="https://js.stripe.com/v3/" defer></script>
 
+  <!-- Referral attribution persistence — keeps the funnel alive through
+       checkout and exposes window.HORIZON.funnel. Spec: docs/referral-attribution-spec.md -->
+  <script src="/js/referral.js"></script>
+
   <!--
     Page-specific styles for the checkout shell. Kept inline for now while
     only one checkout page exists; promote to /css/style.css under a .co-*
