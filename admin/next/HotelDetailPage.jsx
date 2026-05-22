@@ -37,7 +37,7 @@ function HotelDetailPage({ hotel, onBack }) {
 
       <div className="hd-body">
         <main className="hd-main">
-          <PlacementsSection />
+          <PlacementsSection hotel={hotel} />
           <ManagersSection />
           <EmployeesSection />
           <BookingsSection />

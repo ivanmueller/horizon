@@ -15,9 +15,13 @@ function Section({ title, addLabel, children }) {
   );
 }
 
-function Row({ avatar, name, meta, right }) {
+function Row({ avatar, name, meta, right, onClick }) {
   return (
-    <div className="hd-row">
+    <div className={'hd-row' + (onClick ? ' hd-row--clickable' : '')}
+         onClick={onClick}
+         role={onClick ? 'button' : undefined}
+         tabIndex={onClick ? 0 : undefined}
+         onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}>
       <div className="hd-row__main">
         {avatar && <span className="hd-row__avatar">{avatar}</span>}
         <div>
@@ -31,17 +35,29 @@ function Row({ avatar, name, meta, right }) {
 }
 
 /* ── Placements ───────────────────────────────────────────── */
-function PlacementsSection() {
+const PLACEMENTS = [
+  { name:'Lobby kiosk',          status:'ok',   code:'HRZ-banff-lobby', scans:'2,412', meta:'Active · printed Apr 12 · HRZ-banff-lobby' },
+  { name:'In-room QR card',      status:'ok',   code:'HRZ-banff-room',  scans:'1,098', meta:'Active · 412 rooms · HRZ-banff-room' },
+  { name:'Concierge link cards', status:'ok',   code:'HRZ-banff-conc',  scans:'595',   meta:'Active · 6 staff cards' },
+  { name:'Summer 2026 campaign', status:'warn', code:'HRZ-banff-s26',   scans:'642',   meta:'Expires May 24 · HRZ-banff-s26' },
+];
+
+function PlacementsSection({ hotel }) {
+  const [open, setOpen] = React.useState(null);
   return (
     <Section title="Placements" addLabel="Add placement">
-      <Row avatar={<I.qr size={14} />} name="Lobby kiosk" meta="Active · printed Apr 12 · HRZ-banff-lobby"
-           right={<><span className="pill pill--ok">Active</span><span className="hd-row__amt">2,412 scans</span></>} />
-      <Row avatar={<I.qr size={14} />} name="In-room QR card" meta="Active · 412 rooms · HRZ-banff-room"
-           right={<><span className="pill pill--ok">Active</span><span className="hd-row__amt">1,098 scans</span></>} />
-      <Row avatar={<I.qr size={14} />} name="Concierge link cards" meta="Active · 6 staff cards"
-           right={<><span className="pill pill--ok">Active</span><span className="hd-row__amt">595 scans</span></>} />
-      <Row avatar={<I.qr size={14} />} name="Summer 2026 campaign" meta="Expires May 24 · HRZ-banff-s26"
-           right={<><span className="pill pill--warn">Expiring</span><span className="hd-row__amt">642 scans</span></>} />
+      {PLACEMENTS.map(p => (
+        <Row key={p.code}
+             avatar={<I.qr size={14} />}
+             name={p.name}
+             meta={p.meta}
+             onClick={() => setOpen(p)}
+             right={<>
+               <span className={'pill pill--' + (p.status === 'warn' ? 'warn' : 'ok')}>{p.status === 'warn' ? 'Expiring' : 'Active'}</span>
+               <span className="hd-row__amt">{p.scans} scans</span>
+             </>} />
+      ))}
+      {open && <PlacementLightbox placement={open} hotel={hotel} onClose={() => setOpen(null)} />}
     </Section>
   );
 }
