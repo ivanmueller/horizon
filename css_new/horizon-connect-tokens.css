@@ -17,20 +17,20 @@
      ======================================================== */
 
   /* Brand anchors */
-  --color-brand-horizon-violet:   #4920C4;
-  --color-brand-marketing-vivid:  #5B2DE8;
-  --color-brand-aurora:           #F4B860;
+  --color-brand-horizon-violet:   #3543E6;
+  --color-brand-marketing-vivid:  #4F5BFF;
+  --color-brand-aurora:           #FF8A3D;
 
   /* Violet ramp — primary brand */
-  --color-violet-50:   #F5F2FE;
-  --color-violet-100:  #EBE4FD;
-  --color-violet-200:  #D4C4FA;
-  --color-violet-300:  #B69BF5;
-  --color-violet-400:  #8C61EE;
-  --color-violet-500:  #5B2DE8;
-  --color-violet-600:  #4920C4;  /* anchor */
-  --color-violet-700:  #3A189E;
-  --color-violet-800:  #2D1378;
+  --color-violet-50:   #EEF0FF;
+  --color-violet-100:  #DDE2FF;
+  --color-violet-200:  #BFC6FF;
+  --color-violet-300:  #95A0FF;
+  --color-violet-400:  #7281FF;
+  --color-violet-500:  #4F5BFF;
+  --color-violet-600:  #3543E6;  /* anchor */
+  --color-violet-700:  #2530BB;
+  --color-violet-800:  #1A2289;
 
   /* Neutral ramp — violet-tinted */
   --color-neutral-50:   #FAFAFC;
@@ -196,7 +196,7 @@
   --shadow-e1: 0 1px 2px rgba(14, 14, 20, 0.04), 0 1px 1px rgba(14, 14, 20, 0.06);
   --shadow-e2: 0 4px 12px rgba(14, 14, 20, 0.08), 0 1px 2px rgba(14, 14, 20, 0.04);
   --shadow-e3: 0 16px 40px rgba(14, 14, 20, 0.14), 0 4px 8px rgba(14, 14, 20, 0.06);
-  --shadow-focus-ring: 0 0 0 3px rgba(91, 45, 232, 0.18);
+  --shadow-focus-ring: 0 0 0 3px rgba(79, 91, 255, 0.18);
 
   /* ========================================================
      SYSTEM — z-index (single source of stacking order)
@@ -281,8 +281,8 @@
     --bg-subtle:       #1A1822;
     --bg-muted:        var(--color-neutral-700);
     --bg-inverse:      var(--color-neutral-50);
-    --bg-brand-subtle: rgba(73, 32, 196, 0.12);
-    --bg-brand-muted:  rgba(73, 32, 196, 0.20);
+    --bg-brand-subtle: rgba(53, 67, 230, 0.12);
+    --bg-brand-muted:  rgba(53, 67, 230, 0.20);
 
     --text-primary:    var(--color-neutral-50);
     --text-body:       var(--color-neutral-200);

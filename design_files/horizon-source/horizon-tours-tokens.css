@@ -45,7 +45,7 @@
   /* Brand anchors — Tours overrides */
   --color-brand-horizon-amber:    #D4A155;  /* primary — locked Tours brand */
   --color-brand-marketing-warm:   #E8B85F;  /* vivid version for marketing surfaces */
-  --color-brand-deep-violet:      #4920C4;  /* sibling-link accent, not primary */
+  --color-brand-deep-violet:      #4F5BFF;  /* sibling-link accent, not primary */
 
   /* Amber ramp — primary brand spine, replaces Violet ramp's role */
   --color-amber-50:   #FDF8EC;

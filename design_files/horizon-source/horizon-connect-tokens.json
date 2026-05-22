@@ -3,31 +3,31 @@
     "color": {
       "brand": {
         "horizon-violet": {
-          "$value": "#4920C4",
+          "$value": "#3543E6",
           "$type": "color",
           "$description": "The locked primary brand colour. Logo, primary CTAs, brand mark."
         },
         "marketing-vivid": {
-          "$value": "#5B2DE8",
+          "$value": "#4F5BFF",
           "$type": "color",
           "$description": "Vivid violet for marketing surfaces only — hero panels, ad creative, decks."
         },
         "aurora": {
-          "$value": "#F4B860",
+          "$value": "#FF8A3D",
           "$type": "color",
           "$description": "Brand accent. Premium moments, payout-confirmed badges. Use sparingly (≤2% of surface)."
         }
       },
       "violet": {
-        "50":  { "$value": "#F5F2FE", "$type": "color", "$description": "Subtle hover bg, selected row tint" },
-        "100": { "$value": "#EBE4FD", "$type": "color", "$description": "Brand-tinted badges, info callouts" },
-        "200": { "$value": "#D4C4FA", "$type": "color", "$description": "Violet borders, ghost button outlines" },
-        "300": { "$value": "#B69BF5", "$type": "color", "$description": "Disabled CTA backgrounds, decorative" },
-        "400": { "$value": "#8C61EE", "$type": "color", "$description": "Charts, secondary brand accents" },
-        "500": { "$value": "#5B2DE8", "$type": "color", "$description": "Marketing hero, ad creative (vivid)" },
-        "600": { "$value": "#4920C4", "$type": "color", "$description": "Anchor — primary CTA, brand mark" },
-        "700": { "$value": "#3A189E", "$type": "color", "$description": "Primary CTA hover state" },
-        "800": { "$value": "#2D1378", "$type": "color", "$description": "Primary CTA pressed, deep accents" }
+        "50":  { "$value": "#EEF0FF", "$type": "color", "$description": "Subtle hover bg, selected row tint" },
+        "100": { "$value": "#DDE2FF", "$type": "color", "$description": "Brand-tinted badges, info callouts" },
+        "200": { "$value": "#BFC6FF", "$type": "color", "$description": "Violet borders, ghost button outlines" },
+        "300": { "$value": "#95A0FF", "$type": "color", "$description": "Disabled CTA backgrounds, decorative" },
+        "400": { "$value": "#7281FF", "$type": "color", "$description": "Charts, secondary brand accents" },
+        "500": { "$value": "#4F5BFF", "$type": "color", "$description": "Marketing hero, ad creative (vivid)" },
+        "600": { "$value": "#3543E6", "$type": "color", "$description": "Anchor — primary CTA, brand mark" },
+        "700": { "$value": "#2530BB", "$type": "color", "$description": "Primary CTA hover state" },
+        "800": { "$value": "#1A2289", "$type": "color", "$description": "Primary CTA pressed, deep accents" }
       },
       "neutral": {
         "50":  { "$value": "#FAFAFC", "$type": "color", "$description": "Page background (Cloud)" },
@@ -203,7 +203,7 @@
       "focus-ring": {
         "$type": "boxShadow",
         "$value": [
-          { "x": "0", "y": "0", "blur": "0", "spread": "3", "color": "rgba(73, 32, 196, 0.18)", "type": "dropShadow" }
+          { "x": "0", "y": "0", "blur": "0", "spread": "3", "color": "rgba(53, 67, 230, 0.18)", "type": "dropShadow" }
         ],
         "$description": "Keyboard focus ring on interactive elements"
       }
