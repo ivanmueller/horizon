@@ -1980,13 +1980,25 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
   padding: var(--space-lg) 0 0;
 }
 
-.hd-section { display: flex; flex-direction: column; gap: var(--space-md); }
+.hd-section {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
 .hd-section__head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--border-subtle);
 }
+.hd-section__body { padding: 0; }
+/* Inside a section card the data table sits flush (the section is the
+   card) — strip the standalone table-wrap card framing to avoid a
+   double border. */
+.hd-section .bk-table-wrap { background: transparent; border: 0; border-radius: 0; }
 /* Wrapper when there are multiple right-side controls (Sync + Add) */
 .hd-section__head-actions {
   display: flex;
@@ -1994,7 +2006,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
   gap: var(--space-sm);
 }
 .hd-section__title {
-  font-size: 1rem;
+  font-size: var(--type-label-size);
   font-weight: var(--weight-medium);
   color: var(--text-primary);
   margin: 0;
