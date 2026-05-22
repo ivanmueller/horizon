@@ -2012,6 +2012,10 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
    card) — strip the standalone table-wrap card framing to avoid a
    double border. */
 .hd-section .bk-table-wrap { background: transparent; border: 0; border-radius: 0; }
+/* Section tables sit on the white card surface — column headers stay
+   white rather than the subtle tint used on standalone tables. */
+.hd-section .bk-table thead th,
+.hd-section .tbl th { background: var(--bg-surface); }
 /* Wrapper when there are multiple right-side controls (Sync + Add) */
 .hd-section__head-actions {
   display: flex;
