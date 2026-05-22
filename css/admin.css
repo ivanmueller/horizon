@@ -1698,9 +1698,9 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
 .hd-setup {
   display: flex;
   flex-direction: column;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--bg-surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-subtle);
   overflow: hidden;
 }
 .hd-setup[hidden] { display: none; }
@@ -1884,10 +1884,21 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
    hidden via the [hidden] attribute when there are no notes — no
    header, no empty state — so it appears only when there's
    something to read. */
-.hd-notespanel { display: flex; flex-direction: column; gap: var(--space-md); }
+.hd-notespanel {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
 .hd-notespanel[hidden] { display: none; }
+.hd-notespanel__head {
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--border-subtle);
+}
 .hd-notespanel__title {
-  font-size: 1rem;
+  font-size: var(--type-label-size);
   font-weight: var(--weight-medium);
   color: var(--text-primary);
   margin: 0;
@@ -1896,12 +1907,14 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+  padding: var(--space-sm);
 }
 .hd-stickynote {
   padding: 10px 12px;
-  background: var(--feedback-warning-bg);
-  border: 1px solid var(--feedback-warning-border);
-  border-radius: 6px;
+  background: #FFF8DC;
+  border: 0;
+  border-left: 3px solid #E5C44E;
+  border-radius: 4px;
 }
 .hd-stickynote__text {
   font-size: var(--type-body-size);
@@ -2135,15 +2148,18 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
 /* Sidebar cards are borderless — visual rhythm comes from the
    wide gap between sections (hd-side), not from card chrome. */
 .hd-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
 }
 .hd-card__head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--border-subtle);
 }
 .hd-card__title {
   margin: 0;
@@ -2180,7 +2196,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
   align-items: center;
   gap: var(--space-sm);
   width: 100%;
-  padding: 0;
+  padding: var(--space-md) var(--space-lg);
   background: transparent;
   border: 0;
   cursor: pointer;
@@ -2210,7 +2226,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
   transition: transform var(--transition-default);
 }
 .hd-bank.is-open .hd-bank__chev { transform: rotate(180deg); }
-.hd-bank__body { margin-top: var(--space-xs); }
+.hd-bank__body { margin-top: 0; padding: var(--space-md) var(--space-lg); border-top: 1px solid var(--border-subtle); }
 .hd-bank__body[hidden] { display: none; }
 .hd-bank__live {
   display: inline-flex;
@@ -2397,29 +2413,35 @@ select.hd-bankf__input { appearance: auto; }
    reads like a definition list rather than a table. */
 .hd-side__list {
   margin: 0;
+  padding: var(--space-md) var(--space-lg) 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-lg);
+  gap: 0;
 }
 .hd-side__row {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 2px;
-  font-size: var(--type-body-size);
+  grid-template-columns: 110px 1fr;
+  gap: var(--space-sm);
+  padding: 7px 0;
+  font-size: var(--type-caption-size);
+  line-height: 1.5;
+  border-top: 1px solid var(--border-subtle);
 }
-.hd-side__row--block { gap: 2px; }
+.hd-side__list > .hd-side__row:first-child { border-top: 0; }
+.hd-side__more .hd-side__row { border-top: 1px solid var(--border-subtle); }
+.hd-side__row--block { grid-template-columns: 1fr; gap: 2px; }
 .hd-side__label {
   margin: 0;
-  font-size: var(--type-body-size);
-  font-weight: var(--weight-medium);
-  color: var(--text-primary);
+  font-size: var(--type-caption-size);
+  font-weight: var(--weight-regular);
+  color: var(--text-secondary);
 }
 .hd-side__value {
   margin: 0;
-  font-size: var(--type-body-size);
+  font-size: var(--type-caption-size);
   color: var(--text-primary);
   word-break: break-word;
-  text-align: left;
+  text-align: right;
 }
 .hd-side__row--block .hd-side__value { text-align: left; }
 .hd-side__more { display: contents; }
@@ -2427,10 +2449,11 @@ select.hd-bankf__input { appearance: auto; }
 .hd-side__toggle {
   background: transparent;
   border: 0;
-  padding: 2px 0;
-  margin-top: var(--space-sm);
+  padding: var(--space-sm) var(--space-lg) var(--space-md);
+  margin-top: 0;
   color: var(--action-primary-default);
   font-size: var(--type-caption-size);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   text-align: left;
   align-self: flex-start;
@@ -3384,41 +3407,32 @@ select.hd-bankf__input { appearance: auto; }
    timestamp. */
 .hd-activity { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .hd-activity__item {
-  position: relative;
   display: grid;
-  grid-template-columns: 20px 1fr auto;
+  grid-template-columns: 28px 1fr auto;
   gap: var(--space-md);
   align-items: flex-start;
-  padding: var(--space-sm) 0 var(--space-md);
+  padding: 10px 16px;
 }
-.hd-activity__item:last-child { padding-bottom: 0; }
-.hd-activity__item:not(:last-child)::before {
-  content: '';
-  position: absolute;
-  left: 9px;   /* center of the 20px icon column */
-  top: 32px;   /* below the icon */
-  bottom: -2px;
-  width: 1px;
-  background: var(--border);
-}
+.hd-activity__item + .hd-activity__item { border-top: 1px solid var(--border-subtle); }
 .hd-activity__icon {
-  position: relative;
-  z-index: 1;
-  width: 20px;
-  height: 20px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
-.hd-activity__icon svg { width: 16px; height: 16px; }
-.hd-activity__icon--hotel_created { color: var(--text-success); }   /* green person */
-.hd-activity__icon--note          { color: var(--text-secondary); }
-.hd-activity__icon--booking { color: var(--action-primary-default); }
-.hd-activity__icon--email   { color: var(--feedback-info-icon); }
-.hd-activity__icon--payout  { color: var(--text-success); }
+.hd-activity__icon svg { width: 14px; height: 14px; }
+.hd-activity__icon--hotel_created,
+.hd-activity__icon--payout  { background: var(--feedback-success-bg); color: var(--feedback-success-text); }
+.hd-activity__icon--booking { background: var(--bg-brand-subtle); color: var(--text-brand); }
+.hd-activity__icon--email   { background: var(--feedback-info-bg); color: var(--feedback-info-text); }
+.hd-activity__icon--note    { background: #FFF8DC; color: #93750E; }
 .hd-activity__icon--other,
-.hd-activity__icon--system  { color: var(--text-tertiary); }
+.hd-activity__icon--system  { background: var(--bg-subtle); color: var(--text-tertiary); }
 .hd-activity__text { min-width: 0; }
 .hd-activity__title {
   font-size: var(--type-body-size);
@@ -3938,7 +3952,7 @@ select.hd-bankf__input { appearance: auto; }
    booking's revenue divides between the tour operator, the
    hotel, and Horizon. Default to 5% platform fee when empty so
    the design never reads as broken. */
-.hd-comm { display: grid; gap: var(--space-md); }
+.hd-comm { display: grid; gap: var(--space-md); padding: var(--space-md) var(--space-lg); }
 .hd-comm__head { display: grid; gap: 2px; }
 .hd-comm__tier {
   font-size: var(--type-body-size);
