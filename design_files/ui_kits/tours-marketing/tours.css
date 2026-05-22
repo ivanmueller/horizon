@@ -318,9 +318,9 @@ body { margin: 0; background: var(--bg-page); color: var(--text-body); font-fami
 .sibling__title { font: 500 24px/1.2 var(--font-sans); margin: 0 0 6px; letter-spacing: -0.01em; }
 .sibling__body { font: 400 14px/1.55 var(--font-sans); color: rgba(255,255,255,.7); margin: 0; max-width: 38em; }
 .sibling .btn--primary {
-  background: var(--color-violet-600);
+  background: var(--color-blue-600);
 }
-.sibling .btn--primary:hover { background: var(--color-violet-700); }
+.sibling .btn--primary:hover { background: var(--color-blue-700); }
 
 /* ── Footer ─────────────────────────────────────────────── */
 .tfoot {

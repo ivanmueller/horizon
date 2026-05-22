@@ -2,7 +2,7 @@
 
 > **Update from v1.1:** v1.2 ratifies the design-system kit reviewed in
 > May 2026. Three substantive changes from v1.1: (1) Horizon Violet
-> anchors at `--color-violet-500` (`#5B2DE8`) instead of `-600`; (2)
+> anchors at `--color-blue-500` (`#5B2DE8`) instead of `-600`; (2)
 > `--bg-page` is pure `#FFFFFF`, not a tinted neutral; (3) chrome
 > patterns are now codified (no breadcrumbs, search in the topbar,
 > setup pill on partner surfaces, full-page hotel detail).
@@ -61,10 +61,10 @@ tokens.
 
 | Role | Token | Hex |
 |---|---|---|
-| Connect primary (default) | `--color-violet-500` | `#5B2DE8` |
-| Connect primary (hover) | `--color-violet-600` | `#4920C4` |
-| Connect primary (pressed) | `--color-violet-700` | `#3A189E` |
-| Connect primary (disabled) | `--color-violet-200` | `#D4C4FA` |
+| Connect primary (default) | `--color-blue-500` | `#5B2DE8` |
+| Connect primary (hover) | `--color-blue-600` | `#4920C4` |
+| Connect primary (pressed) | `--color-blue-700` | `#3A189E` |
+| Connect primary (disabled) | `--color-blue-200` | `#D4C4FA` |
 | Aurora accent (≤2 % coverage) | `--color-brand-aurora` | `#F4B860` |
 | Page surface (all routes) | `--bg-page` | `#FFFFFF` |
 | Obsidian (text/dark chrome) | `--color-neutral-900` | `#0E0E14` |
@@ -85,7 +85,7 @@ All 27 rules carry equal authority. If a redesign would require breaking one, th
 ### Rules 1–10 — visual token rules
 
 1. **Every value references a token.** No hardcoded hex, no hardcoded pixel values. Use `var(--token-name)`.
-2. **Reach for semantic tokens, not primitives.** Use `--text-primary`, not `--color-neutral-800`. Use `--action-primary-default`, not `--color-violet-500`. Components should be brand-agnostic — semantic tokens flip values based on which brand theme is loaded.
+2. **Reach for semantic tokens, not primitives.** Use `--text-primary`, not `--color-neutral-800`. Use `--action-primary-default`, not `--color-blue-500`. Components should be brand-agnostic — semantic tokens flip values based on which brand theme is loaded.
 3. **Spacing snaps to the 4px grid.** Allowed: 0, 4, 8, 12, 16, 24, 32, 48, 64. Nothing else exists. The grid is universal across both brands.
 4. **Radius hierarchy is fixed within each brand.** Connect: inputs 4 / buttons 8 / cards 12 / modals 16. Tours: inputs 8 / buttons 12 / cards 16 / modals 20. Pills (999px) only for tags and status badges in both.
 5. **Typography uses the defined scale only.** Seven type tokens (display, heading, subheading, label, body, caption, overline, mono). Two weights (400, 500). No italics in product chrome. Identical across both brands.
@@ -269,7 +269,7 @@ Append a self-check confirming:
 - 4px grid compliance: confirmed
 - Brand-correct radius hierarchy applied (Connect 4/8/12/16 or Tours 8/12/16/20): confirmed
 - Page surface is `#FFFFFF`: confirmed
-- Primary CTA uses `--color-violet-500` (not `-600`): confirmed
+- Primary CTA uses `--color-blue-500` (not `-600`): confirmed
 - Interactive states defined for: [list]
 - Tokens used uncertainly: [list, or "none"]
 

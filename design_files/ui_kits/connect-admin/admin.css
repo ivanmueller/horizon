@@ -120,7 +120,7 @@ button, a, input, select, textarea, [role="button"] {
 .nav__item svg { stroke: currentColor; flex: none; }
 .nav__badge {
   margin-left: auto;
-  background: var(--color-violet-500);
+  background: var(--color-blue-500);
   color: #fff;
   border-radius: 999px;
   padding: 1px 7px;
@@ -206,8 +206,8 @@ button, a, input, select, textarea, [role="button"] {
   position: relative; width: 16px; height: 16px;
 }
 .topbar__setup-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-.topbar__setup-ring circle.t { stroke: var(--color-violet-100); }
-.topbar__setup-ring circle.f { stroke: var(--color-violet-500); transition: stroke-dashoffset var(--transition-base); }
+.topbar__setup-ring circle.t { stroke: var(--color-blue-100); }
+.topbar__setup-ring circle.f { stroke: var(--color-blue-500); transition: stroke-dashoffset var(--transition-base); }
 
 /* ── Buttons ──────────────────────────────────────────────── */
 .btn {
@@ -317,8 +317,8 @@ button, a, input, select, textarea, [role="button"] {
   font-variant-numeric: tabular-nums;
 }
 .bk-statcard--active {
-  border-color: var(--color-violet-500);
-  box-shadow: inset 0 0 0 1px var(--color-violet-500);
+  border-color: var(--color-blue-500);
+  box-shadow: inset 0 0 0 1px var(--color-blue-500);
 }
 .bk-statcard--active .bk-statcard__label { color: var(--text-brand); }
 
@@ -337,7 +337,7 @@ button, a, input, select, textarea, [role="button"] {
   margin-top: 2px;
 }
 .bk-tabs__btn:hover { color: var(--text-primary); }
-.bk-tabs__btn--active { color: var(--text-primary); border-bottom-color: var(--color-violet-500); }
+.bk-tabs__btn--active { color: var(--text-primary); border-bottom-color: var(--color-blue-500); }
 
 /* Filter chip rail */
 .bk-toolbar {
@@ -360,7 +360,7 @@ button, a, input, select, textarea, [role="button"] {
 .bk-chip--active {
   background: var(--bg-brand-subtle);
   border-style: solid;
-  border-color: var(--color-violet-200);
+  border-color: var(--color-blue-200);
   color: var(--text-brand);
 }
 .bk-chip--active .bk-chip__plus { color: var(--text-brand); }
@@ -439,7 +439,7 @@ button, a, input, select, textarea, [role="button"] {
 .bk-table tbody tr:hover td { background: rgba(91,45,232,.03); }
 .bk-table tbody tr.is-open td { background: var(--bg-brand-subtle); }
 .bk-table__check { width: 32px; padding-right: 0; }
-.bk-table__check input { accent-color: var(--color-violet-500); }
+.bk-table__check input { accent-color: var(--color-blue-500); }
 .bk-table__kebab { width: 28px; text-align: right; }
 .bk-table .num { text-align: right; font-variant-numeric: tabular-nums; }
 .bk-table .mono { font: 400 12px var(--font-mono); color: var(--text-secondary); }
@@ -502,7 +502,7 @@ button, a, input, select, textarea, [role="button"] {
   font: 500 11px var(--font-sans);
 }
 .bk-funnel__step--credited .bk-funnel__n {
-  background: var(--color-violet-500); color: #fff;
+  background: var(--color-blue-500); color: #fff;
 }
 .bk-funnel__step--credited { font-weight: 500; }
 .bk-funnel__label { color: var(--text-primary); }
@@ -510,7 +510,7 @@ button, a, input, select, textarea, [role="button"] {
 .bk-funnel__when { font: 400 11.5px var(--font-sans); color: var(--text-tertiary); }
 .bk-funnel__credited {
   padding: 1px 8px; border-radius: 999px;
-  background: var(--color-violet-500); color: #fff;
+  background: var(--color-blue-500); color: #fff;
   font: 500 10px var(--font-sans);
 }
 .bk-funnel__meta {
@@ -778,7 +778,7 @@ button, a, input, select, textarea, [role="button"] {
 }
 .hd-setup__fill {
   display: block; height: 100%;
-  background: var(--color-violet-500);
+  background: var(--color-blue-500);
   transition: width var(--transition-base);
 }
 .hd-setup__list { list-style: none; padding: 6px 0 12px; margin: 0; }
@@ -857,7 +857,7 @@ button, a, input, select, textarea, [role="button"] {
   background: var(--bg-muted);
 }
 .hd-comm__seg { display: block; height: 100%; }
-.hd-comm__seg--op       { background: var(--color-violet-500); }
+.hd-comm__seg--op       { background: var(--color-blue-500); }
 .hd-comm__seg--hotel    { background: var(--color-warning-400); }
 .hd-comm__seg--platform { background: var(--color-neutral-700); }
 .hd-comm__legend { display: flex; flex-direction: column; gap: 6px; margin: 0; }
@@ -868,7 +868,7 @@ button, a, input, select, textarea, [role="button"] {
   color: var(--text-body);
 }
 .hd-comm__sw { width: 10px; height: 10px; border-radius: 3px; }
-.hd-comm__sw--op       { background: var(--color-violet-500); }
+.hd-comm__sw--op       { background: var(--color-blue-500); }
 .hd-comm__sw--hotel    { background: var(--color-warning-400); }
 .hd-comm__sw--platform { background: var(--color-neutral-700); }
 .hd-comm__pct { font-variant-numeric: tabular-nums; color: var(--text-primary); font-weight: 500; font-size: 12.5px; }
@@ -938,7 +938,7 @@ button, a, input, select, textarea, [role="button"] {
 .chip:hover { background: var(--bg-subtle); }
 .chip__k { color: var(--text-secondary); }
 .chip__v { font-weight: 500; color: var(--text-primary); }
-.chip--active { background: var(--bg-brand-subtle); border-color: var(--color-violet-200); color: var(--text-brand); }
+.chip--active { background: var(--bg-brand-subtle); border-color: var(--color-blue-200); color: var(--text-brand); }
 .chip--active .chip__k, .chip--active .chip__v { color: inherit; }
 
 /* ── Card / table ─────────────────────────────────────────── */
@@ -1113,7 +1113,7 @@ button, a, input, select, textarea, [role="button"] {
   margin-right: 16px;
 }
 .drawer__tab:hover { color: var(--text-primary); }
-.drawer__tab--active { color: var(--text-brand); border-bottom-color: var(--color-violet-500); }
+.drawer__tab--active { color: var(--text-brand); border-bottom-color: var(--color-blue-500); }
 
 .drawer__body {
   flex: 1; overflow-y: auto;
