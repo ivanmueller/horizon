@@ -2681,13 +2681,6 @@ select.hd-bankf__input { appearance: auto; }
 /* Tighten the Employees table so it fits without horizontal scroll
    at the standard sidebar-on width — narrower side padding only
    inside this section, so other tables stay untouched. */
-#hdEmployeesBody .bk-table thead th,
-#hdEmployeesBody .bk-table tbody td {
-  padding-left: 8px;
-  padding-right: 8px;
-}
-#hdEmployeesBody .bk-table-scroll { overflow-x: visible; }
-
 /* Inline copy icon for IDs / codes / URLs */
 .hd-copy {
   display: inline-flex;
