@@ -2050,13 +2050,10 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
 .hd-section__link:hover:not(:disabled) { color: var(--action-primary-hover); }
 
 .hd-empty {
-  border: 1px dashed var(--border-strong);
-  border-radius: 6px;
   padding: var(--space-xl) var(--space-lg);
   text-align: center;
   color: var(--text-secondary);
   font-size: var(--type-body-size);
-  background: transparent;
 }
 
 .hd-emp { display: flex; align-items: center; gap: var(--space-sm); min-width: 0; }
