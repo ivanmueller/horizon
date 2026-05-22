@@ -47,6 +47,13 @@ export async function onRequest(context) {
 
   // ── Internal ops console host (served at root) ─────────────────────
   if (host === 'admin.gowithhorizon.com') {
+    // Static assets (JS, CSS, JSX, images, etc.) must be served first —
+    // before any path-prefix rewriting — so that /admin/Icons.jsx and
+    // similar kit files are fetched as real files rather than being
+    // caught by the legacy-prefix redirect below.
+    if (isAsset(url.pathname)) {
+      return next();
+    }
     // Legacy prefixed URLs → clean rooted equivalents.
     if (isAdminPath(url.pathname)) {
       return Response.redirect(
@@ -57,10 +64,6 @@ export async function onRequest(context) {
     // Portal/login surfaces don't belong here — send them to Connect.
     if (isDashboardPath(url.pathname)) {
       return Response.redirect(CONNECT_ORIGIN + tail, 302);
-    }
-    // Real static assets serve normally.
-    if (isAsset(url.pathname)) {
-      return next();
     }
     // Everything else is an SPA route — hand back the console shell.
     return env.ASSETS.fetch(new URL('/admin/index.html', url.origin));
