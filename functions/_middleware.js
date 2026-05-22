@@ -54,11 +54,6 @@ export async function onRequest(context) {
     if (isAsset(url.pathname)) {
       return next();
     }
-    // Parallel "next" console (new React kit, served alongside the
-    // original at /next/* while it's migrated surface-by-surface).
-    if (url.pathname === '/next' || url.pathname.startsWith('/next/')) {
-      return env.ASSETS.fetch(new URL('/admin/next/index.html', url.origin));
-    }
     // Legacy prefixed URLs → clean rooted equivalents.
     if (isAdminPath(url.pathname)) {
       return Response.redirect(
@@ -102,7 +97,6 @@ export async function onRequest(context) {
     // admins → the ops host), so no auth logic is needed here.
     const shell = {
       '/': '/dashboard/hotel/index.html',
-      '/next': '/dashboard/hotel/next/index.html', '/next/': '/dashboard/hotel/next/index.html',
       '/login': '/dashboard/login/index.html', '/login/': '/dashboard/login/index.html',
       '/setup': '/dashboard/setup/index.html', '/setup/': '/dashboard/setup/index.html',
       '/otp':   '/dashboard/otp/index.html',   '/otp/':   '/dashboard/otp/index.html',
