@@ -1849,6 +1849,11 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); font-weight: var(-
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
+.hd-herostat__sub {
+  font-size: var(--type-caption-size);
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
 .hd-head__sub {
   display: flex;
   align-items: center;
@@ -2313,6 +2318,32 @@ select.hd-bankf__input { appearance: auto; }
    trigger a deletion. Card surface mirrors the standard popover
    pattern used elsewhere in /admin/: 1px border, 8px radius,
    two-layer soft shadow. */
+/* ── hd-row — list row used by Placements / Managers (kit pattern) ── */
+.hd-row {
+  display: grid; grid-template-columns: 1fr auto;
+  gap: var(--space-md); align-items: center;
+  padding: 10px var(--space-lg);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.hd-row:last-child { border-bottom: 0; }
+.hd-row__main { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.hd-row__avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--bg-muted);
+  color: var(--text-body);
+  display: inline-flex; align-items: center; justify-content: center;
+  font: var(--weight-medium) var(--type-overline-size) var(--font-sans);
+  flex: none;
+}
+.hd-row__name { font: var(--weight-medium) var(--type-label-size)/1.3 var(--font-sans); color: var(--text-primary); }
+.hd-row__meta { font: var(--weight-regular) var(--type-caption-size)/1.3 var(--font-sans); color: var(--text-secondary); margin-top: 1px; }
+.hd-row__amt { font: var(--weight-medium) var(--type-label-size)/1 var(--font-sans); color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.hd-row__right { display: flex; align-items: center; gap: var(--space-lg); justify-content: flex-end; }
+.hd-row__right .pill,
+.hd-row__right .bk-pill { min-width: 96px; justify-content: center; margin-left: 0; }
+.hd-row__right .hd-row__meta,
+.hd-row__right .hd-row__amt { min-width: 120px; text-align: right; margin: 0; }
+
 .hd-rowmenu { position: relative; display: inline-block; }
 .hd-rowmenu__pop {
   position: absolute;
@@ -3919,9 +3950,9 @@ select.hd-bankf__input { appearance: auto; }
   height: 100%;
   transition: width var(--type-body-size);
 }
-.hd-comm__seg--op       { background: var(--text-primary); }
-.hd-comm__seg--hotel    { background: var(--action-primary-default); }
-.hd-comm__seg--platform { background: var(--border-strong); }
+.hd-comm__seg--op       { background: var(--action-primary-default); }
+.hd-comm__seg--hotel    { background: var(--color-warning-400); }
+.hd-comm__seg--platform { background: var(--color-neutral-700); }
 .hd-comm__legend {
   display: grid;
   gap: var(--space-sm);
@@ -3940,9 +3971,9 @@ select.hd-bankf__input { appearance: auto; }
   border-radius: 2px;
   flex-shrink: 0;
 }
-.hd-comm__swatch--op       { background: var(--text-primary); }
-.hd-comm__swatch--hotel    { background: var(--action-primary-default); }
-.hd-comm__swatch--platform { background: var(--border-strong); }
+.hd-comm__swatch--op       { background: var(--action-primary-default); }
+.hd-comm__swatch--hotel    { background: var(--color-warning-400); }
+.hd-comm__swatch--platform { background: var(--color-neutral-700); }
 .hd-comm__label { color: var(--text-secondary); }
 .hd-comm__pct {
   font-variant-numeric: tabular-nums;
