@@ -3,19 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Partner dashboard — Horizon Tours</title>
-  <meta name="description" content="Hotel partner dashboard — bookings and revenue for the current period.">
+  <title>Partner dashboard — Horizon Connect</title>
+  <meta name="description" content="Hotel partner dashboard — bookings, payouts, and referral links for the current period.">
   <meta name="robots" content="noindex">
   <link rel="canonical" href="https://connect.gowithhorizon.com/">
 
   <!--
-    v1.3 design system: tokens live in /css_new/ (synced from the
-    Horizon Connect Design System project). No more /css/style.css.
-    Inter is declared inside the tokens file via @font-face on the
-    locally-hosted variable font — no Google Fonts request needed.
+    v1.3 design system loaded from /css_new/:
+      1. tokens (semantic + primitives + Inter @font-face + motion)
+      2. responsive primitives
+      3. page-specific styles for this partner dashboard
   -->
   <link rel="stylesheet" href="/css_new/horizon-connect-tokens.css">
   <link rel="stylesheet" href="/css_new/horizon-connect-responsive.css">
+  <link rel="stylesheet" href="/css_new/dashboard-hotel.css">
 
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%234F5BFF'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
 
@@ -28,638 +29,232 @@
     its call (render the dashboard OR navigate away).
   -->
   <style>body { visibility: hidden; }</style>
-
-  <style>
-    /* ============================================================
-       Partner dashboard — page-specific styles
-       ============================================================
-       All values reference design-system tokens. Component code
-       below assumes /css_new/horizon-connect-tokens.css is loaded
-       (semantic tokens + radius + spacing + motion + typography).
-       Page surface is pure #FFFFFF per v1.3 rule 10.
-       ============================================================ */
-
-    body {
-      background: var(--bg-page);
-      color: var(--text-body);
-      margin: 0;
-    }
-
-    /* ── Header (minimal — no nav, no big marketing) ─────────────── */
-    .hd-header {
-      background: var(--bg-surface);
-      border-bottom: 1px solid var(--border-subtle);
-      padding: var(--space-lg) 0;
-    }
-    .hd-header__inner {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 var(--space-lg);
-      display: flex; align-items: center; justify-content: space-between;
-      gap: var(--space-lg); flex-wrap: wrap;
-    }
-    .hd-header__logo {
-      display: inline-flex; align-items: center; gap: var(--space-sm);
-      text-decoration: none; color: var(--text-primary);
-    }
-    .hd-header__logo-icon {
-      width: 32px; height: 32px;
-      border-radius: var(--radius-md);
-      background: var(--action-primary-default);
-      display: inline-flex; align-items: center; justify-content: center;
-      color: #fff;
-    }
-    .hd-header__logo-letter {
-      font: var(--weight-medium) 16px/1 var(--font-sans);
-      letter-spacing: -0.01em;
-    }
-    .hd-header__logo-text {
-      font: var(--weight-medium) 20px/1 var(--font-sans);
-      letter-spacing: -0.02em;
-      color: var(--text-primary);
-    }
-    .hd-header__sub {
-      font: var(--weight-regular) var(--type-caption-size)/var(--type-caption-line) var(--font-sans);
-      color: var(--text-secondary);
-      margin-left: var(--space-xs);
-    }
-    .hd-header__hotel {
-      text-align: right; line-height: 1.3;
-    }
-    .hd-header__hotel-eyebrow {
-      display: block;
-      font: var(--weight-medium) var(--type-overline-size)/var(--type-overline-line) var(--font-sans);
-      color: var(--text-secondary);
-      text-transform: uppercase; letter-spacing: 0.06em;
-    }
-    .hd-header__hotel-name {
-      display: block;
-      font: var(--weight-medium) var(--type-subheading-size)/var(--type-subheading-line) var(--font-sans);
-      color: var(--text-primary);
-    }
-    .hd-header__actions {
-      display: inline-flex; gap: var(--space-xs); margin-top: var(--space-xs);
-    }
-    .hd-signout {
-      background: var(--action-secondary-default);
-      border: 1px solid var(--action-secondary-border);
-      padding: var(--space-xs) var(--space-md);
-      border-radius: var(--radius-pill);
-      font: var(--weight-regular) var(--type-caption-size)/1 var(--font-sans);
-      color: var(--text-secondary);
-      cursor: pointer;
-    }
-    .hd-signout:hover {
-      background: var(--action-secondary-hover);
-      color: var(--text-primary);
-    }
-    .hd-signout:disabled { opacity: 0.6; cursor: progress; }
-
-    /* ── Account modal ──────────────────────────────────────────── */
-    .hd-modal {
-      position: fixed; inset: 0;
-      background: var(--bg-overlay);
-      display: flex; align-items: center; justify-content: center;
-      z-index: var(--z-modal); padding: var(--space-lg);
-    }
-    .hd-modal[hidden] { display: none; }
-    .hd-modal__card {
-      background: var(--bg-surface); border-radius: var(--radius-xl);
-      padding: var(--space-xl); width: 100%; max-width: 420px;
-      box-shadow: var(--shadow-e3);
-    }
-    .hd-modal__head {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: var(--space-sm);
-    }
-    .hd-modal__title {
-      font: var(--weight-medium) var(--type-subheading-size)/var(--type-subheading-line) var(--font-sans);
-      color: var(--text-primary);
-      margin: 0;
-    }
-    .hd-modal__close {
-      background: none; border: 0; cursor: pointer;
-      font-size: 22px; line-height: 1; color: var(--text-secondary);
-      padding: 0 var(--space-xs);
-    }
-    .hd-modal__close:hover { color: var(--text-primary); }
-    .hd-modal__sub {
-      font: var(--weight-regular) var(--type-body-size)/var(--type-body-line) var(--font-sans);
-      color: var(--text-secondary);
-      margin: 0 0 var(--space-lg);
-    }
-    .hd-modal__label {
-      display: block;
-      font: var(--weight-medium) var(--type-label-size)/var(--type-label-line) var(--font-sans);
-      color: var(--text-primary);
-      margin-bottom: var(--space-xs);
-    }
-    .hd-modal__input {
-      width: 100%; padding: var(--space-sm) var(--space-md);
-      border: 1px solid var(--border-default);
-      border-radius: var(--radius-sm);
-      font: var(--weight-regular) var(--type-body-size)/var(--type-body-line) var(--font-sans);
-      box-sizing: border-box;
-      margin-bottom: var(--space-md);
-      background: var(--bg-surface);
-      color: var(--text-primary);
-    }
-    .hd-modal__input:focus {
-      outline: none;
-      border-color: var(--border-brand);
-      box-shadow: var(--shadow-focus-ring);
-    }
-    .hd-modal__input:disabled {
-      background: var(--bg-subtle); color: var(--text-secondary);
-    }
-    .hd-modal__error {
-      background: var(--feedback-danger-bg);
-      border: 1px solid var(--feedback-danger-border);
-      color: var(--feedback-danger-text);
-      padding: var(--space-sm) var(--space-md); border-radius: var(--radius-sm);
-      font: var(--weight-regular) var(--type-body-size)/var(--type-body-line) var(--font-sans);
-      margin: 0 0 var(--space-md);
-    }
-    .hd-modal__error[hidden] { display: none; }
-    .hd-modal__success {
-      background: var(--feedback-success-bg);
-      border: 1px solid var(--feedback-success-border);
-      color: var(--feedback-success-text);
-      padding: var(--space-sm) var(--space-md); border-radius: var(--radius-sm);
-      font: var(--weight-regular) var(--type-body-size)/var(--type-body-line) var(--font-sans);
-      margin: 0 0 var(--space-md);
-    }
-    .hd-modal__success[hidden] { display: none; }
-    .hd-modal__actions {
-      display: flex; gap: var(--space-md); justify-content: flex-end;
-      margin-top: var(--space-sm);
-    }
-    .hd-modal__btn {
-      padding: var(--space-sm) var(--space-lg); border-radius: var(--radius-md); border: 0;
-      font: var(--weight-medium) var(--type-body-size)/1 var(--font-sans);
-      cursor: pointer;
-      background: var(--action-primary-default); color: #fff;
-    }
-    .hd-modal__btn:hover { background: var(--action-primary-hover); }
-    .hd-modal__btn:active { background: var(--action-primary-pressed); }
-    .hd-modal__btn:disabled { opacity: 0.6; cursor: progress; }
-    .hd-modal__btn--secondary {
-      background: var(--action-secondary-default);
-      color: var(--text-secondary);
-      border: 1px solid var(--action-secondary-border);
-    }
-    .hd-modal__btn--secondary:hover {
-      background: var(--action-secondary-hover); color: var(--text-primary);
-    }
-
-    /* ── Page layout ────────────────────────────────────────────── */
-    .hd-page {
-      max-width: 1200px; margin: 0 auto;
-      padding: var(--space-xl) var(--space-lg) var(--space-3xl);
-    }
-
-    .hd-controls {
-      display: flex; flex-wrap: wrap; gap: var(--space-md);
-      align-items: center; justify-content: space-between;
-      margin-bottom: var(--space-xl);
-    }
-    .hd-range {
-      display: inline-flex;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-pill);
-      padding: var(--space-xs);
-      gap: 2px;
-    }
-    .hd-range__btn {
-      background: none; border: 0;
-      padding: var(--space-xs) var(--space-md);
-      border-radius: var(--radius-pill);
-      font: var(--weight-medium) var(--type-body-size)/1 var(--font-sans);
-      color: var(--text-secondary);
-      cursor: pointer;
-    }
-    .hd-range__btn:hover { color: var(--text-primary); }
-    .hd-range__btn--active {
-      background: var(--action-primary-default); color: #fff;
-    }
-    .hd-range__btn--active:hover { color: #fff; }
-
-    .hd-refresh {
-      background: var(--action-secondary-default);
-      border: 1px solid var(--action-secondary-border);
-      padding: var(--space-xs) var(--space-md);
-      border-radius: var(--radius-pill);
-      font: var(--weight-regular) var(--type-body-size)/1 var(--font-sans);
-      color: var(--text-secondary);
-      cursor: pointer;
-    }
-    .hd-refresh:hover {
-      background: var(--action-secondary-hover); color: var(--text-primary);
-    }
-
-    /* ── KPI tiles ──────────────────────────────────────────────── */
-    .hd-kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: var(--space-md);
-      margin-bottom: var(--space-xl);
-    }
-    .hd-kpi {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      padding: var(--space-lg) var(--space-xl);
-      box-shadow: var(--shadow-e1);
-    }
-    .hd-kpi__label {
-      display: block;
-      font: var(--weight-medium) var(--type-overline-size)/var(--type-overline-line) var(--font-sans);
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: var(--space-xs);
-    }
-    .hd-kpi__value {
-      font: var(--weight-medium) var(--type-display-size)/var(--type-display-line) var(--font-sans);
-      letter-spacing: -0.02em;
-      color: var(--text-primary);
-      font-variant-numeric: tabular-nums;
-    }
-    .hd-kpi__sub {
-      display: block;
-      font: var(--weight-regular) var(--type-caption-size)/var(--type-caption-line) var(--font-sans);
-      color: var(--text-secondary);
-      margin-top: var(--space-xs);
-    }
-
-    /* ── Bookings table ─────────────────────────────────────────── */
-    .hd-table-wrap {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      box-shadow: var(--shadow-e1);
-    }
-    .hd-table-wrap h2 {
-      font: var(--weight-medium) var(--type-heading-size)/var(--type-heading-line) var(--font-sans);
-      letter-spacing: -0.01em;
-      color: var(--text-primary);
-      margin: 0;
-      padding: var(--space-lg) var(--space-xl);
-      border-bottom: 1px solid var(--border-subtle);
-    }
-    .hd-table-scroll { overflow-x: auto; }
-    .hd-table {
-      width: 100%;
-      border-collapse: collapse;
-      font: var(--weight-regular) var(--type-body-size)/var(--type-body-line) var(--font-sans);
-    }
-    .hd-table th, .hd-table td {
-      padding: var(--space-md) var(--space-xl);
-      text-align: left;
-      border-bottom: 1px solid var(--border-subtle);
-      white-space: nowrap;
-    }
-    .hd-table tbody tr:last-child td { border-bottom: 0; }
-    .hd-table th {
-      font: var(--weight-medium) var(--type-overline-size)/var(--type-overline-line) var(--font-sans);
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      background: var(--bg-subtle);
-    }
-    .hd-table td { color: var(--text-primary); }
-    .hd-table td.hd-num { text-align: right; font-variant-numeric: tabular-nums; }
-    .hd-table th.hd-num { text-align: right; }
-    .hd-table tbody tr:hover td { background: var(--bg-brand-subtle); }
-
-    .hd-funnel-toggle {
-      border: 0; background: none; padding: 0; cursor: pointer;
-      font: var(--weight-medium) var(--type-body-size)/var(--type-body-line) var(--font-sans);
-      color: var(--text-brand); text-align: left;
-    }
-    .hd-funnel-toggle:hover { text-decoration: underline; }
-    .hd-funnel-count {
-      display: inline-block; padding: 0 var(--space-xs);
-      border-radius: var(--radius-pill);
-      background: var(--bg-brand-muted);
-      color: var(--text-brand);
-      font: var(--weight-medium) 11px/1.5 var(--font-sans);
-    }
-    .hd-funnel-row td {
-      background: var(--bg-subtle);
-      padding: var(--space-lg) var(--space-xl);
-    }
-    .hd-funnel-list { list-style: none; margin: 0 0 var(--space-md); padding: 0; }
-    .hd-funnel-step {
-      display: flex; align-items: baseline; gap: var(--space-md);
-      padding: var(--space-xs) 0;
-      font: var(--weight-regular) var(--type-body-size)/var(--type-body-line) var(--font-sans);
-    }
-    .hd-funnel-step--credited { font-weight: var(--weight-medium); }
-    .hd-funnel-step__n {
-      width: 22px; height: 22px; flex: none;
-      border-radius: var(--radius-pill);
-      background: var(--bg-muted);
-      color: var(--text-secondary);
-      text-align: center; line-height: 22px;
-      font: var(--weight-medium) 11px/22px var(--font-sans);
-    }
-    .hd-funnel-step--credited .hd-funnel-step__n {
-      background: var(--action-primary-default); color: #fff;
-    }
-    .hd-funnel-step__code {
-      font: var(--weight-regular) 12px/1.4 var(--font-mono);
-      color: var(--text-secondary);
-    }
-    .hd-funnel-step__when {
-      color: var(--text-secondary);
-      font: var(--weight-regular) var(--type-caption-size)/var(--type-caption-line) var(--font-sans);
-    }
-    .hd-funnel-step__badge {
-      padding: 1px var(--space-sm);
-      border-radius: var(--radius-pill);
-      background: var(--action-primary-default);
-      color: #fff;
-      font: var(--weight-medium) 11px/1.5 var(--font-sans);
-    }
-    .hd-funnel-meta {
-      display: flex; flex-wrap: wrap; gap: var(--space-xl);
-      font: var(--weight-regular) var(--type-body-size)/var(--type-body-line) var(--font-sans);
-      color: var(--text-body);
-    }
-    .hd-table__code {
-      font: var(--weight-regular) 12px/1.4 var(--font-mono);
-      color: var(--text-secondary);
-    }
-
-    .hd-empty {
-      padding: var(--space-2xl) var(--space-xl);
-      text-align: center;
-      color: var(--text-secondary);
-      font: var(--weight-regular) var(--type-body-size)/var(--type-body-line) var(--font-sans);
-    }
-    .hd-empty strong {
-      display: block;
-      color: var(--text-primary);
-      margin-bottom: var(--space-xs);
-      font: var(--weight-medium) var(--type-subheading-size)/var(--type-subheading-line) var(--font-sans);
-    }
-
-    .hd-error {
-      background: var(--feedback-danger-bg);
-      border: 1px solid var(--feedback-danger-border);
-      color: var(--feedback-danger-text);
-      padding: var(--space-md) var(--space-lg);
-      border-radius: var(--radius-md);
-      font: var(--weight-regular) var(--type-body-size)/var(--type-body-line) var(--font-sans);
-      margin-bottom: var(--space-lg);
-    }
-
-    /* Empty / locked-out state — when the signed-in user has no
-       hotel_users row, hide the whole dashboard chrome and centre
-       the explanatory message as a stand-alone card. The header +
-       Account/Sign-out actions stay visible so the user can switch
-       accounts. */
-    .hd-page--empty {
-      min-height: calc(100vh - 100px);
-      display: flex; align-items: center; justify-content: center;
-      padding: var(--space-xl) var(--space-lg);
-    }
-    .hd-page--empty .hd-controls,
-    .hd-page--empty .hd-kpi-grid,
-    .hd-page--empty .hd-table-wrap,
-    .hd-page--empty .hd-links-section { display: none; }
-    .hd-page--empty .hd-error {
-      max-width: 480px;
-      margin: 0;
-      padding: var(--space-xl) var(--space-xl);
-      text-align: center;
-      font: var(--weight-regular) var(--type-subheading-size)/var(--type-subheading-line) var(--font-sans);
-    }
-
-    .hd-skeleton .hd-kpi__value,
-    .hd-skeleton .hd-kpi__sub {
-      color: transparent;
-      background: var(--bg-subtle);
-      border-radius: var(--radius-sm);
-    }
-
-    /* ── Referral Links section ─────────────────────────────────── */
-    .hd-links-section {
-      max-width: 1200px;
-      margin: var(--space-2xl) auto 0;
-      padding: 0 var(--space-lg);
-    }
-    .hd-links-header { margin-bottom: var(--space-xl); }
-    .hd-links-header h2 {
-      font: var(--weight-medium) var(--type-heading-size)/var(--type-heading-line) var(--font-sans);
-      letter-spacing: -0.01em;
-      color: var(--text-primary);
-      margin: 0 0 var(--space-xs);
-    }
-    .hd-links-header p {
-      margin: 0;
-      font: var(--weight-regular) var(--type-body-size)/var(--type-body-line) var(--font-sans);
-      color: var(--text-secondary);
-    }
-    .hd-links-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: var(--space-lg);
-    }
-    .hd-link-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      padding: var(--space-lg);
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-md);
-      box-shadow: var(--shadow-e1);
-    }
-    .hd-link-card__qr {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .hd-link-card__qr canvas {
-      border-radius: var(--radius-md);
-      display: block;
-    }
-    .hd-link-card__body { display: flex; flex-direction: column; gap: var(--space-xs); }
-    .hd-link-card__label {
-      font: var(--weight-medium) var(--type-body-size)/var(--type-body-line) var(--font-sans);
-      color: var(--text-primary);
-    }
-    .hd-link-card__url {
-      display: flex;
-      align-items: center;
-      gap: var(--space-xs);
-      background: var(--bg-subtle);
-      border: none;
-      border-radius: var(--radius-pill);
-      padding: var(--space-xs) var(--space-md);
-      cursor: pointer;
-      font: var(--weight-regular) var(--type-caption-size)/var(--type-caption-line) var(--font-sans);
-      color: var(--text-primary);
-      text-align: left;
-      min-width: 0;
-    }
-    .hd-link-card__url:hover { background: var(--bg-muted); }
-    .hd-link-card__url-text {
-      flex: 1;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .hd-link-card__copy-icon {
-      width: 12px; height: 12px; flex-shrink: 0;
-      color: var(--text-secondary);
-    }
-    .hd-link-card__meta {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: var(--space-sm);
-    }
-    .hd-link-card__clicks {
-      font: var(--weight-regular) var(--type-caption-size)/var(--type-caption-line) var(--font-sans);
-      color: var(--text-secondary);
-    }
-    .hd-link-card__dl {
-      background: var(--action-secondary-default);
-      border: 1px solid var(--action-secondary-border);
-      border-radius: var(--radius-pill);
-      padding: 3px var(--space-md);
-      font: var(--weight-regular) var(--type-caption-size)/var(--type-caption-line) var(--font-sans);
-      color: var(--text-secondary);
-      cursor: pointer;
-    }
-    .hd-link-card__dl:hover {
-      background: var(--action-secondary-hover); color: var(--text-primary);
-    }
-
-    /* ── Mobile ─────────────────────────────────────────────────── */
-    @media (max-width: 600px) {
-      .hd-header__hotel { text-align: left; flex-basis: 100%; }
-      .hd-controls { flex-direction: column; align-items: stretch; }
-      .hd-range { justify-content: center; }
-      .hd-kpi__value { font-size: 24px; }
-    }
-  </style>
 </head>
 <body>
 
-  <!-- Minimal header — no full nav. Audience is the hotel concierge / GM,
-       not a tour shopper. Logo + cobranded hotel name + that's it. -->
-  <header class="hd-header">
-    <div class="hd-header__inner">
-      <a href="/" class="hd-header__logo">
-        <span class="hd-header__logo-icon" aria-hidden="true">
-          <span class="hd-header__logo-letter" id="hdBrandLetter">H</span>
+  <!-- ── Topbar (Stripe-style hero) ───────────────────────────────
+       Per CLAUDE.md v1.3 spec: search left, icon row + setup pill
+       + primary CTA on the right. No breadcrumbs. No page title in
+       the topbar — that lives in the page body next to its controls. -->
+  <header class="topbar" id="hdTopbar">
+    <a href="/" class="topbar__brand">
+      <span class="topbar__brand-mark" aria-hidden="true" id="hdBrandLetter">H</span>
+      <span class="topbar__brand-name">horizon</span>
+      <span class="topbar__brand-sub">partner</span>
+    </a>
+
+    <label class="topbar__search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="hdTopbarSearch" type="search" placeholder="Search bookings, links, guests…" aria-label="Search">
+      <span class="kbd">⌘K</span>
+    </label>
+
+    <div class="topbar__actions">
+      <button type="button" class="topbar__iconbtn" id="hdHelp" title="Help" aria-label="Help">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </button>
+      <button type="button" class="topbar__iconbtn" id="hdNotifs" title="Notifications" aria-label="Notifications">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </button>
+      <button type="button" class="topbar__iconbtn" id="hdSettings" title="Settings" aria-label="Settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+
+      <!-- Setup-guide pill: shows N/M progress, auto-hides at 5/5 -->
+      <button type="button" class="topbar__setup" id="hdSetupPill" hidden title="Open setup guide">
+        <span class="topbar__setup-ring" aria-hidden="true">
+          <svg viewBox="0 0 18 18">
+            <circle cx="9" cy="9" r="7" class="t" stroke-width="2" fill="none"></circle>
+            <circle cx="9" cy="9" r="7" class="f" stroke-width="2" fill="none"
+                    stroke-dasharray="43.98" stroke-dashoffset="43.98"
+                    stroke-linecap="round" id="hdSetupRingFill"></circle>
+          </svg>
         </span>
-        <span class="hd-header__logo-text">horizon</span>
-        <span class="hd-header__sub">partner dashboard</span>
-      </a>
-      <div class="hd-header__hotel">
-        <span class="hd-header__hotel-eyebrow">Viewing</span>
-        <span class="hd-header__hotel-name" id="hdHotelName">—</span>
-        <div class="hd-header__actions" hidden id="hdHeaderActions">
-          <button type="button" class="hd-signout" id="hdAccount">Account</button>
-          <button type="button" class="hd-signout" id="hdSignout">Sign out</button>
-        </div>
-      </div>
+        <span id="hdSetupLabel">Complete profile · 0/5</span>
+      </button>
+
+      <button type="button" class="topbar__primary" id="hdNewLink">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg>
+        New referral link
+      </button>
     </div>
   </header>
 
-  <!-- ── Account modal (set / change password) ─────────────────────── -->
-  <div class="hd-modal" id="hdAccountModal" hidden>
-    <form class="hd-modal__card" id="hdAccountForm">
-      <div class="hd-modal__head">
-        <h2 class="hd-modal__title">Account</h2>
-        <button type="button" class="hd-modal__close" id="hdAccountClose" aria-label="Close">×</button>
-      </div>
+  <main class="page" id="hdPage">
 
-      <p class="hd-modal__sub" id="hdAccountSub">Set a password to sign in faster next time.</p>
-
-      <p class="hd-modal__error" id="hdAccountError" hidden></p>
-      <p class="hd-modal__success" id="hdAccountSuccess" hidden></p>
-
-      <label class="hd-modal__label" for="hdAccountEmail">Email</label>
-      <input type="email" class="hd-modal__input" id="hdAccountEmail" disabled>
-
-      <label class="hd-modal__label" for="hdAccountPassword">New password</label>
-      <input type="password" class="hd-modal__input" id="hdAccountPassword" autocomplete="new-password" minlength="8" required>
-
-      <label class="hd-modal__label" for="hdAccountPasswordConfirm">Confirm new password</label>
-      <input type="password" class="hd-modal__input" id="hdAccountPasswordConfirm" autocomplete="new-password" minlength="8" required>
-
-      <div class="hd-modal__actions">
-        <button type="button" class="hd-modal__btn hd-modal__btn--secondary" id="hdAccountCancel">Cancel</button>
-        <button type="submit" class="hd-modal__btn" id="hdAccountSave">Save password</button>
-      </div>
-    </form>
-  </div>
-
-  <main class="hd-page">
     <div class="hd-error" id="hdError" hidden></div>
 
-    <div class="hd-controls">
-      <div class="hd-range" role="group" aria-label="Date range">
-        <button type="button" class="hd-range__btn" data-range="7">7 days</button>
-        <button type="button" class="hd-range__btn hd-range__btn--active" data-range="30">30 days</button>
-        <button type="button" class="hd-range__btn" data-range="90">90 days</button>
-        <button type="button" class="hd-range__btn" data-range="all">All time</button>
+    <div class="page__head">
+      <div>
+        <h1 class="page__title">Overview</h1>
+        <p class="page__sub" id="hdPageSub">Bookings, payouts, and referral links for <span id="hdHotelName">—</span></p>
       </div>
-      <button type="button" class="hd-refresh" id="hdRefresh">Refresh</button>
+      <div class="page__head-actions" id="hdHeaderActions" hidden>
+        <button type="button" class="btn" id="hdRefresh">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+          Refresh
+        </button>
+        <button type="button" class="btn" id="hdAccount">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Account
+        </button>
+        <button type="button" class="btn btn--ghost" id="hdSignout">Sign out</button>
+      </div>
     </div>
 
-    <section class="hd-kpi-grid hd-skeleton" id="hdKpiGrid">
-      <div class="hd-kpi"><span class="hd-kpi__label">Bookings</span><strong class="hd-kpi__value" id="hdBookings">—</strong><span class="hd-kpi__sub" id="hdBookingsSub">—</span></div>
-      <div class="hd-kpi"><span class="hd-kpi__label">Revenue</span><strong class="hd-kpi__value" id="hdRevenue">—</strong><span class="hd-kpi__sub" id="hdRevenueSub">—</span></div>
-      <div class="hd-kpi"><span class="hd-kpi__label">Travelers</span><strong class="hd-kpi__value" id="hdTravelers">—</strong><span class="hd-kpi__sub" id="hdTravelersSub">—</span></div>
-      <div class="hd-kpi"><span class="hd-kpi__label">Estimated commission</span><strong class="hd-kpi__value" id="hdCommission">—</strong><span class="hd-kpi__sub" id="hdCommissionSub">—</span></div>
+    <div class="controls">
+      <div class="range" role="group" aria-label="Date range">
+        <button type="button" class="range__btn hd-range__btn" data-range="7">7 days</button>
+        <button type="button" class="range__btn hd-range__btn hd-range__btn--active range__btn--active" data-range="30">30 days</button>
+        <button type="button" class="range__btn hd-range__btn" data-range="90">90 days</button>
+        <button type="button" class="range__btn hd-range__btn" data-range="all">All time</button>
+      </div>
+    </div>
+
+    <!-- ── KPI tiles ── -->
+    <section class="kpi-grid hd-skeleton" id="hdKpiGrid">
+      <div class="kpi">
+        <div class="kpi__head">
+          <span class="kpi__label">Bookings</span>
+          <span class="kpi__icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg></span>
+        </div>
+        <div class="kpi__value" id="hdBookings">—</div>
+        <div class="kpi__sub" id="hdBookingsSub">—</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi__head">
+          <span class="kpi__label">Revenue</span>
+          <span class="kpi__icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><path d="M16 8H8"/><path d="M16 12H8"/><path d="M13 16H8"/></svg></span>
+        </div>
+        <div class="kpi__value" id="hdRevenue">—</div>
+        <div class="kpi__sub" id="hdRevenueSub">—</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi__head">
+          <span class="kpi__label">Travelers</span>
+          <span class="kpi__icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        </div>
+        <div class="kpi__value" id="hdTravelers">—</div>
+        <div class="kpi__sub" id="hdTravelersSub">—</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi__head">
+          <span class="kpi__label">Commission</span>
+          <span class="kpi__icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+        </div>
+        <div class="kpi__value" id="hdCommission">—</div>
+        <div class="kpi__sub" id="hdCommissionSub">—</div>
+      </div>
     </section>
 
-    <section class="hd-table-wrap">
-      <h2>Bookings</h2>
-      <div class="hd-table-scroll">
-        <table class="hd-table" id="hdTable">
+    <!-- ── Chart panel ── -->
+    <section class="card" id="hdChartSection" hidden>
+      <div class="card__head">
+        <div>
+          <div class="card__title">Commission earned</div>
+          <div class="card__sub" id="hdChartSub">—</div>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <svg class="chart" id="hdChartSvg" viewBox="0 0 720 220" preserveAspectRatio="none" aria-hidden="true"></svg>
+      </div>
+    </section>
+
+    <!-- ── Bookings table ── -->
+    <section class="card" id="hdTableSection">
+      <div class="card__head">
+        <div>
+          <div class="card__title">Bookings</div>
+          <div class="card__sub">Sorted by most recent · click the source cell for the attribution funnel</div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn btn--sm" id="hdFilter">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            Filter
+          </button>
+          <button type="button" class="btn btn--sm" id="hdExport">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export CSV
+          </button>
+        </div>
+      </div>
+      <div class="tbl-scroll">
+        <table class="tbl" id="hdTable">
           <thead>
             <tr>
               <th>Booked</th>
               <th>Tour date</th>
               <th>Tour</th>
               <th>Guest</th>
-              <th class="hd-num">Travelers</th>
-              <th class="hd-num">Amount</th>
-              <th class="hd-num">Commission</th>
+              <th class="num">Travelers</th>
+              <th class="num">Amount</th>
+              <th class="num">Commission</th>
               <th>Source</th>
+              <th>Status</th>
               <th>Confirmation</th>
             </tr>
           </thead>
           <tbody id="hdTableBody"></tbody>
         </table>
       </div>
-      <div class="hd-empty" id="hdEmpty" hidden>
-        <strong>No bookings yet</strong>
-        Bookings will appear here as soon as guests book through your QR code or referral link.
+      <div class="empty" id="hdEmpty" hidden>
+        <div class="empty__title">No bookings yet</div>
+        <div class="empty__body">Bookings will appear here as soon as guests book through your QR code or referral link.</div>
       </div>
     </section>
 
-    <section class="hd-links-section" id="hdLinksSection" hidden>
-      <div class="hd-links-header">
-        <h2>Referral links</h2>
-        <p>Share these short URLs or QR codes with guests. Scans and bookings are tracked automatically.</p>
+    <!-- ── Referral links ── -->
+    <section class="links-section" id="hdLinksSection" hidden>
+      <div class="links-header">
+        <div>
+          <div class="card__title">Referral links</div>
+          <div class="card__sub">Share these short URLs or QR codes with guests. Scans and bookings track automatically.</div>
+        </div>
       </div>
-      <div class="hd-links-grid" id="hdLinksGrid">
-        <!-- Populated by loadReferralLinks() -->
-      </div>
+      <div class="links-grid" id="hdLinksGrid"><!-- populated by loadReferralLinks() --></div>
     </section>
+
   </main>
+
+  <!-- ── Account modal (set / change password) ── -->
+  <div class="modal-backdrop" id="hdAccountModal" hidden>
+    <form class="modal" id="hdAccountForm">
+      <div class="modal__head">
+        <div>
+          <h2 class="modal__title">Account</h2>
+          <p class="modal__sub" id="hdAccountSub">Set a password to sign in faster next time.</p>
+        </div>
+        <button type="button" class="modal__close" id="hdAccountClose" aria-label="Close">×</button>
+      </div>
+
+      <div class="modal__error" id="hdAccountError" hidden></div>
+      <div class="modal__success" id="hdAccountSuccess" hidden></div>
+
+      <div class="field">
+        <label for="hdAccountEmail">Email</label>
+        <input type="email" id="hdAccountEmail" disabled>
+      </div>
+      <div class="field">
+        <label for="hdAccountPassword">New password</label>
+        <input type="password" id="hdAccountPassword" autocomplete="new-password" minlength="8" required>
+      </div>
+      <div class="field">
+        <label for="hdAccountPasswordConfirm">Confirm new password</label>
+        <input type="password" id="hdAccountPasswordConfirm" autocomplete="new-password" minlength="8" required>
+      </div>
+
+      <div class="modal__actions">
+        <button type="button" class="btn" id="hdAccountCancel">Cancel</button>
+        <button type="submit" class="btn btn--primary" id="hdAccountSave">Save password</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── Toast (ephemeral confirmations) ── -->
+  <div class="toast" id="hdToast" hidden role="status" aria-live="polite">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+    <span id="hdToastText"></span>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
   <script type="module">
@@ -679,71 +274,87 @@
     });
 
     var els = {
-      hotelName:     document.getElementById('hdHotelName'),
-      kpiGrid:       document.getElementById('hdKpiGrid'),
-      bookings:      document.getElementById('hdBookings'),
-      bookingsSub:   document.getElementById('hdBookingsSub'),
-      revenue:       document.getElementById('hdRevenue'),
-      revenueSub:    document.getElementById('hdRevenueSub'),
-      travelers:     document.getElementById('hdTravelers'),
-      travelersSub:  document.getElementById('hdTravelersSub'),
-      commission:    document.getElementById('hdCommission'),
-      commissionSub: document.getElementById('hdCommissionSub'),
-      tableBody:     document.getElementById('hdTableBody'),
-      empty:         document.getElementById('hdEmpty'),
-      error:         document.getElementById('hdError'),
-      refresh:       document.getElementById('hdRefresh'),
-      signout:       document.getElementById('hdSignout'),
-      account:       document.getElementById('hdAccount'),
-      headerActions: document.getElementById('hdHeaderActions'),
-      acctModal:        document.getElementById('hdAccountModal'),
-      acctForm:         document.getElementById('hdAccountForm'),
-      acctClose:        document.getElementById('hdAccountClose'),
-      acctCancel:       document.getElementById('hdAccountCancel'),
-      acctSub:          document.getElementById('hdAccountSub'),
-      acctEmail:        document.getElementById('hdAccountEmail'),
-      acctPassword:     document.getElementById('hdAccountPassword'),
-      acctConfirm:      document.getElementById('hdAccountPasswordConfirm'),
-      acctSave:         document.getElementById('hdAccountSave'),
-      acctError:        document.getElementById('hdAccountError'),
-      acctSuccess:      document.getElementById('hdAccountSuccess'),
-      rangeBtns:     document.querySelectorAll('.hd-range__btn'),
+      page:              document.getElementById('hdPage'),
+      hotelName:         document.getElementById('hdHotelName'),
+      brandLetter:       document.getElementById('hdBrandLetter'),
+      pageSub:           document.getElementById('hdPageSub'),
+      kpiGrid:           document.getElementById('hdKpiGrid'),
+      bookings:          document.getElementById('hdBookings'),
+      bookingsSub:       document.getElementById('hdBookingsSub'),
+      revenue:           document.getElementById('hdRevenue'),
+      revenueSub:        document.getElementById('hdRevenueSub'),
+      travelers:         document.getElementById('hdTravelers'),
+      travelersSub:      document.getElementById('hdTravelersSub'),
+      commission:        document.getElementById('hdCommission'),
+      commissionSub:     document.getElementById('hdCommissionSub'),
+      chartSection:      document.getElementById('hdChartSection'),
+      chartSub:          document.getElementById('hdChartSub'),
+      chartSvg:          document.getElementById('hdChartSvg'),
+      tableBody:         document.getElementById('hdTableBody'),
+      empty:             document.getElementById('hdEmpty'),
+      error:             document.getElementById('hdError'),
+      refresh:           document.getElementById('hdRefresh'),
+      signout:           document.getElementById('hdSignout'),
+      account:           document.getElementById('hdAccount'),
+      headerActions:     document.getElementById('hdHeaderActions'),
+      newLink:           document.getElementById('hdNewLink'),
+      filter:            document.getElementById('hdFilter'),
+      exportCsv:         document.getElementById('hdExport'),
+      help:              document.getElementById('hdHelp'),
+      notifs:            document.getElementById('hdNotifs'),
+      settings:          document.getElementById('hdSettings'),
+      search:            document.getElementById('hdTopbarSearch'),
+      setupPill:         document.getElementById('hdSetupPill'),
+      setupLabel:        document.getElementById('hdSetupLabel'),
+      setupRingFill:     document.getElementById('hdSetupRingFill'),
+      acctModal:         document.getElementById('hdAccountModal'),
+      acctForm:          document.getElementById('hdAccountForm'),
+      acctClose:         document.getElementById('hdAccountClose'),
+      acctCancel:        document.getElementById('hdAccountCancel'),
+      acctSub:           document.getElementById('hdAccountSub'),
+      acctEmail:         document.getElementById('hdAccountEmail'),
+      acctPassword:      document.getElementById('hdAccountPassword'),
+      acctConfirm:       document.getElementById('hdAccountPasswordConfirm'),
+      acctSave:          document.getElementById('hdAccountSave'),
+      acctError:         document.getElementById('hdAccountError'),
+      acctSuccess:       document.getElementById('hdAccountSuccess'),
+      toast:             document.getElementById('hdToast'),
+      toastText:         document.getElementById('hdToastText'),
+      rangeBtns:         document.querySelectorAll('.hd-range__btn'),
     };
 
     // ── State ────────────────────────────────────────────────────────
-    // Optional ?hotel=<slug> on the URL is honoured for backward-compat
-    // (old bookmarks, shared links). When present and valid, it scopes
-    // the dashboard to that hotel; otherwise the boot sequence below
-    // resolves the slug from the user's hotel_users row(s).
     var urlHotelSlug = (new URLSearchParams(window.location.search).get('hotel') || '').trim().toLowerCase();
     if (urlHotelSlug && !/^[a-z0-9-]{2,40}$/.test(urlHotelSlug)) urlHotelSlug = '';
     var hotelSlug = urlHotelSlug;
-    var hotelRecord = null;    // Resolved from /partners.json
-    var currentRangeDays = 30; // 7, 30, 90, or 'all'
-    var session = null;        // Supabase session object after auth gate
+    var hotelRecord = null;     // Resolved from /partners.json
+    var currentRangeDays = 30;  // 7, 30, 90, or 'all'
+    var session = null;         // Supabase session object after auth gate
+    var latestRecords = [];     // Cached so we can re-render the chart without re-fetching
+    var setupState = {          // Setup-guide pill checkpoints (recomputed as data arrives)
+      hasAccount:    false,     // has an authenticated session
+      hasHotel:      false,     // is linked to an active hotel
+      hasPassword:   false,     // has set a password (vs. magic-link only)
+      hasReferralLinks: false,  // has at least one short_link issued
+      hasCommission: false,     // hotel has commission_pct set
+    };
 
     // ── Boot: gate on a Supabase session ─────────────────────────────
-    // 1) No session                          → bounce to /dashboard/login/.
-    // 2) Session, no slug from URL           → resolve from hotel_users.
-    //                                          v1 picks first active assignment;
-    //                                          multi-hotel picker is v2.
-    // 3) Session, slug from URL OR resolved  → render. The worker enforces
-    //                                          that the JWT actually has
-    //                                          access to the slug, so a
-    //                                          stale/invalid URL slug just
-    //                                          surfaces as a 403.
     var sessionResp = await supabase.auth.getSession();
     session = sessionResp.data && sessionResp.data.session;
     if (!session) {
       window.location.replace('/login/');
       throw new Error('redirecting to /dashboard/login/');
     }
+    setupState.hasAccount = true;
+    // Heuristic: if the last sign-in was via password, treat the password
+    // checkpoint as done. The post-setup page sets this localStorage flag.
+    try {
+      setupState.hasPassword =
+        localStorage.getItem('horizon-last-signin-mode') === 'password';
+    } catch (e) {}
 
-    // Horizon admins go to /admin/ — they end up here from
-    // /dashboard/setup/'s post-password-save redirect or from a
-    // direct visit. RLS on horizon_admins scopes the select to the
-    // caller's own row, so this returns one row for admins and
-    // none for everyone else.
+    // Horizon admins go to /admin/.
     var adminCheck = await supabase
       .from('horizon_admins')
       .select('id')
@@ -758,20 +369,13 @@
     // Past the redirect gate — safe to reveal the page.
     document.body.style.visibility = 'visible';
 
-    // Strip any leftover access-token hash from the URL bar. Magic-
-    // link and password-recovery flows now land on /dashboard/setup/
-    // first (where the user picks a password) and only forward here
-    // afterwards — at that point the hash is already gone — but
-    // Google OAuth still hands us a hash directly, so the strip is
-    // worth keeping.
+    // Strip any leftover access-token hash from the URL bar.
     if (window.location.hash) {
       history.replaceState(null, '', window.location.pathname + window.location.search);
     }
 
     if (!hotelSlug) {
-      // RLS scopes hotel_users to the user's own rows. v1 takes the
-      // first active assignment; v2 will show a picker when there's
-      // more than one row.
+      // RLS scopes hotel_users to the user's own rows.
       var assignment = await supabase
         .from('hotel_users')
         .select('hotel_id, hotels(code)')
@@ -782,15 +386,12 @@
     }
 
     if (!hotelSlug) {
-      // Locked-out state: drop the dashboard skeleton entirely and
-      // centre the error so it reads as a stand-alone "you need
-      // permission" page rather than a half-loaded dashboard.
-      document.querySelector('.hd-page').classList.add('hd-page--empty');
+      // Locked-out state.
+      els.page.classList.add('page--empty');
       showError('Your account isn’t linked to any active hotel yet. Contact Horizon to get set up.');
       els.headerActions.hidden = false;
+      renderSetupPill();
     } else {
-      // Render the partner directory bits (hotel name in header) from
-      // partners.json, then fetch the bookings via the worker.
       try {
         var partnersRes = await fetch('/partners.json', { cache: 'no-store' });
         var partners = partnersRes.ok ? await partnersRes.json() : null;
@@ -803,16 +404,15 @@
           if (!hotelRecord) {
             showError('Hotel slug "' + hotelSlug + '" is not an active partner. Contact Horizon.');
           } else {
+            setupState.hasHotel = true;
+            setupState.hasCommission = !!(hotelRecord.commission_pct && hotelRecord.commission_pct > 0);
+
             els.hotelName.textContent = hotelRecord.name;
             document.title = hotelRecord.name + ' — Partner dashboard';
-            // Header logo letter follows the hotel name (admin side
-            // does the same with the admin email — see admin/index.html).
-            var __brandLetterEl = document.getElementById('hdBrandLetter');
-            if (__brandLetterEl) {
-              __brandLetterEl.textContent =
-                ((hotelRecord.name || 'H').trim()[0] || 'H').toUpperCase();
-            }
+            els.brandLetter.textContent =
+              ((hotelRecord.name || 'H').trim()[0] || 'H').toUpperCase();
             els.headerActions.hidden = false;
+            renderSetupPill();
             loadBookings();
             loadReferralLinks();
           }
@@ -823,10 +423,37 @@
       }
     }
 
+    // ── Topbar interactions ──────────────────────────────────────────
     els.signout.addEventListener('click', async function () {
       els.signout.disabled = true;
       await supabase.auth.signOut();
       window.location.replace('/login/');
+    });
+
+    // Placeholder actions for chrome that doesn't have backend yet —
+    // each surfaces a toast so the click feels acknowledged.
+    function placeholderToast(label) {
+      return function () { flashToast(label + ' — coming soon'); };
+    }
+    els.newLink.addEventListener('click', placeholderToast('New referral link'));
+    els.help.addEventListener('click',    placeholderToast('Help centre'));
+    els.notifs.addEventListener('click',  placeholderToast('Notifications'));
+    els.settings.addEventListener('click', function () { els.account.click(); }); // gear ≡ account modal
+    els.filter.addEventListener('click',  placeholderToast('Filter bookings'));
+    els.exportCsv.addEventListener('click', placeholderToast('Export CSV'));
+    els.setupPill.addEventListener('click', placeholderToast('Setup guide'));
+
+    // Search ⌘K focus + placeholder submit toast
+    document.addEventListener('keydown', function (e) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        els.search.focus();
+      }
+    });
+    els.search.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && els.search.value.trim()) {
+        flashToast('Search — coming soon');
+      }
     });
 
     // ── Account modal (set / change password) ───────────────────────
@@ -842,9 +469,7 @@
       els.acctModal.hidden = false;
       setTimeout(function () { els.acctPassword.focus(); }, 0);
     }
-    function closeAccount() {
-      els.acctModal.hidden = true;
-    }
+    function closeAccount() { els.acctModal.hidden = true; }
     els.account.addEventListener('click', function () { openAccount(); });
     els.acctClose.addEventListener('click', closeAccount);
     els.acctCancel.addEventListener('click', closeAccount);
@@ -873,13 +498,10 @@
       try {
         var res = await supabase.auth.updateUser({ password: pw });
         if (res.error) throw res.error;
-        // Same as on the setup page — flip the sign-in default so the
-        // login page opens in password mode next visit.
         try { localStorage.setItem('horizon-last-signin-mode', 'password'); } catch (e) {}
-        els.acctSuccess.textContent = 'Password saved. You can sign in with it next time.';
-        els.acctSuccess.hidden = false;
-        els.acctPassword.value = '';
-        els.acctConfirm.value  = '';
+        setupState.hasPassword = true; renderSetupPill();
+        flashToast('Password saved.');
+        closeAccount();
       } catch (err) {
         console.error('updateUser failed', err);
         els.acctError.textContent = err.message || 'Could not save password.';
@@ -890,354 +512,470 @@
       }
     });
 
-      // ── Range buttons ──────────────────────────────────────────────
-      els.rangeBtns.forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          els.rangeBtns.forEach(function (b) { b.classList.remove('hd-range__btn--active'); });
-          btn.classList.add('hd-range__btn--active');
-          var v = btn.getAttribute('data-range');
-          currentRangeDays = v === 'all' ? 'all' : parseInt(v, 10);
-          loadBookings();
+    // ── Range buttons ───────────────────────────────────────────────
+    els.rangeBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        els.rangeBtns.forEach(function (b) {
+          b.classList.remove('hd-range__btn--active');
+          b.classList.remove('range__btn--active');
         });
+        btn.classList.add('hd-range__btn--active');
+        btn.classList.add('range__btn--active');
+        var v = btn.getAttribute('data-range');
+        currentRangeDays = v === 'all' ? 'all' : parseInt(v, 10);
+        loadBookings();
+      });
+    });
+    els.refresh.addEventListener('click', loadBookings);
+
+    // Delegated funnel toggle — survives table re-renders.
+    els.tableBody.addEventListener('click', function (e) {
+      var btn = e.target.closest && e.target.closest('.hd-funnel-toggle');
+      if (!btn) return;
+      var row = document.getElementById('hd-funnel-' + btn.dataset.funnel);
+      if (!row) return;
+      var open = row.hidden;
+      row.hidden = !open;
+      btn.setAttribute('aria-expanded', String(open));
+    });
+
+    // ── Fetch + render ──────────────────────────────────────────────
+    function loadBookings() {
+      var qs = '?hotel=' + encodeURIComponent(hotelSlug);
+      if (currentRangeDays !== 'all') {
+        var to = new Date();
+        var from = new Date();
+        from.setDate(from.getDate() - currentRangeDays + 1);
+        from.setHours(0, 0, 0, 0);
+        qs += '&from=' + encodeURIComponent(from.toISOString()) +
+              '&to='   + encodeURIComponent(to.toISOString());
+      }
+      hideError();
+      els.kpiGrid.classList.add('hd-skeleton');
+      fetch(BOKUN_API_BASE + '/api/dashboard/bookings' + qs, {
+        cache: 'no-store',
+        headers: { Authorization: 'Bearer ' + session.access_token },
+      })
+        .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
+        .then(function (res) {
+          if (!res.ok) throw new Error((res.body && res.body.error) || 'fetch_failed');
+          latestRecords = res.body.records || [];
+          renderKpis(res.body.kpis || { bookings: 0, revenue: 0, travelers: 0 });
+          renderTable(latestRecords);
+          renderChart(latestRecords);
+          els.kpiGrid.classList.remove('hd-skeleton');
+        })
+        .catch(function (err) {
+          console.error('bookings fetch failed', err);
+          showError('Could not load bookings: ' + (err && err.message || 'unknown error'));
+          els.kpiGrid.classList.remove('hd-skeleton');
+        });
+    }
+
+    function renderKpis(kpis) {
+      var commissionPct = (hotelRecord && hotelRecord.commission_pct) || 0;
+      var commission = (kpis.revenue || 0) * commissionPct / 100;
+      var rangeLabel = currentRangeDays === 'all' ? 'all time' : 'last ' + currentRangeDays + ' days';
+
+      els.bookings.textContent     = String(kpis.bookings || 0);
+      els.bookingsSub.textContent  = rangeLabel;
+      els.revenue.textContent      = formatMoney(kpis.revenue || 0);
+      els.revenueSub.textContent   = 'Gross · ' + rangeLabel;
+      els.travelers.textContent    = String(kpis.travelers || 0);
+      els.travelersSub.textContent = rangeLabel;
+      els.commission.textContent   = formatMoney(commission);
+      els.commissionSub.textContent = commissionPct + '% of revenue · paid net-30';
+    }
+
+    function renderTable(records) {
+      els.tableBody.innerHTML = '';
+      if (!records.length) {
+        els.empty.hidden = false;
+        return;
+      }
+      els.empty.hidden = true;
+      var commissionPct = (hotelRecord && hotelRecord.commission_pct) || 0;
+
+      var frag = document.createDocumentFragment();
+      records.forEach(function (r, idx) {
+        var tr = document.createElement('tr');
+        var travelers = (r.adults || 0) + (r.youth || 0) + (r.infants || 0);
+        var commission = (r.amount || 0) * commissionPct / 100;
+        var tps = Array.isArray(r.touchpoints) ? r.touchpoints : [];
+        tr.innerHTML =
+          '<td>' + escapeHtml(formatShortDate(r.created_at)) + '</td>' +
+          '<td>' + escapeHtml(formatTourDate(r.date)) + '</td>' +
+          '<td>' + escapeHtml(r.tour_title || tourTitleFromId(r.tour_id) || '—') + '</td>' +
+          '<td><span class="guest"><span class="avatar">' + escapeHtml(initials(r.lead_name)) + '</span><span>' + escapeHtml(r.lead_name || '—') + '</span></span></td>' +
+          '<td class="num">' + travelers + '</td>' +
+          '<td class="num">' + escapeHtml(r.amount != null ? formatMoney(r.amount) : '—') + '</td>' +
+          '<td class="num">' + escapeHtml(r.amount != null ? formatMoney(commission) : '—') + '</td>' +
+          '<td>' + sourceCell(r, tps, idx) + '</td>' +
+          '<td>' + statusPill(r) + '</td>' +
+          '<td><span class="mono">' + escapeHtml(r.confirmation_code || '—') + '</span></td>';
+        frag.appendChild(tr);
+
+        if (tps.length) {
+          var detail = document.createElement('tr');
+          detail.className = 'hd-funnel-row';
+          detail.id = 'hd-funnel-' + idx;
+          detail.hidden = true;
+          var cell = document.createElement('td');
+          cell.colSpan = 10;
+          cell.innerHTML = funnelDetail(r, tps);
+          detail.appendChild(cell);
+          frag.appendChild(detail);
+        }
+      });
+      els.tableBody.appendChild(frag);
+    }
+
+    // Status pill — current Bokun endpoint returns confirmed bookings
+    // only, so default to "Confirmed". If the API ever exposes a
+    // `status` field with 'cancelled' / 'pending' / 'refunded' / etc.,
+    // map them here. The pill classes are already in dashboard-hotel.css.
+    function statusPill(r) {
+      var status = (r.status || 'confirmed').toLowerCase();
+      var map = {
+        confirmed:  { cls: 'pill--ok',   label: 'Confirmed' },
+        credited:   { cls: 'pill--ok',   label: 'Credited' },
+        pending:    { cls: 'pill--warn', label: 'Pending' },
+        refunded:   { cls: 'pill--info', label: 'Refunded' },
+        cancelled:  { cls: 'pill--bad',  label: 'Cancelled' },
+        failed:     { cls: 'pill--bad',  label: 'Failed' },
+      };
+      var pill = map[status] || map.confirmed;
+      return '<span class="pill ' + pill.cls + '">' + pill.label + '</span>';
+    }
+
+    function initials(name) {
+      var parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+      if (parts.length >= 2) {
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+      }
+      return (name || '?').slice(0, 2).toUpperCase();
+    }
+
+    function sourceCell(r, tps, idx) {
+      var credited = creditedTouch(r, tps);
+      var label = credited ? streamLabel(credited) : '—';
+      if (!tps.length) return escapeHtml(label);
+      return '<button type="button" class="hd-funnel-toggle" ' +
+        'data-funnel="' + idx + '" aria-expanded="false">' +
+        escapeHtml(label) +
+        (tps.length > 1 ? ' <span class="hd-funnel-count">+' +
+          (tps.length - 1) + '</span>' : '') +
+        ' ▾</button>';
+    }
+
+    function creditedTouch(r, tps) {
+      for (var i = 0; i < tps.length; i++) {
+        if (tps[i].is_credited) return tps[i];
+      }
+      if (r.credited_position != null) {
+        for (var j = 0; j < tps.length; j++) {
+          if (tps[j].position === r.credited_position) return tps[j];
+        }
+      }
+      return tps.length ? tps[tps.length - 1] : null;
+    }
+
+    function streamLabel(t) {
+      if (t.stream_type === 'employee') {
+        var nm = t.touch_staff && t.touch_staff.name;
+        return nm ? ('Employee · ' + nm) : 'Employee';
+      }
+      if (t.stream_type === 'placement')  return 'Placement';
+      if (t.stream_type === 'hotel-slug') return 'Hotel card';
+      if (t.stream_type === 'hotel')      return 'Hotel link';
+      return 'Direct';
+    }
+
+    function funnelDetail(r, tps) {
+      var firstTs = tps[0] && tps[0].touched_at
+        ? new Date(tps[0].touched_at).getTime() : null;
+      var bookedTs = r.created_at || null;
+      var lag = (firstTs && bookedTs)
+        ? formatLag(bookedTs - firstTs) : null;
+      var steps = tps.map(function (t, i) {
+        var when = t.touched_at ? formatShortDate(new Date(t.touched_at).getTime()) : '—';
+        return '<li class="hd-funnel-step' +
+          (t.is_credited ? ' hd-funnel-step--credited' : '') + '">' +
+          '<span class="hd-funnel-step__n">' + (i + 1) + '</span>' +
+          '<span class="hd-funnel-step__label">' + escapeHtml(streamLabel(t)) + '</span>' +
+          '<span class="hd-funnel-step__code">' + escapeHtml(t.code || '') + '</span>' +
+          '<span class="hd-funnel-step__when">' + escapeHtml(when) + '</span>' +
+          (t.is_credited ? '<span class="hd-funnel-step__badge">Credited</span>' : '') +
+          '</li>';
+      }).join('');
+      var meta =
+        '<div class="hd-funnel-meta">' +
+        '<span><strong>First touch:</strong> ' +
+        escapeHtml(r.first_touch_code || (tps[0] && tps[0].code) || '—') + '</span>' +
+        (lag ? '<span><strong>Time to book:</strong> ' + escapeHtml(lag) + '</span>' : '') +
+        (r.attribution_policy_used
+          ? '<span><strong>Policy:</strong> ' + escapeHtml(r.attribution_policy_used) + '</span>'
+          : '') +
+        '</div>';
+      return '<div class="hd-funnel"><ol class="hd-funnel-list">' +
+        steps + '</ol>' + meta + '</div>';
+    }
+
+    function formatLag(ms) {
+      if (ms == null || ms < 0) return null;
+      var mins = Math.round(ms / 60000);
+      if (mins < 60) return mins + ' min';
+      var hrs = Math.round(mins / 60);
+      if (hrs < 48) return hrs + ' hr';
+      return Math.round(hrs / 24) + ' days';
+    }
+
+    // ── Commission chart ────────────────────────────────────────────
+    // Pure SVG, no chart lib. Groups booking records by calendar day
+    // and plots the per-day commission (amount × commission_pct/100)
+    // as an area chart. Hides the chart card if there's no data.
+    function renderChart(records) {
+      if (!records || !records.length) { els.chartSection.hidden = true; return; }
+      var pct = (hotelRecord && hotelRecord.commission_pct) || 0;
+      if (pct <= 0) { els.chartSection.hidden = true; return; }
+
+      // Bucket records into daily commission totals over the active range.
+      var days = currentRangeDays === 'all' ? 30 : Math.min(currentRangeDays, 60);
+      var buckets = new Array(days).fill(0);
+      var labels = new Array(days);
+      var today = new Date(); today.setHours(0,0,0,0);
+      for (var i = 0; i < days; i++) {
+        var d = new Date(today); d.setDate(d.getDate() - (days - 1 - i));
+        labels[i] = d.toLocaleString('en-CA', { month: 'short', day: 'numeric' });
+      }
+      records.forEach(function (r) {
+        if (!r.created_at || r.amount == null) return;
+        var d = new Date(r.created_at); d.setHours(0,0,0,0);
+        var diff = Math.round((today - d) / 86400000);
+        var slot = days - 1 - diff;
+        if (slot >= 0 && slot < days) buckets[slot] += r.amount * pct / 100;
       });
 
-      els.refresh.addEventListener('click', loadBookings);
+      var W = 720, H = 220, P = { l: 36, r: 16, t: 16, b: 28 };
+      var max = Math.max.apply(null, buckets) * 1.15;
+      if (max <= 0) { els.chartSection.hidden = true; return; }
 
-      // Delegated funnel toggle — survives table re-renders.
-      els.tableBody.addEventListener('click', function (e) {
-        var btn = e.target.closest && e.target.closest('.hd-funnel-toggle');
-        if (!btn) return;
-        var row = document.getElementById('hd-funnel-' + btn.dataset.funnel);
-        if (!row) return;
-        var open = row.hidden;
-        row.hidden = !open;
-        btn.setAttribute('aria-expanded', String(open));
+      var xs = buckets.map(function (_, i) { return P.l + (i * (W - P.l - P.r)) / (buckets.length - 1); });
+      var ys = buckets.map(function (v)    { return H - P.b - (v / max) * (H - P.t - P.b); });
+      var linePath = xs.map(function (x, i) { return (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + ys[i].toFixed(1); }).join(' ');
+      var areaPath = linePath + ' L' + xs[xs.length - 1].toFixed(1) + ',' + (H - P.b) + ' L' + xs[0].toFixed(1) + ',' + (H - P.b) + ' Z';
+
+      var yTicks = [0, 0.25, 0.5, 0.75, 1].map(function (t) { return Math.round(max * t); });
+      var gridLines = yTicks.map(function (t, i) {
+        var y = (H - P.b - (t / max) * (H - P.t - P.b)).toFixed(1);
+        var tickLabel = t >= 1000 ? '$' + (t / 1000).toFixed(1) + 'k' : '$' + t;
+        return '<line x1="' + P.l + '" x2="' + (W - P.r) + '" y1="' + y + '" y2="' + y + '" stroke="#ECEAF4" stroke-width="1"/>' +
+               '<text x="' + (P.l - 8) + '" y="' + (Number(y) + 4).toFixed(1) + '" text-anchor="end" font-size="11" fill="#807A92" font-family="JetBrains Mono, monospace">' + escapeHtml(tickLabel) + '</text>';
+      }).join('');
+      var step = Math.max(1, Math.ceil(buckets.length / 6));
+      var xLabelEls = labels.map(function (l, i) {
+        if (i % step !== 0) return '';
+        return '<text x="' + xs[i].toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="11" fill="#807A92" font-family="Inter, sans-serif">' + escapeHtml(l) + '</text>';
+      }).join('');
+
+      els.chartSvg.innerHTML =
+        '<defs><linearGradient id="ccArea" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" stop-color="#4F5BFF" stop-opacity="0.18"/>' +
+        '<stop offset="100%" stop-color="#4F5BFF" stop-opacity="0"/>' +
+        '</linearGradient></defs>' +
+        gridLines +
+        xLabelEls +
+        '<path d="' + areaPath + '" fill="url(#ccArea)"/>' +
+        '<path d="' + linePath + '" fill="none" stroke="#4F5BFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '<circle cx="' + xs[xs.length - 1].toFixed(1) + '" cy="' + ys[ys.length - 1].toFixed(1) + '" r="4" fill="#fff" stroke="#4F5BFF" stroke-width="2"/>';
+
+      var total = buckets.reduce(function (s, v) { return s + v; }, 0);
+      els.chartSub.textContent =
+        formatMoney(total) + ' · ' +
+        (currentRangeDays === 'all' ? 'last 30 days' : 'last ' + currentRangeDays + ' days');
+      els.chartSection.hidden = false;
+    }
+
+    // ── Setup-guide pill ────────────────────────────────────────────
+    function renderSetupPill() {
+      var checkpoints = [
+        setupState.hasAccount,
+        setupState.hasHotel,
+        setupState.hasPassword,
+        setupState.hasReferralLinks,
+        setupState.hasCommission,
+      ];
+      var total = checkpoints.length;
+      var done  = checkpoints.filter(Boolean).length;
+      if (done >= total) { els.setupPill.hidden = true; return; }
+      var C = 2 * Math.PI * 7;
+      els.setupRingFill.setAttribute('stroke-dasharray', String(C));
+      els.setupRingFill.setAttribute('stroke-dashoffset', String(C * (1 - done / total)));
+      els.setupLabel.textContent = 'Complete profile · ' + done + '/' + total;
+      els.setupPill.hidden = false;
+    }
+
+    // ── Helpers ─────────────────────────────────────────────────────
+    function showError(msg) {
+      els.error.textContent = msg;
+      els.error.hidden = false;
+    }
+    function hideError() {
+      els.error.hidden = true;
+      els.error.textContent = '';
+    }
+    function formatShortDate(ms) {
+      if (!ms) return '—';
+      var d = new Date(ms);
+      var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+    }
+    function formatTourDate(ymd) {
+      if (!ymd || !/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return '—';
+      var p = ymd.split('-').map(Number);
+      var d = new Date(p[0], p[1] - 1, p[2]);
+      var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return months[d.getMonth()] + ' ' + d.getDate();
+    }
+    function formatMoney(n) {
+      return 'CA$' + (Math.round(n * 100) / 100).toFixed(2);
+    }
+    function tourTitleFromId(id) {
+      if (id == 1162721) return 'Banff Hidden Gem Canoe Tour';
+      return null;
+    }
+    function escapeHtml(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) {
+        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m];
       });
+    }
 
-      // ── Fetch + render ─────────────────────────────────────────────
-      function loadBookings() {
-        var qs = '?hotel=' + encodeURIComponent(hotelSlug);
-        if (currentRangeDays !== 'all') {
-          // Compute bounds as instants (ISO timestamps) rather than
-          // YYYY-MM-DD dates. The worker's filter compares against
-          // `created_at` (timestamptz, UTC) — sending a date-only `to`
-          // would clip bookings made late evening in local time which
-          // land on the next-day UTC boundary.
-          var to = new Date();
-          var from = new Date();
-          from.setDate(from.getDate() - currentRangeDays + 1);
-          from.setHours(0, 0, 0, 0);
-          qs += '&from=' + encodeURIComponent(from.toISOString()) +
-                '&to='   + encodeURIComponent(to.toISOString());
-        }
-        hideError();
-        els.kpiGrid.classList.add('hd-skeleton');
-        fetch(BOKUN_API_BASE + '/api/dashboard/bookings' + qs, {
-          cache: 'no-store',
-          headers: { Authorization: 'Bearer ' + session.access_token },
-        })
-          .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
-          .then(function (res) {
-            if (!res.ok) throw new Error((res.body && res.body.error) || 'fetch_failed');
-            renderKpis(res.body.kpis || { bookings: 0, revenue: 0, travelers: 0 });
-            renderTable(res.body.records || []);
-            els.kpiGrid.classList.remove('hd-skeleton');
-          })
-          .catch(function (err) {
-            console.error('bookings fetch failed', err);
-            showError('Could not load bookings: ' + (err && err.message || 'unknown error'));
-            els.kpiGrid.classList.remove('hd-skeleton');
+    var toastTimer = null;
+    function flashToast(msg) {
+      els.toastText.textContent = msg;
+      els.toast.hidden = false;
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { els.toast.hidden = true; }, 2200);
+    }
+
+    // ── Referral Links ────────────────────────────────────────────
+    // QR brand colour migrated to v1.3 Horizon Blue (#4F5BFF) —
+    // matches --action-primary-default. If the colour ever changes,
+    // update BOTH the CSS token AND this constant.
+    var HORIZON_BRAND_HEX = '#4F5BFF';
+    var HORIZON_LOGO_URI = 'data:image/svg+xml,' +
+      encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36">' +
+        '<rect width="36" height="36" rx="8" fill="' + HORIZON_BRAND_HEX + '"/>' +
+        '<path d="M13 7v22M13 18c0-6 12-6 12 0v11"' +
+        ' stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>' +
+        '</svg>'
+      );
+
+    function makePartnerQRInstance(url, size) {
+      if (typeof QRCodeStyling === 'undefined') return null;
+      return new QRCodeStyling({
+        width: size, height: size, type: 'canvas',
+        data: url, image: HORIZON_LOGO_URI,
+        dotsOptions:          { color: HORIZON_BRAND_HEX, type: 'rounded' },
+        cornersSquareOptions: { color: HORIZON_BRAND_HEX, type: 'extra-rounded' },
+        cornersDotOptions:    { color: HORIZON_BRAND_HEX, type: 'dot' },
+        backgroundOptions:    { color: '#ffffff' },
+        imageOptions:         { crossOrigin: 'anonymous', margin: 4, imageSize: 0.28 },
+      });
+    }
+
+    function downloadPartnerQR(url, filename) {
+      var qr = makePartnerQRInstance(url, 1024);
+      if (!qr) { flashToast('QR library not loaded — try again in a moment.'); return; }
+      qr.download({ name: filename || 'horizon-qr', extension: 'png' });
+    }
+
+    function linkDisplayLabel(link) {
+      if (link.label) return link.label;
+      if (link.link_type === 'hotel') return 'Hotel link';
+      if (link.link_type === 'staff') {
+        var name = link.staff_member && link.staff_member.name;
+        return name ? name + "'s link" : 'Staff link';
+      }
+      return 'Campaign link';
+    }
+
+    function loadReferralLinks() {
+      var section = document.getElementById('hdLinksSection');
+      var grid    = document.getElementById('hdLinksGrid');
+      if (!section || !grid) return;
+
+      fetch(BOKUN_API_BASE + '/api/dashboard/hotel-links?hotel=' + encodeURIComponent(hotelSlug), {
+        cache: 'no-store',
+        headers: { Authorization: 'Bearer ' + session.access_token },
+      })
+        .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
+        .then(function (res) {
+          if (!res.ok) throw new Error((res.body && res.body.error) || 'fetch_failed');
+          var links = res.body.short_links || [];
+          if (!links.length) return; // section stays hidden when no links yet
+          setupState.hasReferralLinks = true; renderSetupPill();
+          grid.innerHTML = '';
+          links.forEach(function (link) {
+            var card = document.createElement('div');
+            card.className = 'link-card';
+            var label   = linkDisplayLabel(link);
+            var url     = link.short_url || link.target_url || '';
+            var clicks  = link.click_count_cached || 0;
+            var slug    = url.replace(/^https?:\/\/[^/]+\//, '').replace(/[^a-z0-9-]/gi, '-');
+
+            // QR canvas container
+            var qrWrap = document.createElement('div');
+            qrWrap.className = 'link-card__qr';
+            var qrInst = makePartnerQRInstance(url, 140);
+            if (qrInst) qrInst.append(qrWrap);
+
+            // Card body
+            var body = document.createElement('div');
+            body.innerHTML =
+              '<div class="link-card__label">' + escapeHtml(label) + '</div>' +
+              '<button type="button" class="hd-copy-url" data-copy="' + escapeHtml(url) + '" title="Copy link">' +
+                '<span class="hd-link-card__url-text">' + escapeHtml(url) + '</span>' +
+                '<svg class="hd-link-card__copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
+              '</button>' +
+              '<div class="hd-link-card__meta">' +
+                '<span class="hd-link-card__clicks">' + clicks + ' scan' + (clicks === 1 ? '' : 's') + '</span>' +
+                '<button type="button" class="hd-link-card__dl" data-dl-url="' + escapeHtml(url) + '" data-dl-name="horizon-qr-' + escapeHtml(slug) + '">Download QR</button>' +
+              '</div>';
+
+            card.appendChild(qrWrap);
+            card.appendChild(body);
+            grid.appendChild(card);
           });
-      }
 
-      function renderKpis(kpis) {
-        var commissionPct = (hotelRecord && hotelRecord.commission_pct) || 0;
-        var commission = (kpis.revenue || 0) * commissionPct / 100;
-        var rangeLabel = currentRangeDays === 'all' ? 'all time' : 'last ' + currentRangeDays + ' days';
-
-        els.bookings.textContent     = String(kpis.bookings || 0);
-        els.bookingsSub.textContent  = rangeLabel;
-        els.revenue.textContent      = formatMoney(kpis.revenue || 0);
-        els.revenueSub.textContent   = rangeLabel;
-        els.travelers.textContent    = String(kpis.travelers || 0);
-        els.travelersSub.textContent = rangeLabel;
-        els.commission.textContent   = formatMoney(commission);
-        els.commissionSub.textContent = commissionPct + '% of revenue';
-      }
-
-      function renderTable(records) {
-        els.tableBody.innerHTML = '';
-        if (!records.length) {
-          els.empty.hidden = false;
-          return;
-        }
-        els.empty.hidden = true;
-        var commissionPct = (hotelRecord && hotelRecord.commission_pct) || 0;
-
-        var frag = document.createDocumentFragment();
-        records.forEach(function (r, idx) {
-          var tr = document.createElement('tr');
-          var travelers = (r.adults || 0) + (r.youth || 0) + (r.infants || 0);
-          var commission = (r.amount || 0) * commissionPct / 100;
-          var tps = Array.isArray(r.touchpoints) ? r.touchpoints : [];
-          tr.innerHTML =
-            '<td>' + escapeHtml(formatShortDate(r.created_at)) + '</td>' +
-            '<td>' + escapeHtml(formatTourDate(r.date)) + '</td>' +
-            '<td>' + escapeHtml(r.tour_title || tourTitleFromId(r.tour_id) || '—') + '</td>' +
-            '<td>' + escapeHtml(r.lead_name || '—') + '</td>' +
-            '<td class="hd-num">' + travelers + '</td>' +
-            '<td class="hd-num">' + escapeHtml(r.amount != null ? formatMoney(r.amount) : '—') + '</td>' +
-            '<td class="hd-num">' + escapeHtml(r.amount != null ? formatMoney(commission) : '—') + '</td>' +
-            '<td>' + sourceCell(r, tps, idx) + '</td>' +
-            '<td><span class="hd-table__code">' + escapeHtml(r.confirmation_code || '—') + '</span></td>';
-          frag.appendChild(tr);
-
-          if (tps.length) {
-            var detail = document.createElement('tr');
-            detail.className = 'hd-funnel-row';
-            detail.id = 'hd-funnel-' + idx;
-            detail.hidden = true;
-            var cell = document.createElement('td');
-            cell.colSpan = 9;
-            cell.innerHTML = funnelDetail(r, tps);
-            detail.appendChild(cell);
-            frag.appendChild(detail);
-          }
-        });
-        els.tableBody.appendChild(frag);
-      }
-
-      // Credited touch summary + a toggle to reveal the full funnel.
-      function sourceCell(r, tps, idx) {
-        var credited = creditedTouch(r, tps);
-        var label = credited ? streamLabel(credited) : '—';
-        if (!tps.length) return escapeHtml(label);
-        return '<button type="button" class="hd-funnel-toggle" ' +
-          'data-funnel="' + idx + '" aria-expanded="false">' +
-          escapeHtml(label) +
-          (tps.length > 1 ? ' <span class="hd-funnel-count">+' +
-            (tps.length - 1) + '</span>' : '') +
-          ' ▾</button>';
-      }
-
-      function creditedTouch(r, tps) {
-        for (var i = 0; i < tps.length; i++) {
-          if (tps[i].is_credited) return tps[i];
-        }
-        if (r.credited_position != null) {
-          for (var j = 0; j < tps.length; j++) {
-            if (tps[j].position === r.credited_position) return tps[j];
-          }
-        }
-        return tps.length ? tps[tps.length - 1] : null;
-      }
-
-      function streamLabel(t) {
-        if (t.stream_type === 'employee') {
-          var nm = t.touch_staff && t.touch_staff.name;
-          return nm ? ('Employee · ' + nm) : 'Employee';
-        }
-        if (t.stream_type === 'placement') return 'Placement';
-        if (t.stream_type === 'hotel-slug') return 'Hotel card';
-        if (t.stream_type === 'hotel') return 'Hotel link';
-        return 'Direct';
-      }
-
-      function funnelDetail(r, tps) {
-        var firstTs = tps[0] && tps[0].touched_at
-          ? new Date(tps[0].touched_at).getTime() : null;
-        var bookedTs = r.created_at || null;
-        var lag = (firstTs && bookedTs)
-          ? formatLag(bookedTs - firstTs) : null;
-        var steps = tps.map(function (t, i) {
-          var when = t.touched_at ? formatShortDate(new Date(t.touched_at).getTime()) : '—';
-          return '<li class="hd-funnel-step' +
-            (t.is_credited ? ' hd-funnel-step--credited' : '') + '">' +
-            '<span class="hd-funnel-step__n">' + (i + 1) + '</span>' +
-            '<span class="hd-funnel-step__label">' + escapeHtml(streamLabel(t)) + '</span>' +
-            '<span class="hd-funnel-step__code">' + escapeHtml(t.code || '') + '</span>' +
-            '<span class="hd-funnel-step__when">' + escapeHtml(when) + '</span>' +
-            (t.is_credited ? '<span class="hd-funnel-step__badge">Credited</span>' : '') +
-            '</li>';
-        }).join('');
-        var meta =
-          '<div class="hd-funnel-meta">' +
-          '<span><strong>First touch:</strong> ' +
-          escapeHtml(r.first_touch_code || (tps[0] && tps[0].code) || '—') + '</span>' +
-          (lag ? '<span><strong>Time to book:</strong> ' + escapeHtml(lag) + '</span>' : '') +
-          (r.attribution_policy_used
-            ? '<span><strong>Policy:</strong> ' + escapeHtml(r.attribution_policy_used) + '</span>'
-            : '') +
-          '</div>';
-        return '<div class="hd-funnel"><ol class="hd-funnel-list">' +
-          steps + '</ol>' + meta + '</div>';
-      }
-
-      function formatLag(ms) {
-        if (ms == null || ms < 0) return null;
-        var mins = Math.round(ms / 60000);
-        if (mins < 60) return mins + ' min';
-        var hrs = Math.round(mins / 60);
-        if (hrs < 48) return hrs + ' hr';
-        return Math.round(hrs / 24) + ' days';
-      }
-
-      // ── Helpers ────────────────────────────────────────────────────
-      function showError(msg) {
-        els.error.textContent = msg;
-        els.error.hidden = false;
-      }
-      function hideError() {
-        els.error.hidden = true;
-        els.error.textContent = '';
-      }
-      function ymd(d) {
-        return d.getFullYear() + '-' +
-          String(d.getMonth() + 1).padStart(2, '0') + '-' +
-          String(d.getDate()).padStart(2, '0');
-      }
-      function formatShortDate(ms) {
-        if (!ms) return '—';
-        var d = new Date(ms);
-        var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-        return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
-      }
-      function formatTourDate(ymd) {
-        if (!ymd || !/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return '—';
-        var p = ymd.split('-').map(Number);
-        var d = new Date(p[0], p[1] - 1, p[2]);
-        var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-        return months[d.getMonth()] + ' ' + d.getDate();
-      }
-      function formatMoney(n) {
-        return 'CA$' + (Math.round(n * 100) / 100).toFixed(2);
-      }
-      function tourTitleFromId(id) {
-        if (id == 1162721) return 'Banff Hidden Gem Canoe Tour';
-        return null;
-      }
-      function escapeHtml(s) {
-        return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) {
-          return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m];
-        });
-      }
-
-      // ── Referral Links ────────────────────────────────────────────
-      // QR brand colour migrated to v1.3 Horizon Blue (#4F5BFF) —
-      // matches --action-primary-default. If the colour ever needs to
-      // change, update both the CSS token AND this constant.
-      var HORIZON_BRAND_HEX = '#4F5BFF';
-      var HORIZON_LOGO_URI = 'data:image/svg+xml,' +
-        encodeURIComponent(
-          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36">' +
-          '<rect width="36" height="36" rx="8" fill="' + HORIZON_BRAND_HEX + '"/>' +
-          '<path d="M13 7v22M13 18c0-6 12-6 12 0v11"' +
-          ' stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>' +
-          '</svg>'
-        );
-
-      function makePartnerQRInstance(url, size) {
-        if (typeof QRCodeStyling === 'undefined') return null;
-        return new QRCodeStyling({
-          width: size, height: size, type: 'canvas',
-          data: url, image: HORIZON_LOGO_URI,
-          dotsOptions: { color: HORIZON_BRAND_HEX, type: 'rounded' },
-          cornersSquareOptions: { type: 'extra-rounded', color: HORIZON_BRAND_HEX },
-          cornersDotOptions: { type: 'dot', color: HORIZON_BRAND_HEX },
-          backgroundOptions: { color: '#ffffff' },
-          imageOptions: { crossOrigin: 'anonymous', margin: 4, imageSize: 0.28 },
-        });
-      }
-
-      function downloadPartnerQR(url, filename) {
-        var qr = makePartnerQRInstance(url, 1024);
-        if (!qr) { alert('QR library not loaded — please try again in a moment.'); return; }
-        qr.download({ name: filename || 'horizon-qr', extension: 'png' });
-      }
-
-      function linkDisplayLabel(link) {
-        if (link.label) return link.label;
-        if (link.link_type === 'hotel') return 'Hotel link';
-        if (link.link_type === 'staff') {
-          var name = link.staff_member && link.staff_member.name;
-          return name ? name + "'s link" : 'Staff link';
-        }
-        return 'Campaign link';
-      }
-
-      function loadReferralLinks() {
-        var section = document.getElementById('hdLinksSection');
-        var grid    = document.getElementById('hdLinksGrid');
-        if (!section || !grid) return;
-
-        fetch(BOKUN_API_BASE + '/api/dashboard/hotel-links?hotel=' + encodeURIComponent(hotelSlug), {
-          cache: 'no-store',
-          headers: { Authorization: 'Bearer ' + session.access_token },
-        })
-          .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
-          .then(function (res) {
-            if (!res.ok) throw new Error((res.body && res.body.error) || 'fetch_failed');
-            var links = res.body.short_links || [];
-            if (!links.length) return; // section stays hidden when no links yet
-            grid.innerHTML = '';
-            links.forEach(function (link) {
-              var card = document.createElement('div');
-              card.className = 'hd-link-card';
-              var label   = linkDisplayLabel(link);
-              var url     = link.short_url || link.target_url || '';
-              var clicks  = link.click_count_cached || 0;
-              var slug    = url.replace(/^https?:\/\/[^/]+\//, '').replace(/[^a-z0-9-]/gi, '-');
-
-              // QR canvas container
-              var qrWrap = document.createElement('div');
-              qrWrap.className = 'hd-link-card__qr';
-              var qrInst = makePartnerQRInstance(url, 160);
-              if (qrInst) qrInst.append(qrWrap);
-
-              // Card body
-              var body = document.createElement('div');
-              body.className = 'hd-link-card__body';
-              body.innerHTML =
-                '<div class="hd-link-card__label">' + escapeHtml(label) + '</div>' +
-                '<button type="button" class="hd-link-card__url hd-copy-url" data-copy="' + escapeHtml(url) + '" title="Copy link">' +
-                  '<span class="hd-link-card__url-text">' + escapeHtml(url) + '</span>' +
-                  '<svg class="hd-link-card__copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
-                '</button>' +
-                '<div class="hd-link-card__meta">' +
-                  '<span class="hd-link-card__clicks">' + clicks + ' scan' + (clicks === 1 ? '' : 's') + '</span>' +
-                  '<button type="button" class="hd-link-card__dl" data-dl-url="' + escapeHtml(url) + '" data-dl-name="horizon-qr-' + escapeHtml(slug) + '">Download QR</button>' +
-                '</div>';
-
-              card.appendChild(qrWrap);
-              card.appendChild(body);
-              grid.appendChild(card);
+          // Wire copy buttons (delegated → toast)
+          grid.querySelectorAll('.hd-copy-url').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              var txt = btn.dataset.copy;
+              if (!txt) return;
+              if (navigator.clipboard) {
+                navigator.clipboard.writeText(txt)
+                  .then(function () { flashToast('Copied ' + txt); })
+                  .catch(function () { flashToast('Could not copy — select manually.'); });
+              } else { flashToast('Copied ' + txt); }
             });
-
-            // Wire copy buttons
-            grid.querySelectorAll('.hd-copy-url').forEach(function (btn) {
-              btn.addEventListener('click', function () {
-                var txt = btn.dataset.copy;
-                if (!txt) return;
-                navigator.clipboard.writeText(txt).then(function () {
-                  var orig = btn.querySelector('.hd-link-card__url-text');
-                  if (orig) { orig.textContent = 'Copied!'; setTimeout(function () { orig.textContent = txt; }, 1500); }
-                }).catch(function () {});
-              });
-            });
-            // Wire download buttons
-            grid.querySelectorAll('[data-dl-url]').forEach(function (btn) {
-              btn.addEventListener('click', function () {
-                downloadPartnerQR(btn.dataset.dlUrl, btn.dataset.dlName);
-              });
-            });
-
-            section.hidden = false;
-          })
-          .catch(function (err) {
-            // Non-fatal: links section simply stays hidden on error.
-            console.warn('hotel-links fetch failed', err);
           });
-      }
+          // Wire download buttons
+          grid.querySelectorAll('[data-dl-url]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              downloadPartnerQR(btn.dataset.dlUrl, btn.dataset.dlName);
+              flashToast('Downloading QR · ' + btn.dataset.dlName + '.png');
+            });
+          });
+
+          section.hidden = false;
+        })
+        .catch(function (err) {
+          // Non-fatal: links section simply stays hidden on error.
+          console.warn('hotel-links fetch failed', err);
+        });
+    }
   </script>
 </body>
 </html>
