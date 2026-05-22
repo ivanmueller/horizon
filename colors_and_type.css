@@ -40,22 +40,22 @@
 
 :root {
   /* ── Brand anchors ─────────────────────────────────────── */
-  --color-brand-horizon-violet:  #4F5BFF;
+  --color-brand-horizon-blue:  #4F5BFF;
   --color-brand-marketing-vivid: #4F5BFF;
   --color-brand-aurora:          #FF8A3D;
   --color-brand-obsidian:        #0E0E14;
   --color-brand-cloud:           #FAFAFC;
 
   /* ── Violet ramp — primary brand ─────────────────────── */
-  --color-violet-50:   #EEF0FF;
-  --color-violet-100:  #DDE2FF;
-  --color-violet-200:  #BFC6FF;
-  --color-violet-300:  #95A0FF;
-  --color-violet-400:  #7281FF;
-  --color-violet-500:  #4F5BFF;
-  --color-violet-600:  #3543E6;  /* anchor */
-  --color-violet-700:  #2530BB;
-  --color-violet-800:  #1A2289;
+  --color-blue-50:   #EEF0FF;
+  --color-blue-100:  #DDE2FF;
+  --color-blue-200:  #BFC6FF;
+  --color-blue-300:  #95A0FF;
+  --color-blue-400:  #7281FF;
+  --color-blue-500:  #4F5BFF;
+  --color-blue-600:  #3543E6;  /* anchor */
+  --color-blue-700:  #2530BB;
+  --color-blue-800:  #1A2289;
 
   /* ── Neutral ramp (violet-tinted) ───────────────────── */
   --color-neutral-50:   #FAFAFC;
@@ -102,8 +102,8 @@
   --bg-subtle:       var(--color-neutral-100);
   --bg-muted:        var(--color-neutral-200);
   --bg-inverse:      var(--color-neutral-900);
-  --bg-brand-subtle: var(--color-violet-50);
-  --bg-brand-muted:  var(--color-violet-100);
+  --bg-brand-subtle: var(--color-blue-50);
+  --bg-brand-muted:  var(--color-blue-100);
   --bg-overlay:      rgba(14, 14, 20, 0.40);
 
   /* ── Semantic — text ────────────────────────────────── */
@@ -112,7 +112,7 @@
   --text-secondary: var(--color-neutral-500);
   --text-tertiary:  var(--color-neutral-400);
   --text-inverse:   var(--color-neutral-50);
-  --text-brand:     var(--color-violet-500);
+  --text-brand:     var(--color-blue-500);
   --text-success:   var(--color-success-700);
   --text-warning:   var(--color-warning-700);
   --text-danger:    var(--color-danger-700);
@@ -122,13 +122,13 @@
   --border-default: var(--color-neutral-300);
   --border-subtle:  var(--color-neutral-200);
   --border-strong:  var(--color-neutral-400);
-  --border-brand:   var(--color-violet-500);
+  --border-brand:   var(--color-blue-500);
 
   /* ── Semantic — action ──────────────────────────────── */
-  --action-primary-default:  var(--color-violet-500);
-  --action-primary-hover:    var(--color-violet-600);
-  --action-primary-pressed:  var(--color-violet-700);
-  --action-primary-disabled: var(--color-violet-200);
+  --action-primary-default:  var(--color-blue-500);
+  --action-primary-hover:    var(--color-blue-600);
+  --action-primary-pressed:  var(--color-blue-700);
+  --action-primary-disabled: var(--color-blue-200);
 
   --action-secondary-default: #FFFFFF;
   --action-secondary-hover:   var(--color-neutral-100);

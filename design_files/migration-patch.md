@@ -16,7 +16,7 @@ each branch.
 
 ## Branch 1 — Token shift (`css_new/horizon-connect-tokens.css`)
 
-Horizon Violet anchors at `--color-violet-500` instead of `-600`. Page
+Horizon Violet anchors at `--color-blue-500` instead of `-600`. Page
 background flips to pure `#FFFFFF`. Focus ring retints. Every
 component that reads `--action-primary-default`, `--text-brand`,
 `--bg-page`, `--shadow-focus-ring` updates automatically.
@@ -31,26 +31,26 @@ component that reads `--action-primary-default`, `--text-brand`,
 
 ```diff
    /* Text */
--  --text-brand:      var(--color-violet-600);
-+  --text-brand:      var(--color-violet-500);
+-  --text-brand:      var(--color-blue-600);
++  --text-brand:      var(--color-blue-500);
 ```
 
 ```diff
    /* Borders */
--  --border-brand:    var(--color-violet-600);
-+  --border-brand:    var(--color-violet-500);
+-  --border-brand:    var(--color-blue-600);
++  --border-brand:    var(--color-blue-500);
 ```
 
 ```diff
    /* Action — primary */
--  --action-primary-default:  var(--color-violet-600);
--  --action-primary-hover:    var(--color-violet-700);
--  --action-primary-pressed:  var(--color-violet-800);
--  --action-primary-disabled: var(--color-violet-300);
-+  --action-primary-default:  var(--color-violet-500);
-+  --action-primary-hover:    var(--color-violet-600);
-+  --action-primary-pressed:  var(--color-violet-700);
-+  --action-primary-disabled: var(--color-violet-200);
+-  --action-primary-default:  var(--color-blue-600);
+-  --action-primary-hover:    var(--color-blue-700);
+-  --action-primary-pressed:  var(--color-blue-800);
+-  --action-primary-disabled: var(--color-blue-300);
++  --action-primary-default:  var(--color-blue-500);
++  --action-primary-hover:    var(--color-blue-600);
++  --action-primary-pressed:  var(--color-blue-700);
++  --action-primary-disabled: var(--color-blue-200);
 ```
 
 ```diff
@@ -243,8 +243,8 @@ Auto-hides when done.
 .hd-setup-pill:hover { background: var(--bg-subtle); }
 .hd-setup-pill__ring { position: relative; width: 16px; height: 16px; }
 .hd-setup-pill__ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-.hd-setup-pill__ring circle.t { stroke: var(--color-violet-100); }
-.hd-setup-pill__ring circle.f { stroke: var(--color-violet-500); transition: stroke-dashoffset var(--transition-base); }
+.hd-setup-pill__ring circle.t { stroke: var(--color-blue-100); }
+.hd-setup-pill__ring circle.f { stroke: var(--color-blue-500); transition: stroke-dashoffset var(--transition-base); }
 ```
 
 ### JS — wherever the partner dashboard knows its setup state

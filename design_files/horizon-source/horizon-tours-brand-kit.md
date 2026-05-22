@@ -113,7 +113,7 @@ The reverse mirrors: Aurora amber appears in Connect's system at ≤2% pixel cov
 
 The Connect files supply the architecture. The Tours file overrides specific tokens. Components in either project read `--action-primary-default` (or `--text-primary`, etc.) and automatically get the right brand value depending on which file is imported last.
 
-If you're building a unified component library that serves both products, components should reference semantic tokens only (`--action-primary-default`) and never primitives (`--color-violet-600` or `--color-amber-600`). The brand the component renders in is determined by which token file is loaded — the component itself stays brand-agnostic. This is exactly how Material 3 themes, Radix theming, and Shopify Polaris multi-brand work.
+If you're building a unified component library that serves both products, components should reference semantic tokens only (`--action-primary-default`) and never primitives (`--color-blue-600` or `--color-amber-600`). The brand the component renders in is determined by which token file is loaded — the component itself stays brand-agnostic. This is exactly how Material 3 themes, Radix theming, and Shopify Polaris multi-brand work.
 
 ---
 

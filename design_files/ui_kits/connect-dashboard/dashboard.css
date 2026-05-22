@@ -40,7 +40,7 @@ button, a, input, select, textarea, [role="button"] {
 }
 .sb__brand-mark {
   width: 28px; height: 28px; border-radius: 7px;
-  background: var(--color-violet-600);
+  background: var(--color-blue-600);
   display: inline-flex; align-items: center; justify-content: center;
 }
 .sb__brand-name {
@@ -94,8 +94,8 @@ button, a, input, select, textarea, [role="button"] {
 }
 .sb__avatar {
   width: 28px; height: 28px; border-radius: 50%;
-  background: var(--color-violet-100);
-  color: var(--color-violet-700);
+  background: var(--color-blue-100);
+  color: var(--color-blue-700);
   display: inline-flex; align-items: center; justify-content: center;
   font: 500 12px var(--font-sans);
   flex: none;
@@ -174,8 +174,8 @@ button, a, input, select, textarea, [role="button"] {
 .topbar__setup:hover { background: var(--bg-subtle); }
 .topbar__setup-ring { position: relative; width: 16px; height: 16px; }
 .topbar__setup-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-.topbar__setup-ring circle.t { stroke: var(--color-violet-100); }
-.topbar__setup-ring circle.f { stroke: var(--color-violet-500); transition: stroke-dashoffset var(--transition-base); }
+.topbar__setup-ring circle.t { stroke: var(--color-blue-100); }
+.topbar__setup-ring circle.f { stroke: var(--color-blue-500); transition: stroke-dashoffset var(--transition-base); }
 
 .kbd {
   font: 500 11px/1 var(--font-mono);
@@ -215,7 +215,7 @@ button, a, input, select, textarea, [role="button"] {
 }
 .range__btn:hover { color: var(--text-primary); }
 .range__btn--active {
-  background: var(--color-violet-600);
+  background: var(--color-blue-600);
   color: #fff;
 }
 .range__btn--active:hover { color: #fff; }
@@ -339,7 +339,7 @@ button, a, input, select, textarea, [role="button"] {
 .tbl .avatar {
   width: 22px; height: 22px; border-radius: 50%;
   background: var(--bg-brand-muted);
-  color: var(--color-violet-700);
+  color: var(--color-blue-700);
   display: inline-flex; align-items: center; justify-content: center;
   font: 500 10px var(--font-sans);
 }

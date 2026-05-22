@@ -40,7 +40,7 @@ function QrGlyph() {
 function Spark({ points }) {
   return (
     <svg className="kpi__spark" viewBox="0 0 200 32" preserveAspectRatio="none" aria-hidden="true">
-      <polyline fill="none" stroke="var(--color-violet-500)" strokeWidth="1.5" points={points} />
+      <polyline fill="none" stroke="var(--color-blue-500)" strokeWidth="1.5" points={points} />
     </svg>
   );
 }
@@ -211,11 +211,11 @@ function PlacementLightbox({ placement, hotel, onClose }) {
                     <text x="60"  y="232">Apr 22</text><text x="200" y="232">Apr 27</text><text x="340" y="232">May 02</text>
                     <text x="480" y="232">May 07</text><text x="620" y="232">May 12</text><text x="760" y="232">May 17</text>
                   </g>
-                  <path d="M40,180 L68,172 L96,168 L124,160 L152,165 L180,150 L208,142 L236,148 L264,135 L292,128 L320,140 L348,118 L376,122 L404,108 L432,114 L460,98 L488,105 L516,90 L544,95 L572,82 L600,88 L628,72 L656,80 L684,65 L712,70 L740,55 L768,62 L796,48 L824,52 L860,42 L860,210 L40,210 Z" fill="var(--color-violet-500)" fillOpacity="0.08" />
-                  <path d="M40,180 L68,172 L96,168 L124,160 L152,165 L180,150 L208,142 L236,148 L264,135 L292,128 L320,140 L348,118 L376,122 L404,108 L432,114 L460,98 L488,105 L516,90 L544,95 L572,82 L600,88 L628,72 L656,80 L684,65 L712,70 L740,55 L768,62 L796,48 L824,52 L860,42" fill="none" stroke="var(--color-violet-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M40,180 L68,172 L96,168 L124,160 L152,165 L180,150 L208,142 L236,148 L264,135 L292,128 L320,140 L348,118 L376,122 L404,108 L432,114 L460,98 L488,105 L516,90 L544,95 L572,82 L600,88 L628,72 L656,80 L684,65 L712,70 L740,55 L768,62 L796,48 L824,52 L860,42 L860,210 L40,210 Z" fill="var(--color-blue-500)" fillOpacity="0.08" />
+                  <path d="M40,180 L68,172 L96,168 L124,160 L152,165 L180,150 L208,142 L236,148 L264,135 L292,128 L320,140 L348,118 L376,122 L404,108 L432,114 L460,98 L488,105 L516,90 L544,95 L572,82 L600,88 L628,72 L656,80 L684,65 L712,70 L740,55 L768,62 L796,48 L824,52 L860,42" fill="none" stroke="var(--color-blue-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M40,205 L68,202 L96,200 L124,198 L152,200 L180,196 L208,193 L236,195 L264,190 L292,188 L320,191 L348,184 L376,186 L404,180 L432,183 L460,176 L488,179 L516,172 L544,175 L572,168 L600,171 L628,163 L656,167 L684,158 L712,162 L740,152 L768,156 L796,148 L824,150 L860,144" fill="none" stroke="var(--color-neutral-700)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  <line x1="760" y1="40" x2="760" y2="210" stroke="var(--color-violet-500)" strokeWidth="1" strokeDasharray="3 3" opacity="0.45" />
-                  <circle cx="760" cy="55"  r="4"   fill="var(--color-violet-500)" stroke="#fff" strokeWidth="2" />
+                  <line x1="760" y1="40" x2="760" y2="210" stroke="var(--color-blue-500)" strokeWidth="1" strokeDasharray="3 3" opacity="0.45" />
+                  <circle cx="760" cy="55"  r="4"   fill="var(--color-blue-500)" stroke="#fff" strokeWidth="2" />
                   <circle cx="760" cy="156" r="3.5" fill="var(--color-neutral-700)" stroke="#fff" strokeWidth="2" />
                   <g transform="translate(660 -2)">
                     <rect x="0" y="10" width="180" height="48" rx="6" fill="var(--color-neutral-900)" />
