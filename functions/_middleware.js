@@ -35,7 +35,7 @@ function stripAdminPrefix(pathname) {
   return stripped === '' ? '/' : stripped;
 }
 
-const ASSET_PREFIXES = ['/css/', '/css_new/', '/js/', '/scripts/', '/images/'];
+const ASSET_PREFIXES = ['/legacy_css/', '/css_new/', '/js/', '/scripts/', '/images/'];
 const isAsset = (p) =>
   ASSET_PREFIXES.some((a) => p.startsWith(a)) || /\.[a-z0-9]+$/i.test(p);
 
