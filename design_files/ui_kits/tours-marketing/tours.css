@@ -1,15 +1,15 @@
 /* Tours sibling theme — overrides Connect tokens for amber + warmer
    neutrals + softer radii. Lifted from /horizon-source/horizon-tours-tokens.css. */
 :root {
-  --color-amber-50:  #FDF8EC;
-  --color-amber-100: #FBEFD0;
-  --color-amber-200: #F6DFA0;
-  --color-amber-300: #EFC972;
-  --color-amber-400: #E5B458;
-  --color-amber-500: #D4A155;
-  --color-amber-600: #B8862F;
-  --color-amber-700: #95691E;
-  --color-amber-800: #704C12;
+  --color-orange-50:  #FFF2E8;
+  --color-orange-100: #FFE1CC;
+  --color-orange-200: #FFC79C;
+  --color-orange-300: #FFA66B;
+  --color-orange-400: #FF9550;
+  --color-orange-500: #FF8A3D;
+  --color-orange-600: #E0691C;
+  --color-orange-700: #AD4F11;
+  --color-orange-800: #803A0A;
 
   --color-neutral-50:  #FAF9F6;
   --color-neutral-100: #F4F2EC;
@@ -25,26 +25,26 @@
   --bg-page:         var(--color-neutral-50);
   --bg-subtle:       var(--color-neutral-100);
   --bg-muted:        var(--color-neutral-200);
-  --bg-brand-subtle: var(--color-amber-50);
-  --bg-brand-muted:  var(--color-amber-100);
+  --bg-brand-subtle: var(--color-orange-50);
+  --bg-brand-muted:  var(--color-orange-100);
 
   --text-primary:   var(--color-neutral-800);
   --text-body:      var(--color-neutral-700);
   --text-secondary: var(--color-neutral-500);
   --text-tertiary:  var(--color-neutral-400);
-  --text-brand:     var(--color-amber-700);
+  --text-brand:     var(--color-orange-700);
 
   --border-default: var(--color-neutral-300);
   --border-subtle:  var(--color-neutral-200);
   --border-strong:  var(--color-neutral-400);
-  --border-brand:   var(--color-amber-600);
+  --border-brand:   var(--color-orange-600);
 
-  --action-primary-default:  var(--color-amber-600);
-  --action-primary-hover:    var(--color-amber-700);
-  --action-primary-pressed:  var(--color-amber-800);
-  --action-primary-disabled: var(--color-amber-300);
+  --action-primary-default:  var(--color-orange-600);
+  --action-primary-hover:    var(--color-orange-700);
+  --action-primary-pressed:  var(--color-orange-800);
+  --action-primary-disabled: var(--color-orange-300);
 
-  --shadow-focus-ring: 0 0 0 3px rgba(184, 134, 47, 0.18);
+  --shadow-focus-ring: 0 0 0 3px rgba(224, 105, 28, 0.18);
 
   /* Softer radius hierarchy — one stop up everywhere */
   --radius-sm:   8px;
@@ -139,7 +139,7 @@ body { margin: 0; background: var(--bg-page); color: var(--text-body); font-fami
   margin-bottom: 20px;
   border: 1px solid rgba(255,255,255,.2);
 }
-.hero__badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--color-amber-400); }
+.hero__badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--color-orange-400); }
 .hero__title {
   font: 500 clamp(40px, 6vw, 72px)/1.02 var(--font-sans);
   letter-spacing: -0.025em;
@@ -176,7 +176,7 @@ body { margin: 0; background: var(--bg-page); color: var(--text-body); font-fami
   font-variant-numeric: tabular-nums;
 }
 .proof__stars {
-  display: inline-flex; gap: 2px; color: var(--color-amber-600);
+  display: inline-flex; gap: 2px; color: var(--color-orange-600);
 }
 .proof__divider {
   width: 1px; height: 22px; background: var(--border-default);
@@ -307,9 +307,9 @@ body { margin: 0; background: var(--bg-page); color: var(--text-body); font-fami
 .sibling__eyeb {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 4px 10px;
-  background: rgba(73,32,196,.18);
+  background: rgba(53,67,230,.18);
   border: 1px solid rgba(255,255,255,.12);
-  color: #B69BF5;
+  color: #95A0FF;
   border-radius: 999px;
   font: 500 11px/1 var(--font-sans);
   letter-spacing: .04em; text-transform: uppercase;

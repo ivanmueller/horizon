@@ -13,7 +13,7 @@
           "$description": "Vivid violet for marketing surfaces only — hero panels, ad creative, decks."
         },
         "aurora": {
-          "$value": "#FF8A3D",
+          "$value": "#F4B860",
           "$type": "color",
           "$description": "Brand accent. Premium moments, payout-confirmed badges. Use sparingly (≤2% of surface)."
         }

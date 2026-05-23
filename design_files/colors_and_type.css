@@ -42,11 +42,11 @@
   /* ── Brand anchors ─────────────────────────────────────── */
   --color-brand-horizon-blue:  #4F5BFF;
   --color-brand-marketing-vivid: #4F5BFF;
-  --color-brand-aurora:          #FF8A3D;
+  --color-brand-aurora:          #FF8A3D;  /* rare sibling-link accent — Tours' primary */
   --color-brand-obsidian:        #0E0E14;
   --color-brand-cloud:           #FAFAFC;
 
-  /* ── Violet ramp — primary brand ─────────────────────── */
+  /* ── Blue ramp — primary brand ───────────────────────── */
   --color-blue-50:   #EEF0FF;
   --color-blue-100:  #DDE2FF;
   --color-blue-200:  #BFC6FF;
@@ -57,7 +57,7 @@
   --color-blue-700:  #2530BB;
   --color-blue-800:  #1A2289;
 
-  /* ── Neutral ramp (violet-tinted) ───────────────────── */
+  /* ── Neutral ramp (cool-tinted, faint blue undertone) ── */
   --color-neutral-50:   #FAFAFC;
   --color-neutral-100:  #F4F3F8;
   --color-neutral-200:  #ECEAF4;
@@ -79,7 +79,7 @@
   --color-warning-50:  #FFFAF0;
   --color-warning-100: #FEF3DC;
   --color-warning-200: #FCE3B0;
-  --color-warning-400: #F4B860; /* Aurora — accent token */
+  --color-warning-400: #F4B860; /* status warning yellow */
   --color-warning-600: #C77E18;
   --color-warning-700: #9C5F0F;
 

@@ -100,7 +100,7 @@ body { margin: 0; }
 .preview::before {
   content: ''; position: absolute; inset: -12px;
   border-radius: 22px; z-index: -1;
-  background: radial-gradient(60% 60% at 50% 0%, rgba(91,45,232,.18), transparent 70%);
+  background: radial-gradient(60% 60% at 50% 0%, rgba(79,91,255,.18), transparent 70%);
   filter: blur(20px);
 }
 .preview__head {

@@ -27,10 +27,10 @@ If your team uses **Figma's native variables** (Figma 2024+ without a plugin), y
 The system is layered. You should know the difference, because mixing layers is how design systems decay.
 
 ### Primitives
-Raw values. The 9-stop ramps for violet, neutral, success, warning, danger, info. Plus the three brand anchors (Horizon Violet, Marketing Vivid, Aurora). **Designers should not reference primitives directly in components** — they're the underlying material, not the interface.
+Raw values. The 9-stop ramps for blue, neutral, success, warning, danger, info. Plus the three brand anchors (Horizon Blue, Marketing Vivid, Aurora). **Designers should not reference primitives directly in components** — they're the underlying material, not the interface.
 
 ### Semantic tokens
-What components actually use. These are aliases that point at primitives — `text-primary` → `neutral-800`, `action-primary-default` → `violet-600`. The semantic layer is where you build. When dark mode flips or the brand pivots, only the semantic mappings change; component code stays the same.
+What components actually use. These are aliases that point at primitives — `text-primary` → `neutral-800`, `action-primary-default` → `blue-500`. The semantic layer is where you build. When dark mode flips or the brand pivots, only the semantic mappings change; component code stays the same.
 
 ### System tokens
 Non-colour foundations: radius, spacing, elevation, typography. Same idea, same discipline.
@@ -41,13 +41,13 @@ Non-colour foundations: radius, spacing, elevation, typography. Same idea, same 
 
 | Token | Hex | Use |
 |---|---|---|
-| Horizon Violet | `#4920C4` | Primary brand. Logo, primary CTAs, brand mark. |
-| Marketing Vivid | `#5B2DE8` | Marketing-only vivid version. Hero panels, ad creative, decks. |
+| Horizon Blue | `#4F5BFF` | Primary brand. Logo, primary CTAs, brand mark. |
+| Marketing Vivid | `#4F5BFF` | Same hue; alias kept for marketing-surface references. |
 | Obsidian | `#0E0E14` | Deepest text accent, dark-mode chrome. |
-| Cloud | `#FAFAFC` | Default page background. |
-| Aurora | `#F4B860` | Brand accent. Premium moments, payout-confirmed badges. **≤2% surface coverage.** |
+| Cloud | `#FAFAFC` | Default page background (note: v1.3 ships pure `#FFFFFF` at `--bg-page`). |
+| Aurora | `#FF8A3D` | Brand accent. Premium moments, payout-confirmed badges. **≤2% surface coverage.** Same hue as Tours' primary — the sibling-brand link. |
 
-These five hex values are immutable. Everything else derives from them.
+These values are immutable. Everything else derives from them.
 
 ---
 
@@ -68,7 +68,7 @@ Each ramp follows the same convention:
 | 800 | Pressed state of 600, deep accents |
 | 900 | (neutral only) Deepest text, dark-mode chrome |
 
-Aurora at `#F4B860` lives at `warning-400`. The warning *primary* is `warning-600 = #C77E18`. Don't confuse the two.
+Aurora at `#FF8A3D` is its own brand-accent token — `--color-brand-aurora`. It is **not** part of the warning ramp anymore (in v1.2 the two coincidentally shared a hex; in v1.3 they diverge). The warning ramp keeps its semantic yellow at `warning-400 = #F4B860` and `warning-600 = #C77E18` for status pills and alert chrome — don't reach for it as a brand accent.
 
 ---
 
@@ -201,17 +201,17 @@ This is the only context in the system where cards appear flat. New auth-flow pa
 
 A few rules that make the system hold up under pressure:
 
-**1. Reach for semantic, not primitive.** If you find yourself typing `violet-600` in a component, stop. Use `action-primary-default` or `text-brand` instead. Primitives are for token files, not components.
+**1. Reach for semantic, not primitive.** If you find yourself typing `blue-500` in a component, stop. Use `action-primary-default` or `text-brand` instead. Primitives are for token files, not components.
 
 **2. The 6-of-50 rule.** You have ~50 colour tokens. Any single component should need at most 5–6. If you're using more, the component is doing too much.
 
-**3. Brand colour is a scarcity tool.** In product UI, violet should appear at ≤5% pixel coverage — logo, primary CTA, active nav, occasional accents. Marketing surfaces flip the ratio.
+**3. Brand colour is a scarcity tool.** In product UI, Horizon Blue should appear at ≤5% pixel coverage — logo, primary CTA, active nav, occasional accents. Marketing surfaces flip the ratio.
 
 **4. Aurora is rare, not frequent.** Reserve for premium-tier badges, payout-confirmed states, achievement moments. If Aurora shows up on more than 2% of surface, it loses meaning.
 
 **5. Never improvise a new shade.** If the existing tokens don't solve the problem, the component design is wrong. Fix the design, not the palette.
 
-**6. Marketing and product are different jobs.** Marketing surfaces use Marketing Vivid (`#5B2DE8`) heavily. Product surfaces use Horizon Violet (`#4920C4`) sparingly. Same brand, two different registers.
+**6. Marketing and product share the brand colour.** Both surfaces use `#4F5BFF` (Horizon Blue) at full intensity. The earlier "marketing-vivid vs product" hue split (v1.1) has been collapsed in v1.3 — a single anchor reads correctly in both registers. Marketing surfaces vary by *coverage* and *composition*, not by a different shade.
 
 ---
 
