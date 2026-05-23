@@ -40,6 +40,35 @@
 
 ---
 
+## Source of truth & sync direction
+
+This project is the **source of truth** for Horizon styling. The flow is
+one-directional:
+
+```
+colors_and_type.css        authoritative token bundle (what you author)
+  └─ horizon-source/  +  production/css_new/   canonical split files
+       └─ horizon repo  css_new/               the SERVED copy (synced FROM here)
+            └─ every page loads css_new/
+```
+
+The live repo's `css_new/` is a **derivative, never the upstream**. To ship a
+change, edit the files here and copy `production/css_new/*` into
+`horizon/css_new/`. Do not hand-edit the repo's `css_new/` as if it were
+canonical (it used to be treated that way, which caused two token files to
+drift apart — that era is over).
+
+**Anchor-consistency guard.** The split token files (`horizon-source/`,
+`production/css_new/`) must agree with `colors_and_type.css` and the Brand
+colour anchors table below. Connect's `--action-primary-default` is
+`--color-blue-500` (`#4F5BFF`), `--color-blue-600` is hover only, and
+`--bg-page` is pure `#FFFFFF`. If a delivered split file sets
+`--action-primary-default` to `blue-600` or `--bg-page` to a tinted neutral,
+that is a packaging bug — correct it to match `colors_and_type.css` before it
+reaches the repo's `css_new/`.
+
+---
+
 ## Your role
 
 You are the design systems engineer for the **Horizon family of products**, which currently consists of:

@@ -15,7 +15,7 @@ This project is the canonical kit for designing **against** Horizon — for prot
 
 ## Sources used to build this kit
 
-- **Horizon repo:** [github.com/ivanmueller/horizon](https://github.com/ivanmueller/horizon) — the live codebase. The `css_new/` folder there is the source of truth and is mirrored under [`horizon-source/`](horizon-source/) in this project. The dashboard partner app under `dashboard/hotel/` and the marketing site at the root informed the UI kits.
+- **Horizon repo:** [github.com/ivanmueller/horizon](https://github.com/ivanmueller/horizon) — the live codebase. **This design-system project is the source of truth.** `colors_and_type.css` is the authoritative single-import token bundle and [`horizon-source/`](horizon-source/) holds the canonical split files. The repo's `css_new/` folder is the **served derivative** — synced *from* [`production/css_new/`](production/) into `horizon/css_new/`, never edited independently or treated as upstream. The dashboard partner app under `dashboard/hotel/` and the marketing site at the root informed the UI kits.
 - **Figma file:** "Stripe Connect Embedded Components – UI Toolkit (Community)" — used **only** as a reference for B2B dashboard component patterns (tables, payment rows, filters, status pills, onboarding flows). None of Stripe's brand visuals (gradient mesh, Söhne, indigo) carry over — Horizon's own blue/sunset palette governs.
 
 Explore the source repo for: live dashboard code (`dashboard/`), the partner sign-up flow (`partners/`), motion + responsive rules (`css_new/*.md`), and the broader Tours marketing site (root).
@@ -135,7 +135,7 @@ Voice across both brands is **plainspoken**, **specific**, and **infrastructural
 | `README.md` | This file. |
 | `SKILL.md` | Cross-compatible Agent Skill manifest for downstream use. |
 | `colors_and_type.css` | Single import — all tokens + semantic type roles. |
-| `horizon-source/` | Mirror of the upstream `css_new/` folder (tokens, components, motion rules, responsive rules, kitchen sink). The canonical source. |
+| `horizon-source/` | The canonical split source files (tokens, components, motion rules, responsive rules, kitchen sink). The repo's `css_new/` is synced *from here* (via `production/css_new/`) — this is upstream, not a mirror of the repo. |
 | `assets/` | Brand marks (Connect blue, Tours sunset, wordmark). |
 | `preview/` | Design-system card specimens (rendered in the Design System tab). |
 | `ui_kits/connect-dashboard/` | Hotel partner dashboard — Connect's hotel-facing surface. |
