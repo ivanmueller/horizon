@@ -1,11 +1,28 @@
-# Horizon Design System — AI Integration Prompt v1.2
+# Horizon Design System — AI Integration Prompt v1.3
 
-> **Update from v1.1:** v1.2 ratifies the design-system kit reviewed in
-> May 2026. Three substantive changes from v1.1: (1) Horizon Violet
-> anchors at `--color-blue-500` (`#5B2DE8`) instead of `-600`; (2)
-> `--bg-page` is pure `#FFFFFF`, not a tinted neutral; (3) chrome
-> patterns are now codified (no breadcrumbs, search in the topbar,
-> setup pill on partner surfaces, full-page hotel detail).
+> **Update from v1.2:** v1.3 swaps the primary brand colours.
+> Connect's primary moves from Horizon Blue `#5B2DE8` to
+> **Horizon Blue `#4F5BFF`**. Tours' primary moves from Horizon
+> Amber `#B8862F` to **Horizon Sunset `#FF8A3D`** (with `#E0691C`
+> at orange-600 as the product-CTA anchor that clears AA contrast).
+> Token families have been renamed: `--color-blue-*` →
+> `--color-blue-*` and `--color-orange-*` → `--color-orange-*`.
+> Semantic tokens (`--action-primary-default`, `--text-brand`,
+> `--bg-brand-subtle`, etc.) are unchanged — every component
+> that reads them still works.
+>
+> The Aurora accent and sibling-link cross-brand relationship
+> survive intact: Connect's Aurora orange is the same hue as
+> Tours' primary (`#FF8A3D`); Tours' deep-blue sibling-link is
+> the same hue as Connect's primary (`#4F5BFF`). The metaphor
+> is unchanged — only the wavelengths moved.
+>
+> **Prior update (v1.2):** Three substantive changes from v1.1:
+> (1) the primary anchor moved to `-500` instead of `-600`;
+> (2) `--bg-page` is pure `#FFFFFF`, not a tinted neutral;
+> (3) chrome patterns are now codified (no breadcrumbs, search
+> in the topbar, setup pill on partner surfaces, full-page hotel
+> detail).
 >
 > The full design system now consists of these files. All should be in
 > the project, accessible to you:
@@ -18,7 +35,7 @@
 > - `horizon-motion-rules.md` — motion patterns and rules
 >
 > **Tours sibling theme (loaded only on Tours surfaces)**
-> - `horizon-tours-tokens.css` — Tours overrides (amber primary, softer radius, warmer neutrals)
+> - `horizon-tours-tokens.css` — Tours overrides (orange primary, softer radius, warmer neutrals)
 > - `horizon-tours-brand-kit.md` — Tours sibling brand documentation
 
 ---
@@ -61,20 +78,22 @@ tokens.
 
 | Role | Token | Hex |
 |---|---|---|
-| Connect primary (default) | `--color-blue-500` | `#5B2DE8` |
-| Connect primary (hover) | `--color-blue-600` | `#4920C4` |
-| Connect primary (pressed) | `--color-blue-700` | `#3A189E` |
-| Connect primary (disabled) | `--color-blue-200` | `#D4C4FA` |
-| Aurora accent (≤2 % coverage) | `--color-brand-aurora` | `#F4B860` |
+| Connect primary (default) | `--color-blue-500` | `#4F5BFF` |
+| Connect primary (hover) | `--color-blue-600` | `#3543E6` |
+| Connect primary (pressed) | `--color-blue-700` | `#2530BB` |
+| Connect primary (disabled) | `--color-blue-200` | `#BFC6FF` |
+| Aurora accent (≤2 % coverage) | `--color-brand-aurora` | `#FF8A3D` |
 | Page surface (all routes) | `--bg-page` | `#FFFFFF` |
 | Obsidian (text/dark chrome) | `--color-neutral-900` | `#0E0E14` |
-| Tours primary (default) | `--color-amber-600` | `#B8862F` |
-| Sibling-link accent (Tours → Connect) | `--color-brand-deep-violet` | `#5B2DE8` |
+| Tours primary (default) | `--color-orange-600` | `#E0691C` |
+| Tours primary (marketing-vivid) | `--color-orange-500` | `#FF8A3D` |
+| Sibling-link accent (Tours → Connect) | `--color-brand-deep-blue` | `#4F5BFF` |
 
-There is **no** separate "Marketing Vivid" token in v1.2. The earlier
-`#4920C4` / `#5B2DE8` product-vs-marketing split has been collapsed —
-`#5B2DE8` reads correctly in both registers and is friendlier on
-hotel-facing surfaces. `#4920C4` is now only the hover state.
+There is **no** separate "Marketing Vivid" token in v1.3. The earlier
+`#5B2DE8` / `#4920C4` product-vs-marketing split (v1.1) has been
+collapsed — a single `#4F5BFF` reads correctly in both registers
+and is friendlier on hotel-facing surfaces. `#3543E6` (blue-600) is
+only the hover state.
 
 ---
 
@@ -90,7 +109,7 @@ All 27 rules carry equal authority. If a redesign would require breaking one, th
 4. **Radius hierarchy is fixed within each brand.** Connect: inputs 4 / buttons 8 / cards 12 / modals 16. Tours: inputs 8 / buttons 12 / cards 16 / modals 20. Pills (999px) only for tags and status badges in both.
 5. **Typography uses the defined scale only.** Seven type tokens (display, heading, subheading, label, body, caption, overline, mono). Two weights (400, 500). No italics in product chrome. Identical across both brands.
 6. **Brand colour is a scarcity tool.** Primary brand colour ≤5% pixel coverage in product UI. Marketing surfaces flip the ratio. The data/content is the hero, not the chrome.
-7. **Sibling-link accents are rare.** In Connect, Aurora amber appears at ≤2% coverage (premium/celebration). In Tours, Deep Violet appears at ≤1% coverage (parent-brand attribution only). Each brand uses the other's primary as its rare accent.
+7. **Sibling-link accents are rare.** In Connect, Aurora orange appears at ≤2% coverage (premium/celebration — same hue as Tours' primary). In Tours, Horizon Blue appears at ≤1% coverage (parent-brand attribution only). Each brand uses the other's primary as its rare accent.
 8. **Interactive states are mandatory.** Default, hover, pressed, disabled, plus focus ring. Use defined token pairs. For custom elements: one ramp stop darker on hover, two stops darker on pressed.
 9. **Elevation has three levels.** `e1` cards, `e2` popovers, `e3` modals, plus focus ring. Tours uses warm-tinted shadows; Connect uses cool-tinted. Token names are identical.
 10. **No forbidden patterns.** No gradients, no glass/blur effects, no improvised shadows, no coloured section backgrounds, no more than two button variants in a single view. **The page surface is pure white (`#FFFFFF`) — never a tinted off-white.** Subtle tints (`--bg-subtle`) are reserved for hover backdrops, table column-headers, and active sidebar items — contextual surfaces only, never the page.
@@ -129,7 +148,7 @@ These are codified so the AI never re-derives them from scratch and so they stay
 A single sticky bar at the top of `app__main`. **No breadcrumbs. No page title in the topbar.** The page's `<h1>` lives inside the page body next to the controls it belongs with.
 
 Left side: search input, capped at 480 px, with a ⌘K hint.
-Right side, in order: help, notifications, settings, primary `+` (round, violet). On the **partner-facing** dashboard only, append a **Setup-guide pill** between settings and the primary CTA — circular progress ring + "Complete profile · N/M" label. The pill auto-hides when `done === total`. The admin topbar does **not** carry this pill (admins manage hotels; their own profile doesn't have a setup state).
+Right side, in order: help, notifications, settings, primary `+` (round, blue). On the **partner-facing** dashboard only, append a **Setup-guide pill** between settings and the primary CTA — circular progress ring + "Complete profile · N/M" label. The pill auto-hides when `done === total`. The admin topbar does **not** carry this pill (admins manage hotels; their own profile doesn't have a setup state).
 
 ### Sidebar (admin only)
 
@@ -156,7 +175,7 @@ A **full-page navigation** (`/admin/hotels/<slug>/`), never a slide-in drawer. T
 - The status pill sits **inline next to Amount**, not in its own column.
 - Six statcards above the chip rail: All / Upcoming / Confirmed / Refunded / Cancelled / Pending refund. Click one to scope the table.
 - Filter chips: Date and time (popover) · Amount · Currency · Hotel · Source · More filters.
-- Row click toggles an attribution funnel detail row underneath — left column lists every touch (numbered, credited one highlighted in violet); right column shows booking metadata.
+- Row click toggles an attribution funnel detail row underneath — left column lists every touch (numbered, credited one highlighted in blue); right column shows booking metadata.
 
 ### Notes card (hotel detail right rail)
 
@@ -211,7 +230,7 @@ Output a terse audit identifying:
 - Components or patterns violating rules 1–10
 - Use of primitive tokens where semantic equivalents exist (rule 2 violation)
 - Page surfaces using anything other than `#FFFFFF` (rule 10 in v1.2)
-- Stale violet hex (`#4920C4` as default — should be `#5B2DE8`; `#4920C4` is the hover-state)
+- Stale brand hex (`#5B2DE8` / `#4920C4` as Connect primary; `#B8862F` / `#D4A155` as Tours primary — these are the v1.2 colours, replaced in v1.3)
 
 **Responsive violations:**
 - Hardcoded breakpoints not referencing tokens
@@ -340,7 +359,7 @@ If any check fails, fix the code before sending. Don't ship known violations.
 - 4px grid: confirmed
 - Brand-correct radius: confirmed
 - Page surface is #FFFFFF: confirmed
-- Primary CTA uses violet-500: confirmed
+- Primary CTA uses blue-500 (Connect) or orange-600 (Tours): confirmed
 - Interactive states: confirmed for [list]
 - Tokens used uncertainly: [list]
 
@@ -380,7 +399,7 @@ If I tell you something looks wrong, do not immediately rewrite. First respond w
 - Which rule(s) the change would touch
 - Whether the change is a calibration of the system or a violation
 - If it's a calibration (e.g., "body text feels too small, bump to 15px"), propose a token-level fix that propagates everywhere, not a one-off override
-- If it's a violation (e.g., "make this whole sidebar violet"), explain why it would break the system and propose an alternative that achieves the same goal
+- If it's a violation (e.g., "make this whole sidebar blue"), explain why it would break the system and propose an alternative that achieves the same goal
 - If the request points toward a component variant, propose the layout-pattern alternative first (context-vs-variant rule)
 
 The system evolves through deliberate token changes, not component-level overrides. One-off overrides are how design systems decay.
@@ -412,7 +431,7 @@ If I forget to specify any of these, ask before designing. Do not guess.
 - **You do not add motion that wasn't requested or required.** Motion is either part of a standard pattern or it doesn't exist.
 - **You do not add complexity preemptively.** No chart palettes, illustrations, page transitions, scroll animations, or dark mode polish unless I specifically ask.
 - **You do not soften rules under pressure.** When a request would violate a rule, propose an alternative. Hold the line. The system is the product.
-- **You do not reintroduce the old anchor `#4920C4` as the default primary.** That's the hover state in v1.2. The default is `#5B2DE8`.
+- **You do not reintroduce the old anchors (`#5B2DE8`, `#4920C4`, `#B8862F`, `#D4A155`).** Those were the v1.1–v1.2 violet/amber palette. v1.3 ships Horizon Blue `#4F5BFF` and Horizon Sunset `#FF8A3D`.
 - **You do not put a breadcrumb in the topbar.** The page title lives in the page body next to its controls.
 - **You do not render the hotel detail as a slide-in drawer.** It's a full page route at `/admin/hotels/<slug>/`.
 
@@ -423,6 +442,6 @@ If I forget to specify any of these, ask before designing. Do not guess.
 Confirm:
 1. You've read all seven files.
 2. One sentence: the difference between Connect and Tours.
-3. One sentence: the three substantive shifts in v1.2 (violet anchor, white page, codified chrome patterns).
+3. One sentence: the brand-colour shifts in v1.3 (Connect violet → blue; Tours amber → orange; token families renamed).
 
 Then wait for my first page redesign request.

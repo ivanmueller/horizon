@@ -4,7 +4,7 @@ A small sample of the **Tours** sibling brand — the consumer-facing booking si
 
 | What diverges | Connect | Tours |
 |---|---|---|
-| Primary colour | Violet `#4920C4` | Amber `#B8862F` |
+| Primary colour | Violet `#3543E6` | Amber `#E0691C` |
 | Neutrals | Cool, violet-tinted | Warm, amber-tinted |
 | Radius hierarchy | 4 / 8 / 12 / 16 | 8 / 12 / 16 / 20 |
 | Contextual spacing | Static | More generous |

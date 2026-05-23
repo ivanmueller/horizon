@@ -16,7 +16,7 @@ each branch.
 
 ## Branch 1 — Token shift (`css_new/horizon-connect-tokens.css`)
 
-Horizon Violet anchors at `--color-blue-500` instead of `-600`. Page
+Horizon Blue anchors at `--color-blue-500` instead of `-600`. Page
 background flips to pure `#FFFFFF`. Focus ring retints. Every
 component that reads `--action-primary-default`, `--text-brand`,
 `--bg-page`, `--shadow-focus-ring` updates automatically.
@@ -54,8 +54,8 @@ component that reads `--action-primary-default`, `--text-brand`,
 ```
 
 ```diff
--  --shadow-focus-ring: 0 0 0 3px rgba(73, 32, 196, 0.18);
-+  --shadow-focus-ring: 0 0 0 3px rgba(91, 45, 232, 0.18);
+-  --shadow-focus-ring: 0 0 0 3px rgba(53, 67, 230, 0.18);
++  --shadow-focus-ring: 0 0 0 3px rgba(79, 91, 255, 0.18);
 ```
 
 > **Dark-mode override at the bottom of the same file** — `bg-page` and
@@ -65,7 +65,7 @@ component that reads `--action-primary-default`, `--text-brand`,
 ### Inline-SVG hex sweep
 
 Tokens don't reach hard-coded SVG fills. Grep the whole repo and
-replace `#4920C4` → `#5B2DE8`. Expected hits (from a fresh clone):
+replace `#3543E6` → `#4F5BFF`. Expected hits (from a fresh clone):
 
 - `dashboard/hotel/index.html` — QR generator (`dotsOptions.color`,
   `cornersSquareOptions.color`, `cornersDotOptions.color`).
@@ -377,3 +377,21 @@ After each branch lands:
 codebase has drifted since, treat the line numbers as approximate
 landmarks and grep the class names instead — the class names and the
 token names are the stable contract, not the line offsets.*
+
+---
+
+## Visual reference
+
+Screenshots of every surface this patch touches live in
+[`screenshots/migration/`](screenshots/migration/). Pair each branch
+with its PNG when validating:
+
+| Branch | Compare against |
+|---|---|
+| 1 — Token shift | `tokens-brand-anchors.png` · `tokens-violet-ramp.png` · `components-buttons.png` |
+| 2 — Sidebar search → topbar | `admin-home.png` · `admin-hotels-list.png` |
+| 3 — Setup pill | `partner-dashboard.png` |
+| 4 — Bookings table | `admin-bookings.png` |
+| 5 — Hotel detail alignment | `admin-hotel-detail.png` |
+
+See `screenshots/migration/README.md` for the per-image checklist.

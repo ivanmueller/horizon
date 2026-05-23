@@ -6,17 +6,17 @@ Horizon ships as a **sibling-brand family**:
 
 | Brand | Audience | Register | Primary |
 |---|---|---|---|
-| **Horizon Connect** | Hotel staff, tour operators (B2B SaaS) | Considered, restrained, infrastructural | Violet `#5B2DE8` |
-| **Horizon Tours** | Travellers booking guided experiences | Warm, generous, evocative | Amber `#B8862F` |
+| **Horizon Connect** | Hotel staff, tour operators (B2B SaaS) | Considered, restrained, infrastructural | Blue `#4F5BFF` |
+| **Horizon Tours** | Travellers booking guided experiences | Warm, generous, evocative | Sunset `#FF8A3D` |
 
-The two share architecture (4 px grid, type scale, breakpoints, motion, semantic structure) and diverge on **primary colour**, **radius hierarchy** (Connect 4/8/12/16 vs Tours 8/12/16/20), **neutral temperature** (cool violet undertone vs warm), and **contextual spacing** (Tours runs more generous). The same components compose into both surfaces through the semantic token layer.
+The two share architecture (4 px grid, type scale, breakpoints, motion, semantic structure) and diverge on **primary colour**, **radius hierarchy** (Connect 4/8/12/16 vs Tours 8/12/16/20), **neutral temperature** (cool blue undertone vs warm sunset undertone), and **contextual spacing** (Tours runs more generous). The same components compose into both surfaces through the semantic token layer.
 
 This project is the canonical kit for designing **against** Horizon — for prototypes, mockups, decks, and production handoff.
 
 ## Sources used to build this kit
 
 - **Horizon repo:** [github.com/ivanmueller/horizon](https://github.com/ivanmueller/horizon) — the live codebase. The `css_new/` folder there is the source of truth and is mirrored under [`horizon-source/`](horizon-source/) in this project. The dashboard partner app under `dashboard/hotel/` and the marketing site at the root informed the UI kits.
-- **Figma file:** "Stripe Connect Embedded Components – UI Toolkit (Community)" — used **only** as a reference for B2B dashboard component patterns (tables, payment rows, filters, status pills, onboarding flows). None of Stripe's brand visuals (gradient mesh, Söhne, indigo) carry over — Horizon's own violet/amber palette governs.
+- **Figma file:** "Stripe Connect Embedded Components – UI Toolkit (Community)" — used **only** as a reference for B2B dashboard component patterns (tables, payment rows, filters, status pills, onboarding flows). None of Stripe's brand visuals (gradient mesh, Söhne, indigo) carry over — Horizon's own blue/sunset palette governs.
 
 Explore the source repo for: live dashboard code (`dashboard/`), the partner sign-up flow (`partners/`), motion + responsive rules (`css_new/*.md`), and the broader Tours marketing site (root).
 
@@ -61,11 +61,11 @@ Voice across both brands is **plainspoken**, **specific**, and **infrastructural
 
 ### Colour
 
-- **Single brand colour is a scarcity tool.** In Connect product UI, violet appears at **≤ 5 % pixel coverage** — logo, primary CTA, active nav state, occasional accent. Marketing surfaces flip the ratio.
-- **One canonical violet.** `--color-blue-500` (`#5B2DE8` — "Horizon Violet") is the primary brand colour everywhere: product, marketing, decks. `--color-blue-600` (`#4920C4`) plays the *hover* role, `--color-blue-700` (`#3A189E`) the *pressed* role. The earlier `marketing-vivid` distinction has been collapsed — the brighter violet reads correctly in both registers and is friendlier for a hotel-facing surface.
-- **Aurora amber (`#F4B860`)** is the rare accent. Premium-tier badges, payout-confirmed states, achievement moments. **≤ 2 % coverage** — if it shows up everywhere it loses meaning.
+- **Single brand colour is a scarcity tool.** In Connect product UI, Horizon Blue appears at **≤ 5 % pixel coverage** — logo, primary CTA, active nav state, occasional accent. Marketing surfaces flip the ratio.
+- **One canonical blue.** `--color-blue-500` (`#4F5BFF` — "Horizon Blue") is the primary brand colour everywhere: product, marketing, decks. `--color-blue-600` (`#3543E6`) plays the *hover* role, `--color-blue-700` (`#2530BB`) the *pressed* role. The earlier `marketing-vivid` distinction has been collapsed — a single vivid blue reads correctly in both registers and is friendlier for a hotel-facing surface.
+- **Aurora orange (`#FF8A3D`)** is the rare accent. Premium-tier badges, payout-confirmed states, achievement moments. **≤ 2 % coverage** — if it shows up everywhere it loses meaning. (Same hue as Tours' primary; the shared colour signals the sibling-brand link.)
 - **Pure-white page surface.** `--bg-page` is `#FFFFFF`, not a tinted off-white. Card separation comes from 1 px `border-subtle` and `shadow-e1`, never from a darker page tint. `--bg-subtle` (`#F4F3F8`) is reserved for hover backdrops, table column-headers, and sidebar-item active states — contextual surfaces only, never the page.
-- **Cool-tinted neutrals.** Greys carry a faint violet undertone (`#FAFAFC`, `#25222E`, etc.) so the whole UI sits in one tonal family even on a pure-white background. Tours flips this to warm-tinted neutrals.
+- **Cool-tinted neutrals.** Greys carry a faint cool undertone (`#FAFAFC`, `#25222E`, etc.) so the whole UI sits in one tonal family even on a pure-white background. Tours flips this to warm-tinted neutrals.
 - **No improvised shades.** If the existing tokens don't solve it, the component is wrong, not the palette.
 
 ### Type
@@ -112,7 +112,7 @@ Voice across both brands is **plainspoken**, **specific**, and **infrastructural
 ### Iconography
 
 - **Lucide** (`https://unpkg.com/lucide-static`) is the icon library. Stroke weight 1.75 px (matches the dashboard), 20 / 24 px sizes, `currentColor` stroke so icons inherit text colour. The system has no in-house icon set — Lucide was selected for stroke weight consistency with the existing dashboard SVGs in the repo (`docs/`, `dashboard/`).
-- **Brand mark** lives at `assets/horizon-mark.svg` (rounded square, violet fill, white horizon glyph). The wordmark — *horizon* + role suffix — sits in `assets/horizon-wordmark.svg`. Tours uses the same shape with amber fill (`assets/horizon-mark-tours.svg`).
+- **Brand mark** lives at `assets/horizon-mark.svg` (rounded square, Horizon Blue fill, white horizon glyph). The wordmark — *horizon* + role suffix — sits in `assets/horizon-wordmark.svg`. Tours uses the same shape with Sunset orange fill (`assets/horizon-mark-tours.svg`).
 - **No hand-drawn illustrations** in the system yet. Empty states use centred type + icon, never marketing-style illustrations. Photography (Tours only) ships through `srcset` with art-directed crops at major breakpoints.
 - **No emoji in product chrome.** Unicode glyphs (▾, →) are acceptable for low-decoration UI affordances if no icon library is available, but Lucide is preferred.
 - **CDN-substitution flag:** the original repo doesn't bundle an icon library — inline SVGs are used per-component. We pull Lucide from CDN here for kit convenience; production should vendor it.
@@ -136,12 +136,12 @@ Voice across both brands is **plainspoken**, **specific**, and **infrastructural
 | `SKILL.md` | Cross-compatible Agent Skill manifest for downstream use. |
 | `colors_and_type.css` | Single import — all tokens + semantic type roles. |
 | `horizon-source/` | Mirror of the upstream `css_new/` folder (tokens, components, motion rules, responsive rules, kitchen sink). The canonical source. |
-| `assets/` | Brand marks (Connect violet, Tours amber, wordmark). |
+| `assets/` | Brand marks (Connect blue, Tours sunset, wordmark). |
 | `preview/` | Design-system card specimens (rendered in the Design System tab). |
 | `ui_kits/connect-dashboard/` | Hotel partner dashboard — Connect's hotel-facing surface. |
 | `ui_kits/connect-admin/` | **Internal** admin console — workspace switcher, hotels portfolio table, slide-in detail drawer. |
 | `ui_kits/connect-marketing/` | Connect's marketing site (hero, features, pricing, FAQ). |
-| `ui_kits/tours-marketing/` | Tours sibling brand sample — warm amber, softened radii. |
+| `ui_kits/tours-marketing/` | Tours sibling brand sample — warm sunset orange, softened radii. |
 
 ## Open questions / next steps
 
