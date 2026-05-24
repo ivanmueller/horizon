@@ -21,14 +21,14 @@ function FakeQR({ size = 140, seed = 'horizon' }) {
         (r < 3 && c > grid - 4) ||
         (r > grid - 4 && c < 3);
       if (inEye) continue;
-      if ((h >>> 28) & 1) cells.push(<rect key={r+'-'+c} x={c*px} y={r*px} width={px} height={px} rx={px*0.35} fill="#5B2DE8" />);
+      if ((h >>> 28) & 1) cells.push(<rect key={r+'-'+c} x={c*px} y={r*px} width={px} height={px} rx={px*0.35} fill="#4F5BFF" />);
     }
   }
   const Eye = ({ x, y }) => (
     <g transform={`translate(${x} ${y})`}>
-      <rect width={3*px} height={3*px} rx={px*0.5} fill="#5B2DE8" />
+      <rect width={3*px} height={3*px} rx={px*0.5} fill="#4F5BFF" />
       <rect x={px*0.5} y={px*0.5} width={2*px} height={2*px} rx={px*0.4} fill="#fff" />
-      <rect x={px*0.9} y={px*0.9} width={1.2*px} height={1.2*px} rx={px*0.3} fill="#5B2DE8" />
+      <rect x={px*0.9} y={px*0.9} width={1.2*px} height={1.2*px} rx={px*0.3} fill="#4F5BFF" />
     </g>
   );
   return (
@@ -38,7 +38,7 @@ function FakeQR({ size = 140, seed = 'horizon' }) {
       <Eye x={0} y={0} />
       <Eye x={(grid-3)*px} y={0} />
       <Eye x={0} y={(grid-3)*px} />
-      <rect x={size/2 - px*1.5} y={size/2 - px*1.5} width={px*3} height={px*3} rx={px*0.6} fill="#5B2DE8" />
+      <rect x={size/2 - px*1.5} y={size/2 - px*1.5} width={px*3} height={px*3} rx={px*0.6} fill="#4F5BFF" />
       <path d={`M${size/2 - px*0.5},${size/2 - px} v${px*2} M${size/2 - px*0.5},${size/2} c0,-${px*0.4} ${px*1.5},-${px*0.4} ${px*1.5},0 v${px}`} stroke="#fff" strokeWidth={px*0.45} fill="none" strokeLinecap="round" />
     </svg>
   );
