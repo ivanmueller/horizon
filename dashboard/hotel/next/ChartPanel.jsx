@@ -1,4 +1,4 @@
-/* Simple area chart — pure SVG, no chart lib. Uses the violet ramp. */
+/* Simple area chart — pure SVG, no chart lib. Uses the blue ramp. */
 function CommissionChart({ data, height = 220 }) {
   const W = 720, H = height, P = { l: 36, r: 16, t: 16, b: 28 };
   const xs = data.map((_, i) => P.l + (i * (W - P.l - P.r)) / (data.length - 1));
@@ -15,8 +15,8 @@ function CommissionChart({ data, height = 220 }) {
     <svg className="chart" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
       <defs>
         <linearGradient id="ccArea" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"   stopColor="#5B2DE8" stopOpacity="0.18" />
-          <stop offset="100%" stopColor="#5B2DE8" stopOpacity="0" />
+          <stop offset="0%"   stopColor="#4F5BFF" stopOpacity="0.18" />
+          <stop offset="100%" stopColor="#4F5BFF" stopOpacity="0" />
         </linearGradient>
       </defs>
       {/* grid + y labels */}
@@ -36,9 +36,9 @@ function CommissionChart({ data, height = 220 }) {
         <text key={i} x={xs[i]} y={H - 8} textAnchor="middle" fontSize="11" fill="#807A92" fontFamily="Inter, sans-serif">{l}</text>
       ))}
       <path d={areaPath} fill="url(#ccArea)" />
-      <path d={linePath} fill="none" stroke="#5B2DE8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={linePath} fill="none" stroke="#4F5BFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       {/* end dot */}
-      <circle cx={xs[xs.length-1]} cy={ys[ys.length-1]} r="4" fill="#fff" stroke="#5B2DE8" strokeWidth="2" />
+      <circle cx={xs[xs.length-1]} cy={ys[ys.length-1]} r="4" fill="#fff" stroke="#4F5BFF" strokeWidth="2" />
     </svg>
   );
 }
