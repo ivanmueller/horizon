@@ -64,13 +64,19 @@ the Tours consumer site is deprioritized cash flow.
 - No Next server means no temptation to fork business logic across two
   backends. The Worker stays the single source of truth.
 
-**Stack:** Vite + React + TypeScript · **React Router** (routing) ·
+**Stack:** Vite + React + TypeScript · **React Router v7** (routing) ·
 **TanStack Query** (server-state) · the existing `css_new/` design tokens ·
 a typed API client + Supabase auth.
 
 **What would change this decision:** only if SaaS *marketing/lead-gen* SEO
 became a near-term acquisition priority — and even then that's a separate,
 small static surface, not a reason to wrap the dashboards in Next.
+
+### What NOT to add
+
+- **No Tailwind** — `css_new/` tokens are the design system; plain CSS custom properties work everywhere with zero runtime overhead.
+- **No CSS-in-JS** — same reason; specificity fights and runtime cost for no gain when custom properties already do the job.
+- **No Redux or Zustand** — TanStack Query owns server state; React's built-in hooks (`useState`, `useReducer`, `useContext`) own UI state. A global store adds a third source of truth with no clear owner.
 
 ---
 
@@ -93,8 +99,7 @@ These hold for the whole migration:
    for every API interaction.
 6. **TypeScript is required eventually, but must not gate "kill Babel."**
    Convert to a real build first (JS is fine), add types incrementally.
-7. **Validate at the API boundary only.** Runtime response validation (zod
-   or similar) belongs at the API client seam — not spread through the app.
+7. **Validate at the API boundary only.** Runtime response validation with **Zod** belongs at the API client seam — not spread through the app.
 
 ---
 
@@ -130,7 +135,8 @@ mechanical job.
 
 ### Phase 0 — Scaffold
 - [ ] Create the Vite React app (start in **JS**, not TS — see Rule 6).
-- [ ] Add React Router, TanStack Query, ESLint/Prettier, a CI build check.
+- [ ] Add React Router v7, TanStack Query, ESLint/Prettier, a CI build check.
+- [ ] Add **Vitest** — it shares Vite's config and transform pipeline; zero extra setup. Wire it to CI now; write tests in Track B when API calls are real.
 
 ### Phase 1 — Port the design system as-is
 - [ ] Import `css_new/` tokens + `admin/next/admin.css` (plain CSS, no
@@ -154,6 +160,7 @@ production" problem (in-browser Babel) is gone. Shippable as the demo.
 ### Phase 2.5 — Add TypeScript incrementally (after the milestone)
 - [ ] Rename file-by-file to `.tsx`, tightening props as you go. Types land
       at the API boundary (Phase 3) first.
+- [ ] Once the rename is complete, enable **`typescript-eslint`** with the `strict-type-checked` preset — catches real boundary-layer bugs that plain ESLint misses. Overkill before TS is in place.
 
 ---
 
@@ -189,6 +196,7 @@ Checklist:
       `res.ok`/`d.error` normalizer, 401 → login redirect.
 - [ ] Wire the TanStack Query provider; mutations invalidate their
       resource's query key.
+- [ ] Add **Zod** for API response validation — define schemas in `lib/api/schemas.ts` and validate every response at the client boundary. Surfaces field-name drift (see §8) as a hard error rather than a silent type hole.
 
 ### Phase 4 — Resource modules → hooks → demo component
 
