@@ -579,6 +579,7 @@ async function handleBookingInitiate(request, env) {
     ref,
     price_total: typeof body.price_total === "number" ? body.price_total : null,
     currency: typeof body.currency === "string" ? body.currency : CURRENCY,
+    tour_image: typeof body.tour_image === "string" && body.tour_image.startsWith("https://gowithhorizon.com/") ? body.tour_image : null,
     created_at: now,
     expires_at: expiresAt,
   };
