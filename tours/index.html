@@ -351,7 +351,30 @@
   <script src="/js/main.js"></script>
   <script>
   (function () {
-    var BOKUN_API_BASE = 'https://horizon-bokun.ivan-mueller02.workers.dev';
+    var BOKUN_API_BASE  = 'https://horizon-bokun.ivan-mueller02.workers.dev';
+    var CACHE_PREFIX    = 'hzn_price_';
+    var CACHE_TTL_MS    = 60 * 60 * 1000; // 1 hour — matches Bokun worker product cache
+
+    function readCache(id) {
+      try {
+        var raw = localStorage.getItem(CACHE_PREFIX + id);
+        if (!raw) return null;
+        var entry = JSON.parse(raw);
+        return (entry && Date.now() < entry.exp) ? entry.price : null;
+      } catch (e) { return null; }
+    }
+
+    function writeCache(id, price) {
+      try {
+        localStorage.setItem(CACHE_PREFIX + id, JSON.stringify({ price: price, exp: Date.now() + CACHE_TTL_MS }));
+      } catch (e) {}
+    }
+
+    function applyPrice(amtEl, unitEl, price) {
+      amtEl.classList.remove('tour-card__price-amount--loading');
+      amtEl.textContent = '$' + price;
+      if (unitEl) unitEl.textContent = ' CAD';
+    }
 
     function pad(n) { return n < 10 ? '0' + n : String(n); }
     function toYmd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
@@ -362,41 +385,39 @@
       var unitEl = card.querySelector('.tour-card__price-unit');
       if (!amtEl) return;
 
+      // Cached price — apply instantly, no shimmer shown
+      var cached = readCache(id);
+      if (cached !== null) {
+        applyPrice(amtEl, unitEl, cached);
+        return;
+      }
+
+      // No cache — shimmer stays visible while we fetch
       var today = new Date();
       var end   = new Date(today); end.setDate(end.getDate() + 60);
       var qs    = '?start=' + toYmd(today) + '&end=' + toYmd(end);
 
-      // Fetch product + availability in parallel — same pattern as the tour detail page.
-      // Product gives us the adult category id; availability gives us the per-slot prices.
       Promise.all([
         fetch(BOKUN_API_BASE + '/api/product/' + id).then(function (r) { return r.ok ? r.json() : null; }),
         fetch(BOKUN_API_BASE + '/api/availability/' + id + qs).then(function (r) { return r.ok ? r.json() : null; })
       ]).then(function (results) {
         var product = results[0];
         var avail   = results[1];
-        if (!product || !Array.isArray(avail)) return;
+        if (!product || !Array.isArray(avail)) { amtEl.classList.remove('tour-card__price-amount--loading'); return; }
 
-        // Find the adult pricing category by title so we can match by id in each slot.
-        var adultCat = (product.pricingCategories || []).find(function (c) {
-          return /adult/i.test(c.title);
-        });
-        if (!adultCat) return;
+        var adultCat = (product.pricingCategories || []).find(function (c) { return /adult/i.test(c.title); });
+        if (!adultCat) { amtEl.classList.remove('tour-card__price-amount--loading'); return; }
 
-        // Walk every slot to find the lowest adult price (handles seasonal variation).
         var min = Infinity;
         avail.forEach(function (s) {
           if (!s.pricesByRate || !s.pricesByRate[0]) return;
-          var p = (s.pricesByRate[0].pricePerCategoryUnit || []).find(function (x) {
-            return x.id === adultCat.id;
-          });
-          // Bokun nests the price: p.amount.amount
+          var p = (s.pricesByRate[0].pricePerCategoryUnit || []).find(function (x) { return x.id === adultCat.id; });
           if (p && p.amount && p.amount.amount < min) min = p.amount.amount;
         });
 
-        amtEl.classList.remove('tour-card__price-amount--loading');
-        if (min === Infinity) return;
-        amtEl.textContent  = '$' + min;
-        if (unitEl) unitEl.textContent = ' CAD';
+        if (min === Infinity) { amtEl.classList.remove('tour-card__price-amount--loading'); return; }
+        writeCache(id, min);
+        applyPrice(amtEl, unitEl, min);
       }).catch(function () {
         amtEl.classList.remove('tour-card__price-amount--loading');
       });
