@@ -967,8 +967,9 @@
       var currency = window.HORIZON_CHECKOUT.currency;
       var prefix = currency === 'CAD' ? 'CA$' : currency + ' ';
 
-      // Hero image — fall back to gradient if product photos aren't loaded yet.
-      var photo = pickPhoto(product);
+      // Hero image — prefer the tour's own image passed at booking initiation,
+      // fall back to Bokun's product photo, then gradient if neither is available.
+      var photo = (booking && booking.tour_image) || pickPhoto(product);
       if (photo) {
         els.summaryImage.style.backgroundImage = 'url("' + photo + '")';
       }
