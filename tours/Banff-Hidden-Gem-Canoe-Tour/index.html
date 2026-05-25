@@ -1105,6 +1105,16 @@
     .tour-detail--with-hero .booking-panel__from {
       margin-bottom: 0;
     }
+    /* Skeleton shimmer for price while Bokun loads */
+    .booking-panel__price--loading .booking-panel__price-amount {
+      color: transparent !important;
+      background: linear-gradient(90deg, #E5E7EB 25%, #F9FAFB 50%, #E5E7EB 75%);
+      background-size: 600px 100%;
+      animation: shimmer 1s infinite linear;
+      border-radius: 4px;
+      min-width: 72px;
+      display: inline-block;
+    }
     .tour-detail--with-hero .booking-panel__guarantee-list {
       gap: var(--space-2);
       margin-top: var(--space-3);
@@ -1830,7 +1840,7 @@
     <aside id="book">
       <div class="booking-panel">
         <div class="booking-panel__sell-out">Likely to sell out</div>
-        <div class="booking-panel__price">
+        <div class="booking-panel__price booking-panel__price--loading">
           <div class="booking-panel__from">From</div>
           <span class="booking-panel__price-amount"></span><span class="booking-panel__price-unit"></span>
         </div>
@@ -2129,8 +2139,10 @@
       if (amt == null) return;
       var amtEl = document.querySelector('.booking-panel__price-amount');
       var unitEl = document.querySelector('.booking-panel__price-unit');
+      var priceDiv = document.querySelector('.booking-panel__price');
       if (amtEl) amtEl.textContent = '$' + amt;
       if (unitEl) unitEl.textContent = ' ' + window.BOKUN.currency + ' per person';
+      if (priceDiv) priceDiv.classList.remove('booking-panel__price--loading');
     }
 
     function applyJsonLd() {
