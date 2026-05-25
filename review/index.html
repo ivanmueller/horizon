@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Leave a Review | Horizon Tours</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%23FF6B4A'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
+  <style>
+    :root {
+      --forest:       #1b3326;
+      --sage:         #7a9882;
+      --warm-stone:   #b8a88a;
+      --gold:         #c4a24e;
+      --cream:        #faf8f4;
+      --text-dark:    #1b3326;
+      --text-mid:     #4a5e50;
+      --text-light:   #8a9690;
+      --gyg-orange:   #FF5533;
+      --viator-purple:#2B1E70;
+      --radius:       16px;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: #d5d1ca;
+      min-height: 100dvh;
+      display: flex;
+      justify-content: center;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .page {
+      width: 100%;
+      max-width: 430px;
+      min-height: 100dvh;
+      background: var(--cream);
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media (min-width: 500px) {
+      body { align-items: center; padding: 32px 16px; }
+      .page {
+        min-height: auto;
+        border-radius: 28px;
+        overflow: hidden;
+        box-shadow: 0 30px 70px rgba(27,51,38,0.18), 0 2px 8px rgba(27,51,38,0.06);
+      }
+    }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      width: 100%;
+      height: 40vh;
+      min-height: 250px;
+      max-height: 360px;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .hero-img {
+      position: absolute;
+      inset: 0;
+      background-image: url('/images/LakeLouise-Canoe.jpg');
+      background-size: cover;
+      background-position: center 35%;
+      transform: scale(1.04);
+      animation: zoom-out 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    }
+
+    /* Scrim: darkens top for brand, fades bottom into cream */
+    .hero-img::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        180deg,
+        rgba(12,26,18,0.50) 0%,
+        rgba(12,26,18,0.08) 42%,
+        rgba(250,248,244,0.0) 62%,
+        var(--cream) 100%
+      );
+    }
+
+    .brand {
+      position: absolute;
+      top: calc(20px + env(safe-area-inset-top, 0px));
+      left: 22px;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .brand-icon { width: 30px; height: 30px; flex-shrink: 0; }
+
+    .brand-name {
+      font-family: 'Playfair Display', serif;
+      font-weight: 600;
+      font-size: 15px;
+      color: rgba(255,255,255,0.95);
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      text-shadow: 0 1px 8px rgba(0,0,0,0.35);
+    }
+
+    .stars {
+      position: absolute;
+      bottom: 36px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 5;
+      display: flex;
+      gap: 5px;
+      animation: rise 0.6s ease-out 0.25s both;
+    }
+
+    .stars svg {
+      width: 22px;
+      height: 22px;
+      filter: drop-shadow(0 1px 4px rgba(0,0,0,0.35));
+    }
+
+    /* ── CONTENT ── */
+    .content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 6px 24px calc(36px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .headline {
+      font-family: 'Playfair Display', serif;
+      font-weight: 500;
+      font-size: 28px;
+      color: var(--text-dark);
+      text-align: center;
+      line-height: 1.22;
+      margin-bottom: 10px;
+      animation: rise 0.6s ease-out 0.1s both;
+    }
+
+    .body-text {
+      font-size: 14.5px;
+      font-weight: 300;
+      color: var(--text-mid);
+      text-align: center;
+      line-height: 1.6;
+      max-width: 290px;
+      margin-bottom: 26px;
+      animation: rise 0.6s ease-out 0.18s both;
+    }
+
+    .instruction {
+      font-size: 12.5px;
+      font-weight: 400;
+      color: var(--sage);
+      margin-bottom: 14px;
+      text-align: center;
+      letter-spacing: 0.3px;
+      animation: rise 0.6s ease-out 0.24s both;
+    }
+
+    /* ── BUTTONS ── */
+    .btn-stack {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+      animation: rise 0.6s ease-out 0.32s both;
+    }
+
+    .review-btn {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      min-height: 64px;
+      padding: 14px 18px;
+      border-radius: var(--radius);
+      border: none;
+      text-decoration: none;
+      position: relative;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.2s cubic-bezier(0.25,0.46,0.45,0.94),
+                  box-shadow 0.2s cubic-bezier(0.25,0.46,0.45,0.94);
+    }
+
+    /* Press feedback for touchscreens */
+    .review-btn:active { transform: scale(0.97) !important; }
+
+    /* PRIMARY — GetYourGuide */
+    .review-btn.primary {
+      background: var(--forest);
+      color: white;
+      box-shadow: 0 4px 18px rgba(27,51,38,0.28);
+      cursor: pointer;
+    }
+
+    .review-btn.primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(27,51,38,0.32);
+    }
+
+    .btn-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .review-btn.primary .btn-icon {
+      background: var(--gyg-orange);
+      font-weight: 700;
+      font-size: 10.5px;
+      letter-spacing: 0.3px;
+      color: white;
+    }
+
+    .btn-text { flex: 1; }
+
+    .btn-name {
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 1.2;
+    }
+
+    .btn-sub {
+      font-size: 12px;
+      font-weight: 300;
+      margin-top: 2px;
+    }
+
+    .review-btn.primary .btn-name { color: white; }
+    .review-btn.primary .btn-sub  { color: rgba(255,255,255,0.6); }
+
+    .arrow {
+      flex-shrink: 0;
+      transition: transform 0.2s ease;
+    }
+
+    .review-btn.primary .arrow { color: rgba(255,255,255,0.4); }
+    .review-btn.primary:hover .arrow {
+      transform: translateX(4px);
+      color: rgba(255,255,255,0.7);
+    }
+
+    /* SECONDARY — Viator (placeholder until link is ready) */
+    .review-btn.secondary {
+      background: white;
+      border: 1.5px solid rgba(27,51,38,0.1);
+      color: var(--text-dark);
+      opacity: 0.5;
+      cursor: not-allowed;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* Suppress scale on press since it's non-interactive */
+    .review-btn.secondary:active { transform: none !important; }
+
+    .review-btn.secondary .btn-icon {
+      background: var(--viator-purple);
+      font-weight: 700;
+      font-size: 16px;
+      color: white;
+    }
+
+    .review-btn.secondary .btn-name { color: var(--text-dark); }
+    .review-btn.secondary .btn-sub  { color: var(--text-light); }
+    .review-btn.secondary .arrow    { color: var(--text-light); }
+
+    /* "Coming soon" pill */
+    .badge-soon {
+      position: absolute;
+      top: -1px;
+      right: -1px;
+      background: var(--warm-stone);
+      color: white;
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      padding: 4px 9px;
+      border-radius: 0 var(--radius) 0 9px;
+      pointer-events: none;
+    }
+
+    /* ── PAGE FOOTER ── */
+    .page-footer {
+      margin-top: auto;
+      padding-top: 20px;
+      text-align: center;
+      animation: rise 0.6s ease-out 0.45s both;
+    }
+
+    .page-footer p {
+      font-size: 11px;
+      font-weight: 300;
+      color: var(--text-light);
+      line-height: 1.7;
+      opacity: 0.75;
+    }
+
+    .page-footer .accent { color: var(--gold); }
+
+    /* ── ANIMATIONS ── */
+    @keyframes zoom-out {
+      to { transform: scale(1); }
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── SHORT SCREENS (small phones, landscape) ── */
+    @media (max-height: 640px) {
+      .hero    { height: 30vh; min-height: 200px; }
+      .headline { font-size: 24px; }
+      .body-text { font-size: 13.5px; margin-bottom: 18px; }
+      .stars   { bottom: 18px; }
+      .content { padding-top: 4px; }
+    }
+
+    @media (max-height: 500px) {
+      .hero      { height: 25vh; min-height: 160px; }
+      .btn-stack { gap: 8px; }
+      .review-btn { min-height: 54px; }
+      .body-text  { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-img"></div>
+
+    <div class="brand">
+      <svg class="brand-icon" viewBox="0 0 36 36" aria-hidden="true">
+        <rect width="36" height="36" rx="8" fill="#FF6B4A"/>
+        <path d="M13 7v22M13 18c0-6 12-6 12 0v11" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>
+      </svg>
+      <span class="brand-name">Horizon</span>
+    </div>
+
+    <div class="stars" role="img" aria-label="5 stars">
+      <svg viewBox="0 0 24 24" fill="#F5C842" xmlns="http://www.w3.org/2000/svg"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+      <svg viewBox="0 0 24 24" fill="#F5C842" xmlns="http://www.w3.org/2000/svg"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+      <svg viewBox="0 0 24 24" fill="#F5C842" xmlns="http://www.w3.org/2000/svg"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+      <svg viewBox="0 0 24 24" fill="#F5C842" xmlns="http://www.w3.org/2000/svg"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+      <svg viewBox="0 0 24 24" fill="#F5C842" xmlns="http://www.w3.org/2000/svg"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <h1 class="headline">Thank you for<br>adventuring with us</h1>
+
+    <p class="body-text">
+      A quick review helps fellow travellers discover the Rockies&nbsp;— and means everything to our small team.
+    </p>
+
+    <p class="instruction">Where did you book?</p>
+
+    <div class="btn-stack">
+
+      <!-- PRIMARY — GetYourGuide (live link) -->
+      <a
+        href="https://www.getyourguide.com/scan-review-qr?activity_id=1204012&utm_medium=offline&utm_source=supplier_review_link&utm_campaign=supplier_review_qrcode&utm_content=1204012"
+        class="review-btn primary"
+        id="gyg-btn"
+        rel="noopener"
+      >
+        <div class="btn-icon">GYG</div>
+        <div class="btn-text">
+          <div class="btn-name">GetYourGuide</div>
+          <div class="btn-sub">Tap to leave your review</div>
+        </div>
+        <svg class="arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+
+      <!-- SECONDARY — Viator (placeholder — swap div→a and add href when ready) -->
+      <div class="review-btn secondary" id="viator-btn" role="button" aria-disabled="true">
+        <span class="badge-soon">Coming soon</span>
+        <div class="btn-icon">V</div>
+        <div class="btn-text">
+          <div class="btn-name">Viator</div>
+          <div class="btn-sub">Tap to leave your review</div>
+        </div>
+        <svg class="arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+
+    </div>
+
+    <div class="page-footer">
+      <p>Crafted with care in Banff <span class="accent">&amp;</span> Canmore<br>&copy; Horizon Tours</p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  document.getElementById('gyg-btn')?.addEventListener('click', () => {
+    if (typeof gtag === 'function') gtag('event', 'review_click', { platform: 'getyourguide' });
+  });
+</script>
+
+</body>
+</html>
