@@ -11,17 +11,18 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%23FF6B4A'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
   <style>
     :root {
-      --forest:       #1b3326;
-      --sage:         #7a9882;
-      --warm-stone:   #b8a88a;
-      --gold:         #c4a24e;
-      --cream:        #faf8f4;
-      --text-dark:    #1b3326;
-      --text-mid:     #4a5e50;
-      --text-light:   #8a9690;
-      --gyg-orange:   #FF5533;
-      --viator-purple:#2B1E70;
-      --radius:       16px;
+      --forest:        #1b3326;
+      --pine:          #2a4d38;
+      --sage:          #7a9882;
+      --warm-stone:    #b8a88a;
+      --gold:          #c4a24e;
+      --cream:         #faf8f4;
+      --text-dark:     #1b3326;
+      --text-mid:      #4a5e50;
+      --text-light:    #8a9690;
+      --gyg-orange:    #FF5533;
+      --viator-purple: #2B1E70;
+      --radius:        16px;
     }
 
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -36,6 +37,9 @@
       -moz-osx-font-smoothing: grayscale;
     }
 
+    /* ═══════════════════════════════════════════════════════
+       MOBILE — stacked card (default)
+    ═══════════════════════════════════════════════════════ */
     .page {
       width: 100%;
       max-width: 430px;
@@ -45,17 +49,7 @@
       flex-direction: column;
     }
 
-    @media (min-width: 500px) {
-      body { align-items: center; padding: 32px 16px; }
-      .page {
-        min-height: auto;
-        border-radius: 28px;
-        overflow: hidden;
-        box-shadow: 0 30px 70px rgba(27,51,38,0.18), 0 2px 8px rgba(27,51,38,0.06);
-      }
-    }
-
-    /* ── HERO ── */
+    /* ── HERO (mobile/tablet) ── */
     .hero {
       position: relative;
       width: 100%;
@@ -76,14 +70,13 @@
       animation: zoom-out 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
     }
 
-    /* Scrim: darkens top for brand, fades bottom into cream */
     .hero-img::after {
       content: '';
       position: absolute;
       inset: 0;
       background: linear-gradient(
         180deg,
-        rgba(12,26,18,0.50) 0%,
+        rgba(12,26,18,0.52) 0%,
         rgba(12,26,18,0.08) 42%,
         rgba(250,248,244,0.0) 62%,
         var(--cream) 100%
@@ -129,7 +122,7 @@
       filter: drop-shadow(0 1px 4px rgba(0,0,0,0.35));
     }
 
-    /* ── CONTENT ── */
+    /* ── CONTENT (mobile/tablet) ── */
     .content {
       flex: 1;
       display: flex;
@@ -195,7 +188,6 @@
                   box-shadow 0.2s cubic-bezier(0.25,0.46,0.45,0.94);
     }
 
-    /* Press feedback for touchscreens */
     .review-btn:active { transform: scale(0.97) !important; }
 
     /* PRIMARY — GetYourGuide */
@@ -257,7 +249,7 @@
       color: rgba(255,255,255,0.7);
     }
 
-    /* SECONDARY — Viator (placeholder until link is ready) */
+    /* SECONDARY — Viator (placeholder) */
     .review-btn.secondary {
       background: white;
       border: 1.5px solid rgba(27,51,38,0.1);
@@ -268,7 +260,6 @@
       -webkit-user-select: none;
     }
 
-    /* Suppress scale on press since it's non-interactive */
     .review-btn.secondary:active { transform: none !important; }
 
     .review-btn.secondary .btn-icon {
@@ -282,7 +273,6 @@
     .review-btn.secondary .btn-sub  { color: var(--text-light); }
     .review-btn.secondary .arrow    { color: var(--text-light); }
 
-    /* "Coming soon" pill */
     .badge-soon {
       position: absolute;
       top: -1px;
@@ -316,6 +306,188 @@
 
     .page-footer .accent { color: var(--gold); }
 
+    /* ═══════════════════════════════════════════════════════
+       TABLET — wider centered card
+    ═══════════════════════════════════════════════════════ */
+    @media (min-width: 560px) and (max-width: 1023px) {
+      body { align-items: center; padding: 40px 24px; }
+
+      .page {
+        max-width: 580px;
+        min-height: auto;
+        border-radius: 28px;
+        overflow: hidden;
+        box-shadow: 0 30px 70px rgba(27,51,38,0.18), 0 2px 8px rgba(27,51,38,0.06);
+      }
+
+      .hero {
+        height: 46vh;
+        min-height: 280px;
+        max-height: 420px;
+      }
+
+      .headline { font-size: 32px; }
+
+      .body-text {
+        font-size: 15px;
+        max-width: 340px;
+        margin-bottom: 30px;
+      }
+
+      .content { padding: 10px 36px 44px; }
+
+      .btn-stack { gap: 13px; }
+
+      .review-btn { min-height: 68px; padding: 16px 20px; }
+
+      .btn-name { font-size: 17px; }
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       DESKTOP — two-column split layout
+    ═══════════════════════════════════════════════════════ */
+    @media (min-width: 1024px) {
+      body {
+        align-items: stretch;
+        padding: 0;
+        background: var(--forest);
+      }
+
+      .page {
+        max-width: 100%;
+        width: 100%;
+        min-height: 100dvh;
+        flex-direction: row;
+        border-radius: 0;
+      }
+
+      /* LEFT COLUMN — hero image, sticky */
+      .hero {
+        flex: 1 1 55%;
+        height: auto;
+        max-height: none;
+        min-height: 100dvh;
+        position: sticky;
+        top: 0;
+        align-self: flex-start;
+      }
+
+      .hero-img::after {
+        /* Desktop scrim: darken top-left for logo, subtle vignette only */
+        background: linear-gradient(
+          135deg,
+          rgba(12,26,18,0.55) 0%,
+          rgba(12,26,18,0.15) 30%,
+          rgba(12,26,18,0.0) 55%,
+          rgba(12,26,18,0.1) 100%
+        );
+      }
+
+      .brand {
+        top: 36px;
+        left: 36px;
+      }
+
+      .brand-icon { width: 34px; height: 34px; }
+      .brand-name { font-size: 16px; letter-spacing: 3px; }
+
+      .stars {
+        bottom: 48px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .stars svg { width: 26px; height: 26px; }
+
+      /* RIGHT COLUMN — content panel */
+      .content {
+        flex: 0 0 420px;
+        min-height: 100dvh;
+        justify-content: center;
+        padding: 80px 56px;
+        background: var(--cream);
+        border-left: 1px solid rgba(0,0,0,0.04);
+        align-items: flex-start;
+      }
+
+      .headline {
+        font-size: 36px;
+        text-align: left;
+        line-height: 1.18;
+        margin-bottom: 14px;
+      }
+
+      .body-text {
+        font-size: 15px;
+        text-align: left;
+        max-width: 100%;
+        margin-bottom: 32px;
+        line-height: 1.65;
+      }
+
+      .instruction {
+        text-align: left;
+        font-size: 13px;
+        margin-bottom: 16px;
+      }
+
+      .btn-stack { gap: 13px; }
+
+      .review-btn {
+        min-height: 68px;
+        padding: 16px 22px;
+        border-radius: 18px;
+      }
+
+      .review-btn.primary:hover { transform: translateY(-3px); }
+
+      .btn-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 11px;
+      }
+
+      .review-btn.primary .btn-icon { font-size: 11px; }
+
+      .btn-name { font-size: 17px; }
+      .btn-sub  { font-size: 12.5px; }
+
+      .page-footer {
+        text-align: left;
+        padding-top: 28px;
+      }
+
+      .page-footer p { font-size: 12px; }
+    }
+
+    /* WIDE DESKTOP — let the image breathe more */
+    @media (min-width: 1400px) {
+      .content {
+        flex: 0 0 480px;
+        padding: 80px 64px;
+      }
+
+      .headline { font-size: 40px; }
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       SHORT SCREENS
+    ═══════════════════════════════════════════════════════ */
+    @media (max-height: 640px) and (max-width: 1023px) {
+      .hero    { height: 30vh; min-height: 200px; }
+      .headline { font-size: 24px; }
+      .body-text { font-size: 13.5px; margin-bottom: 18px; }
+      .stars   { bottom: 18px; }
+      .content { padding-top: 4px; }
+    }
+
+    @media (max-height: 500px) and (max-width: 1023px) {
+      .hero       { height: 25vh; min-height: 160px; }
+      .btn-stack  { gap: 8px; }
+      .review-btn { min-height: 54px; }
+      .body-text  { display: none; }
+    }
+
     /* ── ANIMATIONS ── */
     @keyframes zoom-out {
       to { transform: scale(1); }
@@ -325,29 +497,13 @@
       from { opacity: 0; transform: translateY(12px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-
-    /* ── SHORT SCREENS (small phones, landscape) ── */
-    @media (max-height: 640px) {
-      .hero    { height: 30vh; min-height: 200px; }
-      .headline { font-size: 24px; }
-      .body-text { font-size: 13.5px; margin-bottom: 18px; }
-      .stars   { bottom: 18px; }
-      .content { padding-top: 4px; }
-    }
-
-    @media (max-height: 500px) {
-      .hero      { height: 25vh; min-height: 160px; }
-      .btn-stack { gap: 8px; }
-      .review-btn { min-height: 54px; }
-      .body-text  { display: none; }
-    }
   </style>
 </head>
 <body>
 
 <div class="page">
 
-  <!-- HERO -->
+  <!-- LEFT / TOP — hero image -->
   <div class="hero">
     <div class="hero-img"></div>
 
@@ -368,7 +524,7 @@
     </div>
   </div>
 
-  <!-- CONTENT -->
+  <!-- RIGHT / BOTTOM — conversion content -->
   <div class="content">
 
     <h1 class="headline">Thank you for<br>adventuring with us</h1>
@@ -381,7 +537,7 @@
 
     <div class="btn-stack">
 
-      <!-- PRIMARY — GetYourGuide (live link) -->
+      <!-- PRIMARY — GetYourGuide (live) -->
       <a
         href="https://www.getyourguide.com/scan-review-qr?activity_id=1204012&utm_medium=offline&utm_source=supplier_review_link&utm_campaign=supplier_review_qrcode&utm_content=1204012"
         class="review-btn primary"
