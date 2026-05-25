@@ -236,7 +236,7 @@
         </a>
 
         <!-- Tour 3 -->
-        <a href="/tours/Banff-Hidden-Gem-Canoe-Tour/" class="tour-card reveal reveal-delay-3">
+        <a href="/tours/Banff-Hidden-Gem-Canoe-Tour/" class="tour-card reveal reveal-delay-3" data-bokun-id="1162721">
           <div class="tour-card__image-wrap" style="width:100%!important;height:0!important;padding-bottom:88%!important;position:relative!important;overflow:hidden!important;">
             <img src="/tours/Banff-Hidden-Gem-Canoe-Tour/images/Hero.jpg"
                  alt="Banff hidden gem canoe tour" loading="lazy" width="540" height="540">
@@ -336,5 +336,43 @@
 
   <script src="/js/referral.js"></script>
   <script src="/js/main.js"></script>
+  <script>
+  (function () {
+    var BOKUN_API_BASE = 'https://horizon-bokun.ivan-mueller02.workers.dev';
+
+    function pad(n) { return n < 10 ? '0' + n : String(n); }
+    function toYmd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+
+    document.querySelectorAll('[data-bokun-id]').forEach(function (card) {
+      var id = card.dataset.bokunId;
+      var amtEl  = card.querySelector('.tour-card__price-amount');
+      var unitEl = card.querySelector('.tour-card__price-unit');
+      if (!amtEl) return;
+
+      var today = new Date();
+      var end   = new Date(today); end.setDate(end.getDate() + 60);
+      var qs    = '?start=' + toYmd(today) + '&end=' + toYmd(end);
+
+      fetch(BOKUN_API_BASE + '/api/availability/' + id + qs)
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (avail) {
+          if (!avail || !Array.isArray(avail)) return;
+          var min = Infinity;
+          avail.forEach(function (s) {
+            if (!s.pricesByRate || !s.pricesByRate[0]) return;
+            var units = s.pricesByRate[0].pricePerCategoryUnit;
+            if (!units) return;
+            units.forEach(function (u) {
+              if (/adult/i.test(u.label || u.title || '') && u.amount < min) min = u.amount;
+            });
+          });
+          if (min === Infinity) return;
+          amtEl.textContent  = '$' + min;
+          if (unitEl) unitEl.textContent = ' CAD';
+        })
+        .catch(function () { /* keep hardcoded fallback on error */ });
+    });
+  })();
+  </script>
 </body>
 </html>
