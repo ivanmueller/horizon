@@ -2018,6 +2018,23 @@
   <script>
     var BOKUN_API_BASE  = 'https://horizon-bokun.ivan-mueller02.workers.dev';
     var BOKUN_PRODUCT_ID = 1162721;
+
+    // If the listing page already fetched and cached the price, apply it now so
+    // the shimmer never shows when arriving from the tours listing.
+    (function () {
+      try {
+        var raw = localStorage.getItem('hzn_price_' + BOKUN_PRODUCT_ID);
+        if (!raw) return;
+        var entry = JSON.parse(raw);
+        if (!entry || Date.now() >= entry.exp) return;
+        var amtEl    = document.querySelector('.booking-panel__price-amount');
+        var unitEl   = document.querySelector('.booking-panel__price-unit');
+        var priceDiv = document.querySelector('.booking-panel__price');
+        if (amtEl)    amtEl.textContent  = '$' + entry.price;
+        if (unitEl)   unitEl.textContent = ' CAD per person';
+        if (priceDiv) priceDiv.classList.remove('booking-panel__price--loading');
+      } catch (e) {}
+    })();
     // Stripe publishable key — public, safe to inline. Swap for the live key
     // (pk_live_…) when going to production. The matching secret key lives in
     // Worker secret storage; see workers/bokun/wrangler.toml.
@@ -2145,6 +2162,9 @@
       if (amtEl) amtEl.textContent = '$' + amt;
       if (unitEl) unitEl.textContent = ' ' + window.BOKUN.currency + ' per person';
       if (priceDiv) priceDiv.classList.remove('booking-panel__price--loading');
+      try {
+        localStorage.setItem('hzn_price_' + BOKUN_PRODUCT_ID, JSON.stringify({ price: amt, exp: Date.now() + 60 * 60 * 1000 }));
+      } catch (e) {}
     }
 
     function applyJsonLd() {
