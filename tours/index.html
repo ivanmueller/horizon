@@ -121,6 +121,18 @@
     .tour-card__footer {
       margin-top: auto !important;
     }
+    @keyframes price-shimmer {
+      0%   { background-position: -200px 0; }
+      100% { background-position:  200px 0; }
+    }
+    .tour-card__price-amount--loading {
+      color: transparent !important;
+      background: linear-gradient(90deg, #E5E7EB 25%, #F9FAFB 50%, #E5E7EB 75%);
+      background-size: 200px 100%;
+      animation: price-shimmer 1s infinite linear;
+      border-radius: 4px;
+      display: inline-block;
+    }
   </style>
 
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><rect width='36' height='36' rx='8' fill='%23FF6B4A'/><path d='M13 7v22M13 18c0-6 12-6 12 0v11' stroke='white' stroke-width='4' stroke-linecap='round' fill='none'/></svg>">
@@ -262,7 +274,7 @@
             <h3 class="tour-card__title" style="color:#1A1A2E !important;-webkit-text-fill-color:#1A1A2E !important;">Banff: Canoe Tour, Moraine Lake &amp; Lake Louise</h3>
             <div class="tour-card__footer">
               <div class="tour-card__price">
-                <span class="tour-card__price-amount">$249.99</span>
+                <span class="tour-card__price-amount tour-card__price-amount--loading">$249.99</span>
                 <span class="tour-card__price-unit"> CAD</span>
               </div>
               <span class="tour-card__duration">
@@ -380,10 +392,13 @@
           if (p && p.amount && p.amount.amount < min) min = p.amount.amount;
         });
 
+        amtEl.classList.remove('tour-card__price-amount--loading');
         if (min === Infinity) return;
         amtEl.textContent  = '$' + min;
         if (unitEl) unitEl.textContent = ' CAD';
-      }).catch(function () { /* keep hardcoded fallback on error */ });
+      }).catch(function () {
+        amtEl.classList.remove('tour-card__price-amount--loading');
+      });
     });
   })();
   </script>
