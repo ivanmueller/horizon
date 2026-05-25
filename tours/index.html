@@ -122,14 +122,15 @@
       margin-top: auto !important;
     }
     @keyframes price-shimmer {
-      0%   { background-position: -200px 0; }
-      100% { background-position:  200px 0; }
+      0%   { background-position: 200% center; }
+      100% { background-position: -200% center; }
     }
     .tour-card__price-amount--loading {
       color: transparent !important;
       background: linear-gradient(90deg, #E5E7EB 25%, #F9FAFB 50%, #E5E7EB 75%);
-      background-size: 200px 100%;
-      animation: price-shimmer 1s infinite linear;
+      background-size: 200% 100%;
+      background-repeat: no-repeat;
+      animation: price-shimmer 1.2s infinite linear;
       border-radius: 4px;
       display: inline-block;
     }
