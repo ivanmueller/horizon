@@ -344,7 +344,7 @@
     function toYmd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
 
     document.querySelectorAll('[data-bokun-id]').forEach(function (card) {
-      var id = card.dataset.bokunId;
+      var id    = card.dataset.bokunId;
       var amtEl  = card.querySelector('.tour-card__price-amount');
       var unitEl = card.querySelector('.tour-card__price-unit');
       if (!amtEl) return;
@@ -353,24 +353,37 @@
       var end   = new Date(today); end.setDate(end.getDate() + 60);
       var qs    = '?start=' + toYmd(today) + '&end=' + toYmd(end);
 
-      fetch(BOKUN_API_BASE + '/api/availability/' + id + qs)
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (avail) {
-          if (!avail || !Array.isArray(avail)) return;
-          var min = Infinity;
-          avail.forEach(function (s) {
-            if (!s.pricesByRate || !s.pricesByRate[0]) return;
-            var units = s.pricesByRate[0].pricePerCategoryUnit;
-            if (!units) return;
-            units.forEach(function (u) {
-              if (/adult/i.test(u.label || u.title || '') && u.amount < min) min = u.amount;
-            });
+      // Fetch product + availability in parallel — same pattern as the tour detail page.
+      // Product gives us the adult category id; availability gives us the per-slot prices.
+      Promise.all([
+        fetch(BOKUN_API_BASE + '/api/product/' + id).then(function (r) { return r.ok ? r.json() : null; }),
+        fetch(BOKUN_API_BASE + '/api/availability/' + id + qs).then(function (r) { return r.ok ? r.json() : null; })
+      ]).then(function (results) {
+        var product = results[0];
+        var avail   = results[1];
+        if (!product || !Array.isArray(avail)) return;
+
+        // Find the adult pricing category by title so we can match by id in each slot.
+        var adultCat = (product.pricingCategories || []).find(function (c) {
+          return /adult/i.test(c.title);
+        });
+        if (!adultCat) return;
+
+        // Walk every slot to find the lowest adult price (handles seasonal variation).
+        var min = Infinity;
+        avail.forEach(function (s) {
+          if (!s.pricesByRate || !s.pricesByRate[0]) return;
+          var p = (s.pricesByRate[0].pricePerCategoryUnit || []).find(function (x) {
+            return x.id === adultCat.id;
           });
-          if (min === Infinity) return;
-          amtEl.textContent  = '$' + min;
-          if (unitEl) unitEl.textContent = ' CAD';
-        })
-        .catch(function () { /* keep hardcoded fallback on error */ });
+          // Bokun nests the price: p.amount.amount
+          if (p && p.amount && p.amount.amount < min) min = p.amount.amount;
+        });
+
+        if (min === Infinity) return;
+        amtEl.textContent  = '$' + min;
+        if (unitEl) unitEl.textContent = ' CAD';
+      }).catch(function () { /* keep hardcoded fallback on error */ });
     });
   })();
   </script>
