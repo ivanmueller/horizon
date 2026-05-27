@@ -71,6 +71,19 @@
     .tour-card__footer {
       margin-top: auto !important;
     }
+    @keyframes price-shimmer {
+      0%   { background-position: 200% center; }
+      100% { background-position: -200% center; }
+    }
+    .tour-card__price-amount--loading {
+      color: transparent !important;
+      background: linear-gradient(90deg, #E5E7EB 25%, #F9FAFB 50%, #E5E7EB 75%);
+      background-size: 200% 100%;
+      background-repeat: no-repeat;
+      animation: price-shimmer 1.2s infinite linear;
+      border-radius: 4px;
+      display: inline-block;
+    }
   </style>
 
   <!-- Favicon -->
@@ -88,7 +101,7 @@
       "@type": "Place",
       "name": "Banff National Park, Alberta, Canada"
     },
-    "priceRange": "$249-$249.99 CAD"
+    "priceRange": "$249-$269 CAD"
   }
   </script>
 </head>
@@ -266,9 +279,9 @@
         </a>
 
         <!-- Tour Card 3 -->
-        <a href="/tours/Banff-Hidden-Gem-Canoe-Tour/" class="tour-card reveal reveal-delay-3">
+        <a href="/tours/Banff-Hidden-Gem-Canoe-Tour/" class="tour-card reveal reveal-delay-3" data-bokun-id="1162721">
           <div class="tour-card__image-wrap" style="width:100%!important;height:0!important;padding-bottom:88%!important;position:relative!important;overflow:hidden!important;">
-            <img src="/images/Lake-Agnes-Tea-House/Lage-Agnes-Tea-House-Hero.jpg"
+            <img src="/tours/Banff-Hidden-Gem-Canoe-Tour/images/Hero.jpg"
                  alt="Banff hidden gem canoe tour"
                  loading="lazy" width="540" height="540">
             <span class="tour-card__badge">Best Value</span>
@@ -287,7 +300,7 @@
             <h3 class="tour-card__title" style="color:#1A1A2E !important;-webkit-text-fill-color:#1A1A2E !important;">Banff: Canoe Tour, Moraine Lake &amp; Lake Louise</h3>
             <div class="tour-card__footer">
               <div class="tour-card__price">
-                <span class="tour-card__price-amount">$249.99</span>
+                <span class="tour-card__price-amount tour-card__price-amount--loading">$269</span>
                 <span class="tour-card__price-unit"> CAD</span>
               </div>
               <span class="tour-card__duration">
@@ -568,5 +581,69 @@
 
   <script src="/js/referral.js"></script>
   <script src="/js/main.js"></script>
+  <script>
+  (function () {
+    var BOKUN_API_BASE = 'https://horizon-bokun.ivan-mueller02.workers.dev';
+    var CACHE_PREFIX   = 'hzn_price_';
+    var CACHE_TTL_MS   = 60 * 60 * 1000;
+
+    function readCache(id) {
+      try {
+        var raw = localStorage.getItem(CACHE_PREFIX + id);
+        if (!raw) return null;
+        var entry = JSON.parse(raw);
+        return (entry && Date.now() < entry.exp) ? entry.price : null;
+      } catch (e) { return null; }
+    }
+
+    function writeCache(id, price) {
+      try {
+        localStorage.setItem(CACHE_PREFIX + id, JSON.stringify({ price: price, exp: Date.now() + CACHE_TTL_MS }));
+      } catch (e) {}
+    }
+
+    function applyPrice(amtEl, unitEl, price) {
+      amtEl.classList.remove('tour-card__price-amount--loading');
+      amtEl.textContent = '$' + price;
+      if (unitEl) unitEl.textContent = ' CAD';
+    }
+
+    function pad(n) { return n < 10 ? '0' + n : String(n); }
+    function toYmd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+
+    document.querySelectorAll('[data-bokun-id]').forEach(function (card) {
+      var id    = card.dataset.bokunId;
+      var amtEl  = card.querySelector('.tour-card__price-amount');
+      var unitEl = card.querySelector('.tour-card__price-unit');
+      if (!amtEl) return;
+
+      var cached = readCache(id);
+      if (cached !== null) { applyPrice(amtEl, unitEl, cached); return; }
+
+      var today = new Date();
+      var end   = new Date(today); end.setDate(end.getDate() + 60);
+      var qs    = '?start=' + toYmd(today) + '&end=' + toYmd(end);
+
+      Promise.all([
+        fetch(BOKUN_API_BASE + '/api/product/' + id).then(function (r) { return r.ok ? r.json() : null; }),
+        fetch(BOKUN_API_BASE + '/api/availability/' + id + qs).then(function (r) { return r.ok ? r.json() : null; })
+      ]).then(function (results) {
+        var product = results[0], avail = results[1];
+        if (!product || !Array.isArray(avail)) { amtEl.classList.remove('tour-card__price-amount--loading'); return; }
+        var adultCat = (product.pricingCategories || []).find(function (c) { return /adult/i.test(c.title); });
+        if (!adultCat) { amtEl.classList.remove('tour-card__price-amount--loading'); return; }
+        var min = Infinity;
+        avail.forEach(function (s) {
+          if (!s.pricesByRate || !s.pricesByRate[0]) return;
+          var p = (s.pricesByRate[0].pricePerCategoryUnit || []).find(function (x) { return x.id === adultCat.id; });
+          if (p && p.amount && p.amount.amount < min) min = p.amount.amount;
+        });
+        if (min === Infinity) { amtEl.classList.remove('tour-card__price-amount--loading'); return; }
+        writeCache(id, min);
+        applyPrice(amtEl, unitEl, min);
+      }).catch(function () { amtEl.classList.remove('tour-card__price-amount--loading'); });
+    });
+  })();
+  </script>
 </body>
 </html>
