@@ -180,14 +180,20 @@
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      overflow: hidden;
+      background: white;
+      padding: 4px;
+    }
+
+    .btn-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
     }
 
     .review-btn.primary .btn-icon {
-      background: var(--gyg);
-      font-weight: 700;
-      font-size: 10.5px;
-      letter-spacing: 0.3px;
-      color: white;
+      background: white;
     }
 
     .btn-text { flex: 1; }
@@ -214,7 +220,7 @@
       box-shadow: 0 8px 24px rgba(27,51,38,0.1);
     }
 
-    .review-btn.secondary .btn-icon { background: #00AF87; font-weight: 700; font-size: 11px; letter-spacing: 0.2px; color: white; }
+    .review-btn.secondary .btn-icon { background: white; }
     .review-btn.secondary .btn-name { color: var(--text-dark); }
     .review-btn.secondary .btn-sub  { color: var(--text-light); }
     .review-btn.secondary .arrow    { color: var(--text-light); }
@@ -312,7 +318,7 @@
     <div class="btn-stack">
       <a href="https://www.getyourguide.com/scan-review-qr?activity_id=1204012&utm_medium=offline&utm_source=supplier_review_link&utm_campaign=supplier_review_qrcode&utm_content=1204012"
          class="review-btn primary" id="gyg-btn" rel="noopener">
-        <div class="btn-icon">GYG</div>
+        <div class="btn-icon"><img src="../logo-assets/getyourguide_logo.png" alt="GetYourGuide"></div>
         <div class="btn-text">
           <div class="btn-name">GetYourGuide</div>
           <div class="btn-sub">Tap to leave your review</div>
@@ -321,10 +327,10 @@
       </a>
 
       <a href="https://www.tripadvisor.com/UserReviewEdit-g154910-d34232643-Banff_Canoe_Tour_Moraine_Lake_Lake_Louise-Banff_National_Park_Alberta.html"
-         class="review-btn secondary" id="ta-btn" rel="noopener">
-        <div class="btn-icon">TA</div>
+         class="review-btn secondary" id="viator-btn" rel="noopener">
+        <div class="btn-icon"><img src="../logo-assets/viator_logo.jpg" alt="Viator"></div>
         <div class="btn-text">
-          <div class="btn-name">Tripadvisor</div>
+          <div class="btn-name">Viator</div>
           <div class="btn-sub">Tap to leave your review</div>
         </div>
         <svg class="arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -341,8 +347,8 @@
   document.getElementById('gyg-btn')?.addEventListener('click', () => {
     if (typeof gtag === 'function') gtag('event', 'review_click', { platform: 'getyourguide' });
   });
-  document.getElementById('ta-btn')?.addEventListener('click', () => {
-    if (typeof gtag === 'function') gtag('event', 'review_click', { platform: 'tripadvisor' });
+  document.getElementById('viator-btn')?.addEventListener('click', () => {
+    if (typeof gtag === 'function') gtag('event', 'review_click', { platform: 'viator' });
   });
 </script>
 </body>
