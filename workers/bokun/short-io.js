@@ -97,9 +97,9 @@ async function parseResponse(res, label) {
 // Create a Short.io link. Returns the full Short.io record.
 //   {
 //     id:            "lnk_abc123",          // Short.io's internal id
-//     shortURL:      "https://link.gowithhorizon.com/x7k2-e0042",
-//     originalURL:   "https://gowithhorizon.com/partners/...",
-//     path:          "x7k2-e0042",
+//     shortURL:      "https://link.gowithhorizon.com/htl-7q4k9-e042",
+//     originalURL:   "https://gowithhorizon.com/?hotel=<slug>&ref=...",
+//     path:          "htl-7q4k9-e042",
 //     ...
 //   }
 //
