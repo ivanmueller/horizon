@@ -1735,23 +1735,36 @@ async function mintShortLinkAndRecord(env, params, { throwOnError = false } = {}
   }
 }
 
-// Build the long URL a short link should redirect to. Hotel master:
-// /partners/<slug>/. Staff: append ?ref=<tracking_code> so the
-// checkout flow attributes the booking to the employee.
+// Build the long URL a short link should redirect to.
+//
+// Attribution is captured from the QUERY STRING (js/referral.js reads
+// ?hotel= / ?ref=), and the ledger write is gated on the hotel slug
+// (checkout recordToLedger returns early without ctx.booking.hotel).
+// So every target must carry ?hotel=<slug>, or the booking never
+// records. The slug in a PATH segment (the old /partners/<slug>/
+// form) is invisible to the capture layer — a path-only link tracks
+// nothing. See PARTNERS_NAMING.md / docs/referral-attribution-spec.md.
+//
+// Hotel master: ?hotel=<slug> alone → hotel-pool attribution.
+// Staff/placement: add &ref=<code> so the funnel also records that
+// touch. The captured slug persists across the whole visit via the
+// localStorage + apex-cookie funnel, so guests can browse from the
+// homepage to any tour and still attribute.
 function hotelTargetUrl(env, hotelCode) {
   const base = (env.PUBLIC_SITE_BASE || "https://gowithhorizon.com").replace(/\/$/, "");
-  return `${base}/partners/${encodeURIComponent(hotelCode)}/`;
+  return `${base}/?hotel=${encodeURIComponent(hotelCode)}`;
 }
 function staffTargetUrl(env, hotelCode, trackingCode) {
-  return `${hotelTargetUrl(env, hotelCode)}?ref=${encodeURIComponent(trackingCode)}`;
+  // hotelTargetUrl already carries ?hotel=, so ref rides as &ref=.
+  return `${hotelTargetUrl(env, hotelCode)}&ref=${encodeURIComponent(trackingCode)}`;
 }
-// A placement redirects to the hotel master URL with its own code as
-// ?ref. The code carries a "-pNN" suffix that never matches a
-// hotel_staff row, so checkout resolves it to hotel-pool attribution
-// (no employee, no kickback) — identical URL shape to staff, distinct
-// attribution outcome by construction.
+// A placement links to the hotel URL with its own code as &ref. The
+// code carries a "-pNN" suffix that never matches a hotel_staff row,
+// so checkout resolves it to hotel-pool attribution (no employee, no
+// kickback) — identical URL shape to staff, distinct attribution
+// outcome by construction.
 function placementTargetUrl(env, hotelCode, code) {
-  return `${hotelTargetUrl(env, hotelCode)}?ref=${encodeURIComponent(code)}`;
+  return `${hotelTargetUrl(env, hotelCode)}&ref=${encodeURIComponent(code)}`;
 }
 
 // Hotel insert wrapper. Generates a unique tracking_prefix and seeds
