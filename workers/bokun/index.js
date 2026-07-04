@@ -3964,13 +3964,19 @@ function validatePlacement(body, { creating }) {
   }
   if (typeof body.status === "string") {
     if (!PLACEMENT_STATUSES.has(body.status)) {
-      return { error: "status must be pending, active, or retired" };
+      return { error: "status must be designed, printed, active, paused, or retired" };
     }
     row.status = body.status;
   } else if (creating) {
-    // New placements start Pending until the material is verified
-    // (printed / widget generated); activated manually in Edit.
-    row.status = "pending";
+    // New placements start "designed" — the artwork exists but no
+    // physical material has been deployed and no scan has happened
+    // yet. The worker (syncClickCounts) auto-advances printed → active
+    // on the first cached click; admins can advance manually in Edit.
+    // Must be a member of PLACEMENT_STATUSES / the DB check constraint
+    // (migration 0026 renamed the old 'pending' state to 'designed');
+    // sending 'pending' here fails the check constraint and the create
+    // returns an error.
+    row.status = "designed";
   }
   // code and sequence_number are auto-managed by
   // insertPlacementWithSequence and locked thereafter — never accept
