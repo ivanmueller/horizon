@@ -876,6 +876,9 @@
           var slot = slots.find(function (s) {
             return s && Number(s.startTimeId) === Number(booking.activity_id);
           }) || slots[0] || null;
+          if (slot && Number(slot.startTimeId) !== Number(booking.activity_id)) {
+            booking.activity_id = slot.startTimeId;
+          }
           window.HORIZON_CHECKOUT.slot = slot;
           renderSummary();
           // Sections 1/2 are wired in later steps; expose a single hook
