@@ -1763,7 +1763,14 @@ function staffTargetUrl(env, hotelCode, trackingCode) {
 // so checkout resolves it to hotel-pool attribution (no employee, no
 // kickback) — identical URL shape to staff, distinct attribution
 // outcome by construction.
-function placementTargetUrl(env, hotelCode, code) {
+// When tour_slug is set, the link lands on the specific tour page
+// (/tours/<slug>/) instead of the homepage — the ?hotel= and &ref=
+// params still ride the URL so attribution captures identically.
+function placementTargetUrl(env, hotelCode, code, tourSlug) {
+  const base = (env.PUBLIC_SITE_BASE || "https://gowithhorizon.com").replace(/\/$/, "");
+  if (tourSlug) {
+    return `${base}/tours/${encodeURIComponent(tourSlug)}/?hotel=${encodeURIComponent(hotelCode)}&ref=${encodeURIComponent(code)}`;
+  }
   return `${hotelTargetUrl(env, hotelCode)}&ref=${encodeURIComponent(code)}`;
 }
 
@@ -1935,7 +1942,7 @@ async function insertPlacementWithSequence(env, row, maxAttempts = 5) {
       let shortLinkWarning = null;
       ({ error: shortLinkWarning } = await mintShortLinkAndRecord(env, {
         shortPath: trackingCodeToShortPath(placement.code),
-        targetUrl: placementTargetUrl(env, hotel.code, placement.code),
+        targetUrl: placementTargetUrl(env, hotel.code, placement.code, placement.tour_slug),
         title: `${hotel.name} — ${placement.name}`,
         linkType: "placement",
         hotelId: row.hotel_id,
@@ -2411,6 +2418,37 @@ async function handleAdminPlacementUpdate(id, request, env) {
       from: priorStatus, to: v.row.status,
     }, auth.claims && auth.claims.email);
   }
+
+  // When tour_slug changes, retarget the placement's short link so the
+  // QR continues to resolve to the correct destination without reprinting.
+  if ("tour_slug" in v.row) {
+    const placement = updated[0];
+    const code = (placement.code || "").toLowerCase();
+    if (code) {
+      const links = await supabaseSelect(
+        env,
+        `short_links?short_path=eq.${encodeURIComponent(code)}&select=id,short_io_id&limit=1`,
+      );
+      if (links.length && links[0].short_io_id) {
+        const hotelRows = await supabaseSelect(
+          env, `hotels?id=eq.${encodeURIComponent(placement.hotel_id)}&select=code`,
+        );
+        if (hotelRows.length) {
+          const newTarget = placementTargetUrl(env, hotelRows[0].code, code, placement.tour_slug);
+          try {
+            await updateShortLink(env, links[0].short_io_id, { originalURL: newTarget });
+            await supabaseUpdate(
+              env, `short_links?id=eq.${encodeURIComponent(links[0].id)}`,
+              { target_url: newTarget },
+            );
+          } catch (err) {
+            console.warn(`retarget short link for placement ${id} failed: ${err && err.message}`);
+          }
+        }
+      }
+    }
+  }
+
   return jsonResponse({ placement: updated[0] }, 200, request);
 }
 
@@ -3020,7 +3058,7 @@ const PLACEMENT_ASSET_FIELDS =
   "version,status,uploaded_at,created_at,updated_at";
 const PLACEMENT_FIELDS =
   "id,hotel_id,sequence_number,code,placement_type,name,status," +
-  "location_in_hotel,deployed_at,created_at,updated_at";
+  "tour_slug,location_in_hotel,deployed_at,created_at,updated_at";
 const PLACEMENT_ASSETS_BUCKET = "placement-assets";
 const PLACEMENT_ASSET_KINDS = new Set(["design", "print_ready", "qr"]);
 const SHORT_LINK_TYPES = new Set(["hotel", "staff", "campaign", "placement"]);
@@ -3950,6 +3988,15 @@ function validatePlacement(body, { creating }) {
     row.placement_type = body.placement_type;
   } else if (creating) {
     return { error: "placement_type required" };
+  }
+  if (body.tour_slug === null) {
+    row.tour_slug = null;
+  } else if (typeof body.tour_slug === "string") {
+    const slug = body.tour_slug.trim().toLowerCase();
+    if (slug && !/^[a-z0-9-]{2,80}$/.test(slug)) {
+      return { error: "tour_slug must be a lowercase URL path (letters, digits, hyphens)" };
+    }
+    row.tour_slug = slug || null;
   }
   if (typeof body.location_in_hotel === "string") {
     const loc = body.location_in_hotel.trim();
