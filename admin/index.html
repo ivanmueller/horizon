@@ -471,6 +471,18 @@
         <span class="drawer-form__hint">It goes live immediately. Add location / deploy date later via Edit.</span>
       </div>
 
+      <div class="drawer-form__row">
+        <label class="drawer-form__label" for="plCreateTour">Tour
+          <span class="drawer-form__optional">(optional)</span></label>
+        <select class="input" id="plCreateTour">
+          <option value="">All tours (homepage)</option>
+          <option value="Banff-Hidden-Gem-Canoe-Tour">Banff Hidden Gem Canoe Tour</option>
+          <option value="banff-town-highlights-gondola">Banff Town Highlights &amp; Gondola</option>
+          <option value="lake-louise-sunrise-canoe">Lake Louise Sunrise Canoe</option>
+        </select>
+        <span class="drawer-form__hint">Links the QR directly to a specific tour page. Leave blank to link to the homepage.</span>
+      </div>
+
       <div class="modal__actions">
         <button type="button" class="btn" id="plCreateCancel">Cancel</button>
         <button type="submit" class="btn btn--primary" id="plCreateSubmit">Create placement</button>
@@ -554,6 +566,18 @@
         <div class="drawer-form__row">
           <label class="drawer-form__label" for="plEditName">Name</label>
           <input class="input" type="text" id="plEditName" maxlength="120" autocomplete="off">
+        </div>
+
+        <div class="drawer-form__row">
+          <label class="drawer-form__label" for="plEditTour">Tour
+            <span class="drawer-form__optional">(optional)</span></label>
+          <select class="input" id="plEditTour">
+            <option value="">All tours (homepage)</option>
+            <option value="Banff-Hidden-Gem-Canoe-Tour">Banff Hidden Gem Canoe Tour</option>
+            <option value="banff-town-highlights-gondola">Banff Town Highlights &amp; Gondola</option>
+            <option value="lake-louise-sunrise-canoe">Lake Louise Sunrise Canoe</option>
+          </select>
+          <span class="drawer-form__hint">Links the QR directly to a specific tour page. Change anytime — the QR stays the same.</span>
         </div>
 
         <div class="drawer-form__row">
@@ -2429,6 +2453,7 @@
     const plCreateError  = document.getElementById('plCreateError');
     const plCreateType   = document.getElementById('plCreateType');
     const plCreateName   = document.getElementById('plCreateName');
+    const plCreateTour   = document.getElementById('plCreateTour');
     const plCreateSubmit = document.getElementById('plCreateSubmit');
 
     const plEditModal  = document.getElementById('plEditModal');
@@ -2437,6 +2462,7 @@
     const plEditCode   = document.getElementById('plEditCode');
     const plEditType   = document.getElementById('plEditType');
     const plEditName   = document.getElementById('plEditName');
+    const plEditTour   = document.getElementById('plEditTour');
     const plEditLocation = document.getElementById('plEditLocation');
     const plEditDeployed = document.getElementById('plEditDeployed');
     const plEditStatus = document.getElementById('plEditStatus');
@@ -3153,13 +3179,14 @@
       plCreateSubmit.disabled = true;
       plCreateSubmit.textContent = 'Creating…';
 
-      // Streamlined: just type + name. Code/link auto-minted, status
-      // auto-active server-side; location/deploy date set later in Edit.
       const body = {
         hotel_id:       _plHotelRef.id,
         placement_type: plCreateType.value,
         name,
       };
+      if (plCreateTour && plCreateTour.value) {
+        body.tour_slug = plCreateTour.value;
+      }
 
       try {
         const res = await fetch(BOKUN_API_BASE + '/api/admin/placements', {
@@ -3190,6 +3217,7 @@
       plEditCode.textContent  = row.dataset.plCode || '—';
       plEditType.value        = row.dataset.plType || 'custom';
       plEditName.value        = row.dataset.plName || '';
+      plEditTour.value        = row.dataset.plTour || '';
       plEditLocation.value    = row.dataset.plLocation || '';
       plEditDeployed.value    = row.dataset.plDeployed || '';
       plEditStatus.value      = row.dataset.plStatus || 'designed';
@@ -3345,11 +3373,10 @@
       plEditSubmit.disabled = true;
       plEditSubmit.textContent = 'Saving…';
 
-      // Send the editable fields. Empty strings clear optional values
-      // (the worker maps "" → null).
       const body = {
         placement_type:    plEditType.value,
         name,
+        tour_slug:         plEditTour.value || null,
         location_in_hotel: plEditLocation.value.trim(),
         deployed_at:       plEditDeployed.value ? plEditDeployed.value : null,
         status:            plEditStatus.value,
@@ -5136,9 +5163,10 @@
                 '<tr data-placement-row="' + escapeHtml(p.id) + '"' +
                   ' data-pl-type="' + escapeHtml(p.placement_type || '') + '"' +
                   ' data-pl-name="' + escapeHtml(p.name || '') + '"' +
+                  ' data-pl-tour="' + escapeHtml(p.tour_slug || '') + '"' +
                   ' data-pl-location="' + escapeHtml(p.location_in_hotel || '') + '"' +
                   ' data-pl-deployed="' + escapeHtml(deployedDate) + '"' +
-                  ' data-pl-status="' + escapeHtml(p.status || 'pending') + '"' +
+                  ' data-pl-status="' + escapeHtml(p.status || 'designed') + '"' +
                   ' data-pl-code="' + escapeHtml(code) + '">' +
                   '<td class="hd-emp__name">' + escapeHtml(p.name || '—') + '</td>' +
                   '<td>' + statusPill + '</td>' +
