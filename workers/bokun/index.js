@@ -3992,9 +3992,9 @@ function validatePlacement(body, { creating }) {
   if (body.tour_slug === null) {
     row.tour_slug = null;
   } else if (typeof body.tour_slug === "string") {
-    const slug = body.tour_slug.trim();
-    if (slug && !/^[a-zA-Z0-9-]{2,80}$/.test(slug)) {
-      return { error: "tour_slug must be a URL path (letters, digits, hyphens)" };
+    const slug = body.tour_slug.trim().toLowerCase();
+    if (slug && !/^[a-z0-9-]{2,80}$/.test(slug)) {
+      return { error: "tour_slug must be a lowercase URL path (letters, digits, hyphens)" };
     }
     row.tour_slug = slug || null;
   }
