@@ -878,6 +878,8 @@
           }) || slots[0] || null;
           if (slot && Number(slot.startTimeId) !== Number(booking.activity_id)) {
             booking.activity_id = slot.startTimeId;
+            if (slot.startTime) booking.time = slot.startTime;
+            if (slot.defaultRateId) booking.rate_id = slot.defaultRateId;
           }
           window.HORIZON_CHECKOUT.slot = slot;
           renderSummary();
@@ -1814,10 +1816,42 @@
             return callSubmit(bookingRequest, opt, section2.paymentMethodId);
           })
           .then(handleSubmitResponse)
-          .catch(handleError);
+          .catch(function (err) {
+            if (/^options_/.test(err && err.message)) {
+              return retryWithFreshSlot(ctx, section2);
+            }
+            handleError(err);
+          });
       } catch (err) {
         handleError(err);
       }
+    }
+
+    function retryWithFreshSlot(ctx, section2) {
+      var booking = ctx.booking || {};
+      if (!booking.tour_id || !booking.date) return handleError(new Error('options_no_retry_data'));
+      var qs = '?start=' + encodeURIComponent(booking.date)
+             + '&end='   + encodeURIComponent(booking.date)
+             + '&fresh=1';
+      return fetch(BOKUN_API_BASE + '/api/availability/' + booking.tour_id + qs)
+        .then(function (r) { return r.ok ? r.json() : []; })
+        .then(function (slots) {
+          if (!Array.isArray(slots) || !slots.length || !slots[0].startTimeId) {
+            throw new Error('options_no_fresh_slot');
+          }
+          var slot = slots[0];
+          booking.activity_id = slot.startTimeId;
+          if (slot.startTime) booking.time = slot.startTime;
+          if (slot.defaultRateId) booking.rate_id = slot.defaultRateId;
+          ctx.slot = slot;
+          var bookingRequest = buildBookingRequest(ctx);
+          return callOptions(bookingRequest)
+            .then(function (opt) {
+              return callSubmit(bookingRequest, opt, section2.paymentMethodId);
+            })
+            .then(handleSubmitResponse);
+        })
+        .catch(handleError);
     }
 
     function callOptions(req) {
