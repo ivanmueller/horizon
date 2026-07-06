@@ -2145,22 +2145,22 @@
     }
 
     function friendlyMessage(err) {
-      var msg = (err && err.message) || ‘’;
-      if (/no_pickup_selected/.test(msg))    return ‘Please pick a pickup location and try again.’;
-      if (/no_slot_selected/.test(msg))      return ‘Your slot information is missing. Go back to the tour page and pick a date.’;
+      var msg = (err && err.message) || '';
+      if (/no_pickup_selected/.test(msg))    return 'Please pick a pickup location and try again.';
+      if (/no_slot_selected/.test(msg))      return 'Your slot information is missing. Go back to the tour page and pick a date.';
       if (/options_/.test(msg)) {
-        var detail = ‘’;
+        var detail = '';
         if (err.bokunBody) {
-          if (typeof err.bokunBody === ‘string’) detail = err.bokunBody;
+          if (typeof err.bokunBody === 'string') detail = err.bokunBody;
           else if (err.bokunBody.message) detail = err.bokunBody.message;
           else if (err.bokunBody.fields) detail = JSON.stringify(err.bokunBody.fields);
           else detail = JSON.stringify(err.bokunBody);
         }
-        return ‘Bokun couldn’t validate your booking. ‘ + (detail ? ‘[‘ + detail + ‘] ‘ : ‘’) + ‘Please try again.’;
+        return 'Bokun couldn't validate your booking. ' + (detail ? '[' + detail + '] ' : '') + 'Please try again.';
       }
-      if (/submit_/.test(msg))               return ‘We couldn’t complete your reservation. Your card was not charged. Please try again or contact support.’;
-      if (/unexpected_submit_shape/.test(msg)) return ‘Something went wrong. Please contact support — we may need to confirm your booking manually.’;
-      return ‘We couldn’t complete your reservation. Your card was not charged. Please try again or contact support.’;
+      if (/submit_/.test(msg))               return 'We couldn't complete your reservation. Your card was not charged. Please try again or contact support.';
+      if (/unexpected_submit_shape/.test(msg)) return 'Something went wrong. Please contact support — we may need to confirm your booking manually.';
+      return 'We couldn't complete your reservation. Your card was not charged. Please try again or contact support.';
     }
   })();
   </script>
