@@ -859,11 +859,6 @@
         els.main.hidden = false;
         startTimer(booking.expires_at);
 
-        console.log('[horizon] Booking state from KV:', JSON.stringify({
-          tour_id: booking.tour_id, date: booking.date, time: booking.time,
-          activity_id: booking.activity_id, rate_id: booking.rate_id,
-        }));
-
         // Fire product + pickup-places + availability fetches in parallel,
         // then render the summary card. Availability is what carries the
         // real per-slot prices — product config alone shows $0.
@@ -878,22 +873,9 @@
           // exact departure the user picked, not a sibling slot at a
           // different time.
           var slots = Array.isArray(r[2]) ? r[2] : [];
-          console.log('[horizon] Fresh availability slots:', JSON.stringify(
-            slots.map(function (s) {
-              return { startTime: s.startTime, startTimeId: s.startTimeId,
-                       defaultRateId: s.defaultRateId, soldOut: s.soldOut };
-            })
-          ));
           var slot = slots.find(function (s) {
             return s && Number(s.startTimeId) === Number(booking.activity_id);
           }) || slots[0] || null;
-          if (slot && Number(slot.startTimeId) !== Number(booking.activity_id)) {
-            console.log('[horizon] startTimeId mismatch — resyncing from',
-              booking.activity_id, 'to', slot.startTimeId);
-            booking.activity_id = slot.startTimeId;
-            if (slot.startTime) booking.time = slot.startTime;
-            if (slot.defaultRateId) booking.rate_id = slot.defaultRateId;
-          }
           window.HORIZON_CHECKOUT.slot = slot;
           renderSummary();
           // Sections 1/2 are wired in later steps; expose a single hook
@@ -1829,52 +1811,13 @@
             return callSubmit(bookingRequest, opt, section2.paymentMethodId);
           })
           .then(handleSubmitResponse)
-          .catch(function (err) {
-            if (/^options_/.test(err && err.message)) {
-              return retryWithFreshSlot(ctx, section2);
-            }
-            handleError(err);
-          });
+          .catch(handleError);
       } catch (err) {
         handleError(err);
       }
     }
 
-    function retryWithFreshSlot(ctx, section2) {
-      console.log('[horizon] First options call failed — retrying with fresh availability');
-      var booking = ctx.booking || {};
-      if (!booking.tour_id || !booking.date) return handleError(new Error('options_no_retry_data'));
-      var qs = '?start=' + encodeURIComponent(booking.date)
-             + '&end='   + encodeURIComponent(booking.date)
-             + '&fresh=1';
-      return fetch(BOKUN_API_BASE + '/api/availability/' + booking.tour_id + qs)
-        .then(function (r) { return r.ok ? r.json() : []; })
-        .then(function (slots) {
-          console.log('[horizon] Fresh slots for retry:', JSON.stringify(
-            (slots || []).map(function (s) {
-              return { startTime: s.startTime, startTimeId: s.startTimeId, defaultRateId: s.defaultRateId };
-            })
-          ));
-          if (!Array.isArray(slots) || !slots.length || !slots[0].startTimeId) {
-            throw new Error('options_no_fresh_slot');
-          }
-          var slot = slots[0];
-          booking.activity_id = slot.startTimeId;
-          if (slot.startTime) booking.time = slot.startTime;
-          if (slot.defaultRateId) booking.rate_id = slot.defaultRateId;
-          ctx.slot = slot;
-          var bookingRequest = buildBookingRequest(ctx);
-          return callOptions(bookingRequest)
-            .then(function (opt) {
-              return callSubmit(bookingRequest, opt, section2.paymentMethodId);
-            })
-            .then(handleSubmitResponse);
-        })
-        .catch(handleError);
-    }
-
     function callOptions(req) {
-      console.log('[horizon] callOptions request:', JSON.stringify(req, null, 2));
       return fetch(BOKUN_API_BASE + '/api/checkout/options', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1882,16 +1825,7 @@
       })
         .then(parseJson)
         .then(function (res) {
-          if (!res.ok) {
-            var bokunBody = res.body && res.body.body;
-            var bokunStatus = res.body && res.body.status;
-            console.error('[horizon] callOptions FAILED — status:', bokunStatus,
-              'upstream body:', JSON.stringify(bokunBody));
-            var e = new Error('options_' + ((res.body && res.body.error) || res.status));
-            e.bokunStatus = bokunStatus;
-            e.bokunBody = bokunBody;
-            throw e;
-          }
+          if (!res.ok) throw new Error('options_' + ((res.body && res.body.error) || res.status));
           var options = res.body.options || (Array.isArray(res.body) ? res.body : []);
           // CUSTOMER_FULL_PAYMENT is the option type that supports the
           // pm_xxx token flow (validated in Phase 0b.1, see 0B_VALIDATION.md).
@@ -2127,9 +2061,6 @@
 
     function handleError(err) {
       console.error('Booking submit failed:', err);
-      if (err && err.bokunBody) {
-        console.error('[horizon] Bokun rejection detail:', JSON.stringify(err.bokunBody, null, 2));
-      }
       var paymentError = document.getElementById('paymentError');
       var bookNow = document.getElementById('bookNow');
       var bookNowLabel = document.getElementById('bookNowLabel');
@@ -2148,19 +2079,10 @@
       var msg = (err && err.message) || '';
       if (/no_pickup_selected/.test(msg))    return 'Please pick a pickup location and try again.';
       if (/no_slot_selected/.test(msg))      return 'Your slot information is missing. Go back to the tour page and pick a date.';
-      if (/options_/.test(msg)) {
-        var detail = '';
-        if (err.bokunBody) {
-          if (typeof err.bokunBody === 'string') detail = err.bokunBody;
-          else if (err.bokunBody.message) detail = err.bokunBody.message;
-          else if (err.bokunBody.fields) detail = JSON.stringify(err.bokunBody.fields);
-          else detail = JSON.stringify(err.bokunBody);
-        }
-        return 'Bokun couldn't validate your booking. ' + (detail ? '[' + detail + '] ' : '') + 'Please try again.';
-      }
-      if (/submit_/.test(msg))               return 'We couldn't complete your reservation. Your card was not charged. Please try again or contact support.';
+      if (/options_/.test(msg))              return 'Bokun couldn’t validate your booking. Please try again.';
+      if (/submit_/.test(msg))               return 'We couldn’t complete your reservation. Your card was not charged. Please try again or contact support.';
       if (/unexpected_submit_shape/.test(msg)) return 'Something went wrong. Please contact support — we may need to confirm your booking manually.';
-      return 'We couldn't complete your reservation. Your card was not charged. Please try again or contact support.';
+      return 'We couldn’t complete your reservation. Your card was not charged. Please try again or contact support.';
     }
   })();
   </script>
