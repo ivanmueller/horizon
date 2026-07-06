@@ -404,9 +404,13 @@ export default {
 };
 
 async function handleProduct(id, env, request) {
+  const url = new URL(request.url);
+  const fresh = url.searchParams.get("fresh") === "1";
   const cacheKey = `product:${id}`;
-  const cached = await env.CACHE?.get(cacheKey, "json");
-  if (cached) return jsonResponse(cached, 200, request);
+  if (!fresh) {
+    const cached = await env.CACHE?.get(cacheKey, "json");
+    if (cached) return jsonResponse(cached, 200, request);
+  }
 
   const r = await bokunFetch("GET", `/activity.json/${id}`, undefined, env);
   if (!r.ok) return passThroughError(r, request);
