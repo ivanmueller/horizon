@@ -2495,7 +2495,7 @@
       var slots = availabilityByDate[ymd];
       if (!slots || slots.length === 0) return false;
       return slots.some(function (s) {
-        return !s.soldOut && (s.unlimitedAvailability || (s.availabilityCount || 0) > 0);
+        return s.defaultRateId && !s.soldOut && (s.unlimitedAvailability || (s.availabilityCount || 0) > 0);
       });
     }
 
@@ -2615,7 +2615,9 @@
               // For Banff Hidden Gem there's only one start time per day.
               // Products with multiple start times will need a follow-up
               // time-picker; we capture all slots so that picker can show them.
-              var slots = availabilityByDate[ymd] || [];
+              var slots = (availabilityByDate[ymd] || []).filter(function (s) {
+                return s.defaultRateId && !s.soldOut && (s.unlimitedAvailability || (s.availabilityCount || 0) > 0);
+              });
               var slot = slots[0];
               window.bokunBooking.date = ymd;
               window.bokunBooking.slot = slot;
