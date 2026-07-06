@@ -2491,27 +2491,38 @@
       if (maxDate) fetchedThrough = startOfDay(maxDate);
     }
 
-    function isBookable(ymd) {
+    var PREFERRED_START_TIME_ID = 5438571; // 08:30 standard departure
+
+    function bookableSlots(ymd) {
       var slots = availabilityByDate[ymd];
-      if (!slots || slots.length === 0) return false;
-      return slots.some(function (s) {
+      if (!slots || slots.length === 0) return [];
+      return slots.filter(function (s) {
         return s.defaultRateId && !s.soldOut && (s.unlimitedAvailability || (s.availabilityCount || 0) > 0);
       });
     }
 
+    function preferredSlot(ymd) {
+      var available = bookableSlots(ymd);
+      if (available.length === 0) return null;
+      var preferred = available.find(function (s) {
+        return Number(s.startTimeId) === PREFERRED_START_TIME_ID;
+      });
+      return preferred || available[0];
+    }
+
+    function isBookable(ymd) {
+      return bookableSlots(ymd).length > 0;
+    }
+
     function adultPriceFor(ymd) {
-      var slots = availabilityByDate[ymd];
-      if (!slots || !slots.length) return null;
+      var slot = preferredSlot(ymd);
+      if (!slot) return null;
       var adult = (window.BOKUN && window.BOKUN.product &&
         (window.BOKUN.product.pricingCategories || []).find(function (c) { return /adult/i.test(c.title); }));
       if (!adult) return null;
-      var min = Infinity;
-      slots.forEach(function (s) {
-        if (!s.pricesByRate || !s.pricesByRate[0]) return;
-        var p = s.pricesByRate[0].pricePerCategoryUnit.find(function (x) { return x.id === adult.id; });
-        if (p && p.amount.amount < min) min = p.amount.amount;
-      });
-      return min === Infinity ? null : min;
+      if (!slot.pricesByRate || !slot.pricesByRate[0]) return null;
+      var p = slot.pricesByRate[0].pricePerCategoryUnit.find(function (x) { return x.id === adult.id; });
+      return p ? p.amount.amount : null;
     }
 
     function ensureAvailabilityThrough(targetDate) {
@@ -2615,10 +2626,7 @@
               // For Banff Hidden Gem there's only one start time per day.
               // Products with multiple start times will need a follow-up
               // time-picker; we capture all slots so that picker can show them.
-              var slots = (availabilityByDate[ymd] || []).filter(function (s) {
-                return s.defaultRateId && !s.soldOut && (s.unlimitedAvailability || (s.availabilityCount || 0) > 0);
-              });
-              var slot = slots[0];
+              var slot = preferredSlot(ymd);
               window.bokunBooking.date = ymd;
               window.bokunBooking.slot = slot;
               window.bokunBooking.startTimeId = slot && slot.startTimeId;
