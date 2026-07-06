@@ -920,7 +920,7 @@
       // slot the user picked. Falls back to an empty array on failure so
       // renderSummary degrades to product-config prices.
       if (!date) return Promise.resolve([]);
-      var qs = '?start=' + encodeURIComponent(date) + '&end=' + encodeURIComponent(date);
+      var qs = '?start=' + encodeURIComponent(date) + '&end=' + encodeURIComponent(date) + '&fresh=1';
       return fetch(BOKUN_API_BASE + '/api/availability/' + id + qs)
         .then(function (r) { return r.ok ? r.json() : []; })
         .catch(function () { return []; });
@@ -2006,7 +2006,8 @@
       pushPassengers('Youth',  booking.youth   || 0);
       pushPassengers('Infant', booking.infants || 0);
 
-      var rateId = booking.rate_id ||
+      var freshSlot = ctx.slot || {};
+      var rateId = freshSlot.defaultRateId || booking.rate_id ||
         (product.rates && product.rates[0] && product.rates[0].id);
 
       var dropoffId = pickDropoffId(ctx, pickup.id);
