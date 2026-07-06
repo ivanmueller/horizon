@@ -1825,10 +1825,12 @@
       })
         .then(parseJson)
         .then(function (res) {
-          if (!res.ok) throw new Error('options_' + ((res.body && res.body.error) || res.status));
+          if (!res.ok) {
+            console.error('Bokun /options failed:', JSON.stringify(res.body, null, 2));
+            var detail = extractBokunDetail(res.body);
+            throw new Error('options_' + ((res.body && res.body.error) || res.status) + (detail ? '::' + detail : ''));
+          }
           var options = res.body.options || (Array.isArray(res.body) ? res.body : []);
-          // CUSTOMER_FULL_PAYMENT is the option type that supports the
-          // pm_xxx token flow (validated in Phase 0b.1, see 0B_VALIDATION.md).
           var pick = options.find(function (o) { return o.type === 'CUSTOMER_FULL_PAYMENT'; })
                   || options[0];
           if (!pick) throw new Error('no_payment_option');
@@ -1862,7 +1864,11 @@
       })
         .then(parseJson)
         .then(function (res) {
-          if (!res.ok) throw new Error('submit_' + ((res.body && res.body.error) || res.status));
+          if (!res.ok) {
+            console.error('Bokun /submit failed:', JSON.stringify(res.body, null, 2));
+            var detail = extractBokunDetail(res.body);
+            throw new Error('submit_' + ((res.body && res.body.error) || res.status) + (detail ? '::' + detail : ''));
+          }
           return res.body;
         });
     }
@@ -2059,8 +2065,22 @@
       return r.json().then(function (body) { return { ok: r.ok, body: body }; });
     }
 
+    function extractBokunDetail(body) {
+      if (!body) return '';
+      var upstream = body.body;
+      if (!upstream) return '';
+      if (typeof upstream === 'string') return upstream;
+      return upstream.message || upstream.errorMessage || upstream.error || JSON.stringify(upstream);
+    }
+
     function handleError(err) {
-      console.error('Booking submit failed:', err);
+      console.error('Booking submit failed:', err && err.message, err);
+      console.error('Full error detail for troubleshooting — share this with support if needed:', JSON.stringify({
+        message: err && err.message,
+        stack: err && err.stack,
+        bookingId: window.HORIZON_CHECKOUT && window.HORIZON_CHECKOUT.bookingId,
+        timestamp: new Date().toISOString(),
+      }, null, 2));
       var paymentError = document.getElementById('paymentError');
       var bookNow = document.getElementById('bookNow');
       var bookNowLabel = document.getElementById('bookNowLabel');
@@ -2079,7 +2099,16 @@
       var msg = (err && err.message) || '';
       if (/no_pickup_selected/.test(msg))    return 'Please pick a pickup location and try again.';
       if (/no_slot_selected/.test(msg))      return 'Your slot information is missing. Go back to the tour page and pick a date.';
-      if (/options_/.test(msg))              return 'Bokun couldn’t validate your booking. Please try again.';
+      if (/options_/.test(msg)) {
+        var detail = (msg.split('::')[1] || '').toLowerCase();
+        if (/sold.?out|no.?availab|fully.?booked|capacity/.test(detail))
+          return 'This time slot is no longer available. Please go back and choose a different date or time.';
+        if (/date|past|expired|cutoff/.test(detail))
+          return 'This booking date is no longer available. Please go back and choose a different date.';
+        if (/invalid|question|answer|missing/i.test(detail))
+          return 'Some booking details could not be validated. Please check your information and try again.';
+        return 'Bokun couldn’t validate your booking. Please try again or contact support.';
+      }
       if (/submit_/.test(msg))               return 'We couldn’t complete your reservation. Your card was not charged. Please try again or contact support.';
       if (/unexpected_submit_shape/.test(msg)) return 'Something went wrong. Please contact support — we may need to confirm your booking manually.';
       return 'We couldn’t complete your reservation. Your card was not charged. Please try again or contact support.';

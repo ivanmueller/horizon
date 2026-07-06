@@ -4307,9 +4307,12 @@ async function readJson(request) {
 }
 
 function passThroughError(r, request) {
-  // Surface Bokun's status + body so the page can show useful errors.
-  // The page is the only consumer and same-origin via this proxy, so
-  // it's safe to expose Bokun's error shape during the build phase.
+  console.error("Bokun upstream error:", JSON.stringify({
+    status: r.status,
+    statusText: r.statusText,
+    body: r.data,
+    path: new URL(request.url).pathname,
+  }));
   return jsonResponse(
     { error: "upstream", status: r.status, statusText: r.statusText, body: r.data },
     502,
