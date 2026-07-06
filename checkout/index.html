@@ -873,12 +873,12 @@
           // exact departure the user picked, not a sibling slot at a
           // different time.
           var slots = Array.isArray(r[2]) ? r[2] : [];
-          var PREFERRED_START_TIME = '08:30'; // standard departure
+          var PREFERRED_START_TIME_ID = 5438571; // 08:30 "New Schedule"
           var bookableSlots = slots.filter(function (s) { return s && s.defaultRateId; });
           var slot = bookableSlots.find(function (s) {
             return Number(s.startTimeId) === Number(booking.activity_id);
           }) || bookableSlots.find(function (s) {
-            return s.startTime === PREFERRED_START_TIME;
+            return Number(s.startTimeId) === PREFERRED_START_TIME_ID;
           }) || bookableSlots[0] || null;
           window.HORIZON_CHECKOUT.slot = slot;
           renderSummary();
