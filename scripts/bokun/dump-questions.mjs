@@ -9,7 +9,7 @@
 //   node --env-file=scripts/bokun/.env scripts/bokun/dump-questions.mjs
 //   node --env-file=scripts/bokun/.env scripts/bokun/dump-questions.mjs --date=2026-10-31
 //
-// Defaults: productId 1162721 (Banff-Hidden-Gem-Canoe-Tour). Picks the
+// Defaults: productId 1162721 (banff-hidden-gem-canoe-tour). Picks the
 // first bookable date if --date isn't passed.
 
 import { bokunFetch } from "./api.mjs";
@@ -153,8 +153,8 @@ async function main() {
     sendNotificationToMainContact: false,
     showPricesInNotification: false,
     successUrl: "https://gowithhorizon.com/booking-confirmed/",
-    errorUrl: "https://gowithhorizon.com/tours/Banff-Hidden-Gem-Canoe-Tour/",
-    cancelUrl: "https://gowithhorizon.com/tours/Banff-Hidden-Gem-Canoe-Tour/",
+    errorUrl: "https://gowithhorizon.com/tours/banff-hidden-gem-canoe-tour/",
+    cancelUrl: "https://gowithhorizon.com/tours/banff-hidden-gem-canoe-tour/",
   };
 
   let submitResp;

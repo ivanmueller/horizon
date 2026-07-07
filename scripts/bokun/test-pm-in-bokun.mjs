@@ -34,7 +34,7 @@
 //   node --env-file=scripts/bokun/.env scripts/bokun/test-pm-in-bokun.mjs \
 //     --date=2026-06-15 --pm=pm_existing_id
 //
-// Defaults: productId 1162721 (Banff-Hidden-Gem-Canoe-Tour), test card
+// Defaults: productId 1162721 (banff-hidden-gem-canoe-tour), test card
 // 4242 4242 4242 4242 (12/2030, CVC 123), 1 adult passenger.
 
 import { bokunFetch } from "./api.mjs";
@@ -205,8 +205,8 @@ async function main() {
     sendNotificationToMainContact: false,
     showPricesInNotification: false,
     successUrl: "https://gowithhorizon.com/booking-confirmed/",
-    errorUrl: "https://gowithhorizon.com/tours/Banff-Hidden-Gem-Canoe-Tour/?booking=failed",
-    cancelUrl: "https://gowithhorizon.com/tours/Banff-Hidden-Gem-Canoe-Tour/",
+    errorUrl: "https://gowithhorizon.com/tours/banff-hidden-gem-canoe-tour/?booking=failed",
+    cancelUrl: "https://gowithhorizon.com/tours/banff-hidden-gem-canoe-tour/",
   };
 
   let submitResp;

@@ -50,7 +50,7 @@ export default {
     const params = new URLSearchParams({
       mode: 'payment',
       success_url: `${ALLOWED_ORIGIN}/booking-confirmed/`,
-      cancel_url: `${ALLOWED_ORIGIN}/tours/Banff-Hidden-Gem-Canoe-Tour/`,
+      cancel_url: `${ALLOWED_ORIGIN}/tours/banff-hidden-gem-canoe-tour/`,
       'payment_method_types[0]': 'card',
       'line_items[0][price]': env.STRIPE_PRICE_ID,
       'line_items[0][quantity]': String(payingGuests),

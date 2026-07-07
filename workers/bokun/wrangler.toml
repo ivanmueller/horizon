@@ -49,7 +49,7 @@ SHORT_IO_DOMAIN = "link.gowithhorizon.com"
 #   wrangler secret delete HORIZON_ADMIN_PASSWORD
 #
 # The page also needs the Stripe publishable key (pk_test_... / pk_live_...) —
-# that one is public and lives inline in tours/Banff-Hidden-Gem-Canoe-Tour/index.html
+# that one is public and lives inline in tours/banff-hidden-gem-canoe-tour/index.html
 # (look for STRIPE_PUBLISHABLE_KEY).
 
 # KV namespace for caching product config + pickup places + availability.

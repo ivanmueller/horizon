@@ -104,6 +104,16 @@ export async function onRequest(context) {
     return next();
   }
 
+  // ── Normalize tour URLs to lowercase ────────────────────────────────
+  // QR codes, manual links, or search engines may use mixed-case tour
+  // slugs; Cloudflare Pages is case-sensitive, so redirect to lowercase.
+  if (url.pathname.startsWith('/tours/')) {
+    const lower = url.pathname.toLowerCase();
+    if (lower !== url.pathname) {
+      return Response.redirect(url.origin + lower + url.search, 301);
+    }
+  }
+
   // ── Apex (Tours) — relocate Connect surfaces once subdomains live ──
   if (host === 'gowithhorizon.com' && SUBDOMAINS_LIVE) {
     if (isAdminPath(url.pathname)) {
