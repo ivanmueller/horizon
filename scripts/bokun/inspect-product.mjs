@@ -21,7 +21,7 @@
 //   node --env-file=scripts/bokun/.env scripts/bokun/inspect-product.mjs --dry-checkout --coupon=MYCODE
 //   node --env-file=scripts/bokun/.env scripts/bokun/inspect-product.mjs --dry-checkout --date=2026-06-01
 //
-// Defaults: productId 1162721 (Banff-Hidden-Gem-Canoe-Tour),
+// Defaults: productId 1162721 (banff-hidden-gem-canoe-tour),
 // availability window = today + 60 days, currency = CAD.
 //
 // --coupon=CODE attaches the value as BookingRequest.promoCode. Combined
@@ -443,7 +443,7 @@ async function main() {
                 showPricesInNotification: false,
                 successUrl: "https://gowithhorizon.com/booking/confirmed",
                 errorUrl: "https://gowithhorizon.com/booking/failed",
-                cancelUrl: "https://gowithhorizon.com/tours/Banff-Hidden-Gem-Canoe-Tour/",
+                cancelUrl: "https://gowithhorizon.com/tours/banff-hidden-gem-canoe-tour/",
                 // For CUSTOMER_FULL_PAYMENT we attach paymentMethod=CARD
                 // and the uti returned by /options. We deliberately do NOT
                 // include paymentToken — that's the field a TOKEN-flow

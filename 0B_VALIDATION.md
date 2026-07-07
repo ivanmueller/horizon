@@ -111,7 +111,7 @@ codes at the new page.
 2. `wrangler secret put STRIPE_SECRET_KEY` from `workers/bokun/` with
    `sk_live_…`.
 3. Update the `STRIPE_PUBLISHABLE_KEY` constant in
-   `tours/Banff-Hidden-Gem-Canoe-Tour/index.html` to the `pk_live_…` key.
+   `tours/banff-hidden-gem-canoe-tour/index.html` to the `pk_live_…` key.
 4. Re-run 0b.2 in live mode (single $1 charge + refund) to confirm the
    live-mode Stripe Connect link is healthy.
 5. One real booking, refund afterward, verify booking + charge + email.
