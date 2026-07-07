@@ -2845,6 +2845,13 @@ async function handleAdminStaffStats(staffId, request, env) {
   if (auth.error) return auth.error;
   if (!UUID_RE.test(staffId)) return jsonResponse({ error: "invalid staff id" }, 400, request);
 
+  const staffRows = await supabaseSelect(
+    env,
+    `hotel_staff?id=eq.${encodeURIComponent(staffId)}&select=kickback_pct&limit=1`,
+  );
+  const staffKickbackPct = staffRows[0] && staffRows[0].kickback_pct != null
+    ? Number(staffRows[0].kickback_pct) : 0;
+
   const url = new URL(request.url);
   let period = url.searchParams.get("period") || "last30";
   if (!PLACEMENT_STAT_PERIODS.has(period)) period = "last30";
@@ -2859,16 +2866,13 @@ async function handleAdminStaffStats(staffId, request, env) {
   // Pull a flat list of this staff's confirmed bookings (recent first
   // so we can slice the top 5 for the lightbox without a second
   // round-trip). At realistic per-employee volumes this is small.
-  // Commission is computed on the fly from amount × hotel.commission_pct
-  // — the old commission_ledger accrual table was dropped in
-  // migration 0017 when automated payouts were retired in favour of
-  // manual e-Transfer / EFT (see 0018). The cross-hotel summary at
-  // line ~1051 follows the same pattern.
+  // Kickback is computed on the fly from amount × staff.kickback_pct.
+  // The cross-hotel summary at line ~1051 follows the same pattern.
   const rows = await supabaseSelect(
     env,
     `bookings?staff_id=eq.${encodeURIComponent(staffId)}` +
       `&status=eq.confirmed` +
-      `&select=id,created_at,date,tour_title,amount,currency,lead_name,status,confirmation_code,hotel:hotels(commission_pct)` +
+      `&select=id,created_at,date,tour_title,amount,currency,lead_name,status,confirmation_code` +
       `&order=created_at.desc&limit=500`,
   );
   const bookings = Array.isArray(rows) ? rows : [];
@@ -2878,16 +2882,14 @@ async function handleAdminStaffStats(staffId, request, env) {
     : bookings_total;
   const bookings_month = bookings.filter((b) => b.created_at && b.created_at >= monthStart).length;
   const last_booking_at = bookings.length ? bookings[0].created_at : null;
-  const commissionFor = (b) => {
+  const kickbackFor = (b) => {
     const amount = Number(b.amount) || 0;
-    const pct = b.hotel && b.hotel.commission_pct != null
-      ? Number(b.hotel.commission_pct) : 0;
-    return (amount * pct) / 100;
+    return (amount * staffKickbackPct) / 100;
   };
   let lifetime_commission = 0;
   let currency = "CAD";
   for (const b of bookings) {
-    lifetime_commission += commissionFor(b);
+    lifetime_commission += kickbackFor(b);
     if (b.currency) currency = b.currency;
   }
   lifetime_commission = round2(lifetime_commission);
@@ -2918,7 +2920,7 @@ async function handleAdminStaffStats(staffId, request, env) {
     currency: b.currency,
     lead_name: b.lead_name,
     status: b.status,
-    commission_amount: round2(commissionFor(b)),
+    commission_amount: round2(kickbackFor(b)),
   }));
 
   return jsonResponse({
