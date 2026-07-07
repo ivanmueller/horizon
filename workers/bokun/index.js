@@ -2700,6 +2700,7 @@ async function bookingsForPlacement(env, code, period) {
   const touches = await supabaseSelect(
     env,
     `booking_touchpoints?code=ilike.${encodeURIComponent(code)}` +
+      `&is_credited=eq.true` +
       `&select=confirmation_code`,
   );
   const codes = Array.from(new Set(
