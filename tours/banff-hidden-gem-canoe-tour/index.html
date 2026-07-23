@@ -1180,6 +1180,54 @@
         margin: calc(-1 * var(--space-5)) auto var(--space-3) calc(-1 * var(--space-5));
       }
     }
+    /* ── Mobile sticky CTA bar ──────────────────────────────────
+       A slim fixed bar at the bottom of the viewport on mobile,
+       showing price + "Check availability" so users always have
+       a booking entry point without scrolling to the panel. */
+    .mobile-cta-bar {
+      display: none;
+    }
+    @media (max-width: 960px) {
+      .mobile-cta-bar {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 900;
+        background: #fff;
+        border-top: 1px solid #E5E7EB;
+        padding: 12px 16px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
+      }
+      .mobile-cta-bar__price {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+      }
+      .mobile-cta-bar__from {
+        font-size: 0.72rem;
+        color: var(--mid-gray);
+      }
+      .mobile-cta-bar__amount {
+        font-family: var(--font-display);
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--near-black);
+      }
+      .mobile-cta-bar__unit {
+        font-size: 0.75rem;
+        color: var(--mid-gray);
+        font-weight: 400;
+      }
+      .mobile-cta-bar__btn {
+        flex-shrink: 0;
+      }
+    }
+
     /* Calendar dropdown stacks the 2-month layout vertically and fills
        the booking-panel width, instead of the desktop 660px right-aligned
        layout that overflows mobile viewports. */
@@ -1954,6 +2002,15 @@
         </div>
       </div>
     </aside>
+  </div>
+
+  <!-- Mobile sticky CTA bar -->
+  <div class="mobile-cta-bar" id="mobileCta">
+    <div class="mobile-cta-bar__price">
+      <span class="mobile-cta-bar__from">From</span>
+      <span class="mobile-cta-bar__amount" id="mobileCtaPrice"></span>
+    </div>
+    <button class="btn btn--primary btn--lg mobile-cta-bar__btn" id="mobileCtaBtn" type="button">Check availability</button>
   </div>
 
   <section class="section section--alt"><div class="container">
@@ -3003,6 +3060,38 @@
             validation.classList.add('bp-expansion__validation--error');
           }
         });
+    });
+  })();
+  </script>
+
+  <!-- Mobile sticky CTA bar logic -->
+  <script>
+  (function() {
+    var ctaBar = document.getElementById('mobileCta');
+    var ctaPrice = document.getElementById('mobileCtaPrice');
+    var ctaBtn = document.getElementById('mobileCtaBtn');
+    if (!ctaBar || !ctaBtn) return;
+
+    function updateCtaPrice() {
+      var amt = window.BOKUN && window.BOKUN.lowestAdultPrice;
+      var currency = (window.BOKUN && window.BOKUN.currency) || 'CAD';
+      if (amt != null) {
+        ctaPrice.innerHTML = '$' + amt + '<span class="mobile-cta-bar__unit"> ' + currency + ' per person</span>';
+      }
+    }
+
+    if (window.BOKUN && window.BOKUN.ready) updateCtaPrice();
+    document.addEventListener('bokun:ready', updateCtaPrice);
+
+    ctaBtn.addEventListener('click', function() {
+      var panel = document.getElementById('book');
+      if (panel) {
+        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setTimeout(function() {
+          var dateBtn = document.getElementById('dateBtn');
+          if (dateBtn) dateBtn.click();
+        }, 500);
+      }
     });
   })();
   </script>
