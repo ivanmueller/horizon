@@ -1147,17 +1147,34 @@
     }
 
     /* ── Mobile booking-panel overrides ─────────────────────────
-       The global stylesheet converts .booking-panel into a sticky
-       bottom bar (position: fixed; display: flex) at ≤960px, which
-       was sized for a simple "From $X + Book now" two-element row.
-       Our enhanced panel has badge + price + travellers picker +
-       date picker + check-availability button + guarantees, which
-       can't fit a single horizontal line on a 375px viewport — the
-       result was a row of crushed elements clipped past the screen
-       edge. Defeat the sticky-bar mode and render the panel as a
-       normal block in the document flow at narrow widths. */
+       On mobile the aside#book becomes a bottom-sheet that slides up
+       from the fixed CTA bar. The sheet is hidden by default and
+       toggled via body.mobile-sheet-open. */
     @media (max-width: 960px) {
       .tour-detail--with-hero { grid-template-columns: 1fr !important; }
+
+      /* Bottom-sheet container */
+      aside#book {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        top: auto !important;
+        z-index: 950 !important;
+        background: #fff;
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -4px 24px rgba(0,0,0,0.14);
+        max-height: 85vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        transform: translateY(100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        padding: 0 0 env(safe-area-inset-bottom, 0);
+      }
+      body.mobile-sheet-open aside#book {
+        transform: translateY(0);
+      }
+
       .booking-panel {
         position: static !important;
         top: auto !important;
@@ -1166,18 +1183,101 @@
         right: auto !important;
         display: block !important;
         height: auto !important;
-        border-radius: var(--radius-xl) !important;
-        padding: var(--space-5) !important;
-        box-shadow: var(--elevation-3) !important;
-        margin: 0 auto var(--space-6) !important;
+        border-radius: 0 !important;
+        padding: 0 var(--space-5) var(--space-5) !important;
+        box-shadow: none !important;
+        margin: 0 !important;
         z-index: auto !important;
-        max-width: 480px;
+        max-width: none;
         width: 100%;
       }
       .booking-panel__details { display: block !important; }
       .mobile-booking-spacer { display: none !important; }
       .tour-detail--with-hero .booking-panel__sell-out {
-        margin: calc(-1 * var(--space-5)) auto var(--space-3) calc(-1 * var(--space-5));
+        display: none !important;
+      }
+
+      /* Sheet handle bar */
+      .mobile-sheet__handle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 16px 4px;
+        cursor: grab;
+      }
+      .mobile-sheet__handle-bar {
+        width: 40px;
+        height: 5px;
+        border-radius: 3px;
+        background: #D1D5DB;
+      }
+      .mobile-sheet__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px var(--space-5) 12px;
+        border-bottom: 1px solid #F3F4F6;
+        margin-bottom: var(--space-4);
+      }
+      .mobile-sheet__title {
+        font-weight: 700;
+        font-size: 1.05rem;
+        color: var(--near-black);
+      }
+      .mobile-sheet__close {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: none;
+        background: #F3F4F6;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--near-black);
+        flex-shrink: 0;
+      }
+      .mobile-sheet__close:hover { background: #E5E7EB; }
+
+      /* Inside the sheet, make dropdowns flow inline so they scroll */
+      body.mobile-sheet-open .bp-field .bp-dropdown {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        margin-top: 8px;
+        border-radius: 12px;
+        box-shadow: none;
+        border: 1px solid #E5E7EB;
+      }
+      body.mobile-sheet-open .bp-calendar {
+        width: auto !important;
+        min-width: 0 !important;
+        padding: 16px !important;
+      }
+      body.mobile-sheet-open .bp-cal__header { grid-template-columns: 1fr !important; gap: 0 !important; margin-bottom: 8px; }
+      body.mobile-sheet-open .bp-cal__months { grid-template-columns: 1fr !important; gap: 16px !important; }
+      body.mobile-sheet-open .bp-cal__header > div:nth-child(2) { display: flex; justify-content: flex-end; }
+      body.mobile-sheet-open .bp-cal__header > div:nth-child(2) .bp-cal__month-title { display: none; }
+
+      /* Backdrop */
+      .mobile-sheet-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.4);
+        z-index: 940;
+      }
+      body.mobile-sheet-open .mobile-sheet-backdrop {
+        display: block;
+      }
+
+      /* Hide CTA bar when sheet is open */
+      body.mobile-sheet-open .mobile-cta-bar {
+        z-index: 960;
+        border-top: none;
+        box-shadow: none;
+        border-radius: 0;
       }
     }
     /* ── Mobile sticky CTA bar ──────────────────────────────────
@@ -1918,7 +2018,15 @@
       </div>
     </main>
 
+    <div class="mobile-sheet-backdrop" id="mobileSheetBackdrop"></div>
     <aside id="book">
+      <div class="mobile-sheet__handle"><div class="mobile-sheet__handle-bar"></div></div>
+      <div class="mobile-sheet__header">
+        <span class="mobile-sheet__title">Book your tour</span>
+        <button class="mobile-sheet__close" id="mobileSheetClose" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
       <div class="booking-panel">
         <div class="booking-panel__sell-out">Likely to sell out</div>
         <div class="booking-panel__price booking-panel__price--loading">
@@ -3064,12 +3172,14 @@
   })();
   </script>
 
-  <!-- Mobile sticky CTA bar logic -->
+  <!-- Mobile sticky CTA bar logic + bottom sheet -->
   <script>
   (function() {
     var ctaBar = document.getElementById('mobileCta');
     var ctaPrice = document.getElementById('mobileCtaPrice');
     var ctaBtn = document.getElementById('mobileCtaBtn');
+    var backdrop = document.getElementById('mobileSheetBackdrop');
+    var closeBtn = document.getElementById('mobileSheetClose');
     if (!ctaBar || !ctaBtn) return;
 
     function updateCtaPrice() {
@@ -3083,14 +3193,39 @@
     if (window.BOKUN && window.BOKUN.ready) updateCtaPrice();
     document.addEventListener('bokun:ready', updateCtaPrice);
 
+    function isMobile() {
+      return window.innerWidth <= 960;
+    }
+
+    function openSheet() {
+      document.body.classList.add('mobile-sheet-open');
+    }
+
+    function closeSheet() {
+      document.body.classList.remove('mobile-sheet-open');
+    }
+
     ctaBtn.addEventListener('click', function() {
-      var panel = document.getElementById('book');
-      if (panel) {
-        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        setTimeout(function() {
-          var dateBtn = document.getElementById('dateBtn');
-          if (dateBtn) dateBtn.click();
-        }, 500);
+      if (isMobile()) {
+        openSheet();
+      } else {
+        var panel = document.getElementById('book');
+        if (panel) {
+          panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          setTimeout(function() {
+            var dateBtn = document.getElementById('dateBtn');
+            if (dateBtn) dateBtn.click();
+          }, 500);
+        }
+      }
+    });
+
+    if (closeBtn) closeBtn.addEventListener('click', closeSheet);
+    if (backdrop) backdrop.addEventListener('click', closeSheet);
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && document.body.classList.contains('mobile-sheet-open')) {
+        closeSheet();
       }
     });
   })();
