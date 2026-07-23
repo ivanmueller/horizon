@@ -114,6 +114,14 @@ export async function onRequest(context) {
     }
   }
 
+  // ── Normalize rental URLs to lowercase ──────────────────────────────
+  if (url.pathname.startsWith('/rentals/')) {
+    const lower = url.pathname.toLowerCase();
+    if (lower !== url.pathname) {
+      return Response.redirect(url.origin + lower + url.search, 301);
+    }
+  }
+
   // ── Apex (Tours) — relocate Connect surfaces once subdomains live ──
   if (host === 'gowithhorizon.com' && SUBDOMAINS_LIVE) {
     if (isAdminPath(url.pathname)) {
