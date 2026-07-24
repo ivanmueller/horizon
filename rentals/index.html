@@ -34,7 +34,440 @@
     "category": "Raft Rental"
   }
   </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/rentals/raft.css">
+  <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<!-- ============ STICKY NAV ============ -->
+<!-- Starts transparent over the hero, gains .is-scrolled (Sandbar + blur) past 80px -->
+<nav class="nav" id="site-nav" aria-label="Primary">
+  <div class="nav__inner">
+    <div class="nav__left">
+      <a class="nav__back" href="/" aria-label="Home">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+        <span class="nav__back-label">Home</span>
+      </a>
+      <span class="nav__divider" aria-hidden="true"></span>
+      <a class="nav__logo" href="/rentals/">
+        <svg class="nav__mark" width="32" height="32" viewBox="0 0 36 36" aria-hidden="true"><rect width="36" height="36" rx="8" fill="#2B6E7E"/><path d="M13 7v22M13 18c0-6 12-6 12 0v11" stroke="#F5F0E8" stroke-width="4" stroke-linecap="round" fill="none"/></svg>
+        <span class="nav__wordmark">horizon</span>
+        <span class="nav__suffix">raft</span>
+      </a>
+    </div>
+
+    <div class="nav__right">
+      <ul class="nav__links">
+        <li><a class="nav__link" href="#float">Float the Bow</a></li>
+        <li><a class="nav__link" href="#fleet">Fleet</a></li>
+        <li><a class="nav__link" href="#safety">Safety &amp; Info</a></li>
+        <li><a class="nav__link" href="#groups">Groups</a></li>
+      </ul>
+      <a class="btn btn--primary nav__cta" href="#book">Book Now</a>
+      <button class="nav__toggle" id="nav-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Open menu">
+        <span class="nav__toggle-bars" aria-hidden="true"></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile nav overlay — Alpine background, 28px items, 56px rows -->
+<div class="mobile-menu" id="mobile-menu" hidden>
+  <div class="mobile-menu__head">
+    <span class="mobile-menu__brand">
+      <svg width="28" height="28" viewBox="0 0 36 36" aria-hidden="true"><rect width="36" height="36" rx="8" fill="#2B6E7E"/><path d="M13 7v22M13 18c0-6 12-6 12 0v11" stroke="#F5F0E8" stroke-width="4" stroke-linecap="round" fill="none"/></svg>
+      <span class="mobile-menu__wordmark">horizon</span>
+      <span class="mobile-menu__suffix">raft</span>
+    </span>
+    <button class="mobile-menu__close" id="nav-close" type="button" aria-label="Close menu">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <ul class="mobile-menu__links">
+    <li><a href="#float">Float the Bow</a></li>
+    <li><a href="#fleet">Fleet</a></li>
+    <li><a href="#safety">Safety &amp; Info</a></li>
+    <li><a href="#groups">Groups</a></li>
+  </ul>
+  <a class="btn btn--primary mobile-menu__cta" href="#book">Book Now</a>
+</div>
+
+<main id="main">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <!-- Photo slot — full-bleed image or looping video goes here -->
+    <div class="hero__media" aria-hidden="true">
+      <div class="hero__gradient"></div>
+      <div class="hero__scrim"></div>
+      <div class="hero__watermark"><span>BOW</span></div>
+    </div>
+
+    <div class="hero__content">
+      <p class="hero__badge">
+        <span class="hero__badge-dot" aria-hidden="true"></span>
+        Now booking for summer 2026
+      </p>
+      <h1 class="hero__title">Float the Bow</h1>
+      <p class="hero__lede">Canmore's self-guided river experience. Grab a raft, push off, and spend the afternoon on glacial water with the Rockies all around you.</p>
+
+      <div class="hero__actions">
+        <a class="btn btn--primary btn--lg btn--on-dark" href="#book">Book Your Float <span class="btn__arrow" aria-hidden="true">→</span></a>
+        <a class="btn btn--glass btn--lg" href="#float">See the Route</a>
+      </div>
+
+      <!-- Trust pills — reviews, since year, safety -->
+      <div class="trust">
+        <span class="trust__item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#F5C542" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <span><strong>4.9</strong> · 500+ reviews</span>
+        </span>
+        <span class="trust__rule" aria-hidden="true"></span>
+        <span class="trust__item">Since 2024</span>
+        <span class="trust__rule" aria-hidden="true"></span>
+        <span class="trust__item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0112 2a8 8 0 018 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+          Safety first
+        </span>
+      </div>
+    </div>
+
+    <div class="hero__scroll-hint" aria-hidden="true"></div>
+  </section>
+
+  <!-- ============ HOW IT WORKS ============ -->
+  <section class="section">
+    <header class="section__head reveal">
+      <span class="eyebrow">How It Works</span>
+      <h2 class="section__title">Three steps. No fuss.</h2>
+    </header>
+    <div class="steps reveal">
+      <div class="step">
+        <span class="step__icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </span>
+        <h3 class="step__title">Book</h3>
+        <p class="step__body">Pick your group size and date. Two minutes, done.</p>
+      </div>
+      <div class="step">
+        <span class="step__icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </span>
+        <h3 class="step__title">Show Up</h3>
+        <p class="step__body">We hand you everything — raft, paddles, PFDs, safety kit. Five-minute briefing and you're on the water.</p>
+      </div>
+      <div class="step">
+        <span class="step__icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        </span>
+        <h3 class="step__title">Float</h3>
+        <p class="step__body">2–4 hours of mountain river. Ha Ling Peak on one side, Three Sisters on the other.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHOOSE YOUR FLOAT — group-size-first ============ -->
+  <section class="section" id="fleet">
+    <header class="section__head reveal">
+      <span class="eyebrow">Choose Your Float</span>
+      <h2 class="section__title">How many are floating?</h2>
+    </header>
+    <div class="fleet reveal">
+      <a class="card" href="#fleet-solo">
+        <span class="card__photo">Photo placeholder</span>
+        <span class="card__body">
+          <span class="eyebrow eyebrow--sm">Solo / Couple</span>
+          <span class="card__title">1–2 people</span>
+          <span class="card__meta">Packraft or kayak</span>
+          <span class="card__price">from $XX</span>
+        </span>
+      </a>
+      <a class="card" href="#fleet-small">
+        <span class="card__photo">Photo placeholder</span>
+        <span class="card__body">
+          <span class="eyebrow eyebrow--sm">Small Group</span>
+          <span class="card__title">3–6 people</span>
+          <span class="card__meta">4 or 6-person raft</span>
+          <span class="card__price">from $XX</span>
+        </span>
+      </a>
+      <a class="card" href="#fleet-large">
+        <span class="card__photo">Photo placeholder</span>
+        <span class="card__body">
+          <span class="eyebrow eyebrow--sm">Large Group</span>
+          <span class="card__title">7–12 people</span>
+          <span class="card__meta">8, 10 or 12-person raft</span>
+          <span class="card__price">from $XX</span>
+        </span>
+      </a>
+      <a class="card" href="#groups">
+        <span class="card__photo">Photo placeholder</span>
+        <span class="card__body">
+          <span class="eyebrow eyebrow--sm">Big Group</span>
+          <span class="card__title">13+ people</span>
+          <span class="card__meta">Custom package</span>
+          <span class="card__price card__price--sm">Custom Quote</span>
+        </span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ============ ROUTE STRIP — signature element ============ -->
+  <section class="route" id="float">
+    <div class="route__inner">
+      <header class="section__head reveal">
+        <span class="eyebrow">The Route</span>
+        <h2 class="section__title section__title--tight">Your float, start to finish</h2>
+      </header>
+
+      <figure class="route__figure reveal">
+        <svg class="route__svg" viewBox="0 0 1100 140" fill="none" role="img" aria-label="Route diagram: put-in at 0 km, bridge at about 30 minutes, gentle rapid at about 1 hour, wildlife area at about 1.5 hours, take-out at about 2 hours.">
+          <!-- River line — single weight, Glacial on Sandbar -->
+          <path class="route__path" d="M40 90 C200 60, 280 110, 400 80 C500 55, 580 100, 700 75 C800 55, 880 95, 1060 70" stroke="#2B6E7E" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+          <!-- Put-in -->
+          <circle cx="40" cy="90" r="8" fill="#2B6E7E"/>
+          <text class="route__label" x="40" y="120" text-anchor="middle">Put-in</text>
+          <text class="route__note" x="40" y="135" text-anchor="middle">0 km</text>
+          <!-- Landmarks -->
+          <circle cx="300" cy="92" r="5" fill="#A68B6B"/>
+          <text class="route__landmark" x="300" y="120" text-anchor="middle">Bridge</text>
+          <circle cx="540" cy="76" r="5" fill="#A68B6B"/>
+          <text class="route__landmark" x="540" y="105" text-anchor="middle">Gentle Rapid</text>
+          <circle cx="780" cy="72" r="5" fill="#A68B6B"/>
+          <text class="route__landmark" x="780" y="100" text-anchor="middle">Wildlife Area</text>
+          <!-- Take-out -->
+          <circle cx="1060" cy="70" r="8" fill="#2B6E7E"/>
+          <text class="route__label" x="1060" y="100" text-anchor="middle">Take-out</text>
+          <text class="route__note" x="1060" y="115" text-anchor="middle">X km</text>
+          <!-- Time markers -->
+          <text class="route__note" x="170" y="50" text-anchor="middle">~30 min</text>
+          <text class="route__note" x="420" y="45" text-anchor="middle">~1 hr</text>
+          <text class="route__note" x="660" y="48" text-anchor="middle">~1.5 hrs</text>
+          <text class="route__note" x="920" y="52" text-anchor="middle">~2 hrs</text>
+        </svg>
+      </figure>
+
+      <p class="route__caption reveal">X km of mountain river. 2–4 hours of quiet.</p>
+    </div>
+  </section>
+
+  <!-- ============ PHOTO GALLERY — 5 images, mixed ratios ============ -->
+  <section class="section">
+    <header class="section__head section__head--tight reveal">
+      <span class="eyebrow">On the Water</span>
+      <h2 class="section__title">Moments from the Bow</h2>
+    </header>
+    <div class="gallery reveal">
+      <div class="gallery__item gallery__item--landscape">3:2 landscape</div>
+      <div class="gallery__item gallery__item--landscape">3:2 landscape</div>
+      <div class="gallery__item gallery__item--portrait">4:5 portrait</div>
+      <div class="gallery__item gallery__item--wide">16:9 wide</div>
+      <div class="gallery__item gallery__item--square">1:1</div>
+    </div>
+  </section>
+
+  <!-- ============ SOCIAL PROOF ============ -->
+  <section class="reviews">
+    <div class="reviews__inner">
+      <header class="section__head section__head--tight reveal">
+        <span class="eyebrow">Guest Reviews</span>
+        <h2 class="section__title">4.9 out of 5 — 500+ reviews</h2>
+      </header>
+      <div class="reviews__grid reveal">
+        <article class="review">
+          <div class="review__stars" role="img" aria-label="5 out of 5 stars">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </div>
+          <p class="review__quote">"Spent a perfect afternoon floating past the Three Sisters with the family. The kids loved it, and the raft was way more comfortable than we expected. Setup was painless."</p>
+          <footer class="review__by">
+            <span class="review__avatar" aria-hidden="true">MK</span>
+            <span>
+              <span class="review__name">Michelle K.</span>
+              <span class="review__meta">August 2025 · Google</span>
+            </span>
+          </footer>
+        </article>
+
+        <article class="review">
+          <div class="review__stars" role="img" aria-label="5 out of 5 stars">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </div>
+          <p class="review__quote">"We float this stretch every summer and Horizon had the best gear we've rented. The dry bags were actually waterproof, and the shuttle was right on time."</p>
+          <footer class="review__by">
+            <span class="review__avatar" aria-hidden="true">DP</span>
+            <span>
+              <span class="review__name">Dan P.</span>
+              <span class="review__meta">July 2025 · TripAdvisor</span>
+            </span>
+          </footer>
+        </article>
+
+        <article class="review">
+          <div class="review__stars" role="img" aria-label="5 out of 5 stars">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </div>
+          <p class="review__quote">"Booked last minute for a stag party — 8 of us in two rafts. Horizon sorted everything. We just showed up and had the best day of the trip."</p>
+          <footer class="review__by">
+            <span class="review__avatar" aria-hidden="true">JR</span>
+            <span>
+              <span class="review__name">James R.</span>
+              <span class="review__meta">June 2025 · Google</span>
+            </span>
+          </footer>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ADD-ONS — horizontal scroll strip ============ -->
+  <section class="section">
+    <header class="section__head section__head--tight reveal">
+      <span class="eyebrow">Add-Ons</span>
+      <h2 class="section__title section__title--sm">Make it even better</h2>
+    </header>
+    <ul class="addons reveal" tabindex="0" aria-label="Add-ons — scrollable">
+      <li class="addon">
+        <span class="addon__icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        </span>
+        <span class="addon__text">
+          <span class="addon__title">Shuttle</span>
+          <span class="addon__meta">Back to put-in</span>
+        </span>
+        <span class="addon__price">$XX</span>
+      </li>
+      <li class="addon">
+        <span class="addon__icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+        </span>
+        <span class="addon__text">
+          <span class="addon__title">Dry Bag</span>
+          <span class="addon__meta">Keep gear dry</span>
+        </span>
+        <span class="addon__price">$XX</span>
+      </li>
+      <li class="addon">
+        <span class="addon__icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+        </span>
+        <span class="addon__text">
+          <span class="addon__title">Boxed Lunch</span>
+          <span class="addon__meta">Per person</span>
+        </span>
+        <span class="addon__price">$XX</span>
+      </li>
+      <li class="addon">
+        <span class="addon__icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+        </span>
+        <span class="addon__text">
+          <span class="addon__title">Phone Case</span>
+          <span class="addon__meta">Waterproof</span>
+        </span>
+        <span class="addon__price">$XX</span>
+      </li>
+    </ul>
+  </section>
+
+  <!-- ============ FINAL CTA ============ -->
+  <section class="cta" id="book">
+    <div class="cta__inner reveal">
+      <h2 class="cta__title">Ready to float?</h2>
+      <p class="cta__body">The Bow River is right here. Getting on it should feel this easy.</p>
+      <a class="btn btn--invert btn--lg" href="#book">Book Your Float <span class="btn__arrow" aria-hidden="true">→</span></a>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="footer">
+  <div class="footer__inner">
+    <div class="footer__grid">
+      <div class="footer__brand">
+        <span class="footer__logo">
+          <svg width="28" height="28" viewBox="0 0 36 36" aria-hidden="true"><rect width="36" height="36" rx="8" fill="#2B6E7E"/><path d="M13 7v22M13 18c0-6 12-6 12 0v11" stroke="#F5F0E8" stroke-width="4" stroke-linecap="round" fill="none"/></svg>
+          <span class="footer__wordmark">horizon</span>
+          <span class="footer__suffix">raft</span>
+        </span>
+        <p class="footer__blurb">Self-guided raft rentals on the Bow River in Canmore. All equipment included. Just show up and float.</p>
+      </div>
+
+      <div class="footer__col">
+        <h2 class="footer__heading">Raft Rentals</h2>
+        <ul class="footer__links">
+          <li><a href="#fleet">Fleet</a></li>
+          <li><a href="#float">Float the Bow</a></li>
+          <li><a href="#safety">Safety &amp; Info</a></li>
+          <li><a href="#groups">Groups</a></li>
+          <li><a href="#">Gift Cards</a></li>
+          <li><a href="#">Loyalty &amp; Rewards</a></li>
+        </ul>
+      </div>
+
+      <div class="footer__col">
+        <h2 class="footer__heading">Horizon Tours</h2>
+        <ul class="footer__links">
+          <li><a href="/tours/">Guided Experiences</a></li>
+          <li><a href="/about/">About Us</a></li>
+          <li><a href="/blog/">Blog</a></li>
+          <li><a href="#">Partner Offers</a></li>
+          <li><a href="#">Careers</a></li>
+        </ul>
+      </div>
+
+      <div class="footer__col">
+        <h2 class="footer__heading">Get In Touch</h2>
+        <ul class="footer__links">
+          <li><a href="mailto:raft@gowithhorizon.com">raft@gowithhorizon.com</a></li>
+          <li><a href="/contact/">Contact</a></li>
+          <li><span class="footer__place">Canmore, Alberta, Canada</span></li>
+        </ul>
+        <div class="footer__social">
+          <a href="#" aria-label="Instagram">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </a>
+          <a href="#" aria-label="TripAdvisor">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+          </a>
+          <a href="#" aria-label="Google">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+          </a>
+          <a href="#" aria-label="Facebook">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer__bottom">
+      <p class="footer__copy">© 2026 Horizon. All rights reserved.</p>
+      <p class="footer__land">Horizon acknowledges the Treaty 7 territory and the Stoney Nakoda, Blackfoot, and Tsuut'ina peoples on whose land we operate.</p>
+    </div>
+  </div>
+</footer>
+
+<!-- Mobile sticky Book Now bar — hides on scroll up, reappears on scroll down -->
+<a class="book-bar" id="book-bar" href="#book">Book Your Float</a>
+
+  <script src="/js/referral.js"></script>
+  <script src="/rentals/raft.js"></script>
 </body>
 </html>
