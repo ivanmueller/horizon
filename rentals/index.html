@@ -44,6 +44,7 @@
     .route-map-section{padding:var(--pad-y) var(--pad-x);background:var(--sandbar);overflow:hidden}
     #route-map-wrap{position:relative;height:680px;max-width:var(--max);margin:0 auto;border-radius:var(--radius, 16px);overflow:hidden}
     #route-map{position:absolute;inset:0;background:var(--summit)}
+    #route-map-wrap .leaflet-tile-pane{filter:brightness(1.03) sepia(0.08)}
     #route-map-wrap .leaflet-container{font-family:var(--body);background:var(--summit)}
     #route-map-wrap .leaflet-control-attribution{font-size:10px;background:rgba(245,240,232,0.85)}
     #route-panel{position:absolute;top:20px;left:20px;width:352px;max-height:calc(100% - 40px);z-index:600;
@@ -498,9 +499,9 @@
 
     var map=L.map('route-map',{zoomControl:false,scrollWheelZoom:false,attributionControl:true});
     L.control.zoom({position:'topright'}).addTo(map);
-    L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiaXZhbmdvd2l0aGhvcml6b24iLCJhIjoiY21tZTA3MjYwMDR5cjJzbjNoa3BlN2VjbSJ9.ujNcQr3Sux3HYncTFns7fg',{
-      attribution:'&copy; <a href="https://www.mapbox.com/">Mapbox</a> &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>',
-      tileSize:512,zoomOffset:-1,maxZoom:19
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
+      attribution:'&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+      subdomains:'abcd',maxZoom:19
     }).addTo(map);
 
     L.polyline(ROUTE,{color:'#F5F0E8',weight:11,opacity:0.9,lineCap:'round',lineJoin:'round'}).addTo(map);
