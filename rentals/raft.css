@@ -547,10 +547,9 @@ a:hover { color: var(--alpine); }
   background: var(--slot);
 }
 .card__photo--raft {
-  aspect-ratio: 3 / 4;
-  max-height: 320px;
+  aspect-ratio: 4 / 3;
   object-fit: contain;
-  padding: 32px 24px;
+  padding: 24px;
   background: transparent;
 }
 .card__body { display: block; padding: 24px; }
@@ -578,6 +577,12 @@ a:hover { color: var(--alpine); }
   color: var(--glacial);
 }
 .card__price--sm { font-size: 18px; font-variant-numeric: normal; }
+.card__price-note {
+  font-family: var(--body);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted);
+}
 
 /* ---------- route strip (signature element) ---------- */
 
