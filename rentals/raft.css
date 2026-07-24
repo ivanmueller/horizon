@@ -357,12 +357,13 @@ a:hover { color: var(--alpine); }
   background: var(--alpine);
   text-align: center;
 }
-/* Replace .hero__media with a full-bleed <img>/<video> — keep the scrim above it. */
 .hero__media { position: absolute; inset: 0; }
-.hero__gradient {
+.hero__img {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, #1D4F5C 0%, #2B6E7E 40%, #3a8a9a 70%, #1D4F5C 100%);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .hero__scrim {
   position: absolute;
@@ -550,17 +551,12 @@ a:hover { color: var(--alpine); }
   box-shadow: 0 8px 24px rgba(0,0,0,0.1);
   color: inherit;
 }
-/* Replace with an <img> at 3:2 — keep the aspect ratio. */
 .card__photo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
+  width: 100%;
   aspect-ratio: 3 / 2;
+  object-fit: cover;
   background: var(--slot);
-  font-size: 12px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted);
 }
 .card__body { display: block; padding: 24px; }
 .card__title {
@@ -651,17 +647,15 @@ html:not(.js) .route__path { stroke-dashoffset: 0; }
   grid-template-columns: repeat(6, 1fr);
   gap: 12px;
 }
-/* Each item is a photo slot — swap for <img> with the same ratio. */
 .gallery__item {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  overflow: hidden;
   background: var(--slot);
   border-radius: 12px;
-  font-size: 12px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--driftwood);
+}
+.gallery__item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .gallery__item--landscape { grid-column: span 2; aspect-ratio: 3 / 2; }
 .gallery__item--portrait  { grid-column: span 2; grid-row: span 2; min-height: 320px; }
