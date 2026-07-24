@@ -63,8 +63,9 @@
     .sk{font-variant-numeric:tabular-nums;font-size:12px;color:var(--driftwood)}
     .sd{grid-column:2 / -1;font-size:12px;line-height:1.5;color:var(--muted);margin-top:3px;display:none}
     .srow[aria-current="true"] .sd{display:block;color:rgba(255,255,255,0.82)}
-    .raft-marker{width:30px;height:30px;border-radius:50%;background:var(--glacial);border:3px solid var(--sandbar);
-      box-shadow:0 3px 10px rgba(29,79,92,0.4);display:flex;align-items:center;justify-content:center}
+    .raft-marker{width:36px;height:36px;border-radius:50%;background:var(--glacial);border:3px solid var(--sandbar);
+      box-shadow:0 3px 10px rgba(29,79,92,0.4);display:flex;align-items:center;justify-content:center;padding:5px}
+    .raft-marker img{width:100%;height:100%;filter:invert(1)}
     .rdot{width:11px;height:11px;border-radius:50%;background:var(--sandbar);border:2.5px solid var(--glacial);box-shadow:0 1px 3px rgba(0,0,0,0.25)}
     .rdot.end{background:var(--glacial);border-color:var(--sandbar);width:14px;height:14px}
     .mlabel{font-family:var(--display);font-size:11px;font-weight:600;letter-spacing:0.04em;
@@ -503,8 +504,25 @@
       attribution:'&copy; OpenStreetMap contributors',maxZoom:19
     }).addTo(map);
 
-    L.polyline(ROUTE,{color:'#F5F0E8',weight:11,opacity:0.9,lineCap:'round',lineJoin:'round'}).addTo(map);
-    var line=L.polyline(ROUTE,{color:'#2B6E7E',weight:5,opacity:1,lineCap:'round',lineJoin:'round'}).addTo(map);
+    function smooth(pts,n){
+      var out=[];
+      for(var i=0;i<pts.length-1;i++){
+        var p0=pts[Math.max(i-1,0)],p1=pts[i],p2=pts[i+1],p3=pts[Math.min(i+2,pts.length-1)];
+        for(var s=0;s<n;s++){
+          var t=s/n,t2=t*t,t3=t2*t;
+          out.push([
+            0.5*(2*p1[0]+(-p0[0]+p2[0])*t+(2*p0[0]-5*p1[0]+4*p2[0]-p3[0])*t2+(-p0[0]+3*p1[0]-3*p2[0]+p3[0])*t3),
+            0.5*(2*p1[1]+(-p0[1]+p2[1])*t+(2*p0[1]-5*p1[1]+4*p2[1]-p3[1])*t2+(-p0[1]+3*p1[1]-3*p2[1]+p3[1])*t3)
+          ]);
+        }
+      }
+      out.push(pts[pts.length-1]);
+      return out;
+    }
+    var SMOOTH=smooth(ROUTE,8);
+
+    L.polyline(SMOOTH,{color:'#F5F0E8',weight:11,opacity:0.9,lineCap:'round',lineJoin:'round'}).addTo(map);
+    var line=L.polyline(SMOOTH,{color:'#2B6E7E',weight:5,opacity:1,lineCap:'round',lineJoin:'round'}).addTo(map);
     map.fitBounds(line.getBounds(),{paddingTopLeft:[400,60],paddingBottomRight:[60,110]});
 
     var R=6371000,rad=Math.PI/180;
@@ -531,8 +549,8 @@
       }
     });
 
-    var raft=L.marker(at(0),{icon:L.divIcon({className:'',iconSize:[30,30],iconAnchor:[15,15],
-      html:'<div class="raft-marker"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#F5F0E8" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="18" rx="6"/><path d="M6 10h12M6 15h12"/><path d="M2.5 8 6 10.2M21.5 8 18 10.2"/></svg></div>'}),
+    var raft=L.marker(at(0),{icon:L.divIcon({className:'',iconSize:[36,36],iconAnchor:[18,18],
+      html:'<div class="raft-marker"><img src="/rentals/images/raft-icon.png" alt=""></div>'}),
       zIndexOffset:1000,interactive:false}).addTo(map);
 
     var list=document.getElementById('route-plist'),readEl=document.getElementById('route-read'),
