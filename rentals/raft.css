@@ -370,21 +370,6 @@ a:hover { color: var(--alpine); }
   inset: 0;
   background: linear-gradient(180deg, rgba(29,79,92,0.2) 0%, rgba(29,79,92,0.5) 100%);
 }
-.hero__watermark {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.06;
-}
-.hero__watermark span {
-  font-family: var(--display);
-  font-size: 200px;
-  font-weight: 700;
-  letter-spacing: -0.04em;
-  color: #fff;
-}
 
 .hero__content {
   position: relative;
