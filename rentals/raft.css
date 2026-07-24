@@ -522,6 +522,9 @@ a:hover { color: var(--alpine); }
   grid-template-columns: repeat(4, 1fr);
   gap: 24px;
 }
+.fleet--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
 .card {
   display: block;
   overflow: hidden;
@@ -542,6 +545,12 @@ a:hover { color: var(--alpine); }
   aspect-ratio: 3 / 2;
   object-fit: cover;
   background: var(--slot);
+}
+.card__photo--raft {
+  aspect-ratio: 3 / 4;
+  object-fit: contain;
+  padding: 24px;
+  background: #fff;
 }
 .card__body { display: block; padding: 24px; }
 .card__title {
