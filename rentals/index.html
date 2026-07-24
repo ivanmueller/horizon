@@ -41,8 +41,8 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
   <style>
-    .route-map-section{padding:0;background:var(--sandbar);overflow:hidden}
-    #route-map-wrap{position:relative;height:680px}
+    .route-map-section{padding:var(--pad-y) var(--pad-x);background:var(--sandbar);overflow:hidden}
+    #route-map-wrap{position:relative;height:680px;max-width:var(--max);margin:0 auto;border-radius:var(--radius, 16px);overflow:hidden}
     #route-map{position:absolute;inset:0;background:var(--summit)}
     #route-map-wrap .leaflet-tile-pane{filter:saturate(0.35) brightness(1.06) contrast(0.92)}
     #route-map-wrap .leaflet-container{font-family:var(--body);background:var(--summit)}
@@ -497,7 +497,8 @@
     var STOPS=[{"name":"Put in","km":0,"min":0,"desc":"Gear check, five-minute briefing, then you push off.","frac":0},{"name":"Elk Island","km":0.73,"min":14,"desc":"The river splits around a wooded island. Stay right and let the current do the work.","frac":0.1564},{"name":"Beaver Barn","km":0.93,"min":18,"desc":"A lodge built into the far bank. Look for fresh-cut willow at the water line.","frac":0.1999},{"name":"Canmore Creek","km":1.24,"min":24,"desc":"Creek water joins from the right. You feel the temperature drop.","frac":0.2663},{"name":"Black Bear Reach","km":1.45,"min":28,"desc":"Long straight stretch, spruce on both sides. The quietest part of the float.","frac":0.3117},{"name":"The Bend","km":1.8,"min":35,"desc":"The river swings east and Ha Ling Peak comes into full view.","frac":0.3864},{"name":"Old Mine #2","km":2.09,"min":40,"desc":"Foundations from the Canmore coal era, half-swallowed by the bank.","frac":0.4486},{"name":"Old Lamphouse","km":2.42,"min":47,"desc":"Stone shell on river left, where miners collected their lamps at shift change.","frac":0.5198},{"name":"The Jam","km":2.8,"min":54,"desc":"Old logs stacked on the outside of the corner. Keep to the inside line.","frac":0.5995},{"name":"Skipping Stone Beach","km":3.27,"min":63,"desc":"Wide gravel bar, shallow and warm. The usual spot to pull out and stretch.","frac":0.7028},{"name":"Cougar Corner","km":3.53,"min":68,"desc":"Tight left-hand corner under a cut bank. Tracks show up in the mud here.","frac":0.7579},{"name":"Take out","km":4.65,"min":90,"desc":"Horizon staff meet you here. Leave the raft, we handle the rest.","frac":1}];
     var TOTAL_KM=4.66,TOTAL_MIN=90;
 
-    var map=L.map('route-map',{zoomControl:true,scrollWheelZoom:true,attributionControl:true});
+    var map=L.map('route-map',{zoomControl:false,scrollWheelZoom:false,attributionControl:true});
+    L.control.zoom({position:'topright'}).addTo(map);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
       attribution:'&copy; OpenStreetMap contributors',maxZoom:19
     }).addTo(map);
