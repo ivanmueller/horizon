@@ -786,7 +786,60 @@ html:not(.js) .route__path { stroke-dashoffset: 0; }
   color: var(--glacial);
 }
 
-/* ---------- FAQ accordion (safety-and-info) ---------- */
+/* ---------- short FAQ (homepage objection handling) ---------- */
+
+.faq-short-section { max-width: 800px; }
+.faq-short {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+.faq-short__item {}
+.faq-short__q {
+  margin: 0 0 6px;
+  font-family: var(--display);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--stone);
+}
+.faq-short__a {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.faq-short__more {
+  max-width: 720px;
+  margin: 40px auto 0;
+  text-align: center;
+}
+.faq-short__more a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--glacial);
+}
+.faq-short__more a:hover { color: var(--alpine); }
+
+/* ---------- FAQ page ---------- */
+
+.faq-page-hero { padding-bottom: 0; }
+.faq-page-intro {
+  max-width: 560px;
+  margin: 16px auto 0;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--muted);
+  text-align: center;
+}
+.faq-page-intro a { color: var(--glacial); text-decoration: underline; text-underline-offset: 2px; }
+.faq-page-intro a:hover { color: var(--alpine); }
+
+/* ---------- FAQ accordion (full FAQ page) ---------- */
 
 .faq-section { max-width: 800px; }
 .faq-content { max-width: 720px; margin: 0 auto; }
