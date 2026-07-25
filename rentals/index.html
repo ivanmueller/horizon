@@ -199,6 +199,37 @@
     <div class="hero__scroll-hint" aria-hidden="true"></div>
   </section>
 
+  <!-- ============ HOW IT WORKS ============ -->
+  <section class="section">
+    <header class="section__head reveal">
+      <span class="eyebrow">How It Works</span>
+      <h2 class="section__title">Three steps. No fuss.</h2>
+    </header>
+    <div class="steps reveal">
+      <div class="step">
+        <span class="step__icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </span>
+        <h3 class="step__title">Book</h3>
+        <p class="step__body">Pick your group size and date. Two minutes, done.</p>
+      </div>
+      <div class="step">
+        <span class="step__icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </span>
+        <h3 class="step__title">Show Up</h3>
+        <p class="step__body">We hand you everything — raft, paddles, PFDs, safety kit. Five-minute briefing and you're on the water.</p>
+      </div>
+      <div class="step">
+        <span class="step__icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        </span>
+        <h3 class="step__title">Float</h3>
+        <p class="step__body">75 minutes on the Bow. Ha Ling Peak on one side, Three Sisters on the other. Back at your car in two and a half hours.</p>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ CHOOSE YOUR FLOAT ============ -->
   <section class="section" id="fleet">
     <header class="section__head reveal">
@@ -233,61 +264,6 @@
           <span class="card__price">$299 <span class="card__price-note">per raft</span></span>
         </span>
       </a>
-    </div>
-  </section>
-
-  <!-- ============ ROUTE — interactive live map ============ -->
-  <section class="route-map-section" id="float">
-    <header class="section__head reveal" style="max-width:var(--max);margin:0 auto 32px">
-      <span class="eyebrow">The Route</span>
-      <h2 class="section__title">Your float, start to finish</h2>
-    </header>
-    <div id="route-map-wrap">
-      <div id="route-map"></div>
-      <div id="route-panel">
-        <div style="padding:16px 18px 12px;border-bottom:1px solid rgba(166,139,107,0.28)">
-          <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--driftwood);display:block;margin-bottom:6px">The route</span>
-          <h2 style="font-family:var(--display);font-weight:600;font-size:20px;margin:0 0 4px;color:var(--stone);letter-spacing:-0.01em">The Rundle Reach</h2>
-          <p style="margin:0;font-size:13px;color:var(--muted)">4.66 km · about 1.5 hours on the Bow</p>
-        </div>
-        <div id="route-plist"></div>
-      </div>
-      <div id="route-ctl">
-        <span class="read" id="route-read">0.00 km · 0 min</span>
-        <input id="route-scrub" type="range" min="0" max="1000" value="0" aria-label="Position along the route">
-        <button id="route-play" type="button"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg><span id="route-playlbl">Play the float</span></button>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ HOW IT WORKS ============ -->
-  <section class="section">
-    <header class="section__head reveal">
-      <span class="eyebrow">How It Works</span>
-      <h2 class="section__title">Three steps. No fuss.</h2>
-    </header>
-    <div class="steps reveal">
-      <div class="step">
-        <span class="step__icon">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        </span>
-        <h3 class="step__title">Book</h3>
-        <p class="step__body">Pick your group size and date. Two minutes, done.</p>
-      </div>
-      <div class="step">
-        <span class="step__icon">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        </span>
-        <h3 class="step__title">Show Up</h3>
-        <p class="step__body">We hand you everything — raft, paddles, PFDs, safety kit. Five-minute briefing and you're on the water.</p>
-      </div>
-      <div class="step">
-        <span class="step__icon">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-        </span>
-        <h3 class="step__title">Float</h3>
-        <p class="step__body">75 minutes on the Bow. Ha Ling Peak on one side, Three Sisters on the other. Back at your car in two and a half hours.</p>
-      </div>
     </div>
   </section>
 
@@ -375,6 +351,30 @@
           <h4 class="sched-shuttle__faq-q">How will we find the van?</h4>
           <p class="sched-shuttle__faq-a">One gravel lot, one white van. Text 403-555-0134 if you are standing there and cannot see us.</p>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ROUTE — interactive live map ============ -->
+  <section class="route-map-section" id="float">
+    <header class="section__head reveal" style="max-width:var(--max);margin:0 auto 32px">
+      <span class="eyebrow">The Route</span>
+      <h2 class="section__title">Your float, start to finish</h2>
+    </header>
+    <div id="route-map-wrap">
+      <div id="route-map"></div>
+      <div id="route-panel">
+        <div style="padding:16px 18px 12px;border-bottom:1px solid rgba(166,139,107,0.28)">
+          <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--driftwood);display:block;margin-bottom:6px">The route</span>
+          <h2 style="font-family:var(--display);font-weight:600;font-size:20px;margin:0 0 4px;color:var(--stone);letter-spacing:-0.01em">The Rundle Reach</h2>
+          <p style="margin:0;font-size:13px;color:var(--muted)">4.66 km · about 1.5 hours on the Bow</p>
+        </div>
+        <div id="route-plist"></div>
+      </div>
+      <div id="route-ctl">
+        <span class="read" id="route-read">0.00 km · 0 min</span>
+        <input id="route-scrub" type="range" min="0" max="1000" value="0" aria-label="Position along the route">
+        <button id="route-play" type="button"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg><span id="route-playlbl">Play the float</span></button>
       </div>
     </div>
   </section>
