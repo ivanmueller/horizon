@@ -23,9 +23,24 @@
   }
   var escapeAttr = escapeHtml;
 
+  var REQUIRED = [
+    'travellersBtn', 'travellersDropdown', 'travellersRows',
+    'dateBtn', 'calendar', 'calGrid1', 'calGrid2',
+  ];
+
   function init(ctx) {
     var sel = ctx.sel, cls = ctx.cls;
     var booking = global.bokunBooking;
+
+    /* Individual pieces degrade gracefully below, but a missing element is
+       almost always a redesign that renamed something without updating the
+       selector map — so name it rather than quietly rendering a dead panel. */
+    var missing = REQUIRED.filter(function (k) { return !sel(k); });
+    if (missing.length) {
+      console.warn('[HorizonBooking] booking panel incomplete — no element matched: ' +
+        missing.map(function (k) { return k + ' (' + ctx.rawSelector(k) + ')'; }).join(', ') +
+        '. See docs/booking-contract.md §2.');
+    }
 
     /* ── Travellers ────────────────────────────────────────────────────
        Rows are rendered from Bokun's pricingCategories, keyed by the

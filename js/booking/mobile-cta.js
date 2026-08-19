@@ -16,6 +16,7 @@
     var ctaBtn   = sel('mobileCtaBtn');
     var backdrop = sel('mobileSheetBackdrop');
     var closeBtn = sel('mobileSheetClose');
+    // Optional by design: a layout with no sticky mobile bar is legitimate.
     if (!ctaBar || !ctaBtn) return null;
 
     function updateCtaPrice() {

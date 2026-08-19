@@ -21,7 +21,18 @@
     var checkBtn  = sel('checkAvailBtn');
     var bookBtn   = sel('bookNowBtn');
     var expansion = sel('expansion');
-    if (!checkBtn || !bookBtn || !expansion) return null;
+    /* Without any one of these there is no checkout path at all, so fail
+       loudly rather than leaving a page that looks fine and cannot book —
+       the exact failure mode a redesign is likely to introduce. */
+    if (!checkBtn || !bookBtn || !expansion) {
+      var missing = [];
+      if (!checkBtn)  missing.push('checkAvailBtn (' + ctx.rawSelector('checkAvailBtn') + ')');
+      if (!bookBtn)   missing.push('bookNowBtn (' + ctx.rawSelector('bookNowBtn') + ')');
+      if (!expansion) missing.push('expansion (' + ctx.rawSelector('expansion') + ')');
+      console.warn('[HorizonBooking] checkout not mounted — no element matched: ' +
+        missing.join(', ') + '. See docs/booking-contract.md §2.');
+      return null;
+    }
 
     function bokunCounts() {
       return (global.bokunBooking && global.bokunBooking.counts) || {};

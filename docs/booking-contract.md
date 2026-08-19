@@ -290,9 +290,23 @@ page (checkout declares its own).
    network access to the Worker. Fixtures prove the front end still drives
    the flow; only the live run proves the integration works.
 
-If a selector key is missing or misspelled, the engine logs
-`[HorizonBooking] unknown selector key: …` rather than failing silently.
-Watch the console during a redesign.
+The engine is loud about a broken map rather than silently rendering a page
+that looks fine and cannot book:
+
+```
+[HorizonBooking] checkout not mounted — no element matched: bookNowBtn (#bookNowBtn). See docs/booking-contract.md §2.
+[HorizonBooking] booking panel incomplete — no element matched: dateBtn (#dateBtn), calendar (#calendarDropdown). …
+[HorizonBooking] unknown selector key: bookNowBtnn
+```
+
+None of these throw — a bad map degrades the page, it never takes it down.
+Watch the console while redesigning, and treat any of them as a build break.
+
+**Proof this works:** `tests/redesign.spec.js` runs the whole flow against a
+page rebuilt from scratch — no shared id, class, tag structure, or naming
+convention with production, reconnected purely through the override map. If
+you are wondering whether you are allowed to change something, that harness
+(`tests/fixtures/redesigned-tour.js`) is the worked example.
 
 ---
 
@@ -330,10 +344,14 @@ test lane (`0B_VALIDATION.md`) before testing past the tour page.
 ## 10. The test suite
 
 ```
-tests/booking.spec.js      15 tests — the safety net
-tests/fixtures/bokun.js    recorded Bokun shapes, generated relative to today
-tests/static-server.mjs    dependency-free static server for the harness
+tests/booking.spec.js            15 tests — the safety net on the real page
+tests/redesign.spec.js            6 tests — the same flow on rebuilt markup
+tests/fixtures/bokun.js           recorded Bokun shapes, generated relative to today
+tests/fixtures/redesigned-tour.js a from-scratch page wired only via overrides
+tests/static-server.mjs           dependency-free static server for the harness
 ```
+
+21 tests total; 20 run offline, 1 is live-only.
 
 `npm run test:booking` (fixtures, offline, deterministic — safe for CI) ·
 `npm run test:booking:live` (real Worker; run before deploying).
