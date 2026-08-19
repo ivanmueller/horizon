@@ -1,8 +1,8 @@
 # Consumer site redesign plan — gowithhorizon.com
 
-**Status:** Proposed · **Scope:** the Tours (consumer) host only ·
-**Non-goal:** any change to the Bokun Worker, Supabase, Stripe, or the
-booking data flow.
+**Status:** Phases 0 and 1 are **done** — the redesign is unblocked ·
+**Scope:** the Tours (consumer) host only · **Non-goal:** any change to the
+Bokun Worker, Supabase, Stripe, or the booking data flow.
 
 This plan covers the full visual/structural revamp of the public site.
 It is deliberately sequenced so that the one revenue-critical surface —
@@ -212,7 +212,17 @@ plan.
 
 Each phase is independently shippable and independently revertible.
 
-### Phase 0 — Safety net (before any code moves)
+### Phase 0 — Safety net ✅ DONE
+
+- [x] Contract ratified and expanded into `docs/booking-contract.md`.
+- [x] 33-test suite (`npm run test:booking`), 32 of them offline and
+      deterministic, plus a live mode for pre-deploy. Wired to CI.
+- [x] Mutation-tested: breaking the category collapse, the JSON-LD patch, the
+      price cache, capacity validation, the missing-element guard, the load
+      order, or `revealCalendar` each fails its test.
+- [x] Attribution deliberately **not** gated, per the site owner.
+
+<details><summary>Original Phase 0 checklist</summary>
 
 - [ ] Ratify §1's contract list; keep it as `docs/booking-contract.md`.
 - [ ] Write a **booking smoke test** (Playwright — Chromium is already
@@ -224,7 +234,26 @@ Each phase is independently shippable and independently revertible.
       and assert both land in the `/api/booking/initiate` payload.
 - [ ] Run it against production once and record the baseline.
 
-This test is what makes every later phase safe. Build it first.
+</details>
+
+### Phase 1 — Extract the booking engine ✅ DONE
+
+The engine lives in `/js/booking/` behind a selector map. The tour page went
+from 3,465 to ~2,640 lines with no visual or functional change. Verified
+three ways: the suite passes unchanged against the pre-extraction page, every
+assertion is mutation-checked, and `tests/redesign.spec.js` runs the whole
+flow against a page rebuilt from scratch that shares no id, class, or naming
+convention with production.
+
+**What this means for the redesign:** you can now restructure the tour page
+freely. Rename ids and classes, and pass `selectors` / `classes` overrides to
+`mount()` instead of editing booking logic. `docs/booking-contract.md` §7 is
+the step-by-step.
+
+Still outstanding before a deploy: the **Stripe test lane** (§4) — without it,
+a full checkout run on a preview URL hits live Stripe.
+
+<details><summary>Original Phase 1 plan</summary>
 
 ### Phase 1 — Extract the booking engine (no visual change)
 
@@ -252,6 +281,8 @@ Rules for this phase:
 
 **Gate:** do not start Phase 2 until a live booking has completed on the
 extracted engine.
+
+</details>
 
 ### Phase 2 — Design system for the consumer site
 
@@ -370,8 +401,8 @@ additive `ALLOWED_ORIGINS` entries.
 
 | Order | Phase | Risk | Touches integration? |
 |---|---|---|---|
-| 1 | Phase 0 — smoke test + contract doc | none | reads only |
-| 2 | Phase 1 — extract booking engine | **medium** | yes — but zero visual change |
+| ✅ | Phase 0 — smoke test + contract doc | none | reads only |
+| ✅ | Phase 1 — extract booking engine | **medium** | yes — but zero visual change |
 | 3 | Phase 2 — design system | none | no |
 | 4 | Phase 3 — Eleventy + templates | low | no |
 | 5 | Phase 4 steps 1–4 — marketing pages | none | no |
@@ -379,6 +410,7 @@ additive `ALLOWED_ORIGINS` entries.
 | 7 | Phase 4 steps 7–8 — confirmed + checkout skin | low | skin only |
 | 8 | Phase 5 — cutover | low | verification |
 
-The two genuinely risky moments are Phase 1 and Phase 4 step 6 — and they
-are separated by weeks of production soak. That separation is the whole
-point of the plan.
+The two genuinely risky moments are Phase 1 and Phase 4 step 6. Phase 1 has
+landed; the soak before step 6 is what the remaining phases buy. Start with
+the marketing pages while the extracted engine runs in production
+unchanged.
