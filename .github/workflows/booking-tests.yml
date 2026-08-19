@@ -16,6 +16,7 @@ name: Booking tests
 
 on:
   push:
+    branches: [main]
     paths:
       - 'js/booking/**'
       - 'tours/**'
@@ -34,7 +35,7 @@ on:
 # A superseded run has nothing to tell us, and leaving it running holds a
 # runner. Cancel the previous run for this ref when a new commit lands.
 concurrency:
-  group: booking-${{ github.ref }}
+  group: booking-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -52,7 +53,14 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      # NOT `--with-deps`. That flag shells out to apt to install Chromium's
+      # shared libraries, and it hung indefinitely on four consecutive runs
+      # here (23s on the runs before that, so it is not a slow step — it
+      # stops making progress). The ubuntu-latest image already ships those
+      # libraries; the browser download on its own has never been the
+      # problem. If a library is ever genuinely missing, the test step fails
+      # in seconds with a clear loader error instead of hanging.
+      - run: npx playwright install chromium
         timeout-minutes: 6
       - run: npm run test:booking
       - uses: actions/upload-artifact@v4
