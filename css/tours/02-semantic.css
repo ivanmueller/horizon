@@ -1,0 +1,158 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   HORIZON TOURS — 02 · SEMANTIC
+   ═══════════════════════════════════════════════════════════════════════
+   Roles, not values. Components reference ONLY these; they never reach
+   past this file into the primitive ramps.
+
+   That one-way rule is the whole point of the split. Rebranding means
+   editing the ramps in 01-primitives.css and, at most, the assignments
+   here — never a component file, and never a page.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+@layer tokens {
+  :root {
+
+    /* ── Surfaces ───────────────────────────────────────────────────── */
+    --surface-page:     var(--neutral-0);
+    --surface-subtle:   var(--neutral-50);
+    --surface-raised:   var(--neutral-0);
+    --surface-sunken:   var(--neutral-100);
+    --surface-inverse:  var(--neutral-900);
+    --surface-brand:    var(--brand-600);
+    --surface-brand-subtle: var(--brand-50);
+    --surface-accent:   var(--accent-500);
+    --surface-overlay:  rgb(15 20 24 / 0.88);
+    --surface-scrim:    rgb(15 20 24 / 0.45);
+
+    /* ── Text ───────────────────────────────────────────────────────────
+       -primary and -secondary carry almost everything. -muted is for
+       genuinely de-emphasised metadata and still clears 4.5:1 on
+       --surface-page; do not push it lighter. */
+    --text-primary:   var(--neutral-900);
+    --text-secondary: var(--neutral-700);
+    --text-muted:     var(--neutral-600);
+    --text-inverse:   var(--neutral-0);
+    --text-brand:     var(--brand-700);
+    --text-on-brand:  var(--neutral-0);
+    --text-on-accent: var(--neutral-0);
+    --text-link:      var(--brand-700);
+    --text-link-hover:var(--brand-800);
+
+    /* ── Borders ────────────────────────────────────────────────────── */
+    --border-subtle:  var(--neutral-200);   /* decorative hairlines */
+    --border-default: var(--neutral-300);   /* decorative, heavier */
+    --border-strong:  var(--neutral-400);
+    /* Boundaries that carry meaning — input edges, control outlines.
+       Must clear 3:1 against the surface behind them (WCAG 1.4.11). */
+    --border-control: var(--neutral-500);
+    --border-brand:   var(--brand-500);
+    --border-focus:   var(--brand-600);
+
+    /* ── Actions ────────────────────────────────────────────────────────
+       Primary = the booking CTA. It uses the ACCENT ramp, not the brand
+       ramp: the warm hue is the one thing on the page that means "book",
+       and reserving it keeps that signal legible. Secondary is the brand
+       hue; tertiary is quiet. */
+    /* accent-700, not -600: white on -600 measures 3.56:1 and button text
+       at 16px semibold is not "large text", so it needs the full 4.5:1.
+       Verified in _kitchen-sink.html — do not lighten these without
+       re-running that audit. */
+    --action-primary-bg:        var(--accent-700);
+    --action-primary-bg-hover:  var(--accent-800);
+    --action-primary-bg-active: var(--accent-900);
+    --action-primary-text:      var(--text-on-accent);
+
+    /* brand-700 for the same reason: -600 lands at 4.35:1, just under. */
+    --action-secondary-bg:        var(--brand-700);
+    --action-secondary-bg-hover:  var(--brand-800);
+    --action-secondary-bg-active: var(--brand-900);
+    --action-secondary-text:      var(--text-on-brand);
+
+    --action-quiet-bg:       transparent;
+    --action-quiet-bg-hover: var(--neutral-100);
+    --action-quiet-text:     var(--text-primary);
+    --action-quiet-border:   var(--border-control);
+
+    --action-disabled-bg:   var(--neutral-200);
+    --action-disabled-text: var(--neutral-600);
+
+    /* ── Feedback ───────────────────────────────────────────────────── */
+    --feedback-success-bg: var(--success-100);
+    --feedback-success-fg: var(--success-800);
+    --feedback-warning-bg: var(--warning-100);
+    --feedback-warning-fg: var(--warning-800);
+    --feedback-danger-bg:  var(--danger-100);
+    --feedback-danger-fg:  var(--danger-800);
+    --feedback-info-bg:    var(--info-100);
+    --feedback-info-fg:    var(--info-800);
+
+    /* ── Focus ──────────────────────────────────────────────────────────
+       One ring, everywhere, never removed without a replacement. Keyboard
+       booking has to be possible. */
+    --focus-ring: 0 0 0 3px color-mix(in srgb, var(--border-focus) 40%, transparent);
+    --focus-ring-offset: 2px;
+    --selection-bg: var(--brand-200);
+    --selection-fg: var(--brand-950);
+
+    /* ── Typography roles ───────────────────────────────────────────── */
+    --type-display:  var(--weight-bold) var(--text-5xl)/var(--leading-tight) var(--font-display);
+    --type-title:    var(--weight-bold) var(--text-4xl)/var(--leading-tight) var(--font-display);
+    --type-heading:  var(--weight-semibold) var(--text-2xl)/var(--leading-snug) var(--font-display);
+    --type-subhead:  var(--weight-semibold) var(--text-lg)/var(--leading-snug) var(--font-sans);
+    --type-body:     var(--weight-regular) var(--text-base)/var(--leading-normal) var(--font-sans);
+    --type-small:    var(--weight-regular) var(--text-sm)/var(--leading-normal) var(--font-sans);
+    --type-caption:  var(--weight-medium) var(--text-xs)/var(--leading-normal) var(--font-sans);
+
+    /* ── Component-shared ───────────────────────────────────────────── */
+    --card-radius:    var(--radius-lg);
+    --card-shadow:    var(--shadow-2);
+    --control-radius: var(--radius-md);
+    --control-height: 3rem;
+    --control-height-sm: 2.25rem;
+  }
+
+  /* ── Dark theme ───────────────────────────────────────────────────────
+     Defined but NOT auto-activated. It is deliberately gated behind an
+     explicit [data-theme="dark"] rather than prefers-color-scheme, because
+     shipping an untested dark mode to every visitor whose OS is dark is a
+     good way to break a booking page for a third of traffic.
+
+     To turn it on for real: audit the components in dark, then add
+     `@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { … } }`
+     pointing at this same block. One change, once it is earned. */
+  [data-theme="dark"] {
+    --surface-page:    var(--neutral-950);
+    --surface-subtle:  var(--neutral-900);
+    --surface-raised:  var(--neutral-900);
+    --surface-sunken:  var(--neutral-950);
+    --surface-inverse: var(--neutral-50);
+    --surface-brand-subtle: var(--brand-950);
+    --surface-overlay: rgb(0 0 0 / 0.9);
+
+    --text-primary:   var(--neutral-50);
+    --text-secondary: var(--neutral-300);
+    --text-muted:     var(--neutral-400);
+    --text-inverse:   var(--neutral-950);
+    --text-brand:     var(--brand-300);
+    --text-link:      var(--brand-300);
+    --text-link-hover:var(--brand-200);
+
+    --border-subtle:  var(--neutral-800);
+    --border-default: var(--neutral-700);
+    --border-strong:  var(--neutral-600);
+    --border-control: var(--neutral-500);
+
+    --action-quiet-bg-hover: var(--neutral-800);
+    --action-disabled-bg:    var(--neutral-800);
+    --action-disabled-text:  var(--neutral-500);
+
+    --feedback-success-bg: var(--success-800); --feedback-success-fg: var(--success-100);
+    --feedback-warning-bg: var(--warning-800); --feedback-warning-fg: var(--warning-100);
+    --feedback-danger-bg:  var(--danger-800);  --feedback-danger-fg:  var(--danger-100);
+    --feedback-info-bg:    var(--info-800);    --feedback-info-fg:    var(--info-100);
+
+    --card-shadow: 0 2px 4px rgb(0 0 0 / 0.4), 0 12px 28px rgb(0 0 0 / 0.5);
+    --selection-bg: var(--brand-800);
+    --selection-fg: var(--brand-50);
+  }
+}

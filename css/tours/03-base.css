@@ -1,0 +1,148 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   HORIZON TOURS — 03 · BASE
+   ═══════════════════════════════════════════════════════════════════════
+   Reset plus element defaults. After this file, unstyled HTML already
+   looks like Horizon — which is what keeps component CSS small.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+@layer reset {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  /* Margin is opt-in. Every stray gap should be a deliberate one. */
+  * { margin: 0; }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    /* Anchor links and the booking panel's smooth scroll both land under
+       the sticky nav without this. */
+    scroll-padding-top: var(--space-20);
+  }
+
+  body {
+    min-height: 100svh;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  img, picture, video, canvas, svg {
+    display: block;
+    max-width: 100%;
+  }
+
+  input, button, textarea, select { font: inherit; color: inherit; }
+
+  /* Long tour names and guest emails must not blow out a card. */
+  p, h1, h2, h3, h4, h5, h6 { overflow-wrap: break-word; }
+
+  /* Respect the OS setting rather than animating regardless. The booking
+     panel's smooth scrolls and skeleton flashes both honour this. */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer base {
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--surface-page);
+    color: var(--text-primary);
+    font: var(--type-body);
+  }
+
+  h1 { font: var(--type-title);   letter-spacing: var(--tracking-tight); }
+  h2 { font: var(--type-heading); letter-spacing: var(--tracking-tight); }
+  h3 { font: var(--type-subhead); }
+  h4, h5, h6 { font: var(--type-body); font-weight: var(--weight-semibold); }
+
+  p { max-width: var(--measure); }
+
+  a {
+    color: var(--text-link);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+  a:hover { color: var(--text-link-hover); }
+
+  strong, b { font-weight: var(--weight-semibold); }
+  small { font: var(--type-small); color: var(--text-secondary); }
+
+  ul, ol { padding-inline-start: var(--space-5); }
+  li + li { margin-block-start: var(--space-2); }
+
+  hr {
+    border: 0;
+    border-block-start: 1px solid var(--border-subtle);
+    margin-block: var(--space-8);
+  }
+
+  code, kbd, pre { font-family: var(--font-mono); font-size: 0.925em; }
+
+  /* One focus ring for the whole site. :focus-visible so pointer users do
+     not see it, keyboard users always do. Never remove without a
+     replacement — the booking flow has to be completable by keyboard. */
+  :focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: var(--focus-ring-offset);
+    border-radius: var(--radius-sm);
+  }
+
+  ::selection {
+    background: var(--selection-bg);
+    color: var(--selection-fg);
+  }
+
+  /* The engine toggles the `hidden` ATTRIBUTE to open and close the
+     travellers dropdown, the calendar, and the whole booking expansion.
+     Reasserting the UA default here means a later `display: flex` on one
+     of those components cannot accidentally force it visible — which is
+     the single most likely way a CSS rewrite silently breaks booking.
+     See docs/booking-contract.md §2. */
+  [hidden] { display: none !important; }
+}
+
+@layer layout {
+  .container {
+    width: 100%;
+    max-width: var(--container);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  .section { padding-block: var(--space-section); }
+  .section--subtle { background: var(--surface-subtle); }
+
+  /* Vertical rhythm without margin bookkeeping: children of a .stack get
+     an even gap, overridable per instance with --stack-gap. */
+  .stack > * + * { margin-block-start: var(--stack-gap, var(--space-4)); }
+
+  .cluster {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--cluster-gap, var(--space-3));
+    align-items: center;
+  }
+
+  /* Responsive grid with no breakpoints: columns wrap when they cannot
+     hold --col-min. */
+  .grid-auto {
+    display: grid;
+    gap: var(--grid-gap, var(--space-6));
+    grid-template-columns: repeat(auto-fit, minmax(min(var(--col-min, 18rem), 100%), 1fr));
+  }
+
+  .visually-hidden:not(:focus):not(:active) {
+    clip-path: inset(50%);
+    height: 1px; width: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+  }
+}

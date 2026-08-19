@@ -1,0 +1,184 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   HORIZON TOURS — 01 · PRIMITIVES
+   ═══════════════════════════════════════════════════════════════════════
+   Raw scales. No meaning, no opinions about usage — just the vocabulary
+   the semantic layer draws from.
+
+   NOTHING IN THE SITE SHOULD REFERENCE THESE DIRECTLY. Components use the
+   semantic tokens in 02-semantic.css. The one-way dependency is what lets
+   the whole look change from one file.
+
+   Repo-owned: this system deliberately sits OUTSIDE design_files/ →
+   css_new/, which is replaced wholesale on each Claude Design handoff and
+   belongs to the Connect/admin dashboards. See docs/design-system.md §1.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Cascade order, declared once for the whole system. Later layers win
+   regardless of selector specificity, which is what keeps component CSS
+   from turning into a specificity arms race. */
+@layer reset, tokens, base, layout, components, utilities;
+
+@layer tokens {
+  :root {
+
+    /* ── Colour ramps ──────────────────────────────────────────────────
+       Numeric ramps, not t-shirt sizes: they extend without renaming and
+       the number carries meaning (higher = darker in light mode).
+
+       TO REBRAND: replace the --brand-* ramp and, if needed, the neutral
+       tint. Nothing else in the system hardcodes a colour. Keep the step
+       count and the rough lightness curve or the semantic assignments in
+       02-semantic.css stop landing at usable contrast. */
+
+    /* Neutral — cool-tinted. Carries most of the page. */
+    --neutral-0:   #FFFFFF;
+    --neutral-50:  #F7F9FA;
+    --neutral-100: #EFF3F5;
+    --neutral-200: #DFE6EA;
+    --neutral-300: #C6D1D8;
+    --neutral-400: #A0B0BA;
+    --neutral-500: #7A8C98;
+    --neutral-600: #5C6D78;
+    --neutral-700: #45535C;
+    --neutral-800: #2F3A41;
+    --neutral-900: #1C2429;
+    --neutral-950: #0F1418;
+
+    /* Brand — glacial teal. PLACEHOLDER: swap wholesale, see above. */
+    --brand-50:  #ECFBFA;
+    --brand-100: #D2F5F2;
+    --brand-200: #A6EBE7;
+    --brand-300: #6FDCD7;
+    --brand-400: #38C4C0;
+    --brand-500: #17A8A5;
+    --brand-600: #0E8785;
+    --brand-700: #106B6A;
+    --brand-800: #135555;
+    --brand-900: #144747;
+    --brand-950: #062A2B;
+
+    /* Accent — warm. Earns its place by contrasting the brand hue, so it
+       is what booking CTAs use. Sparingly: if everything is accented,
+       nothing is. */
+    --accent-50:  #FFF7ED;
+    --accent-100: #FFEDD5;
+    --accent-200: #FED7AA;
+    --accent-300: #FDBA74;
+    --accent-400: #FB923C;
+    --accent-500: #F97316;
+    --accent-600: #EA580C;
+    --accent-700: #C2410C;
+    --accent-800: #9A3412;
+    --accent-900: #7C2D12;
+
+    /* Status. Deliberately not brand-tinted — a booking error must read as
+       an error, not as decoration. */
+    --success-100: #DCFCE7;  --success-600: #16A34A;  --success-800: #166534;
+    --warning-100: #FEF3C7;  --warning-600: #D97706;  --warning-800: #92400E;
+    --danger-100:  #FEE2E2;  --danger-600:  #DC2626;  --danger-800:  #991B1B;
+    --info-100:    #DBEAFE;  --info-600:    #2563EB;  --info-800:    #1E40AF;
+
+    /* ── Typography ────────────────────────────────────────────────────
+       Fluid by default: every step interpolates between a mobile and a
+       desktop size, so there is no breakpoint bookkeeping for type. The
+       clamp middle term is vw-based; the outer terms are the hard floor
+       and ceiling. */
+
+    --font-sans: 'DM Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-display: 'Outfit', var(--font-sans);
+    --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+
+    --text-xs:   clamp(0.75rem,  0.73rem + 0.10vw, 0.8125rem);
+    --text-sm:   clamp(0.875rem, 0.85rem + 0.12vw, 0.9375rem);
+    --text-base: clamp(1rem,     0.97rem + 0.15vw, 1.0625rem);
+    --text-lg:   clamp(1.125rem, 1.08rem + 0.22vw, 1.25rem);
+    --text-xl:   clamp(1.25rem,  1.18rem + 0.35vw, 1.5rem);
+    --text-2xl:  clamp(1.5rem,   1.38rem + 0.60vw, 1.875rem);
+    --text-3xl:  clamp(1.875rem, 1.65rem + 1.10vw, 2.5rem);
+    --text-4xl:  clamp(2.25rem,  1.85rem + 2.00vw, 3.25rem);
+    --text-5xl:  clamp(2.75rem,  2.05rem + 3.50vw, 4.5rem);
+
+    --leading-tight:   1.12;
+    --leading-snug:    1.28;
+    --leading-normal:  1.55;
+    --leading-relaxed: 1.7;
+
+    --tracking-tight:  -0.02em;
+    --tracking-normal: 0;
+    --tracking-wide:   0.04em;
+
+    --weight-regular:  400;
+    --weight-medium:   500;
+    --weight-semibold: 600;
+    --weight-bold:     700;
+
+    /* ── Space ─────────────────────────────────────────────────────────
+       4px base, numeric ramp. The number IS the multiple of 4, so
+       --space-6 is 24px and stays obvious at a glance. */
+    --space-0:  0;
+    --space-1:  0.25rem;
+    --space-2:  0.5rem;
+    --space-3:  0.75rem;
+    --space-4:  1rem;
+    --space-5:  1.25rem;
+    --space-6:  1.5rem;
+    --space-8:  2rem;
+    --space-10: 2.5rem;
+    --space-12: 3rem;
+    --space-16: 4rem;
+    --space-20: 5rem;
+    --space-24: 6rem;
+    --space-32: 8rem;
+
+    /* Fluid rhythm — vertical gaps between page sections, and the page
+       gutter. These are the two that would otherwise need a breakpoint
+       each. */
+    --space-section: clamp(3rem, 7vw, 7rem);
+    --gutter:        clamp(1rem, 4vw, 2.5rem);
+    --measure:       68ch;   /* readable line length for body copy */
+    --container:     1200px;
+
+    /* ── Radius ────────────────────────────────────────────────────── */
+    --radius-none: 0;
+    --radius-sm:   0.25rem;
+    --radius-md:   0.5rem;
+    --radius-lg:   0.875rem;
+    --radius-xl:   1.25rem;
+    --radius-2xl:  1.75rem;
+    --radius-full: 999px;
+
+    /* ── Elevation ─────────────────────────────────────────────────────
+       Two-shadow recipe: a tight contact shadow plus a wide ambient one.
+       Reads as real depth rather than a grey blur. */
+    --shadow-1: 0 1px 2px rgb(15 20 24 / 0.06), 0 1px 3px rgb(15 20 24 / 0.04);
+    --shadow-2: 0 2px 4px rgb(15 20 24 / 0.06), 0 4px 12px rgb(15 20 24 / 0.07);
+    --shadow-3: 0 4px 8px rgb(15 20 24 / 0.07), 0 12px 28px rgb(15 20 24 / 0.10);
+    --shadow-4: 0 8px 16px rgb(15 20 24 / 0.08), 0 24px 56px rgb(15 20 24 / 0.14);
+
+    /* ── Motion ────────────────────────────────────────────────────── */
+    --ease-out:  cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+    --duration-fast:   120ms;
+    --duration-normal: 220ms;
+    --duration-slow:   400ms;
+
+    /* ── Z-index ───────────────────────────────────────────────────────
+       Named so nobody has to invent 9999 again. The booking panel sits
+       below its own dropdowns; lightboxes sit above everything. */
+    --z-base:      0;
+    --z-sticky:    100;
+    --z-nav:       200;
+    --z-dropdown:  300;
+    --z-mobile-bar: 400;
+    --z-overlay:   500;
+    --z-lightbox:  600;
+  }
+
+  /* Breakpoints exist as documentation only — custom properties cannot be
+     used in media queries. Keep these in sync with the @media values used
+     in the layout and component layers. */
+  /*  sm 480px · md 768px · lg 960px · xl 1200px
+      960px is load-bearing: it must match mobileBreakpoint in
+      HorizonBooking.mount(), which decides sheet-vs-scroll on the booking
+      CTA. See docs/booking-contract.md. */
+}
