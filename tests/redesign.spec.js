@@ -153,6 +153,33 @@ test.describe('booking engine on completely rebuilt markup', () => {
     expect(ld.offers.priceCurrency).toBe('CAD');
   });
 
+  test('a wrong script load order says so instead of throwing a cryptic error', async ({ page }) => {
+    /* The six files must load client → state → panel → expansion → mobile-cta
+       → mount. They used to capture their dependencies at eval time, so
+       getting this wrong (or adding `defer` to some tags but not the inline
+       mount() call) produced "cannot read properties of undefined". They now
+       resolve lazily and name the actual problem. */
+    await page.route(/^https:\/\/(fonts\.|cdnjs\.)/, (r) => r.abort());
+    await page.route(REDESIGN_URL, (route) => route.fulfill({
+      status: 200,
+      contentType: 'text/html; charset=utf-8',
+      // mount.js alone, without the modules it depends on.
+      body: `<!doctype html><html><body>
+        <script src="/js/booking/mount.js"></script>
+        <script>try { HorizonBooking.mount({ productId: 1162721 }); }
+                catch (e) { window.__err = String(e); }</script>
+      </body></html>`,
+    }));
+    await page.goto(REDESIGN_URL);
+
+    const err = await page.evaluate(() => window.__err);
+    expect(err, 'mount() did not fail on a broken load order').toBeTruthy();
+    expect(err).toMatch(/HorizonBokunClient is not loaded/);
+    expect(err, 'the error must state the required order').toMatch(/bokun-client, booking-state, panel/);
+    expect(err, 'the error must warn about defer\/async').toMatch(/no defer\/async/);
+    expect(err).toMatch(/booking-contract\.md/);
+  });
+
   test('a selector pointing at nothing is reported, not swallowed', async ({ page }) => {
     const warnings = [];
     page.on('console', (m) => { if (m.type() === 'warning') warnings.push(m.text()); });
@@ -177,6 +204,19 @@ test.describe('booking engine on completely rebuilt markup', () => {
     }));
     await page.goto(REDESIGN_URL);
     await page.waitForTimeout(1500);
+
+    /* The document-level click and Escape handlers are registered
+       unconditionally and call closeTravellers()/closeCalendar(). Before
+       both were guarded, a page missing the travellers markup threw on
+       EVERY click anywhere on the page — which would break unrelated
+       features mid-redesign, with the cause nowhere near the symptom. */
+    // Raw mouse events: this stub page's <body> has no height, so a locator
+    // click would have nothing actionable to aim at.
+    await page.mouse.click(5, 5);
+    await page.mouse.click(50, 50);
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
 
     const joined = warnings.join('\n');
     expect(joined, 'engine did not report the missing checkout elements')

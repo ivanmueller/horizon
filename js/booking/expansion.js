@@ -13,7 +13,22 @@
 (function (global) {
   'use strict';
 
-  var S = global.HorizonBookingState;
+  /* Dependencies are resolved lazily, not captured at eval time. The six
+     booking files must load in order (client → state → panel → expansion →
+     mobile-cta → mount); if that order is broken — or someone adds `defer`
+     or `async` to some tags but not the inline mount() call — this says so
+     instead of throwing "cannot read property of undefined". */
+  function need(name) {
+    var mod = global[name];
+    if (!mod) {
+      throw new Error('[HorizonBooking] ' + name + ' is not loaded. The booking files must ' +
+        'load in order: bokun-client, booking-state, panel, expansion, mobile-cta, mount — ' +
+        'as classic scripts, with no defer/async. See docs/booking-contract.md §1.');
+    }
+    return mod;
+  }
+  function S() { return need('HorizonBookingState'); }
+
 
   function init(ctx) {
     var sel = ctx.sel, cls = ctx.cls;
@@ -60,14 +75,14 @@
       var dateIso = (db && db.dataset.selectedDate) || '';
       var setText = function (key, value) { var el = sel(key); if (el) el.textContent = value; };
 
-      setText('expansionDate',       dateIso ? S.formatLongDate(dateIso)   : '');
-      setText('expansionCancelDate', dateIso ? S.formatCancelDate(dateIso) : '');
+      setText('expansionDate',       dateIso ? S().formatLongDate(dateIso)   : '');
+      setText('expansionCancelDate', dateIso ? S().formatCancelDate(dateIso) : '');
 
       var counts   = bokunCounts();
       var product  = global.BOKUN && global.BOKUN.product;
       var slot     = (global.bokunBooking && global.bokunBooking.slot) || null;
       var currency = (global.BOKUN && global.BOKUN.currency) || 'CAD';
-      var currencyPrefix = S.currencyPrefixFor(currency, 'ca');
+      var currencyPrefix = S().currencyPrefixFor(currency, 'ca');
 
       // Title + duration come from the live product, not the markup.
       if (product) {
@@ -76,7 +91,7 @@
       }
 
       // Start time from the picked slot.
-      var startStr = slot && slot.startTime ? S.formatBokunTime(slot.startTime) : '';
+      var startStr = slot && slot.startTime ? S().formatBokunTime(slot.startTime) : '';
       if (startStr) {
         setText('expansionStartTime',  startStr);
         setText('expansionCancelTime', startStr);
@@ -97,12 +112,12 @@
         }
       }
 
-      var totals = S.computeTotals(product, counts, currencyPrefix);
+      var totals = S().computeTotals(product, counts, currencyPrefix);
       setText('expansionTotal',     currencyPrefix + totals.total.toFixed(2));
       setText('expansionBreakdown', totals.parts.join(' · '));
 
       // Validation gates the checkout button.
-      var result = S.validate(dateIso, counts, slot);
+      var result = S().validate(dateIso, counts, slot);
       var validation = sel('expansionValidation');
       if (validation) {
         if (result.message) {

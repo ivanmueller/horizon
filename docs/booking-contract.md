@@ -37,6 +37,19 @@ HorizonBooking.mount({
 Load order matters (`client → state → panel → expansion → mobile-cta →
 mount`). Concatenating them into one bundle later is safe; reordering is not.
 
+**Do not add `defer` or `async` to these tags.** They are classic scripts and
+the `mount()` call runs inline during parse — deferring the files without
+deferring that call breaks the page. If you want them non-blocking, defer
+*all* of them **and** move `mount()` into a `DOMContentLoaded` handler, then
+re-run the suite. Dependencies are resolved lazily, so a broken order reports
+itself rather than throwing `cannot read properties of undefined`:
+
+```
+[HorizonBooking] HorizonBokunClient is not loaded. The booking files must load in
+order: bokun-client, booking-state, panel, expansion, mobile-cta, mount — as
+classic scripts, with no defer/async. See docs/booking-contract.md §1.
+```
+
 The two zero-DOM files are the important boundary. Everything that talks to
 Bokun or Stripe is on one side of it; everything a redesign touches is on the
 other.
@@ -236,9 +249,14 @@ already too late for the no-flash guarantee.
 
 **JSON-LD.** The page ships a static `TouristTrip` block whose
 `offers.price` is rewritten at runtime with the live Bokun price. This is
-SEO-visible: dropping or restructuring the block silently loses rich
-results. Keep exactly one `script[type="application/ld+json"]` on the page,
-or pass a more specific `jsonLd` selector.
+SEO-visible: dropping or restructuring the block silently loses rich results.
+
+The engine scans **all** `ld+json` blocks and patches whichever ones carry an
+`offers` object, rather than blindly taking the first match — so adding
+`BreadcrumbList`, `FAQPage` or `Organization` schema (a routine SEO task
+nobody would think of as touching booking) cannot hijack the price patch. If
+no block has an `offers` object, it warns that the structured-data price is
+stale.
 
 ---
 
@@ -343,12 +361,25 @@ considered call, not an accident:
    and orphaned in-flight state. `initGlobals()` now preserves an existing
    object.
 
-3. **Listeners are registered before the fetch starts.** The inline version
+3. **`preferredStartTimeId` defaults to `null`, not to Banff's 08:30 id.**
+   The inline code hardcoded `5438571`. As a default in a *shared* module
+   that is a trap: a second tour that forgets to set it would silently
+   inherit another tour's departure. `null` means "first bookable slot of the
+   day"; the canoe page passes `5438571` explicitly.
+
+4. **A missing `tourImage` warns.** The Worker drops any `tour_image` that is
+   not on the apex domain, so a forgotten or wrong one leaves the checkout
+   page imageless with nothing failing.
+
+5. **Listeners are registered before the fetch starts.** The inline version
    relied on the network always being slower than HTML parsing, which was
    true but unenforced. `mount()` builds the whole UI first, then loads. Same
    observable behaviour, minus the assumption. One visible consequence:
    external `bokun:ready` listeners now fire *after* the engine has updated
-   its own UI, rather than interleaved with it.
+   its own UI, rather than interleaved with it. The engine's own components
+   are wired by direct call, not by subscription — `bokun:ready` is for
+   *external* consumers only. Anything new that listens for it should also
+   check `window.BOKUN.ready` on startup, in case it registered late.
 
 ---
 
@@ -422,14 +453,14 @@ test lane (`0B_VALIDATION.md`) before testing past the tour page.
 ## 10. The test suite
 
 ```
-tests/booking.spec.js            22 tests — the safety net on the real page
-tests/redesign.spec.js            6 tests — the same flow on rebuilt markup
+tests/booking.spec.js            20 tests — the safety net on the real page
+tests/redesign.spec.js            7 tests — the same flow on rebuilt markup
 tests/fixtures/bokun.js           recorded Bokun shapes, generated relative to today
 tests/fixtures/redesigned-tour.js a from-scratch page wired only via overrides
 tests/static-server.mjs           dependency-free static server for the harness
 ```
 
-28 tests total; 27 run offline, 1 is live-only.
+27 tests total; 26 run offline, 1 is live-only.
 
 `npm run test:booking` (fixtures, offline, deterministic — safe for CI) ·
 `npm run test:booking:live` (real Worker; run before deploying).

@@ -2253,10 +2253,19 @@
 
   <!-- Load order is significant: client → state → panel → expansion →
        mobile-cta → mount. Safe to concatenate into one bundle later; not
-       safe to reorder. These sit here, mid-body, rather than in <head>
-       because the engine binds to markup above and starts its fetches
-       immediately — the same point in the parse where the inline version
-       used to run. -->
+       safe to reorder.
+
+       DO NOT add defer or async to these tags. They are classic scripts and
+       the inline mount() call below runs during parse; deferring the files
+       without deferring that call breaks the page. (It fails loudly rather
+       than mysteriously — the engine reports the load-order problem — but it
+       still fails.) If you want them non-blocking, defer ALL of them AND
+       move the mount() call into a DOMContentLoaded handler, and re-run
+       `npm run test:booking`.
+
+       They sit here, mid-body, rather than in <head> because the engine
+       binds to markup above and starts its fetches immediately — the same
+       point in the parse where the inline version used to run. -->
   <script src="/js/booking/bokun-client.js"></script>
   <script src="/js/booking/booking-state.js"></script>
   <script src="/js/booking/panel.js"></script>

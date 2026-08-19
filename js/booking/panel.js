@@ -13,8 +13,23 @@
 (function (global) {
   'use strict';
 
-  var S = global.HorizonBookingState;
-  var C = global.HorizonBokunClient;
+  /* Dependencies are resolved lazily, not captured at eval time. The six
+     booking files must load in order (client → state → panel → expansion →
+     mobile-cta → mount); if that order is broken — or someone adds `defer`
+     or `async` to some tags but not the inline mount() call — this says so
+     instead of throwing "cannot read property of undefined". */
+  function need(name) {
+    var mod = global[name];
+    if (!mod) {
+      throw new Error('[HorizonBooking] ' + name + ' is not loaded. The booking files must ' +
+        'load in order: bokun-client, booking-state, panel, expansion, mobile-cta, mount — ' +
+        'as classic scripts, with no defer/async. See docs/booking-contract.md §1.');
+    }
+    return mod;
+  }
+  function S() { return need('HorizonBookingState'); }
+  function C() { return need('HorizonBokunClient'); }
+
 
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, function (m) {
@@ -30,7 +45,10 @@
 
   function init(ctx) {
     var sel = ctx.sel, cls = ctx.cls;
-    var booking = global.bokunBooking;
+    /* Read live rather than caching the object: expansion.js reads
+       global.bokunBooking fresh on every call, and a cached reference here
+       would silently diverge if anything ever reassigned the global. */
+    function cart() { return global.bokunBooking; }
 
     /* Individual pieces degrade gracefully below, but a missing element is
        almost always a redesign that renamed something without updating the
@@ -58,9 +76,9 @@
       var container = sel('travellersRows');
       if (!container) return;
       container.innerHTML = categories.map(function (c, i) {
-        var s = S.slug(c.title);
-        var initial = booking.counts[s] || 0;
-        var min = booking.mins[s] || 0;
+        var s = S().slug(c.title);
+        var initial = cart().counts[s] || 0;
+        var min = cart().mins[s] || 0;
         var last = (i === categories.length - 1);
         return (
           '<div class="' + cls('travellersRow') + '"' + (last ? ' style="border-bottom:none;"' : '') + '>' +
@@ -78,7 +96,7 @@
       }).join('');
 
       categories.forEach(function (c) {
-        var s = S.slug(c.title);
+        var s = S().slug(c.title);
         var plus  = document.getElementById(ctx.stepperId('plus', s));
         var minus = document.getElementById(ctx.stepperId('minus', s));
         if (plus)  plus.addEventListener('click',  function () { changeCount(s, 1); });
@@ -89,11 +107,11 @@
 
     function updateTravellersLabel() {
       var parts = [];
-      var counts = booking.counts || {};
+      var counts = cart().counts || {};
       var product = global.BOKUN && global.BOKUN.product;
       if (product && product.pricingCategories) {
         product.pricingCategories.forEach(function (c) {
-          var n = counts[S.slug(c.title)] || 0;
+          var n = counts[S().slug(c.title)] || 0;
           if (n > 0) parts.push(c.title + ' x ' + n);
         });
       } else {
@@ -106,8 +124,8 @@
     }
 
     function changeCount(s, delta) {
-      var counts = booking.counts;
-      var mins = booking.mins;
+      var counts = cart().counts;
+      var mins = cart().mins;
       counts[s] = Math.max(mins[s] || 0, (counts[s] || 0) + delta);
       var countEl = document.getElementById(ctx.stepperId('count', s));
       var minusEl = document.getElementById(ctx.stepperId('minus', s));
@@ -127,13 +145,13 @@
       var product = global.BOKUN && global.BOKUN.product;
       if (!product || !product.pricingCategories) return;
       product.pricingCategories.forEach(function (c) {
-        var s = S.slug(c.title);
+        var s = S().slug(c.title);
         if (s === 'adult') {
-          booking.mins[s] = 1;
-          if (!booking.counts[s]) booking.counts[s] = 1;
+          cart().mins[s] = 1;
+          if (!cart().counts[s]) cart().counts[s] = 1;
         } else {
-          booking.mins[s] = 0;
-          if (booking.counts[s] == null) booking.counts[s] = 0;
+          cart().mins[s] = 0;
+          if (cart().counts[s] == null) cart().counts[s] = 0;
         }
       });
       renderRows(product.pricingCategories);
@@ -143,13 +161,19 @@
     var travellersDropdown = sel('travellersDropdown');
     var travellersContinue = sel('travellersContinue');
 
+    /* Both guarded, and for the same reason closeCalendar is: the document
+       click and Escape listeners below are registered unconditionally, so an
+       unguarded close would throw on every click on a page whose travellers
+       markup was renamed. */
     function openTravellers() {
+      if (!travellersDropdown || !travellersBtn) return;
       travellersDropdown.hidden = false;
       travellersBtn.classList.add(cls('selectRowOpen'));
       travellersBtn.setAttribute('aria-expanded', 'true');
       closeCalendar();
     }
     function closeTravellers() {
+      if (!travellersDropdown || !travellersBtn) return;
       travellersDropdown.hidden = true;
       travellersBtn.classList.remove(cls('selectRowOpen'));
       travellersBtn.setAttribute('aria-expanded', 'false');
@@ -168,7 +192,7 @@
        window.BOKUN.availability. Paging forward past what we hold triggers
        a lazy fetch of the next window. */
 
-    var TODAY = C.startOfDay(new Date());
+    var TODAY = C().startOfDay(new Date());
     var calStart = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1);
     var selectedDate = null;
 
@@ -177,7 +201,7 @@
     var fetchInFlight = null;    // dedupes rapid next-month clicks
 
     function reindex(slots) {
-      var idx = S.indexAvailability(slots, C.ymdFromMillis, C.startOfDay);
+      var idx = S().indexAvailability(slots, C().ymdFromMillis, C().startOfDay);
       availabilityByDate = idx.byDate;
       if (idx.fetchedThrough) fetchedThrough = idx.fetchedThrough;
     }
@@ -190,7 +214,7 @@
         : TODAY;
       var endDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate() + 30);
       fetchInFlight = ctx.client
-        .fetchAvailability(C.ymdFromLocal(startDate), C.ymdFromLocal(endDate))
+        .fetchAvailability(C().ymdFromLocal(startDate), C().ymdFromLocal(endDate))
         .then(function (slots) {
           if (!Array.isArray(slots)) return;
           global.BOKUN.availability = (global.BOKUN.availability || []).concat(slots);
@@ -213,8 +237,8 @@
       var m1 = new Date(calStart.getFullYear(), calStart.getMonth(), 1);
       var m2 = new Date(calStart.getFullYear(), calStart.getMonth() + 1, 1);
       var t1 = sel('calMonth1'), t2 = sel('calMonth2');
-      if (t1) t1.textContent = S.MONTHS[m1.getMonth()] + ' ' + m1.getFullYear();
-      if (t2) t2.textContent = S.MONTHS[m2.getMonth()] + ' ' + m2.getFullYear();
+      if (t1) t1.textContent = S().MONTHS[m1.getMonth()] + ' ' + m1.getFullYear();
+      if (t2) t2.textContent = S().MONTHS[m2.getMonth()] + ' ' + m2.getFullYear();
       renderMonth(sel('calGrid1'), m1);
       renderMonth(sel('calGrid2'), m2);
       var prevBtn = sel('calPrev');
@@ -230,7 +254,7 @@
       var offset = (firstDow === 0) ? 6 : firstDow - 1; // Monday-start
       var daysInMonth = new Date(y, m + 1, 0).getDate();
       var currency = (global.BOKUN && global.BOKUN.currency) || 'CAD';
-      var currencyPrefix = S.currencyPrefixFor(currency);
+      var currencyPrefix = S().currencyPrefixFor(currency);
 
       for (var i = 0; i < offset; i++) grid.appendChild(document.createElement('span'));
 
@@ -239,10 +263,10 @@
           var btn = document.createElement('button');
           btn.className = cls('calDay');
           var thisDate = new Date(y, m, day);
-          var ymd = C.ymdFromLocal(thisDate);
+          var ymd = C().ymdFromLocal(thisDate);
           var isPast = thisDate < TODAY;
-          var bookable = !isPast && S.isBookable(availabilityByDate, ymd);
-          var isSelected = selectedDate && C.ymdFromLocal(selectedDate) === ymd;
+          var bookable = !isPast && S().isBookable(availabilityByDate, ymd);
+          var isSelected = selectedDate && C().ymdFromLocal(selectedDate) === ymd;
 
           var numEl = document.createElement('span');
           numEl.className = cls('calDayNum');
@@ -257,7 +281,7 @@
             btn.disabled = true;
           } else {
             btn.classList.add(cls('calDayAvailable'));
-            var price = S.adultPriceFor(availabilityByDate, ymd, global.BOKUN && global.BOKUN.product, ctx.preferredStartTimeId);
+            var price = S().adultPriceFor(availabilityByDate, ymd, global.BOKUN && global.BOKUN.product, ctx.preferredStartTimeId);
             if (price != null) {
               var priceEl = document.createElement('span');
               priceEl.className = cls('calDayPrice');
@@ -273,13 +297,13 @@
               /* One start time per day on this product. A product with
                  several would need a time picker here — every slot for the
                  day is already indexed so that picker has data to show. */
-              var slot = S.preferredSlot(availabilityByDate, ymd, ctx.preferredStartTimeId);
-              booking.date = ymd;               // write-only today; kept for compat
-              booking.slot = slot;
-              booking.startTimeId = slot && slot.startTimeId;
-              booking.rateId = slot && slot.defaultRateId;
+              var slot = S().preferredSlot(availabilityByDate, ymd, ctx.preferredStartTimeId);
+              cart().date = ymd;               // write-only today; kept for compat
+              cart().slot = slot;
+              cart().startTimeId = slot && slot.startTimeId;
+              cart().rateId = slot && slot.defaultRateId;
               var lbl = sel('dateLabel');
-              if (lbl) lbl.textContent = S.MONTHS[m] + ' ' + day + ', ' + y;
+              if (lbl) lbl.textContent = S().MONTHS[m] + ' ' + day + ', ' + y;
               // The selected date lives on the DOM node — the expansion and
               // the checkout handoff both read it from here.
               var db = sel('dateBtn');

@@ -99,6 +99,8 @@ test.describe('canoe tour booking engine', () => {
       hasBokun:       typeof window.BOKUN === 'object',
       hasBokunBooking:typeof window.bokunBooking === 'object',
       showExpansion:  typeof window.__horizonShowExpansion === 'function',
+      expansionMounted: !!(window.HorizonBooking.instance && window.HorizonBooking.instance.expansion),
+      panelMounted:     !!(window.HorizonBooking.instance && window.HorizonBooking.instance.panel),
       productTitle:   window.BOKUN.product && window.BOKUN.product.title,
       categories:     (window.BOKUN.product?.pricingCategories || []).map((c) => c.title),
       currency:       window.BOKUN.currency,
@@ -113,6 +115,9 @@ test.describe('canoe tour booking engine', () => {
     expect(shape.hasBokun).toBe(true);
     expect(shape.hasBokunBooking).toBe(true);
     expect(shape.showExpansion, 'back-compat global __horizonShowExpansion dropped').toBe(true);
+    // A null expansion means the page renders fine and cannot take money.
+    expect(shape.expansionMounted, 'expansion did not mount — there is no checkout path').toBe(true);
+    expect(shape.panelMounted, 'panel did not mount').toBe(true);
 
     expect(shape.productTitle, 'no product title from Bokun').toBeTruthy();
     expect(shape.categories.length, 'no pricing categories').toBeGreaterThan(0);
@@ -376,6 +381,77 @@ test.describe('canoe tour booking engine', () => {
     // The point of the test: the calendar opened, without anyone touching #dateBtn.
     await expect(page.locator('#calendarDropdown')).toBeVisible({ timeout: 10_000 });
     await expect(page.locator('#dateBtn')).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  test('added schema blocks do not hijack the JSON-LD price patch', async ({ page }) => {
+    /* Adding BreadcrumbList or FAQPage schema is a routine SEO task that
+       nobody would think of as touching booking. With a blind first-match it
+       would send the live price into the wrong document and leave the real
+       offer stale. */
+    await arrange(page);
+    // Inject the decoy into the HTML itself — that is how a real SEO addition
+    // would land, and it puts the block genuinely first in the document.
+    const decoy = '<script type="application/ld+json">' +
+      JSON.stringify({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [] }) +
+      '<\/script>';
+    await page.route('**/tours/banff-hidden-gem-canoe-tour/**', async (route) => {
+      if (route.request().resourceType() !== 'document') return route.fallback();
+      const res = await route.fetch();
+      const body = (await res.text()).replace('<head>', '<head>' + decoy);
+      return route.fulfill({ response: res, body, headers: { ...res.headers(), 'content-type': 'text/html; charset=utf-8' } });
+    });
+    await page.goto(TOUR);
+    await waitForBokun(page);
+
+    const blocks = await page.evaluate(() =>
+      [...document.querySelectorAll('script[type="application/ld+json"]')]
+        .map((s) => JSON.parse(s.textContent)));
+    const live = await page.evaluate(() => window.BOKUN.lowestAdultPrice);
+
+    expect(blocks.length, 'decoy schema block was not injected').toBeGreaterThan(1);
+    expect(blocks[0]['@type'], 'the decoy should still be first in the document').toBe('BreadcrumbList');
+    expect(blocks[0].offers, 'the decoy must not have gained an offers object').toBeUndefined();
+
+    const offer = blocks.find((b) => b.offers);
+    expect(offer, 'the TouristTrip offer block disappeared').toBeTruthy();
+    expect(offer.offers.price, 'the real offer block was not patched').toBe(String(live));
+  });
+
+  test('the inline description toggle still works', async ({ page }) => {
+    /* toggleDescription() is reached from an onclick attribute in the markup,
+       so it must stay a real global. It is the page's last inline-handler
+       dependency and the obvious thing to "finish extracting" one day. */
+    await arrange(page);
+    await page.goto(TOUR);
+    await expect(page.locator('#tourDescription')).toHaveClass(/tour-description--collapsed/);
+    expect(await page.evaluate(() => typeof window.toggleDescription)).toBe('function');
+
+    await page.locator('#descriptionToggle').click();
+    await expect(page.locator('#tourDescription')).not.toHaveClass(/tour-description--collapsed/);
+    await expect(page.locator('#descriptionToggle')).toHaveText(/See less/);
+    await page.locator('#descriptionToggle').click();
+    await expect(page.locator('#tourDescription')).toHaveClass(/tour-description--collapsed/);
+  });
+
+  test('Escape closes the photo viewer and releases the scroll lock', async ({ page }) => {
+    /* Five separate document-level Escape listeners exist across the page and
+       the engine, and extraction changed their registration order. The one
+       thing that must survive is that Escape out of the photo viewer both
+       closes it and restores scrolling — a stuck body overflow makes the
+       whole page feel broken. */
+    await arrange(page);
+    await page.goto(TOUR);
+    await waitForBokun(page);
+
+    await page.locator('.tour-photo-grid__show-all').click();
+    await expect(page.locator('#photoGalleryOverlay')).toBeVisible();
+    await page.locator('#photoGalleryOverlay .photo-gallery-overlay__item img').first().click();
+    await expect(page.locator('#photoViewer')).toHaveClass(/active/);
+
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#photoViewer')).toHaveClass('photo-viewer');
+    expect(await page.evaluate(() => document.body.style.overflow),
+      'scroll lock left on after Escape').toBe('');
   });
 
   test('continue to checkout sends the contracted payload and hands off', async ({ page }) => {

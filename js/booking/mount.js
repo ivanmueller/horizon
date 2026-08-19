@@ -23,8 +23,23 @@
 (function (global) {
   'use strict';
 
-  var C = global.HorizonBokunClient;
-  var S = global.HorizonBookingState;
+  /* Dependencies are resolved lazily, not captured at eval time. The six
+     booking files must load in order (client → state → panel → expansion →
+     mobile-cta → mount); if that order is broken — or someone adds `defer`
+     or `async` to some tags but not the inline mount() call — this says so
+     instead of throwing "cannot read property of undefined". */
+  function need(name) {
+    var mod = global[name];
+    if (!mod) {
+      throw new Error('[HorizonBooking] ' + name + ' is not loaded. The booking files must ' +
+        'load in order: bokun-client, booking-state, panel, expansion, mobile-cta, mount — ' +
+        'as classic scripts, with no defer/async. See docs/booking-contract.md §1.');
+    }
+    return mod;
+  }
+  function C() { return need('HorizonBokunClient'); }
+  function S() { return need('HorizonBookingState'); }
+
 
   /* ── Default selector map ──────────────────────────────────────────────
      Every DOM lookup in the booking engine resolves through here. */
@@ -122,12 +137,13 @@
   };
 
   var DEFAULTS = {
-    apiBase:              C.DEFAULT_API_BASE,
+    apiBase:              null,   // resolved in mount(); see below
     productId:            null,
-    /* 08:30 "New Schedule" on the Banff Hidden Gem product. When a day has
-       several bookable slots this one wins; otherwise the first bookable
-       slot is used. Harmless on single-departure products. */
-    preferredStartTimeId: 5438571,
+    /* null = "use the first bookable slot of the day". Deliberately NOT a
+       real start-time id: this is a shared module, and defaulting to one
+       tour's magic number means a second tour that forgets to set it
+       silently inherits Banff's 08:30 departure. Set it per page. */
+    preferredStartTimeId: null,
     availabilityWindowDays: 60,
     checkoutUrl:          '/checkout/',
     tourImage:            null,
@@ -152,7 +168,7 @@
      docs/booking-contract.md §4. */
   function paintCachedPrice(productId, selectors) {
     var sels = assign(assign({}, DEFAULT_SELECTORS), selectors);
-    var entry = C.readCachedPrice(productId);
+    var entry = C().readCachedPrice(productId);
     if (!entry) return false;
     var amtEl    = document.querySelector(sels.priceAmount);
     var unitEl   = document.querySelector(sels.priceUnit);
@@ -180,19 +196,27 @@
 
   function mount(options) {
     var opts = assign(assign({}, DEFAULTS), options);
+    if (!opts.apiBase) opts.apiBase = C().DEFAULT_API_BASE;
     if (!opts.productId) throw new Error('HorizonBooking.mount: productId is required');
+    /* Per-tour, and easy to forget when copying this page for a second tour.
+       The Worker nulls any tour_image not on the apex domain, so a missing or
+       wrong one silently leaves the checkout page without an image. */
+    if (!opts.tourImage) {
+      console.warn('[HorizonBooking] no tourImage configured — /checkout/ will show no image ' +
+        'for this booking. It must be an https://gowithhorizon.com/ URL or the Worker drops it.');
+    }
 
     var selectors   = assign(assign({}, DEFAULT_SELECTORS), options && options.selectors);
     var classes     = assign(assign({}, DEFAULT_CLASSES),   options && options.classes);
     var stepperIds  = assign(assign({}, DEFAULT_STEPPER_IDS), options && options.stepperIds);
 
-    S.initGlobals();
+    S().initGlobals();
     readPartnerParams();
 
     var ctx = {
       opts:       opts,
       productId:  opts.productId,
-      client:     new C.Client({ apiBase: opts.apiBase, productId: opts.productId }),
+      client:     new (C().Client)({ apiBase: opts.apiBase, productId: opts.productId }),
       preferredStartTimeId: opts.preferredStartTimeId,
       sel:        function (key) {
         var s = selectors[key];
@@ -233,7 +257,7 @@
       if (amtEl)    amtEl.textContent = '$' + amt;
       if (unitEl)   unitEl.textContent = ' ' + global.BOKUN.currency + ' per person';
       if (priceDiv) priceDiv.classList.remove(ctx.cls('priceLoading'));
-      C.writeCachedPrice(opts.productId, amt);
+      C().writeCachedPrice(opts.productId, amt);
     }
 
     /* Rewrites the static offer price in the JSON-LD with the live one.
@@ -243,17 +267,30 @@
       if (!opts.patchJsonLd) return;
       var amt = global.BOKUN.lowestAdultPrice;
       if (amt == null) return;
-      var script = ctx.sel('jsonLd');
-      if (!script) return;
-      try {
-        var data = JSON.parse(script.textContent);
-        if (data.offers) {
+
+      /* Patch the block that actually carries the offer, not simply the first
+         ld+json on the page. Adding BreadcrumbList / FAQPage / Organization
+         schema above the TouristTrip block is a routine SEO task that nobody
+         would think of as touching booking — and with a blind first-match it
+         would silently send the live price into the wrong document. */
+      var blocks = document.querySelectorAll(ctx.rawSelector('jsonLd'));
+      var patched = 0;
+      for (var i = 0; i < blocks.length; i++) {
+        try {
+          var data = JSON.parse(blocks[i].textContent);
+          if (!data || !data.offers) continue;
           data.offers.price = String(amt);
           data.offers.priceCurrency = global.BOKUN.currency;
+          blocks[i].textContent = JSON.stringify(data);
+          patched++;
+        } catch (e) {
+          console.warn('[BOKUN] could not parse a JSON-LD block', e);
         }
-        script.textContent = JSON.stringify(data);
-      } catch (e) {
-        console.warn('[BOKUN] could not patch JSON-LD', e);
+      }
+      if (!patched) {
+        console.warn('[HorizonBooking] no JSON-LD block with an "offers" object — ' +
+          'the structured-data price is stale. Search engines will show ' +
+          'whatever is hardcoded in the markup.');
       }
     }
 
@@ -268,8 +305,8 @@
 
     function load() {
       var today = new Date();
-      var start = C.ymdUtc(today);
-      var end   = C.ymdUtc(new Date(today.getTime() + opts.availabilityWindowDays * 86400 * 1000));
+      var start = C().ymdUtc(today);
+      var end   = C().ymdUtc(new Date(today.getTime() + opts.availabilityWindowDays * 86400 * 1000));
 
       return Promise.all([
         ctx.client.fetchProduct(),
@@ -285,7 +322,7 @@
         global.BOKUN.dropoffPlaces = places.dropoffPlaces || [];
         global.BOKUN.availability  = avail;
 
-        var pricing = S.derivePricing(product, avail);
+        var pricing = S().derivePricing(product, avail);
         if (pricing.pricePerCategory) {
           global.BOKUN.pricePerCategory = pricing.pricePerCategory;
           global.BOKUN.currency         = pricing.currency || 'CAD';
