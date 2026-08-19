@@ -31,9 +31,20 @@ on:
       - 'tests/**'
       - 'playwright.config.js'
 
+# A superseded run has nothing to tell us, and leaving it running holds a
+# runner. Cancel the previous run for this ref when a new commit lands.
+concurrency:
+  group: booking-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   booking:
     runs-on: ubuntu-latest
+    # The suite itself takes ~60s and browser install ~25s. The cap exists
+    # because `playwright install --with-deps` shells out to apt, which has
+    # hung on the runner before — without a timeout that burns hours against
+    # GitHub's 6h default before anyone notices.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -42,6 +53,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+        timeout-minutes: 6
       - run: npm run test:booking
       - uses: actions/upload-artifact@v4
         if: failure()
