@@ -1,0 +1,73 @@
+# Booking-flow regression tests.
+#
+# Why this exists
+# ───────────────
+# The Bokun/Stripe booking flow is the only thing on the consumer site that
+# takes money, and the site is being redesigned around it. This workflow is
+# the guard rail: it runs the fixture-mode suite on every change to the tour
+# page, the booking engine, or the checkout page, so a styling commit that
+# quietly breaks the flow fails here instead of in production.
+#
+# Fixture mode only — deterministic, offline, no live Bokun or Stripe calls.
+# Before deploying a redesign, also run `npm run test:booking:live` from a
+# machine that can reach the Worker. See docs/booking-contract.md §7.
+
+name: Booking tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'js/booking/**'
+      - 'tours/**'
+      - 'checkout/**'
+      - 'tests/**'
+      - 'playwright.config.js'
+      - '.github/workflows/booking-tests.yml'
+  pull_request:
+    paths:
+      - 'js/booking/**'
+      - 'tours/**'
+      - 'checkout/**'
+      - 'tests/**'
+      - 'playwright.config.js'
+
+# A superseded run has nothing to tell us, and leaving it running holds a
+# runner. Cancel the previous run for this ref when a new commit lands.
+concurrency:
+  group: booking-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  booking:
+    runs-on: ubuntu-latest
+    # The suite itself takes ~60s and browser install ~25s. The cap exists
+    # because `playwright install --with-deps` shells out to apt, which has
+    # hung on the runner before — without a timeout that burns hours against
+    # GitHub's 6h default before anyone notices.
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # NOT `--with-deps`. That flag shells out to apt to install Chromium's
+      # shared libraries, and it hung indefinitely on four consecutive runs
+      # here (23s on the runs before that, so it is not a slow step — it
+      # stops making progress). The ubuntu-latest image already ships those
+      # libraries; the browser download on its own has never been the
+      # problem. If a library is ever genuinely missing, the test step fails
+      # in seconds with a clear loader error instead of hanging.
+      - run: npx playwright install chromium
+        timeout-minutes: 6
+      - run: npm run test:booking
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

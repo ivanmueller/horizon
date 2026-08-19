@@ -7,9 +7,15 @@
   "scripts": {
     "test": "node --test \"workers/**/*.test.mjs\"",
     "build:partners": "node scripts/build/generate-partners-json.mjs",
-    "invoices": "node --env-file=scripts/supabase/.env scripts/horizon/generate-invoices.mjs"
+    "invoices": "node --env-file=scripts/supabase/.env scripts/horizon/generate-invoices.mjs",
+    "test:booking": "playwright test",
+    "serve": "node tests/static-server.mjs",
+    "test:booking:live": "HORIZON_LIVE=1 playwright test"
   },
   "dependencies": {
     "pdfkit": "^0.15.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
   }
 }
