@@ -134,9 +134,23 @@ templates with `stepperIds` if you need a different scheme.
    descendant.
 2. `travellersRows` and the two calendar grids have their `innerHTML`
    replaced. Do not put hand-authored markup inside them.
-3. `travellersDropdown` and `calendar` are toggled via the `hidden`
-   **attribute**, not a class. Their CSS must not force visibility.
-4. `expansion` is likewise toggled via `hidden`.
+3. **`hidden` is a state machine, not decoration.** `travellersDropdown`,
+   `calendar`, `expansion`, `expansionBadge` and `expansionValidation` are all
+   seeded `hidden` in the markup, and the engine *reads it back* to decide
+   whether a toggle opens or closes (`travellersDropdown.hidden ? open :
+   close`). Ship the markup without those seeds and both dropdowns and the
+   whole expansion card render open on load, with every toggle inverted.
+4. **The CSS is entangled with that same attribute**, so swapping `hidden`
+   for an `is-open` class breaks two things silently:
+   - `.bp-dropdown:not([hidden])` and `.bp-expansion:not([hidden])` carry the
+     open animations — they simply stop running.
+   - `.bp-expansion__badge` sets `display: inline-block`, which beats the UA's
+     `[hidden] { display: none }`. A dedicated `.bp-expansion__badge[hidden]`
+     rule puts it back. Drop it and the scarcity badge shows permanently,
+     with stale text.
+
+   If you do want class-based state, change the engine and the CSS in the
+   same commit and re-run `tests/page-integrity.spec.js`.
 
 ---
 
@@ -344,6 +358,31 @@ Removed during extraction as genuinely dead: a `DOW` weekday array (the
 headers are static markup) and an unused `STRIPE_PUBLISHABLE_KEY` on the tour
 page (checkout declares its own).
 
+### Page-level traps that are not the engine's
+
+Found while extracting; left as they are, but worth knowing before you
+redesign. `tests/page-integrity.spec.js` guards all of them.
+
+- **Nine inline `onclick` attributes** still exist: eight
+  `openWydLightbox(0..7)` on the itinerary items, and one
+  `toggleDescription()`. Both functions are global only because their scripts
+  are classic and un-wrapped — `openWydLightbox` via an explicit
+  `window.openWydLightbox = open` assignment, `toggleDescription` purely by
+  living at the top level of a classic script. Wrapping either in an IIFE
+  during a tidy-up breaks the feature silently and immediately.
+- **`#expansionHeader` reads "1 option available" and is entirely static.** No
+  JS touches it, despite it looking dynamic. If departures ever vary, that
+  text will lie.
+- **The pickup pill default lives in two places** — the
+  `bp-pickup__pill--active` class in the markup and `var activeLocation =
+  'canmore'` in the pickup-map script. Change one and the map opens on the
+  wrong town until the visitor clicks a pill.
+- **Leaflet is used unguarded.** Both the itinerary lightbox and the pickup
+  map call `L.map(...)` with no `typeof L` check, and Leaflet comes from
+  cdnjs. On a network that blocks that CDN — hotel wifi, a corporate
+  guest network — clicking an itinerary item throws and the lightbox stays
+  broken. Pre-existing, not introduced here, and worth fixing on its own.
+
 ### Deliberate deviations from the original
 
 Three things do **not** behave exactly as the inline version did. Each was a
@@ -455,12 +494,13 @@ test lane (`0B_VALIDATION.md`) before testing past the tour page.
 ```
 tests/booking.spec.js            20 tests — the safety net on the real page
 tests/redesign.spec.js            7 tests — the same flow on rebuilt markup
+tests/page-integrity.spec.js      6 tests — the non-booking couplings above
 tests/fixtures/bokun.js           recorded Bokun shapes, generated relative to today
 tests/fixtures/redesigned-tour.js a from-scratch page wired only via overrides
 tests/static-server.mjs           dependency-free static server for the harness
 ```
 
-27 tests total; 26 run offline, 1 is live-only.
+33 tests total; 32 run offline, 1 is live-only.
 
 `npm run test:booking` (fixtures, offline, deterministic — safe for CI) ·
 `npm run test:booking:live` (real Worker; run before deploying).
