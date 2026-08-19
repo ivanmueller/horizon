@@ -2224,18 +2224,29 @@
        version paints too late. The cache format is shared with /tours/ and
        with HorizonBokunClient — see docs/booking-contract.md §4. -->
   <script>
+    // ONE definition of the price selectors, shared by the pre-paint snippet
+    // below and by mount() further down. Rename the markup here and both
+    // follow — otherwise the snippet keeps looking for the old class and the
+    // shimmer quietly comes back for returning visitors.
+    var HORIZON_PRICE = {
+      productId:    1162721,
+      amount:       '.booking-panel__price-amount',
+      unit:         '.booking-panel__price-unit',
+      wrap:         '.booking-panel__price',
+      loadingClass: 'booking-panel__price--loading',
+    };
     (function () {
       try {
-        var raw = localStorage.getItem('hzn_price_1162721');
+        var raw = localStorage.getItem('hzn_price_' + HORIZON_PRICE.productId);
         if (!raw) return;
         var entry = JSON.parse(raw);
         if (!entry || Date.now() >= entry.exp) return;
-        var amtEl    = document.querySelector('.booking-panel__price-amount');
-        var unitEl   = document.querySelector('.booking-panel__price-unit');
-        var priceDiv = document.querySelector('.booking-panel__price');
+        var amtEl    = document.querySelector(HORIZON_PRICE.amount);
+        var unitEl   = document.querySelector(HORIZON_PRICE.unit);
+        var priceDiv = document.querySelector(HORIZON_PRICE.wrap);
         if (amtEl)    amtEl.textContent  = '$' + entry.price;
         if (unitEl)   unitEl.textContent = ' CAD per person';
-        if (priceDiv) priceDiv.classList.remove('booking-panel__price--loading');
+        if (priceDiv) priceDiv.classList.remove(HORIZON_PRICE.loadingClass);
       } catch (e) {}
     })();
   </script>
@@ -2254,10 +2265,17 @@
   <script src="/js/booking/mount.js"></script>
   <script>
     HorizonBooking.mount({
-      productId: 1162721,
+      productId: HORIZON_PRICE.productId,
       tourImage: 'https://gowithhorizon.com/tours/banff-hidden-gem-canoe-tour/images/hero.jpg',
       // 08:30 "New Schedule" — preferred when a day offers several departures.
       preferredStartTimeId: 5438571,
+      // Kept in step with the pre-paint snippet above by construction.
+      selectors: {
+        priceAmount: HORIZON_PRICE.amount,
+        priceUnit:   HORIZON_PRICE.unit,
+        price:       HORIZON_PRICE.wrap,
+      },
+      classes: { priceLoading: HORIZON_PRICE.loadingClass },
     });
   </script>
 
@@ -2375,11 +2393,10 @@
         closeViewer();
         closeGallery();
         document.body.style.overflow = '';
-        var dateBtn = document.getElementById('dateBtn');
-        if (dateBtn) {
-          dateBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          setTimeout(function() { dateBtn.click(); }, 400);
-        }
+        // Ask the booking engine rather than hardcoding #dateBtn — that id
+        // is owned by the selector map and a redesign may rename it.
+        var booking = window.HorizonBooking && window.HorizonBooking.instance;
+        if (booking && booking.panel) booking.panel.revealCalendar(400);
       });
 
       // Arrow key navigation

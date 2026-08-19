@@ -270,6 +270,32 @@ test.describe('canoe tour booking engine', () => {
     if (!LIVE) expect(total).toBe(ADULT_PRICE);
   });
 
+  test('typographic characters render as the real glyphs, not ASCII lookalikes', async ({ page }) => {
+    /* The original inline source wrote some of these as \uXXXX escapes and
+       the extracted modules write them literally. Identical at runtime — but
+       "identical at runtime" is the claim, so assert it at runtime rather
+       than by comparing source. An ASCII hyphen in the stepper or an 'x' in
+       the price breakdown is a visible typographic regression. */
+    await openAndSelect(page);
+    await page.locator('#travellersBtn').click();
+
+    // U+2212 MINUS SIGN, not U+002D HYPHEN-MINUS.
+    expect(await page.locator('#btn-minus-adult').textContent()).toBe('\u2212');
+    expect(await page.locator('#btn-plus-adult').textContent()).toBe('+');
+
+    // Age bands use U+2013 EN DASH.
+    await expect(page.locator('#bp-travellers-rows .bp-travellers__age').first())
+      .toHaveText(/\u2013|\+$/);
+
+    await page.locator('#travellersContinue').click();
+    // Breakdown uses U+00D7 MULTIPLICATION SIGN and U+00B7 MIDDLE DOT.
+    await page.locator('#travellersBtn').click();
+    await page.locator('#btn-plus-youth').click();
+    await page.locator('#travellersContinue').click();
+    await expect(page.locator('#expansionBreakdown')).toHaveText(/\u00d7/, { timeout: 15_000 });
+    await expect(page.locator('#expansionBreakdown')).toHaveText(/\u00b7/);
+  });
+
   test('total tracks party size', async ({ page }) => {
     await openAndSelect(page);
     const readTotal = async () =>
@@ -323,6 +349,33 @@ test.describe('canoe tour booking engine', () => {
     await page.locator('#checkAvailBtn').click();
     await expect(page.locator('#calendarDropdown')).toBeVisible({ timeout: 10_000 });
     await expect(page.locator('#bpExpansion')).toBeHidden();
+  });
+
+  test('the photo viewer opens the calendar through the engine, not a hardcoded id', async ({ page }) => {
+    /* The photo viewer's "Check availability" button used to reach in and
+       click #dateBtn directly, which a selector-map rename would have broken
+       silently. It now calls panel.revealCalendar(). This test pins that. */
+    await arrange(page);
+    await page.goto(TOUR);
+    await waitForBokun(page);
+
+    // No page-local code may hardcode an id the selector map owns.
+    const api = await page.evaluate(() =>
+      typeof window.HorizonBooking.instance.panel.revealCalendar === 'function');
+    expect(api, 'panel.revealCalendar() is the supported entry point').toBe(true);
+
+    await page.locator('.tour-photo-grid__show-all').click();
+    await expect(page.locator('#photoGalleryOverlay')).toBeVisible();
+    await page.locator('#photoGalleryOverlay .photo-gallery-overlay__item img').first().click();
+    await expect(page.locator('#photoViewer')).toBeVisible();
+
+    await page.locator('#viewerCheckAvail').click();
+    // The viewer closes by dropping its `.active` class — it fades on opacity
+    // with pointer-events:none, so Playwright still counts it as "visible".
+    await expect(page.locator('#photoViewer')).toHaveClass('photo-viewer');
+    // The point of the test: the calendar opened, without anyone touching #dateBtn.
+    await expect(page.locator('#calendarDropdown')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('#dateBtn')).toHaveAttribute('aria-expanded', 'true');
   });
 
   test('continue to checkout sends the contracted payload and hands off', async ({ page }) => {

@@ -161,6 +161,60 @@ listener can assume prices and rows are rendered.
 
 ---
 
+## 3a. Page-local code must call the engine, never reach into it
+
+Anything on the page that is *not* the booking engine — a photo viewer, a
+sticky header, a hero CTA — must go through the public API rather than
+grabbing an element the selector map owns. Hardcoding `#dateBtn` works
+today and breaks silently the moment someone renames it.
+
+```js
+var booking = window.HorizonBooking && window.HorizonBooking.instance;
+if (booking && booking.panel) booking.panel.revealCalendar(400);
+```
+
+Available on `HorizonBooking.instance`:
+
+| | |
+|---|---|
+| `panel.revealCalendar(delayMs)` | scroll the date control into view, then open the calendar |
+| `panel.openCalendar()` / `closeCalendar()` | open/close without scrolling |
+| `panel.renderCalendar()` | force a redraw |
+| `expansion.show()` / `hide()` | open/close the confirm card |
+| `expansion.getBookingData()` | the current `{ date, adults, youth, infants }` |
+| `mobileCta.openSheet()` / `closeSheet()` | mobile bottom sheet |
+| `reload()` | re-run the whole Bokun bootstrap |
+
+The photo viewer's "Check availability" button is the worked example — it
+used to click `#dateBtn` directly and now calls `revealCalendar()`.
+
+### The price selectors are shared with an inline snippet
+
+The pre-paint snippet (§4) cannot use the engine, because it must run before
+the engine loads. So the page defines the price selectors **once** and hands
+the same values to both:
+
+```js
+var HORIZON_PRICE = {
+  productId: 1162721,
+  amount: '.booking-panel__price-amount',
+  unit:   '.booking-panel__price-unit',
+  wrap:   '.booking-panel__price',
+  loadingClass: 'booking-panel__price--loading',
+};
+// …the snippet reads HORIZON_PRICE…
+HorizonBooking.mount({
+  productId: HORIZON_PRICE.productId,
+  selectors: { priceAmount: HORIZON_PRICE.amount, priceUnit: HORIZON_PRICE.unit, price: HORIZON_PRICE.wrap },
+  classes:   { priceLoading: HORIZON_PRICE.loadingClass },
+});
+```
+
+Rename the price markup and both follow. Split them apart again and the
+shimmer quietly returns for repeat visitors, with nothing failing.
+
+---
+
 ## 4. Cross-page contracts
 
 **Price cache.** `/tours/` writes and the tour page reads:
@@ -272,6 +326,30 @@ Removed during extraction as genuinely dead: a `DOW` weekday array (the
 headers are static markup) and an unused `STRIPE_PUBLISHABLE_KEY` on the tour
 page (checkout declares its own).
 
+### Deliberate deviations from the original
+
+Three things do **not** behave exactly as the inline version did. Each was a
+considered call, not an accident:
+
+1. **`getBookingData()` no longer throws on a missing date control.** The
+   inline version did an unguarded `document.getElementById('dateBtn').dataset`,
+   which threw a `TypeError` out of the click handler. It now returns an empty
+   date, which routes into the normal "Please pick a date." validation and
+   disables checkout — and the panel separately warns that the element is
+   missing. Strictly more debuggable, and no worse for a visitor.
+
+2. **`window.BOKUN` is initialised with `||`, not clobbered.** The inline
+   version reassigned the whole object; a double-load reset `ready` to false
+   and orphaned in-flight state. `initGlobals()` now preserves an existing
+   object.
+
+3. **Listeners are registered before the fetch starts.** The inline version
+   relied on the network always being slower than HTML parsing, which was
+   true but unenforced. `mount()` builds the whole UI first, then loads. Same
+   observable behaviour, minus the assumption. One visible consequence:
+   external `bokun:ready` listeners now fire *after* the engine has updated
+   its own UI, rather than interleaved with it.
+
 ---
 
 ## 7. How to redesign a page safely
@@ -344,14 +422,14 @@ test lane (`0B_VALIDATION.md`) before testing past the tour page.
 ## 10. The test suite
 
 ```
-tests/booking.spec.js            15 tests — the safety net on the real page
+tests/booking.spec.js            22 tests — the safety net on the real page
 tests/redesign.spec.js            6 tests — the same flow on rebuilt markup
 tests/fixtures/bokun.js           recorded Bokun shapes, generated relative to today
 tests/fixtures/redesigned-tour.js a from-scratch page wired only via overrides
 tests/static-server.mjs           dependency-free static server for the harness
 ```
 
-21 tests total; 20 run offline, 1 is live-only.
+28 tests total; 27 run offline, 1 is live-only.
 
 `npm run test:booking` (fixtures, offline, deterministic — safe for CI) ·
 `npm run test:booking:live` (real Worker; run before deploying).

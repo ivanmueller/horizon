@@ -350,7 +350,19 @@
       if (c) c.innerHTML = ctx.opts.travellersErrorHtml;
     }
 
+    /* Public: scroll the date control into view and open the calendar.
+       Exists so page-local code (e.g. a "check availability" button inside
+       the photo viewer) never has to hardcode #dateBtn — that hardcoding is
+       exactly what a selector-map rename would silently break. */
+    function revealCalendar(delayMs) {
+      var db = sel('dateBtn');
+      if (!db) return;
+      db.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(openCalendar, delayMs == null ? 400 : delayMs);
+    }
+
     return {
+      revealCalendar: revealCalendar,
       applyFromBokun: applyFromBokun,
       onBokunReady: function () { applyFromBokun(); onBokunReadyForCalendar(); },
       onBokunError: onError,
