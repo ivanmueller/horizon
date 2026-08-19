@@ -492,6 +492,7 @@ test lane (`0B_VALIDATION.md`) before testing past the tour page.
 ## 10. The test suite
 
 ```
+tools/visual-diff.sh             render the page now vs at a git ref, compare pixels
 tests/booking.spec.js            20 tests — the safety net on the real page
 tests/redesign.spec.js            7 tests — the same flow on rebuilt markup
 tests/page-integrity.spec.js      6 tests — the non-booking couplings above
@@ -504,6 +505,20 @@ tests/static-server.mjs           dependency-free static server for the harness
 
 `npm run test:booking` (fixtures, offline, deterministic — safe for CI) ·
 `npm run test:booking:live` (real Worker; run before deploying).
+
+```sh
+tools/visual-diff.sh              # working tree vs HEAD
+tools/visual-diff.sh main         # vs another ref
+tools/visual-diff.sh HEAD~3 tours/index.html
+```
+
+`visual-diff.sh` renders the page with mocked Bokun data and third-party
+assets blocked, so it is deterministic and needs no network. It is how the
+extraction's "no visual change" claim was verified: the extracted page and
+the pre-extraction commit produce **byte-identical** full-page screenshots
+(1280×8436, same SHA256). During the redesign it answers the reverse
+question — "this was meant to be a CSS-only refactor; did it move any
+pixels?"
 
 Every assertion maps to a section above. The suite has been checked two ways:
 it passes unchanged against the **pre-extraction** page (proving the
