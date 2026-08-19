@@ -20,3 +20,7 @@ invoices/
 # disagrees with what's live on the site. Run `npm run build:partners`
 # locally to regenerate it from the .env in scripts/supabase/.
 partners.json
+
+# Playwright output (traces, screenshots, HTML report)
+test-results/
+playwright-report/
