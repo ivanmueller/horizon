@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Horizon Tours — design system</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="01-primitives.css">
+<link rel="stylesheet" href="02-semantic.css">
+<link rel="stylesheet" href="03-base.css">
+<style>
+  /* Page chrome for this review page only — not part of the system. */
+  .ks-head { position: sticky; top: 0; z-index: var(--z-nav); background: var(--surface-raised);
+             border-block-end: 1px solid var(--border-subtle); padding-block: var(--space-4); }
+  .ks-swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(4.5rem, 1fr)); gap: var(--space-1); }
+  .ks-sw { aspect-ratio: 1; border-radius: var(--radius-sm); display: grid; align-content: end;
+           padding: var(--space-1); font-size: 0.6875rem; border: 1px solid var(--border-subtle); }
+  .ks-row { display: grid; grid-template-columns: 10rem 1fr; gap: var(--space-4);
+            align-items: baseline; padding-block: var(--space-2);
+            border-block-end: 1px solid var(--border-subtle); }
+  .ks-label { font: var(--type-caption); color: var(--text-muted); font-family: var(--font-mono); }
+  .ks-box { background: var(--surface-brand); height: var(--space-6); border-radius: var(--radius-sm); }
+  .ks-card { background: var(--surface-raised); border: 1px solid var(--border-subtle);
+             border-radius: var(--card-radius); padding: var(--space-6); box-shadow: var(--card-shadow); }
+  .ks-fail { color: var(--feedback-danger-fg); font-weight: var(--weight-semibold); }
+  .ks-pass { color: var(--feedback-success-fg); }
+  table { border-collapse: collapse; width: 100%; font: var(--type-small); }
+  td, th { text-align: left; padding: var(--space-2); border-block-end: 1px solid var(--border-subtle); }
+</style>
+</head>
+<body>
+
+<header class="ks-head">
+  <div class="container cluster" style="justify-content:space-between">
+    <strong style="font:var(--type-subhead)">Horizon Tours — design system</strong>
+    <button type="button" id="themeToggle" style="background:var(--action-quiet-bg);border:1px solid var(--action-quiet-border);color:var(--action-quiet-text);border-radius:var(--control-radius);padding:var(--space-2) var(--space-4);cursor:pointer">
+      Toggle dark
+    </button>
+  </div>
+</header>
+
+<main class="container section stack" style="--stack-gap: var(--space-12)">
+
+  <section class="stack">
+    <h1>Design system</h1>
+    <p style="color:var(--text-secondary)">
+      Every value below comes from <code>01-primitives.css</code> and
+      <code>02-semantic.css</code>. To rebrand, edit the ramps in the
+      primitives file — nothing on this page is hardcoded.
+    </p>
+  </section>
+
+  <!-- ── Contrast audit ─────────────────────────────────────────────── -->
+  <section class="stack">
+    <h2>Contrast audit</h2>
+    <p style="color:var(--text-secondary)">
+      Computed live from the tokens as rendered. A new palette is the easiest
+      way to ship unreadable text; this fails loudly instead. WCAG AA needs
+      4.5:1 for body copy and 3:1 for large text and UI boundaries.
+    </p>
+    <div class="ks-card"><table id="contrast"><thead>
+      <tr><th>Pair</th><th>Ratio</th><th>AA body</th><th>AA large</th></tr>
+    </thead><tbody></tbody></table></div>
+  </section>
+
+  <!-- ── Ramps ──────────────────────────────────────────────────────── -->
+  <section class="stack">
+    <h2>Colour ramps</h2>
+    <div id="ramps" class="stack"></div>
+  </section>
+
+  <!-- ── Type ───────────────────────────────────────────────────────── -->
+  <section class="stack">
+    <h2>Type scale</h2>
+    <p style="color:var(--text-secondary)">Fluid — resize the window and every step moves with it.</p>
+    <div class="ks-card stack">
+      <div style="font:var(--type-display)">Display · Banff by canoe</div>
+      <div style="font:var(--type-title)">Title · Lake Louise at sunrise</div>
+      <div style="font:var(--type-heading)">Heading · What you'll do</div>
+      <div style="font:var(--type-subhead)">Subhead · Meeting point and pickup</div>
+      <div style="font:var(--type-body)">Body · Paddle a quiet arm of the lake before the crowds arrive, with a guide who knows where the light lands first.</div>
+      <div style="font:var(--type-small);color:var(--text-secondary)">Small · Free cancellation up to 24 hours before departure.</div>
+      <div style="font:var(--type-caption);color:var(--text-muted);text-transform:uppercase;letter-spacing:var(--tracking-wide)">Caption · 9–10 hours</div>
+    </div>
+  </section>
+
+  <!-- ── Space ──────────────────────────────────────────────────────── -->
+  <section class="stack">
+    <h2>Space</h2>
+    <div class="ks-card" id="spaceScale"></div>
+  </section>
+
+  <!-- ── Radius + elevation ─────────────────────────────────────────── -->
+  <section class="stack">
+    <h2>Radius &amp; elevation</h2>
+    <div class="grid-auto" style="--col-min:9rem">
+      <div class="ks-card" style="border-radius:var(--radius-sm);box-shadow:var(--shadow-1)"><span class="ks-label">sm / shadow-1</span></div>
+      <div class="ks-card" style="border-radius:var(--radius-md);box-shadow:var(--shadow-2)"><span class="ks-label">md / shadow-2</span></div>
+      <div class="ks-card" style="border-radius:var(--radius-lg);box-shadow:var(--shadow-3)"><span class="ks-label">lg / shadow-3</span></div>
+      <div class="ks-card" style="border-radius:var(--radius-xl);box-shadow:var(--shadow-4)"><span class="ks-label">xl / shadow-4</span></div>
+    </div>
+  </section>
+
+  <!-- ── Actions ────────────────────────────────────────────────────── -->
+  <section class="stack">
+    <h2>Actions</h2>
+    <p style="color:var(--text-secondary)">
+      Primary uses the <strong>accent</strong> ramp, not the brand ramp. The
+      warm hue is reserved to mean “book” — that is the only reason it reads
+      as urgent when it appears.
+    </p>
+    <div class="cluster">
+      <button style="background:var(--action-primary-bg);color:var(--action-primary-text);border:0;border-radius:var(--control-radius);height:var(--control-height);padding-inline:var(--space-6);font-weight:var(--weight-semibold);cursor:pointer">Continue to checkout</button>
+      <button style="background:var(--action-secondary-bg);color:var(--action-secondary-text);border:0;border-radius:var(--control-radius);height:var(--control-height);padding-inline:var(--space-6);font-weight:var(--weight-semibold);cursor:pointer">Check availability</button>
+      <button style="background:var(--action-quiet-bg);color:var(--action-quiet-text);border:1px solid var(--action-quiet-border);border-radius:var(--control-radius);height:var(--control-height);padding-inline:var(--space-6);cursor:pointer">See more</button>
+      <button disabled style="background:var(--action-disabled-bg);color:var(--action-disabled-text);border:0;border-radius:var(--control-radius);height:var(--control-height);padding-inline:var(--space-6)">Sold out</button>
+    </div>
+  </section>
+
+  <!-- ── Feedback ───────────────────────────────────────────────────── -->
+  <section class="stack">
+    <h2>Feedback</h2>
+    <div class="stack" style="--stack-gap:var(--space-2)">
+      <div style="background:var(--feedback-success-bg);color:var(--feedback-success-fg);padding:var(--space-3) var(--space-4);border-radius:var(--control-radius)">Booking confirmed — check your email for the voucher.</div>
+      <div style="background:var(--feedback-warning-bg);color:var(--feedback-warning-fg);padding:var(--space-3) var(--space-4);border-radius:var(--control-radius)">Only 2 spots left on this departure.</div>
+      <div style="background:var(--feedback-danger-bg);color:var(--feedback-danger-fg);padding:var(--space-3) var(--space-4);border-radius:var(--control-radius)">Sorry — we couldn’t hold your spot. Please try again.</div>
+      <div style="background:var(--feedback-info-bg);color:var(--feedback-info-fg);padding:var(--space-3) var(--space-4);border-radius:var(--control-radius)">Pickup is from Canmore and Banff only.</div>
+    </div>
+  </section>
+
+  <!-- ── The hidden-attribute contract ──────────────────────────────── -->
+  <section class="stack">
+    <h2>The <code>[hidden]</code> contract</h2>
+    <p style="color:var(--text-secondary)">
+      The booking engine opens and closes the travellers dropdown, the
+      calendar, and the whole expansion card by toggling the
+      <code>hidden</code> <em>attribute</em> — not a class. A component that
+      sets <code>display</code> would override the UA default and pin those
+      open. <code>03-base.css</code> reasserts it with
+      <code>!important</code>. The box below must stay invisible.
+    </p>
+    <div class="ks-card">
+      <div hidden style="display:flex;background:var(--feedback-danger-bg);color:var(--feedback-danger-fg);padding:var(--space-4)">
+        If you can read this, the [hidden] rule was lost and booking is broken.
+      </div>
+      <span class="ks-pass" id="hiddenOk">✓ [hidden] still wins over display</span>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  // ── Theme toggle ────────────────────────────────────────────────────
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    const r = document.documentElement;
+    r.dataset.theme = r.dataset.theme === 'dark' ? 'light' : 'dark';
+    render();
+  });
+
+  // ── Ramps, read back from the cascade rather than hardcoded ─────────
+  const RAMPS = {
+    neutral: [0,50,100,200,300,400,500,600,700,800,900,950],
+    brand:   [50,100,200,300,400,500,600,700,800,900,950],
+    accent:  [50,100,200,300,400,500,600,700,800,900],
+  };
+  const cs = () => getComputedStyle(document.documentElement);
+
+  function renderRamps() {
+    const host = document.getElementById('ramps');
+    host.innerHTML = Object.entries(RAMPS).map(([name, steps]) => `
+      <div>
+        <div class="ks-label">--${name}-*</div>
+        <div class="ks-swatches">${steps.map((s) => {
+          const v = cs().getPropertyValue(`--${name}-${s}`).trim();
+          return `<div class="ks-sw" style="background:${v};color:${s >= 500 ? '#fff' : '#000'}">${s}<br>${v}</div>`;
+        }).join('')}</div>
+      </div>`).join('');
+  }
+
+  function renderSpace() {
+    const steps = [1,2,3,4,5,6,8,10,12,16,20,24,32];
+    document.getElementById('spaceScale').innerHTML = steps.map((s) => {
+      const v = cs().getPropertyValue(`--space-${s}`).trim();
+      return `<div class="ks-row"><span class="ks-label">--space-${s} · ${v}</span>
+              <span class="ks-box" style="width:var(--space-${s})"></span></div>`;
+    }).join('');
+  }
+
+  // ── Contrast ────────────────────────────────────────────────────────
+  // Resolves whatever the token actually computes to, so it audits the
+  // rendered result rather than the authored value.
+  function toRgb(color) {
+    const d = document.createElement('div');
+    d.style.color = color; document.body.appendChild(d);
+    const rgb = getComputedStyle(d).color.match(/[\d.]+/g).map(Number);
+    d.remove(); return rgb;
+  }
+  const lum = ([r, g, b]) => {
+    const f = (c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
+    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+  };
+  const ratio = (a, b) => {
+    const [l1, l2] = [lum(toRgb(a)), lum(toRgb(b))].sort((x, y) => y - x);
+    return (l1 + 0.05) / (l2 + 0.05);
+  };
+
+  const PAIRS = [
+    ['--text-primary', '--surface-page'],
+    ['--text-secondary', '--surface-page'],
+    ['--text-muted', '--surface-page'],
+    ['--text-primary', '--surface-subtle'],
+    ['--text-link', '--surface-page'],
+    ['--action-primary-text', '--action-primary-bg'],
+    ['--action-secondary-text', '--action-secondary-bg'],
+    ['--action-disabled-text', '--action-disabled-bg'],
+    ['--feedback-success-fg', '--feedback-success-bg'],
+    ['--feedback-warning-fg', '--feedback-warning-bg'],
+    ['--feedback-danger-fg', '--feedback-danger-bg'],
+    ['--feedback-info-fg', '--feedback-info-bg'],
+    ['--border-control', '--surface-page'],
+  ];
+
+  function renderContrast() {
+    const body = document.querySelector('#contrast tbody');
+    body.innerHTML = PAIRS.map(([fg, bg]) => {
+      const r = ratio(cs().getPropertyValue(fg).trim(), cs().getPropertyValue(bg).trim());
+      const ui = fg === '--border-control' || fg === '--action-disabled-text';
+      const okBody = ui ? r >= 3 : r >= 4.5;
+      const okLarge = r >= 3;
+      return `<tr>
+        <td><code>${fg}</code> on <code>${bg}</code></td>
+        <td>${r.toFixed(2)}:1</td>
+        <td class="${okBody ? 'ks-pass' : 'ks-fail'}">${okBody ? 'pass' : 'FAIL'}${ui ? ' <small>(3:1 bar)</small>' : ''}</td>
+        <td class="${okLarge ? 'ks-pass' : 'ks-fail'}">${okLarge ? 'pass' : 'FAIL'}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function render() { renderRamps(); renderSpace(); renderContrast(); }
+  render();
+
+  // Prove the [hidden] rule is still in force.
+  const probe = document.querySelector('[hidden][style*="display:flex"]');
+  if (probe && getComputedStyle(probe).display !== 'none') {
+    const el = document.getElementById('hiddenOk');
+    el.textContent = '✗ [hidden] was overridden — the booking engine cannot close its dropdowns';
+    el.className = 'ks-fail';
+  }
+</script>
+</body>
+</html>

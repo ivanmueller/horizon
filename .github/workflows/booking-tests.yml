@@ -22,6 +22,8 @@ on:
       - 'tours/**'
       - 'checkout/**'
       - 'tests/**'
+      - 'css/tours/**'
+      - 'tools/check-tokens.mjs'
       - 'playwright.config.js'
       - '.github/workflows/booking-tests.yml'
   pull_request:
@@ -30,6 +32,8 @@ on:
       - 'tours/**'
       - 'checkout/**'
       - 'tests/**'
+      - 'css/tours/**'
+      - 'tools/check-tokens.mjs'
       - 'playwright.config.js'
 
 # A superseded run has nothing to tell us, and leaving it running holds a
